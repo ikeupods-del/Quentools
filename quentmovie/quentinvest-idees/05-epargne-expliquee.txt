@@ -1,0 +1,865 @@
+@theme Produits d'épargne expliqués
+
+# Qu'est-ce qu'un PEA ?
+
+Le PEA permet de placer jusqu'à 150 000 euros en actions européennes. Et après 5 ans, ses gains échappent à l'impôt sur le revenu. Mais il a des règles strictes. Qu'est-ce que c'est exactement, et à quoi faut-il faire attention ?
+
+Trois lettres
+
+PEA veut dire plan d'épargne en actions. C'est une enveloppe, une sorte de boîte, dans laquelle on place des actions et certains fonds. Il a été créé en 1992 pour encourager les Français à financer les entreprises européennes.
+
+L'enveloppe elle-même ne rapporte rien. Ce qui compte, c'est ce que tu mets dedans. Si les actions montent, la valeur du PEA monte. Si elles baissent, il baisse aussi. Le PEA n'est pas un placement garanti.
+
+Son intérêt, c'est la fiscalité. Tant que l'argent reste dedans, les gains ne sont pas imposés. Et après un certain temps, ils bénéficient d'un avantage important.
+
+Qui peut en ouvrir un ?
+
+Il faut être majeur et avoir son domicile fiscal en France. Chaque personne ne peut avoir qu'un seul PEA. Un couple marié peut donc en ouvrir deux, un pour chacun.
+
+On l'ouvre dans une banque ou chez un courtier en ligne. Il se compose de deux parties. Un compte en espèces, où arrive l'argent versé. Et un compte titres, où sont rangés les placements achetés.
+
+Ce qu'on peut y mettre
+
+Le PEA accepte les actions d'entreprises dont le siège est dans l'Union européenne, ou dans quelques pays européens proches. Il accepte aussi certains fonds, dont des ETF, à condition qu'ils respectent les règles d'éligibilité.
+
+En revanche, on ne peut pas y acheter directement des actions américaines ou asiatiques. Ni des obligations. Ni des cryptomonnaies. Certains ETF éligibles permettent pourtant de suivre des indices mondiaux, grâce à un montage technique.
+
+La règle des 150 000 euros
+
+On peut verser jusqu'à 150 000 euros sur un PEA classique. Attention, c'est le plafond des versements, pas de la valeur. Si tes placements montent au-delà, aucun problème. Le PEA peut valoir bien plus que ce plafond.
+
+Il existe aussi un PEA-PME, pour les petites et moyennes entreprises. Les deux peuvent se cumuler, avec un plafond commun de 225 000 euros de versements.
+
+Le cœur du PEA : les 5 ans
+
+Tout se joue sur la durée. Avant 5 ans, un retrait entraîne en principe la clôture du plan. Les gains sont alors imposés comme sur un compte ordinaire. Il existe quelques exceptions, comme la création d'une entreprise ou un licenciement.
+
+Après 5 ans, tout change. Tu peux retirer de l'argent sans fermer ton PEA, et continuer à y verser. Surtout, les gains ne sont plus soumis à l'impôt sur le revenu.
+
+Attention : les prélèvements sociaux, eux, restent dus sur les gains. Leur taux est fixé par la loi et peut changer. Le plus simple est de vérifier le taux en vigueur sur le site service-public.fr.
+
+La date qui compte
+
+Un détail important : le compteur des 5 ans démarre au premier versement. C'est pour ça que certaines personnes ouvrent un PEA tôt, avec une petite somme. Le temps qui passe compte, même si le plan reste presque vide.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : un PEA garantit qu'on ne perdra pas d'argent ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Le PEA est une enveloppe fiscale. Sa valeur dépend des actions ou des fonds qu'il contient. Si la Bourse baisse, le PEA baisse aussi.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes avec le PEA.
+
+Un : confondre l'enveloppe et le placement. Le PEA n'a pas de rendement propre. Tout dépend de ce qu'on met dedans.
+
+Deux : oublier la règle des 5 ans. Un retrait trop tôt peut entraîner la clôture du plan et la perte de l'avantage.
+
+Trois : croire que tout est exonéré. Après 5 ans, l'impôt sur le revenu disparaît sur les gains, mais pas les prélèvements sociaux.
+
+Ce qu'il faut retenir
+
+- Le PEA est une enveloppe pour les actions européennes
+- On peut y verser jusqu'à 150 000 euros
+- Après 5 ans, les gains échappent à l'impôt sur le revenu, pas aux prélèvements sociaux
+
+En une phrase : le PEA est une enveloppe d'actions européennes dont les gains sont allégés d'impôt après 5 ans. Et toi, savais-tu que le compteur démarre dès le premier versement ?
+
+Sources : S1 · Service-public.fr, « Plan d'épargne en actions (PEA) » (plafond de 150 000 euros, un PEA par personne, majeur domicilié en France, retrait avant 5 ans entraînant la clôture sauf exceptions, exonération d'impôt sur le revenu après 5 ans, prélèvements sociaux dus)
+S2 · Service-public.fr, « PEA-PME » (plafond commun de 225 000 euros) ; Wikipédia, « Plan d'épargne en actions » (créé en 1992)
+
+===
+
+# L'assurance-vie, le placement préféré des Français
+
+L'assurance-vie est le placement préféré des Français, avec plus de 1 900 milliards d'euros d'encours. Pourtant, malgré son nom, ce n'est pas vraiment une assurance. Alors qu'est-ce que c'est, et comment ça marche ?
+
+Un nom trompeur
+
+Quand on entend « assurance-vie », on pense à une assurance en cas de décès. En réalité, c'est surtout un contrat d'épargne. Tu verses de l'argent, il est placé, et tu peux le récupérer quand tu veux.
+
+Le mot « assurance » vient du fait que ce contrat est proposé par une compagnie d'assurance. Et qu'il permet de transmettre de l'argent à des personnes choisies, en cas de décès, avec des avantages.
+
+Une enveloppe, plusieurs supports
+
+Comme le PEA, l'assurance-vie est une enveloppe. À l'intérieur, on choisit des supports. Il en existe deux grandes familles : le fonds en euros et les unités de compte.
+
+Le fonds en euros est garanti par l'assureur. Le capital versé ne peut pas baisser, hors frais. En échange, son rendement est modeste et varie chaque année.
+
+Les unités de compte sont des parts de fonds : actions, obligations, immobilier. Elles peuvent rapporter plus, mais elles peuvent aussi baisser. Le capital n'est pas garanti.
+
+L'argent reste disponible
+
+Contrairement à une idée reçue, l'argent n'est pas bloqué pendant 8 ans. Tu peux faire un retrait à tout moment. On appelle ça un rachat. Il peut être partiel ou total.
+
+Seule la partie « gains » d'un retrait est imposée. Imagine : tu as versé 10 000 euros et le contrat en vaut 12 000. Un retrait de 1 200 euros contient alors 200 euros de gains. Seuls ces 200 euros sont concernés par l'impôt.
+
+Le cap des 8 ans
+
+La durée du contrat change la fiscalité. Après 8 ans, chaque année, une partie des gains retirés échappe à l'impôt sur le revenu. L'abattement est de 4 600 euros pour une personne seule, et de 9 200 euros pour un couple.
+
+Comme pour le PEA, le compteur démarre à l'ouverture du contrat. Ouvrir une assurance-vie tôt, même avec peu d'argent, permet donc de prendre date.
+
+Les prélèvements sociaux restent dus sur les gains, à leur taux en vigueur. Sur le fonds en euros, ils sont en général prélevés chaque année.
+
+La transmission
+
+L'assurance-vie a un grand avantage pour transmettre. Lors du décès, l'argent revient aux bénéficiaires choisis dans le contrat. On les désigne dans la clause bénéficiaire.
+
+Pour les versements faits avant 70 ans, chaque bénéficiaire profite d'un abattement de 152 500 euros. Au-delà de ce montant, une taxation s'applique. Après 70 ans, les règles sont différentes et moins avantageuses.
+
+Les frais
+
+Il faut regarder les frais de près. Il peut y avoir des frais sur chaque versement et des frais de gestion chaque année. Les fonds eux-mêmes ont aussi leurs frais. Ils varient beaucoup d'un contrat à l'autre.
+
+Pourquoi les Français l'adorent
+
+L'assurance-vie cumule plusieurs qualités rarement réunies. Elle est souple : on verse quand on veut, on retire quand on veut. Elle est polyvalente : prudente ou dynamique selon les supports choisis. Et elle a une fiscalité douce avec le temps.
+
+Elle sert donc à beaucoup de projets différents. Préparer sa retraite, financer les études des enfants, transmettre un capital, ou simplement épargner à moyen terme. C'est un couteau suisse de l'épargne.
+
+La protection des épargnants
+
+Que se passe-t-il si l'assureur fait faillite ? Les assureurs sont étroitement surveillés par l'Autorité de contrôle prudentiel et de résolution. En dernier recours, un fonds de garantie protège les épargnants jusqu'à 70 000 euros par personne et par assureur.
+
+On peut aussi ouvrir plusieurs contrats, chez plusieurs assureurs. Il n'y a pas de limite au nombre de contrats, ni au montant des versements.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : l'argent d'une assurance-vie est bloqué pendant 8 ans ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. On peut retirer à tout moment. Les 8 ans ne concernent que la fiscalité des gains retirés, plus avantageuse après ce délai.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes avec l'assurance-vie.
+
+Un : croire que tout est garanti. Seul le fonds en euros l'est. Les unités de compte peuvent baisser.
+
+Deux : négliger la clause bénéficiaire. Elle décide qui recevra l'argent. Il faut la rédiger avec soin et la mettre à jour.
+
+Trois : oublier les frais. Un contrat cher peut grignoter une grande partie du rendement sur des années.
+
+Ce qu'il faut retenir
+
+- L'assurance-vie est un contrat d'épargne, pas une simple assurance
+- Le fonds en euros est garanti, les unités de compte ne le sont pas
+- Après 8 ans, la fiscalité des gains devient plus douce
+
+En une phrase : l'assurance-vie est une enveloppe d'épargne souple, plus avantageuse après 8 ans et pour transmettre. Et toi, sais-tu quels supports contient ton contrat ?
+
+Sources : S1 · Service-public.fr, « Assurance-vie : fiscalité » (abattement de 4 600 euros pour une personne seule et 9 200 euros pour un couple après 8 ans, prélèvements sociaux) ; « Assurance-vie : transmission » (abattement de 152 500 euros par bénéficiaire pour les versements avant 70 ans)
+S3 · Fonds de garantie des assurances de personnes (jusqu'à 70 000 euros par personne et par assureur)
+S2 · France Assureurs, encours de l'assurance-vie supérieur à 1 900 milliards d'euros ; Calcul de la chaîne : 10 000 euros versés, 12 000 euros de valeur, retrait de 1 200 euros dont 200 euros de gains
+
+===
+
+# Fonds en euros ou unités de compte : quelle différence ?
+
+Dans une assurance-vie, ton argent peut aller sur un fonds en euros, garanti. Ou sur des unités de compte, qui peuvent monter ou baisser. Un choix qui peut changer beaucoup sur 20 ans. Comment fonctionnent ces deux supports ?
+
+Le fonds en euros
+
+Le fonds en euros est le support historique de l'assurance-vie. L'assureur rassemble l'argent de tous ses clients et le place surtout en obligations. Ce sont des prêts à des États et à des entreprises, qui rapportent des intérêts.
+
+Sa grande force, c'est la garantie. Le capital versé ne peut pas baisser, hors frais. Et en général, les intérêts gagnés chaque année sont définitivement acquis. On parle d'effet cliquet.
+
+Sa faiblesse, c'est le rendement. Il dépend des taux d'intérêt. À la fin des années 2010, les taux étaient très bas. Beaucoup de fonds en euros rapportaient moins que l'inflation.
+
+Les unités de compte
+
+Les unités de compte sont des parts de fonds d'investissement. Elles peuvent contenir des actions, des obligations, de l'immobilier, ou un mélange. Leur valeur change chaque jour, selon les marchés.
+
+Leur potentiel est plus élevé sur le long terme, surtout pour les actions. Mais leur valeur peut baisser, parfois fortement. Le capital n'est pas garanti. L'assureur s'engage sur le nombre de parts, pas sur leur valeur.
+
+Un exemple chiffré
+
+Imaginons 10 000 euros placés pendant 20 ans. Supposons 2 % par an d'un côté, et 5 % par an de l'autre. Ces chiffres sont seulement des hypothèses pour comparer, pas des promesses.
+
+À 2 % par an, on obtient environ 14 860 euros. À 5 % par an, environ 26 530 euros. L'écart dépasse 11 000 euros. Mais le placement à 5 % aurait connu des années de baisse en chemin.
+
+Le temps est donc un élément clé. Plus la durée est longue, plus on peut supporter les baisses passagères. Sur deux ou trois ans, une baisse des marchés peut ne pas avoir le temps d'être rattrapée.
+
+Les règles qui changent
+
+Pour inciter à prendre plus d'unités de compte, certains assureurs limitent l'accès au fonds en euros. Ils demandent par exemple qu'une partie des versements aille en unités de compte. Il faut lire les conditions avant de signer.
+
+La loi permet aussi, dans des situations exceptionnelles, de limiter temporairement les retraits du fonds en euros. C'est une mesure de sécurité pour éviter une panique. Elle n'a jamais été utilisée à grande échelle, mais elle existe.
+
+La gestion pilotée
+
+Beaucoup de contrats proposent une gestion pilotée. Tu choisis un profil, prudent, équilibré ou dynamique. Un professionnel répartit ensuite ton argent entre les supports. Cette option a souvent des frais supplémentaires.
+
+Le rendement du fonds en euros
+
+Chaque année, l'assureur annonce le rendement de son fonds en euros, en général en début d'année. Ce taux est souvent différent d'un contrat à l'autre, même chez le même assureur.
+
+Il dépend des placements de l'assureur, de ses frais, et de ses choix. Car l'assureur peut garder une partie des gains en réserve, pour lisser les rendements des années suivantes. Cette réserve s'appelle la provision pour participation aux bénéfices.
+
+Les unités de compte immobilières
+
+Parmi les unités de compte, certaines investissent dans l'immobilier. Des parts de SCPI ou de sociétés similaires. Elles ont attiré beaucoup d'épargnants, séduits par leur stabilité apparente. Mais elles peuvent aussi baisser, comme on l'a vu récemment.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : sur un fonds en euros, ton épargne peut baisser après une mauvaise année de Bourse ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux, hors frais. Le capital versé est garanti par l'assureur, et les intérêts gagnés sont en général acquis. C'est sa grande différence avec les unités de compte.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes sur ces supports.
+
+Un : croire que « garanti » veut dire « rentable ». Un rendement inférieur à l'inflation fait perdre du pouvoir d'achat, même sans perte visible.
+
+Deux : penser que les unités de compte sont toutes très risquées. Certaines sont prudentes, d'autres très volatiles. Il faut regarder leur contenu.
+
+Trois : choisir sans tenir compte de la durée. Le même support peut convenir pour 20 ans et être inadapté pour 2 ans.
+
+Ce qu'il faut retenir
+
+- Le fonds en euros est garanti, mais son rendement est modeste
+- Les unités de compte peuvent rapporter plus, ou baisser
+- La durée de placement change tout
+
+En une phrase : le fonds en euros protège le capital, les unités de compte visent plus en acceptant des baisses. Et toi, préfères-tu la garantie ou le potentiel ?
+
+Sources : S1 · Autorité des marchés financiers et Banque de France, fiches pédagogiques sur l'assurance-vie (fonds en euros garanti hors frais, effet cliquet, unités de compte non garanties, gestion pilotée ; taux bas de la fin des années 2010)
+S2 · Calcul de la chaîne : 10 000 × 1,02²⁰ ≈ 14 860 euros et 10 000 × 1,05²⁰ ≈ 26 530 euros, soit un écart de plus de 11 000 euros (hypothèses de 2 % et 5 % par an sur 20 ans)
+S3 · Loi Sapin 2 de 2016 (limitation temporaire possible des retraits par le Haut Conseil de stabilité financière)
+
+===
+
+# Le PER : épargner pour sa retraite et payer moins d'impôt
+
+Le plan d'épargne retraite, créé en 2019, permet de déduire ses versements de son revenu imposable. Pour quelqu'un taxé à 30 %, verser 1 000 euros fait baisser son impôt de 300 euros. Mais l'argent est bloqué jusqu'à la retraite. Comment fonctionne ce placement ?
+
+Une réforme récente
+
+Le PER, plan d'épargne retraite, a été créé par la loi Pacte. Il existe depuis le 1er octobre 2019. Il remplace progressivement plusieurs anciens produits, comme le Perp ou le contrat Madelin.
+
+Son but : aider chacun à se constituer un complément de revenu pour la retraite. Car les pensions de retraite ne remplacent qu'une partie des revenus d'activité.
+
+Trois formes
+
+Il existe un PER individuel, que l'on ouvre soi-même dans une banque ou une assurance. Et deux PER d'entreprise : l'un ouvert à tous les salariés, l'autre réservé à certaines catégories.
+
+L'argent de ces différents plans peut être regroupé. Et un PER se transfère d'un établissement à l'autre, sous certaines conditions. Il suit son titulaire tout au long de sa carrière.
+
+L'avantage à l'entrée
+
+Les versements volontaires sur un PER peuvent être déduits du revenu imposable, dans une certaine limite. Cette limite dépend notamment des revenus professionnels. Elle figure sur l'avis d'impôt.
+
+L'intérêt dépend de ta tranche d'imposition. Prenons quelqu'un dont la tranche marginale est de 30 %. S'il verse 1 000 euros, son revenu imposable baisse de 1 000 euros. Son impôt baisse donc d'environ 300 euros.
+
+Pour quelqu'un qui n'est pas imposable, l'avantage disparaît. La déduction ne sert à rien s'il n'y a pas d'impôt à réduire. Il peut alors renoncer à la déduction, ce qui change la fiscalité à la sortie.
+
+La contrepartie à la sortie
+
+Cet avantage n'est pas un cadeau. C'est souvent un report d'impôt. À la retraite, les sommes versées et déduites seront imposées au moment de la sortie.
+
+L'opération est intéressante si ta tranche d'imposition à la retraite est plus faible que pendant ta vie active. C'est souvent le cas, mais pas toujours. Il faut faire le calcul selon sa situation.
+
+L'argent bloqué
+
+L'argent d'un PER est en principe bloqué jusqu'à l'âge de la retraite. Il existe des cas de déblocage anticipé. Le plus connu : l'achat de la résidence principale.
+
+Les autres concernent des accidents de la vie. Le décès du conjoint, l'invalidité, le surendettement, la fin des droits au chômage, ou la liquidation judiciaire de son entreprise.
+
+À la retraite, on choisit en général entre un capital, en une ou plusieurs fois, et une rente à vie. Ou un mélange des deux.
+
+Les placements à l'intérieur
+
+Comme l'assurance-vie, le PER contient des supports. Fonds garantis, fonds d'actions, d'obligations. Par défaut, beaucoup de PER appliquent une gestion pilotée à horizon. Plus la retraite approche, plus l'épargne est sécurisée.
+
+Un exemple sur une carrière
+
+Prenons Léa, 35 ans, imposée dans la tranche à 30 %. Elle verse 100 euros par mois sur un PER pendant 30 ans. Elle aura versé 36 000 euros en tout.
+
+Chaque année, ses versements de 1 200 euros réduisent son impôt d'environ 360 euros. Sur 30 ans, ça représente environ 10 800 euros d'impôt en moins pendant sa vie active. Sans compter le rendement de son épargne.
+
+À la retraite, elle paiera l'impôt sur ses versements, au taux de sa tranche d'alors. Si sa tranche est plus basse, elle aura gagné au change. Si elle est identique, l'avantage vient surtout du rendement de l'argent économisé entre-temps.
+
+Le PER et les indépendants
+
+Pour les travailleurs indépendants, le PER est souvent encore plus intéressant. Leurs plafonds de déduction peuvent être plus élevés. Et leurs revenus, parfois irréguliers, leur permettent de verser davantage les bonnes années.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : la déduction d'impôt d'un PER est définitive, sans impôt à payer plus tard ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Les sommes déduites à l'entrée sont imposées à la sortie. C'est surtout un décalage d'impôt dans le temps, intéressant si ta tranche baisse à la retraite.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes avec le PER.
+
+Un : oublier que l'argent est bloqué. Il ne faut pas y mettre une épargne dont on pourrait avoir besoin avant la retraite.
+
+Deux : ouvrir un PER sans payer d'impôt. La déduction n'a alors presque aucun intérêt.
+
+Trois : négliger les frais. Sur des décennies, des frais élevés peuvent effacer une bonne partie de l'avantage fiscal.
+
+Ce qu'il faut retenir
+
+- Le PER sert à préparer sa retraite
+- Les versements peuvent réduire l'impôt aujourd'hui, mais sont imposés à la sortie
+- L'argent est bloqué, sauf achat de la résidence principale et accidents de la vie
+
+En une phrase : le PER réduit l'impôt aujourd'hui en échange d'une épargne bloquée et imposée à la retraite. Et toi, sais-tu dans quelle tranche d'imposition tu te trouves ?
+
+Sources : S1 · Service-public.fr, « Plan d'épargne retraite (PER) » (créé par la loi Pacte, en place depuis le 1er octobre 2019 ; déduction des versements dans une limite indiquée sur l'avis d'impôt ; déblocage pour la résidence principale et accidents de la vie ; sortie en capital ou en rente)
+S2 · Calcul de la chaîne : 1 000 euros versés × 30 % de tranche marginale = environ 300 euros d'impôt en moins ; exemple de Léa, 35 ans, 100 euros par mois pendant 30 ans = 36 000 euros versés, 1 200 euros par an × 30 % ≈ 360 euros, soit environ 10 800 euros sur 30 ans
+
+===
+
+# Le Livret A : comment est calculé son taux ?
+
+Le Livret A existe depuis 1818. Plus de 200 ans ! Ses intérêts sont nets d'impôt, et on peut y placer jusqu'à 22 950 euros. Mais qui décide de son taux, et à quoi sert vraiment ton argent ?
+
+Un très vieux livret
+
+Le Livret A naît en 1818, avec la première Caisse d'épargne, à Paris. L'idée est d'encourager les ouvriers et les familles modestes à mettre de l'argent de côté. Plutôt que de le dépenser ou de le cacher sous le matelas.
+
+Pendant longtemps, seules la Caisse d'épargne et La Poste peuvent le proposer. Depuis 2009, toutes les banques ont le droit de le distribuer. C'est aujourd'hui le placement le plus répandu en France.
+
+Les règles de base
+
+Une personne ne peut avoir qu'un seul Livret A. Les enfants peuvent en avoir un dès la naissance. Le plafond de dépôts est de 22 950 euros pour un particulier, hors intérêts.
+
+Les intérêts ne sont soumis ni à l'impôt sur le revenu, ni aux prélèvements sociaux. Ce que tu vois, c'est ce que tu gagnes. Et l'argent reste disponible à tout moment.
+
+Qui fixe le taux ?
+
+Le taux du Livret A est fixé par l'État, sur proposition de la Banque de France. Il est revu deux fois par an, en principe au 1er février et au 1er août.
+
+Il existe une formule de calcul. Elle tient compte de l'inflation et du niveau des taux d'intérêt entre les banques. L'idée est de protéger à peu près le pouvoir d'achat de l'épargnant, tout en restant raisonnable.
+
+Mais le gouvernement peut s'écarter de la formule. Il l'a déjà fait, à la hausse comme à la baisse. Le taux peut donc changer d'un semestre à l'autre. Pour connaître le taux actuel, il suffit de consulter le site de la Banque de France ou service-public.fr.
+
+Le calcul par quinzaine
+
+Les intérêts du Livret A sont calculés par quinzaines. Une quinzaine va du 1er au 15 du mois, ou du 16 à la fin du mois. Un dépôt commence à rapporter à partir de la quinzaine suivante.
+
+Un retrait, lui, arrête de rapporter dès la quinzaine en cours. Autrement dit, déposer le 14 ou le 2 du mois, ça ne change rien : l'argent commence à compter le 16. Les intérêts sont ajoutés au livret une fois par an, au 31 décembre.
+
+À quoi sert ton argent ?
+
+Une grande partie de l'argent des livrets A est centralisée à la Caisse des dépôts. Elle s'en sert surtout pour financer le logement social. Quand tu épargnes sur un Livret A, tu prêtes indirectement pour construire des logements.
+
+Le reste est utilisé par les banques, notamment pour prêter aux petites et moyennes entreprises. C'est un circuit d'épargne très français, qui relie l'épargne des ménages au financement de l'économie locale.
+
+Les autres livrets réglementés
+
+Le Livret A a des cousins. Le livret de développement durable et solidaire, ou LDDS, fonctionne de la même façon. Même taux, intérêts nets d'impôt, argent disponible. Son plafond est de 12 000 euros.
+
+Le livret d'épargne populaire, ou LEP, est réservé aux personnes dont les revenus ne dépassent pas un certain plafond. Son taux est supérieur ou égal à celui du Livret A. Son plafond de dépôts est de 10 000 euros. Beaucoup de personnes qui y ont droit ne l'ont pas encore ouvert.
+
+Le Livret A en chiffres
+
+Les Français ont des dizaines de millions de livrets A. C'est l'un des produits d'épargne les plus populaires du pays. Son encours dépasse plusieurs centaines de milliards d'euros. Quand son taux monte, les dépôts augmentent fortement. Quand il baisse, une partie de l'argent part ailleurs.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : si tu déposes de l'argent le 3 du mois, il rapporte des intérêts dès le 3 ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Il commence à rapporter le 16, au début de la quinzaine suivante. C'est la règle des quinzaines du Livret A.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes sur le Livret A.
+
+Un : croire que son taux est fixe. Il est revu régulièrement et peut baisser comme monter.
+
+Deux : penser qu'il protège toujours de l'inflation. Certaines années, son taux a été inférieur à la hausse des prix.
+
+Trois : oublier le plafond. Au-delà de 22 950 euros de dépôts, on ne peut plus verser. Seuls les intérêts peuvent faire dépasser ce montant.
+
+Ce qu'il faut retenir
+
+- Le taux du Livret A est fixé par l'État, sur proposition de la Banque de France
+- Ses intérêts sont nets d'impôt et calculés par quinzaine
+- Son argent finance en grande partie le logement social
+
+En une phrase : le Livret A est un livret disponible et sans impôt, dont le taux est fixé par l'État. Et toi, savais-tu que ton livret aidait à construire des logements ?
+
+Sources : S1 · Service-public.fr, « Livret A » (quinzaines du 1er au 15 et du 16 à la fin du mois, plafond de 22 950 euros, un livret par personne, intérêts exonérés, calcul par quinzaine, intérêts versés au 31 décembre)
+S3 · Service-public.fr, « LDDS » (plafond de 12 000 euros) et « LEP » (plafond de 10 000 euros)
+S2 · Banque de France, « Taux du Livret A » (formule, révision au 1er février et au 1er août) ; Wikipédia, « Livret A » (créé en 1818, distribué par toutes les banques depuis 2009, centralisation à la Caisse des dépôts) ; 2026 moins 1818, soit plus de 200 ans
+
+===
+
+# Le PEL : le plan d'épargne logement a-t-il encore un intérêt ?
+
+Le PEL garantit son taux pendant toute sa durée, parfois plus de 10 ans. Mais depuis 2018, il a perdu une partie de ses avantages. On peut y verser jusqu'à 61 200 euros. Comment fonctionne-t-il vraiment ?
+
+Un placement et un prêt
+
+Le plan d'épargne logement, ou PEL, a été créé dans les années 1960. Il a deux fonctions. D'abord épargner, avec un taux connu dès le départ. Ensuite, obtenir éventuellement un prêt immobilier à un taux fixé à l'avance.
+
+Pendant longtemps, il a aidé des millions de Français à financer leur premier logement. Aujourd'hui, c'est surtout l'aspect épargne qui intéresse ceux qui l'ouvrent.
+
+Les règles de versement
+
+Pour ouvrir un PEL, il faut un versement initial minimum de 225 euros. Ensuite, il faut verser au moins 540 euros par an. Ces versements peuvent être mensuels, trimestriels ou annuels.
+
+Le plafond des versements est de 61 200 euros, hors intérêts. Une personne ne peut avoir qu'un seul PEL. Et une fois ouvert, on ne peut plus retirer d'argent sans le fermer.
+
+Le taux garanti
+
+C'est la grande particularité du PEL. Son taux est fixé le jour de l'ouverture. Il reste le même pendant toute la vie du plan. Même si les taux montent ou baissent ensuite.
+
+Cela peut devenir un avantage ou un inconvénient. Un PEL ouvert quand les taux étaient élevés reste intéressant longtemps. Un PEL ouvert quand les taux étaient très bas rapporte peu, même si les taux remontent ensuite.
+
+Le taux des nouveaux PEL est révisé régulièrement selon une formule. Il faut donc comparer avec les autres placements au moment d'ouvrir.
+
+La durée
+
+Un PEL doit être conservé au moins 2 ans. S'il est fermé avant, les intérêts sont fortement réduits. Pour pouvoir obtenir le prêt immobilier associé, il faut en général l'avoir gardé au moins 3 ans.
+
+Les versements sont possibles pendant 10 ans au maximum. Ensuite, le plan continue de rapporter des intérêts pendant quelques années, sans nouveaux versements.
+
+Ce qui a changé en 2018
+
+Avant 2018, l'État versait une prime aux titulaires d'un PEL qui prenaient un prêt immobilier. Et les intérêts étaient exonérés d'impôt sur le revenu pendant les 12 premières années.
+
+Pour les PEL ouverts depuis le 1er janvier 2018, la prime d'État a disparu. Et les intérêts sont imposés dès la première année, au même régime que la plupart des placements. Le PEL est donc devenu moins attractif.
+
+Les anciens PEL, ouverts avant 2018, gardent souvent leurs anciennes règles et leurs anciens taux. Certains sont très intéressants. C'est pour ça que beaucoup de gens les conservent.
+
+Le prêt d'épargne logement
+
+Le PEL donne droit, sous conditions, à un prêt immobilier à un taux fixé dès l'ouverture du plan. Le montant du prêt dépend des intérêts acquis pendant la phase d'épargne. Il sert à financer une résidence principale, ou certains travaux.
+
+Ce prêt est rarement suffisant pour acheter un logement entier. Il complète en général un prêt immobilier classique. Son intérêt dépend des taux du marché au moment de l'achat. Quand les taux du marché sont plus bas, il perd tout attrait.
+
+Que se passe-t-il au bout de 15 ans ?
+
+Un PEL ne peut pas vivre indéfiniment. Au bout de 15 ans, il cesse de produire des intérêts au taux du plan. Il est alors transformé en livret d'épargne ordinaire, dont les intérêts sont imposés. Il est utile de surveiller cette date.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : on peut retirer une partie de son PEL tout en le gardant ouvert ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Tout retrait entraîne la fermeture du PEL. C'est une différence importante avec un Livret A, où l'argent reste disponible à tout moment.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes avec le PEL.
+
+Un : oublier que l'argent n'est pas disponible. Un retrait ferme le plan.
+
+Deux : comparer avec un livret sans tenir compte de l'impôt. Les intérêts des nouveaux PEL sont imposés, pas ceux du Livret A.
+
+Trois : fermer trop vite un ancien PEL. Ouvert avant 2018, il peut avoir un taux et une fiscalité qu'on ne retrouvera plus.
+
+Ce qu'il faut retenir
+
+- Le PEL a un taux fixé à l'ouverture pour toute sa durée
+- On ne peut pas retirer d'argent sans le fermer
+- Depuis 2018, les nouveaux PEL n'ont plus de prime d'État et leurs intérêts sont imposés
+
+En une phrase : le PEL garantit son taux, mais bloque l'argent, et les nouveaux plans sont imposés. Et toi, as-tu un vieux PEL ouvert avant 2018 ?
+
+Sources : S1 · Service-public.fr, « Plan d'épargne logement (PEL) » (versement initial de 225 euros, 540 euros par an au minimum, plafond de 61 200 euros, taux fixé à l'ouverture, conservation de 2 ans au minimum, 3 ans pour le prêt, versements pendant 10 ans au maximum, fin de la prime d'État et imposition des intérêts pour les plans ouverts depuis le 1er janvier 2018, exonération sur 12 ans pour les anciens plans)
+S2 · Wikipédia, « Plan d'épargne logement » (créé dans les années 1960 ; transformation en livret au bout de 15 ans)
+
+===
+
+# Les SCPI : devenir propriétaire d'immeubles avec 200 euros
+
+Avec une SCPI, on peut posséder une petite part de bureaux, de commerces ou de cliniques. Parfois dès 200 euros. On touche une partie des loyers. Mais en 2023, plusieurs SCPI ont baissé le prix de leurs parts. Comment fonctionne cette « pierre-papier » ?
+
+Le principe
+
+SCPI veut dire société civile de placement immobilier. C'est une société qui collecte l'argent de nombreux épargnants. Avec cet argent, elle achète des immeubles et les met en location.
+
+Les épargnants achètent des parts de cette société. Ils deviennent indirectement copropriétaires de tout le patrimoine. Et ils reçoivent une partie des loyers, en proportion de leurs parts.
+
+On parle de pierre-papier. Tu possèdes de l'immobilier, mais sous forme de papier, sans gérer toi-même les locataires, les travaux ou les impayés.
+
+Ce que possèdent les SCPI
+
+Les SCPI achètent surtout de l'immobilier professionnel. Des bureaux, des commerces, des entrepôts, des hôtels, des établissements de santé. Certaines investissent aussi dans le logement, ou à l'étranger.
+
+Une grande SCPI peut posséder des centaines d'immeubles, loués à des milliers de locataires. Le risque est donc réparti. Si un locataire part, l'impact sur le total reste limité.
+
+Les frais
+
+Les SCPI ont un défaut connu : leurs frais d'entrée. Ils sont souvent autour de 10 % du montant investi. Si tu places 10 000 euros, environ 1 000 euros partent en frais dès le départ.
+
+Il faut donc plusieurs années de loyers pour compenser ces frais. Les SCPI sont pensées pour un placement de long terme, souvent huit ans ou plus. Il existe aussi des frais de gestion prélevés chaque année sur les loyers.
+
+Un détail à connaître : le délai de jouissance. Après l'achat de tes parts, tu attends souvent plusieurs mois avant de toucher tes premiers loyers.
+
+Le risque de liquidité
+
+Une part de SCPI n'est pas une action. Pour la revendre, il faut qu'un autre épargnant veuille l'acheter. Ou que la SCPI trouve de nouveaux souscripteurs pour te rembourser.
+
+Quand beaucoup de gens veulent vendre en même temps, les demandes s'accumulent. Les vendeurs peuvent attendre des mois, voire davantage. C'est le risque de liquidité.
+
+Les difficultés de 2023
+
+En 2022 et 2023, les taux d'intérêt remontent fortement. L'immobilier devient moins attractif. Le télétravail fait aussi douter de l'avenir de certains bureaux.
+
+Les experts réévaluent les immeubles à la baisse. En 2023 et les mois suivants, plusieurs SCPI baissent le prix de leurs parts. Certaines de plus de 10 %. Des épargnants qui croyaient l'immobilier très stable découvrent qu'il peut aussi perdre de la valeur.
+
+SCPI à crédit
+
+Certains épargnants achètent des parts de SCPI à crédit. Les loyers reçus remboursent en partie l'emprunt. Et les intérêts d'emprunt peuvent être déduits des revenus fonciers.
+
+Ce montage peut être intéressant quand les taux d'emprunt sont bas et les loyers élevés. Mais il ajoute un risque. Si les loyers baissent ou si le prix des parts chute, l'emprunt, lui, reste à rembourser.
+
+La fiscalité des loyers
+
+Les loyers versés par une SCPI sont imposés comme des revenus fonciers. Ils s'ajoutent aux autres revenus et sont taxés selon la tranche d'imposition, avec les prélèvements sociaux en plus. Pour les foyers très imposés, cette fiscalité peut réduire fortement le rendement.
+
+C'est pour ça que certains épargnants détiennent des SCPI dans une assurance-vie. Les loyers y sont réinvestis, et la fiscalité est celle de l'assurance-vie. En échange, le choix de SCPI disponibles est plus limité.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : le capital investi dans une SCPI est garanti ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. La valeur des parts dépend de la valeur des immeubles. Elle peut baisser. Et les loyers versés peuvent aussi diminuer si des locataires partent.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes avec les SCPI.
+
+Un : regarder seulement le rendement affiché. Il faut aussi tenir compte des frais d'entrée et de l'évolution du prix de la part.
+
+Deux : y placer de l'argent dont on pourrait avoir besoin vite. La revente peut prendre du temps.
+
+Trois : croire que l'immobilier ne baisse jamais. Les années récentes ont montré le contraire.
+
+Ce qu'il faut retenir
+
+- Une SCPI permet de posséder une part d'un parc immobilier
+- Les frais d'entrée sont élevés, il faut viser le long terme
+- La revente peut être lente et la valeur des parts peut baisser
+
+En une phrase : une SCPI verse des loyers sans gérer d'immeuble, avec des frais et un vrai risque. Et toi, préférerais-tu posséder un appartement ou une part de centaines d'immeubles ?
+
+Sources : S1 · Autorité des marchés financiers, « Les SCPI » (principe, frais de souscription souvent autour de 10 %, délai de jouissance, risque de liquidité, capital non garanti ; parts parfois accessibles dès 200 euros)
+S2 · ASPIM et presse spécialisée : baisses du prix de part de plusieurs SCPI en 2023 et 2024, certaines de plus de 10 %, après la remontée des taux de 2022 ; Calcul de la chaîne : 10 % de 10 000 euros = 1 000 euros
+
+===
+
+# L'épargne de précaution : combien garder de côté ?
+
+On entend souvent qu'il faudrait garder entre 3 et 6 mois de dépenses de côté. Pour un coup dur. Mais pourquoi ce chiffre ? Et où placer cette épargne pour qu'elle soit vraiment disponible ? C'est la base de toute la gestion de l'argent.
+
+À quoi sert-elle ?
+
+L'épargne de précaution, c'est ton coussin de sécurité. Elle sert à faire face aux imprévus. Une voiture en panne, une machine à laver à remplacer, une facture de dentiste, une perte d'emploi.
+
+Sans ce coussin, le moindre imprévu oblige à emprunter. Souvent avec un crédit à la consommation, ou un découvert bancaire. Ces solutions coûtent cher. Une petite panne peut alors devenir un gros problème.
+
+Elle sert aussi à autre chose : dormir tranquille. Savoir qu'on peut faire face à un coup dur change la façon de prendre ses décisions.
+
+Combien ?
+
+La règle la plus souvent citée est de garder l'équivalent de 3 à 6 mois de dépenses. Attention : on parle de dépenses, pas de salaire. Le loyer, les courses, les factures, les transports.
+
+Ce n'est pas une règle officielle. C'est un repère, qui s'adapte à chaque situation. Un fonctionnaire au revenu stable peut se contenter de moins. Un indépendant, dont les revenus varient beaucoup, aura souvent besoin de plus.
+
+Prenons un exemple. Si tes dépenses mensuelles sont de 1 500 euros, ce repère donne entre 4 500 et 9 000 euros. Ça paraît beaucoup. Mais on peut le construire petit à petit.
+
+Où la placer ?
+
+Cette épargne doit remplir trois conditions. Être disponible rapidement. Ne pas risquer de baisser. Et rester facile à utiliser.
+
+Les livrets d'épargne réglementés sont souvent utilisés pour ça. Le Livret A, le livret de développement durable et solidaire. Ou le livret d'épargne populaire, pour ceux qui y ont droit. L'argent y est disponible à tout moment, et le capital ne baisse pas.
+
+En revanche, cette épargne n'a pas sa place en Bourse. Si un coup dur arrive pendant une baisse des marchés, il faudrait vendre au pire moment. Ni sur un placement bloqué, comme un PEL ou un PER.
+
+La construire petit à petit
+
+Peu de gens peuvent mettre de côté plusieurs mois de dépenses d'un coup. L'astuce la plus courante est le virement automatique. Le jour du salaire, une petite somme part directement vers un livret.
+
+Même 30 ou 50 euros par mois finissent par compter. En un an, 50 euros par mois représentent 600 euros. Le fait que ce soit automatique évite d'avoir à y penser chaque mois.
+
+Et quand on a dû utiliser cette épargne, on la reconstitue en priorité. C'est un réservoir qui se vide et se remplit.
+
+Le bon ordre
+
+Beaucoup de spécialistes de l'éducation financière proposent un ordre. D'abord, éviter les dettes chères. Ensuite, constituer son épargne de précaution. Et seulement après, penser aux placements de long terme, plus risqués.
+
+Cet ordre a une logique. Un placement de long terme a besoin de temps. Sans coussin de sécurité, on risque de devoir le casser trop tôt.
+
+Le coût d'un imprévu sans réserve
+
+Imagine une réparation de voiture à 1 000 euros. Sans réserve, tu passes par un crédit renouvelable. Selon son taux et sa durée, ce crédit peut coûter plusieurs dizaines, voire centaines d'euros d'intérêts.
+
+Avec une épargne de précaution, la même panne coûte simplement 1 000 euros. Et tu reconstitues ta réserve les mois suivants. C'est pour ça qu'on dit souvent que ce coussin est le premier placement à faire.
+
+Le piège du découvert
+
+Le découvert bancaire est l'autre solution de secours. Il est pratique, mais il peut coûter cher, avec des agios et parfois des frais. Un découvert qui dure devient vite une habitude coûteuse. L'épargne de précaution permet de l'éviter.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : l'épargne de précaution doit rapporter le plus possible ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Son rôle n'est pas de rapporter beaucoup. C'est d'être disponible et stable, au moment où tu en as besoin. Le rendement passe au second plan.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : confondre épargne de précaution et épargne pour un projet. Le coussin ne doit pas servir à partir en vacances.
+
+Deux : placer cette réserve en Bourse pour qu'elle rapporte plus. Le jour du coup dur, elle pourrait avoir baissé.
+
+Trois : attendre d'avoir beaucoup d'argent pour commencer. Une petite somme régulière vaut mieux que rien.
+
+Ce qu'il faut retenir
+
+- L'épargne de précaution sert à faire face aux imprévus
+- Le repère courant est de 3 à 6 mois de dépenses
+- Elle doit rester disponible et ne pas risquer de baisser
+
+En une phrase : l'épargne de précaution est un coussin disponible, construit petit à petit, avant tout placement risqué. Et toi, combien de mois de dépenses as-tu déjà de côté ?
+
+Sources : S1 · Banque de France, « Mes questions d'argent » (épargne de précaution, livrets réglementés, repère de 3 à 6 mois de dépenses souvent cité)
+S3 · Exemple de réparation à 1 000 euros
+S2 · Calcul de la chaîne : 1 500 euros × 3 = 4 500 euros et 1 500 × 6 = 9 000 euros ; 50 euros × 12 mois = 600 euros ; exemples de 30 ou 50 euros par mois
+
+===
+
+# Le compte-titres ordinaire : la boîte sans limite
+
+Un compte-titres accepte presque tous les placements du monde, de 100 euros à des millions, sans plafond. Actions américaines, obligations, fonds de toutes sortes. Mais ses gains sont imposés chaque année où tu les encaisses. Qu'est-ce que c'est, et en quoi diffère-t-il d'un PEA ?
+
+Un compte pour les titres
+
+Le compte-titres ordinaire, souvent appelé CTO, est un compte qui sert à conserver des titres financiers. Des actions, des obligations, des parts de fonds, des ETF. On l'ouvre dans une banque ou chez un courtier.
+
+Il est associé à un compte en espèces. C'est là qu'arrive l'argent versé, et c'est là que reviennent les dividendes et le produit des ventes.
+
+Sa grande force : la liberté
+
+Le CTO n'a presque aucune limite. Pas de plafond de versement. Pas de restriction géographique. Tu peux y détenir des actions américaines, japonaises, des obligations d'État, des fonds du monde entier.
+
+Tu peux aussi en ouvrir plusieurs, dans des établissements différents. Et y retirer de l'argent à tout moment, sans fermer le compte. Il convient aussi bien aux mineurs, avec l'accord des parents, qu'aux entreprises.
+
+C'est une boîte très souple. Mais cette souplesse a un prix : la fiscalité.
+
+La fiscalité
+
+Sur un CTO, les gains sont imposés l'année où on les encaisse. Les dividendes reçus et les plus-values réalisées en vendant sont soumis à l'impôt.
+
+Par défaut, ils sont soumis au prélèvement forfaitaire unique, souvent appelé flat tax. Il regroupe l'impôt sur le revenu et les prélèvements sociaux. On peut aussi choisir l'imposition au barème progressif, si c'est plus avantageux. Le taux en vigueur se vérifie sur service-public.fr.
+
+Une bonne nouvelle : les pertes peuvent compenser les gains. Si tu vends un titre en perte, cette moins-value peut être déduite de tes plus-values de la même année. Et des dix années suivantes.
+
+CTO ou PEA ?
+
+Le PEA est plus avantageux fiscalement après 5 ans. Mais il est limité aux actions européennes et à certains fonds, avec un plafond de versement.
+
+Le CTO, lui, est moins favorable fiscalement, mais beaucoup plus libre. Beaucoup d'épargnants utilisent les deux. Le PEA pour ce qui y est accepté. Le CTO pour le reste.
+
+Les deux ne sont pas des placements en soi. Ce sont des enveloppes. Le risque dépend toujours de ce qu'on y met.
+
+Les frais
+
+Les frais varient beaucoup selon l'établissement. Frais de courtage sur chaque achat et chaque vente. Parfois des frais de garde chaque année. Et des frais de change pour les titres en devises étrangères. Les courtiers en ligne sont souvent bien moins chers que les banques traditionnelles.
+
+La transmission
+
+À la différence d'un PEA, qui se ferme au décès, un CTO peut se transmettre tel quel aux héritiers. Les titres sont intégrés à la succession. Les plus-values latentes ne sont alors pas imposées au titre de l'impôt sur le revenu.
+
+Un exemple de calcul
+
+Imagine que tu achètes une action 1 000 euros, et que tu la revends 1 500 euros. Ta plus-value est de 500 euros. C'est sur ces 500 euros que porte l'impôt, pas sur les 1 500 euros de la vente.
+
+La même année, tu vends une autre action avec une perte de 200 euros. Ta plus-value nette tombe à 300 euros. L'impôt porte alors seulement sur ces 300 euros. D'où l'intérêt de bien suivre ses achats et ses ventes.
+
+Les titres étrangers
+
+Quand tu reçois des dividendes d'une entreprise étrangère, un impôt peut être prélevé à la source dans son pays. Des conventions fiscales entre pays évitent en partie de payer deux fois. Mais les règles sont techniques. Ton relevé fiscal annuel récapitule ces montants.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : sur un compte-titres, on peut acheter des actions américaines ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : vrai. C'est même l'un de ses grands intérêts. Contrairement au PEA, le compte-titres n'a pas de limite géographique.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes avec le CTO.
+
+Un : oublier que les dividendes sont imposés chaque année. Ils ne sont pas protégés comme dans un PEA.
+
+Deux : négliger les frais de change et de courtage. Sur de petits montants, ils peuvent peser lourd.
+
+Trois : oublier les moins-values. Elles peuvent réduire l'impôt sur les plus-values pendant dix ans.
+
+Ce qu'il faut retenir
+
+- Le CTO accepte presque tous les placements, sans plafond
+- Ses gains sont imposés l'année où on les encaisse
+- Il complète souvent un PEA
+
+En une phrase : le compte-titres est l'enveloppe la plus libre, mais aussi la moins avantageuse fiscalement. Et toi, connaissais-tu la différence entre un CTO et un PEA ?
+
+Sources : S0 · Exemple de 100 euros, aucun plafond
+S1 · Service-public.fr, « Compte-titres ordinaire » et « Prélèvement forfaitaire unique » (fiscalité des dividendes et plus-values, option pour le barème, imputation des moins-values sur l'année et les dix années suivantes)
+S3 · Calcul de la chaîne : achat 1 000 euros, vente 1 500 euros, plus-value de 500 euros ; perte de 200 euros, plus-value nette de 300 euros
+S2 · Autorité des marchés financiers, fiches sur les frais de courtage et de garde ; règles de succession des comptes-titres
+
+===
+
+# L'épargne salariale : l'argent que ton employeur peut ajouter
+
+Dans certaines entreprises, quand tu épargnes 100 euros, ton employeur peut en ajouter jusqu'à 300 de plus. C'est l'abondement. Intéressement, participation, plan d'épargne entreprise : de quoi parle-t-on vraiment ?
+
+Les deux primes
+
+L'épargne salariale commence souvent par deux primes. L'intéressement d'abord. Il est lié aux résultats ou aux performances de l'entreprise, selon un accord signé avec les salariés. Il est facultatif.
+
+La participation ensuite. C'est une part des bénéfices de l'entreprise redistribuée aux salariés. Elle est obligatoire dans les entreprises d'au moins 50 salariés, quand les bénéfices le permettent.
+
+Quand tu reçois ces primes, tu as en général le choix. Les toucher tout de suite, comme un complément de salaire, imposé. Ou les placer sur un plan d'épargne d'entreprise.
+
+Le plan d'épargne entreprise
+
+Le plan d'épargne entreprise, ou PEE, est une enveloppe proposée par l'employeur. On peut y placer l'intéressement, la participation, et aussi ses propres versements volontaires.
+
+L'argent y est investi dans des fonds communs, choisis par l'entreprise. Ces fonds peuvent être prudents ou plus risqués. Certains contiennent des actions de l'entreprise elle-même.
+
+Les sommes issues de l'intéressement et de la participation placées sur le PEE échappent à l'impôt sur le revenu. Les gains, eux, supportent les prélèvements sociaux.
+
+L'abondement
+
+C'est le grand avantage de l'épargne salariale. L'entreprise peut compléter tes versements. Par exemple, pour chaque euro que tu verses, elle ajoute un euro, ou plus. La loi permet un abondement jusqu'à trois fois le versement du salarié, dans un plafond annuel.
+
+Prenons un exemple simple. Tu verses 500 euros. Ton entreprise abonde à 100 %. Elle ajoute 500 euros. Ton épargne double immédiatement, avant même tout rendement.
+
+Peu de placements offrent un tel coup de pouce. Il faut juste vérifier les règles de ta propre entreprise : taux d'abondement, plafond, fonds concernés.
+
+Le blocage de 5 ans
+
+En contrepartie, l'argent placé sur un PEE est bloqué pendant 5 ans. Mais il existe de nombreux cas de déblocage anticipé.
+
+Par exemple, le mariage ou le PACS. La naissance ou l'adoption d'un troisième enfant. L'achat de la résidence principale. Le divorce avec garde d'enfant. Ou la fin du contrat de travail. Il y a aussi des cas liés à la santé ou au surendettement.
+
+Il existe aussi un plan pour la retraite, le PER d'entreprise. Là, l'argent est bloqué jusqu'à la retraite, sauf exceptions.
+
+Le choix des fonds
+
+Dans un PEE, on choisit parmi plusieurs fonds proposés par l'entreprise. Il y a souvent un fonds monétaire, très prudent. Des fonds d'obligations. Des fonds d'actions, plus risqués. Et parfois un fonds solidaire, qui finance des projets d'utilité sociale.
+
+La loi oblige d'ailleurs les plans d'entreprise à proposer au moins un fonds solidaire. Chacun peut répartir son épargne entre ces fonds, et en changer ensuite, selon les règles du plan.
+
+Les plateformes
+
+L'épargne salariale est gérée par des sociétés spécialisées, souvent liées à des banques. Tu y accèdes en général par un site ou une application. C'est là que tu choisis tes placements, que tu suis tes montants et que tu demandes un déblocage.
+
+Beaucoup de salariés ne s'y connectent jamais. Résultat, ils oublient parfois des sommes sur d'anciens plans. Un service public permet d'ailleurs de rechercher des comptes et contrats oubliés.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : si tu quittes ton entreprise, tu perds ton épargne salariale ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. L'argent t'appartient. La fin du contrat de travail permet même de le débloquer. Tu peux aussi le transférer vers le plan de ton nouvel employeur.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : ignorer l'abondement. C'est souvent l'argent le plus facile à gagner. Il faut lire les règles de son entreprise.
+
+Deux : tout placer en actions de son employeur. Si l'entreprise va mal, tu risques ton emploi et ton épargne en même temps.
+
+Trois : oublier de choisir. Sans choix, les primes peuvent être placées automatiquement selon des règles par défaut.
+
+Ce qu'il faut retenir
+
+- L'intéressement et la participation peuvent être placés sur un PEE
+- L'abondement de l'employeur peut fortement augmenter ton épargne
+- L'argent est bloqué 5 ans, avec de nombreux cas de déblocage
+
+En une phrase : l'épargne salariale permet de placer ses primes et de recevoir un complément de son employeur. Et toi, sais-tu si ton entreprise propose un abondement ?
+
+Sources : S1 · Service-public.fr, « Épargne salariale : intéressement, participation, PEE » (participation obligatoire à partir de 50 salariés, abondement plafonné à trois fois le versement du salarié, blocage de 5 ans et cas de déblocage anticipé, exonération d'impôt sur le revenu des primes placées)
+S2 · Calcul de la chaîne : 500 euros versés + 500 euros d'abondement à 100 % = 1 000 euros ; exemple de 100 euros versés et jusqu'à 300 euros ajoutés
+
+===
+
+# Épargner pour ses enfants : livrets, PEA jeune et donations
+
+Le livret jeune accepte jusqu'à 1 600 euros, le PEA jeune jusqu'à 20 000 euros. Et chaque parent peut donner 100 000 euros à chaque enfant sans droits, tous les 15 ans. Comment préparer l'avenir financier de ses enfants ?
+
+Dès la naissance
+
+Un enfant peut avoir un Livret A dès sa naissance. Ce sont les parents qui l'ouvrent et le gèrent. Les règles sont les mêmes que pour un adulte : même taux, même plafond, intérêts sans impôt.
+
+À partir de 12 ans, l'enfant peut aussi avoir un livret jeune. Il est réservé aux jeunes de 12 à 25 ans, résidant en France. Son plafond est de 1 600 euros. Son taux est fixé par chaque banque, et ne peut pas être inférieur à celui du Livret A.
+
+Ces livrets ont une vertu pédagogique. Voir son argent grandir, même un peu, aide à comprendre l'épargne. Certains parents en font un outil pour apprendre à gérer un budget.
+
+Le PEA jeune
+
+De 18 à 25 ans, un jeune rattaché au foyer fiscal de ses parents peut ouvrir un PEA. On l'appelle souvent le PEA jeune. Son plafond de versements est limité à 20 000 euros.
+
+L'intérêt principal, c'est de prendre date. Comme pour tout PEA, le compteur des 5 ans démarre au premier versement. Un jeune qui ouvre son plan à 18 ans aura un PEA de plus de 5 ans à 23 ans.
+
+Quand le jeune n'est plus rattaché au foyer fiscal de ses parents, le plafond normal de 150 000 euros s'applique.
+
+L'assurance-vie pour un enfant
+
+Un enfant mineur peut aussi être titulaire d'une assurance-vie. Les parents gèrent le contrat jusqu'à sa majorité. L'avantage est le même que pour un adulte : le compteur des 8 ans démarre à l'ouverture.
+
+Attention : l'argent donné à l'enfant lui appartient. Les parents ne peuvent pas le reprendre pour eux-mêmes. À sa majorité, l'enfant en dispose librement.
+
+Les donations
+
+Pour transmettre de l'argent de son vivant, il existe des abattements. Chaque parent peut donner jusqu'à 100 000 euros à chacun de ses enfants, sans droits de donation. Cet abattement se renouvelle tous les 15 ans.
+
+Les grands-parents disposent aussi d'un abattement, plus faible, pour chacun de leurs petits-enfants. Il existe enfin des dons familiaux de sommes d'argent, sous conditions d'âge.
+
+Pour les montants importants, il vaut mieux déclarer le don, et parfois passer par un notaire. Ça évite les mauvaises surprises au moment de la succession.
+
+Le plus beau des placements
+
+Au-delà des produits, le plus utile est peut-être d'apprendre à ses enfants comment fonctionne l'argent. L'épargne, le crédit, les intérêts composés, les arnaques. Ces connaissances les protégeront toute leur vie.
+
+Le calcul du temps
+
+Le temps est l'allié principal de l'épargne pour un enfant. Imagine 50 euros par mois, de la naissance à 18 ans. Cela fait 10 800 euros versés.
+
+Sur un placement hypothétique à 2 % par an, on obtiendrait environ 13 000 euros à 18 ans. À 4 % par an, environ 15 800 euros. Ce sont des hypothèses, pas des promesses, mais elles montrent l'effet de la durée.
+
+Les comptes oubliés
+
+Il arrive que des livrets ouverts pour des enfants soient oubliés. Un service public, Ciclade, permet de retrouver l'argent des comptes et contrats d'assurance-vie inactifs. Il a été créé après la loi Eckert de 2014.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : les parents peuvent récupérer l'argent placé sur le livret de leur enfant pour leurs propres dépenses ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. L'argent placé au nom de l'enfant lui appartient. Les parents le gèrent dans son intérêt, mais ne peuvent pas s'en servir pour eux-mêmes.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : oublier que l'argent appartient à l'enfant. À sa majorité, il en fera ce qu'il voudra.
+
+Deux : ne pas déclarer les dons importants. En cas de contrôle ou de succession, des droits pourraient être réclamés.
+
+Trois : tout miser sur les livrets. Pour un horizon de 18 ans, d'autres supports peuvent aussi être envisagés, en acceptant leurs risques.
+
+Ce qu'il faut retenir
+
+- Livret A dès la naissance, livret jeune de 12 à 25 ans
+- PEA jeune possible de 18 à 25 ans, plafonné à 20 000 euros
+- Chaque parent peut donner 100 000 euros par enfant tous les 15 ans sans droits
+
+En une phrase : livrets, PEA jeune, assurance-vie et donations permettent de préparer tôt l'avenir de ses enfants. Et toi, à quel âge as-tu eu ton premier livret ?
+
+Sources : S1 · Service-public.fr, « Livret jeune » (12 à 25 ans, plafond de 1 600 euros, taux au moins égal à celui du Livret A) ; « Plan d'épargne en actions » (PEA d'un jeune rattaché de 18 à 25 ans, plafond de 20 000 euros ; plafond de 150 000 euros ; 5 ans)
+S3 · Calcul de la chaîne : 50 euros × 12 × 18 = 10 800 euros versés ; environ 13 000 euros à 2 % par an et 15 800 euros à 4 % par an (versements mensuels, 18 ans) ; Ciclade, loi Eckert de 2014
+S2 · Service-public.fr, « Donation : abattements » (100 000 euros par parent et par enfant, renouvelable tous les 15 ans) ; assurance-vie d'un mineur, 8 ans ; 18 ans d'horizon, PEA de plus de 5 ans à 23 ans

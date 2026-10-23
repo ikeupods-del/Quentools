@@ -1,0 +1,884 @@
+@theme Anecdotes méconnues
+
+# D'où viennent les mots de la Bourse ?
+
+Le mot « Bourse » a plus de 500 ans. Mais pourquoi dit-on « Bourse » ? Pourquoi un taureau pour la hausse et un ours pour la baisse ? Et d'où vient le mot « krach » ? Derrière le vocabulaire de la finance se cachent une auberge flamande, des fourrures et un bruit de bois qui casse.
+
+Une auberge à Bruges
+
+Remontons au Moyen Âge, à Bruges, dans l'actuelle Belgique. La ville est alors l'un des grands centres du commerce européen. Des marchands italiens, espagnols, allemands y échangent des marchandises et des lettres de change.
+
+Selon l'explication la plus répandue, ils se retrouvent sur une place. Devant la maison d'une famille de notables : les Van der Buerse. Leurs armoiries montrent trois bourses, c'est-à-dire trois petits sacs à monnaie.
+
+On prend alors l'habitude de dire qu'on va « à la Bourse » pour faire des affaires. Le nom de la famille devient celui de l'endroit, puis celui de l'activité elle-même. Toutes les langues ne l'ont pas gardé, mais le français, le néerlandais ou l'allemand l'utilisent encore.
+
+Les premières Bourses
+
+Au seizième siècle, la ville voisine d'Anvers construit un bâtiment spécialement dédié aux échanges. Il ouvre en 1531. Les marchands y négocient toute la journée, sous des galeries couvertes.
+
+À Paris, la Bourse est officiellement créée par un arrêt du Conseil du roi en 1724. En 1826, elle s'installe dans un bâtiment à colonnes, voulu par Napoléon : le palais Brongniart. On y a négocié à la criée pendant plus de cent cinquante ans.
+
+Le taureau et l'ours
+
+En Bourse, un marché qui monte est dit « haussier », et on le représente par un taureau. Un marché qui baisse est « baissier », avec un ours. D'où viennent ces animaux ?
+
+L'explication la plus citée vient de leur façon d'attaquer. Le taureau frappe avec ses cornes de bas en haut. L'ours frappe avec ses pattes de haut en bas. Le premier pousse les prix vers le haut, le second vers le bas.
+
+Une autre explication vient de Londres, au dix-huitième siècle. On y parlait de marchands qui vendaient la peau de l'ours avant de l'avoir tué. Ils vendaient des fourrures qu'ils n'avaient pas encore, en espérant les racheter moins cher. Exactement comme un vendeur qui parie sur la baisse.
+
+Le krach
+
+Le mot « krach » vient de l'allemand. Il évoque un craquement, le bruit de quelque chose qui se brise d'un coup. Il se popularise en 1873, lors d'une grave crise boursière à Vienne, en Autriche.
+
+En français, on garde l'orthographe allemande, avec un « k » et un « h ». Le mot désigne une chute brutale et importante des cours. On ne parle pas de krach pour une petite baisse de quelques jours.
+
+Spéculer et boursicoter
+
+Le mot « spéculer » vient du latin speculari : observer, guetter depuis un poste d'observation. Le spéculateur est d'abord celui qui observe, qui anticipe. Ce n'est qu'avec le temps que le mot a pris un sens parfois péjoratif.
+
+« Boursicoter », lui, est un mot plus tardif. Il désigne le fait de faire de petites opérations en Bourse, souvent en amateur. Il a un petit côté moqueur, comme si on jouait à la Bourse.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : le mot « bourse » dans « bourse d'études » a la même origine que la Bourse des valeurs ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : vrai, d'une certaine façon. Les deux remontent au même mot, qui désigne un petit sac pour garder l'argent. Une bourse d'études, c'est un peu d'argent dans un sac. La Bourse des valeurs, c'est l'endroit où l'argent change de mains.
+
+Attention, grain de sable
+
+Il y a trois idées reçues sur ce vocabulaire.
+
+Un : croire que l'origine de chaque mot est certaine. Pour Bourse comme pour le taureau et l'ours, plusieurs explications coexistent.
+
+Deux : penser qu'un krach est une simple baisse. Le mot est réservé aux chutes fortes et brutales.
+
+Trois : confondre spéculer et tricher. Spéculer, c'est parier sur un mouvement futur. C'est risqué, mais pas forcément malhonnête.
+
+Ce qu'il faut retenir
+
+- Le mot Bourse viendrait d'une famille de Bruges
+- Le taureau représente la hausse, l'ours la baisse
+- Un krach désigne une chute brutale et forte
+
+En une phrase : le vocabulaire de la Bourse vient d'une auberge flamande, d'animaux et d'un craquement allemand. Et toi, quel mot de la finance aimerais-tu comprendre ensuite ?
+
+Sources : S1 · Wikipédia, « Bourse (économie) » (origine attribuée à la famille Van der Buerse de Bruges, Bourse d'Anvers ouverte en 1531, Bourse de Paris créée par arrêt du Conseil en 1724, palais Brongniart en 1826)
+S2 · Bruges au quinzième siècle, soit plus de 500 ans ; Wikipédia, « Marché haussier et marché baissier » ; « Krach de 1873 » (Vienne) ; Trésor de la langue française (spéculer, boursicoter)
+
+===
+
+# La première action de l'histoire est néerlandaise
+
+En 1602, à Amsterdam, une compagnie de commerce vend des parts à n'importe quel habitant. Pour la première fois, des milliers de personnes deviennent copropriétaires d'une grande entreprise. C'est la naissance de l'action moderne. Quelle est cette compagnie ?
+
+La route des épices
+
+Au début du dix-septième siècle, les épices valent une fortune en Europe. Le poivre, la muscade, le clou de girofle viennent d'Asie, au bout d'un voyage de plusieurs mois. Un seul navire qui revient peut enrichir ses armateurs.
+
+Mais un navire sur plusieurs peut aussi disparaître. Tempêtes, maladies, pirates, guerres. Financer une expédition seul est un pari énorme. Les marchands néerlandais cherchent une solution pour partager ce risque.
+
+La VOC
+
+En 1602, les Provinces-Unies, l'ancêtre des Pays-Bas, créent la Compagnie néerlandaise des Indes orientales. On l'appelle la VOC, d'après ses initiales en néerlandais. Elle reçoit le monopole du commerce néerlandais avec l'Asie.
+
+Sa grande nouveauté : elle vend des parts à tous les habitants qui le souhaitent. Des marchands, mais aussi des artisans, des domestiques, des veuves. Plus d'un millier de personnes souscrivent à Amsterdam.
+
+Et ces parts ne sont pas liées à un seul voyage. Elles portent sur l'entreprise entière, pour des années. C'est ce qui en fait les ancêtres directs de nos actions.
+
+La naissance de la Bourse d'Amsterdam
+
+Problème : la compagnie ne rembourse pas les parts avant longtemps. Comment récupérer son argent si on en a besoin ? En revendant sa part à quelqu'un d'autre.
+
+Les échanges de parts se développent vite. On les négocie d'abord dans la rue, puis dans un bâtiment construit pour ça, ouvert en 1611. La Bourse d'Amsterdam devient l'une des premières Bourses d'actions au monde.
+
+Très vite, on y voit apparaître des pratiques modernes. Des contrats pour acheter plus tard, des paris sur la baisse, des rumeurs pour manipuler les prix. En 1609, un ancien dirigeant de la compagnie, Isaac Le Maire, organise même une opération pour faire baisser le cours.
+
+Des dividendes en épices
+
+La VOC verse des dividendes à ses actionnaires, c'est-à-dire une partie de ses bénéfices. Mais les premières années, elle les paie parfois en nature. Les actionnaires reçoivent des épices, comme du macis, plutôt que de l'argent.
+
+Par la suite, les dividendes sont surtout versés en argent. Sur l'ensemble de son existence, la VOC verse en moyenne des dividendes élevés. Elle devient l'une des entreprises les plus puissantes de son temps.
+
+Une puissance inquiétante
+
+Mais la VOC n'est pas une entreprise comme les autres. Elle a le droit de faire la guerre, de signer des traités, de fonder des colonies et de battre monnaie. Elle dispose d'une armée et de navires de guerre.
+
+Pour garder son monopole des épices, elle commet de terribles violences. Dans les îles Banda, productrices de muscade, la population est massacrée ou réduite en esclavage. L'histoire de la première action est aussi une histoire de domination coloniale.
+
+La fin
+
+Au dix-huitième siècle, la VOC décline. La concurrence britannique, la corruption et les guerres l'affaiblissent. Elle est dissoute en 1799. Ses territoires passent sous le contrôle de l'État néerlandais.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : avant la VOC, personne n'avait jamais partagé le financement d'une expédition commerciale ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Les marchands partageaient déjà les risques, voyage par voyage. La nouveauté de la VOC, c'est une entreprise permanente, avec des parts revendables par n'importe qui.
+
+Attention, grain de sable
+
+Il y a trois idées à garder en tête.
+
+Un : l'action n'a pas été inventée pour spéculer. Elle sert d'abord à partager un risque trop grand pour une seule personne.
+
+Deux : la possibilité de revendre sa part change tout. Sans Bourse, peu de gens accepteraient de bloquer leur argent pour des années.
+
+Trois : une entreprise rentable n'est pas forcément une entreprise morale. La VOC en est l'exemple le plus frappant.
+
+Ce qu'il faut retenir
+
+- La VOC, créée en 1602, est l'ancêtre des sociétés par actions
+- La Bourse est née du besoin de revendre ses parts
+- L'action sert à partager les risques d'une grande entreprise
+
+En une phrase : la VOC a inventé l'action moderne pour partager les risques du commerce des épices. Et toi, aurais-tu acheté une part d'un voyage vers l'Asie en 1602 ?
+
+Sources : S1 · Wikipédia, « Compagnie néerlandaise des Indes orientales » (créée en 1602, plus d'un millier de souscripteurs à Amsterdam, dividendes parfois versés en épices, droits de guerre et de traités, massacre des îles Banda, dissolution en 1799 ; déclin au dix-huitième siècle)
+S2 · Wikipédia, « Bourse d'Amsterdam » (bâtiment ouvert en 1611) ; « Isaac Le Maire » (opération à la baisse en 1609)
+
+===
+
+# Wall Street est né sous un arbre
+
+Le 17 mai 1792, 24 courtiers signent un accord sous un platane, à New York. Ce petit texte de deux phrases est l'ancêtre de la plus grande Bourse du monde. Et le nom de Wall Street vient d'un mur. Pourquoi ?
+
+Le mur de La Nouvelle-Amsterdam
+
+Au dix-septième siècle, New York n'est pas encore New York. C'est une colonie néerlandaise appelée La Nouvelle-Amsterdam, au sud de l'île de Manhattan. Les Néerlandais craignent les attaques des Anglais et des peuples autochtones.
+
+En 1653, ils construisent un mur de bois pour protéger le nord de la ville. Le long de ce mur passe un chemin. On l'appelle la rue du mur : Wall Street. Le mur est démoli à la fin du dix-septième siècle, mais le nom reste.
+
+Les débuts désordonnés
+
+Après l'indépendance américaine, le nouveau gouvernement émet des titres pour rembourser les dettes de la guerre. Des courtiers commencent à les acheter et à les revendre. On échange aussi des actions de quelques banques.
+
+Les transactions se font dans la rue, dans des cafés, de manière très désordonnée. En 1792, une première crise frappe le marché, après des spéculations malheureuses. Les courtiers sentent le besoin de mettre de l'ordre.
+
+L'accord du platane
+
+Le 17 mai 1792, 24 courtiers se réunissent sous un platane, au 68 Wall Street. Ils signent un accord très court. On l'appelle l'accord de Buttonwood, du nom anglais de l'arbre.
+
+Il tient en deux phrases. Les signataires s'engagent à ne négocier qu'entre eux. Et à prendre une commission minimale sur chaque transaction. C'est une sorte de club fermé, qui protège ses membres de la concurrence.
+
+La naissance de la Bourse de New York
+
+En 1817, les courtiers créent une organisation plus formelle et s'installent à l'intérieur. Elle devient plus tard la New York Stock Exchange, la Bourse de New York.
+
+Pendant le dix-neuvième siècle, elle grandit avec le pays. Les chemins de fer, l'acier, le pétrole, puis l'électricité y trouvent leurs financements. Aujourd'hui, c'est la plus grande Bourse du monde par la valeur des entreprises cotées.
+
+L'arbre, lui, n'existe plus. Selon les récits, il aurait été abattu par une tempête au milieu du dix-neuvième siècle.
+
+Une rue devenue un symbole
+
+Aujourd'hui, « Wall Street » ne désigne plus seulement une rue. C'est le surnom de toute la finance américaine. On parle de Wall Street comme on parlerait de la City à Londres. Et devant la Bourse, une statue de taureau en bronze attire les touristes.
+
+Cette statue n'a pas été commandée par la Bourse. Un artiste, Arturo Di Modica, l'a installée lui-même, sans autorisation, une nuit de décembre 1989. Elle devait être retirée. Face à son succès, la ville l'a finalement gardée à quelques rues de là.
+
+Le marché le plus organisé du monde
+
+Aujourd'hui, la Bourse de New York n'a plus grand-chose à voir avec un arbre. Presque tous les ordres passent par des ordinateurs. La salle de cotation existe toujours, mais elle sert surtout de décor pour la télévision.
+
+Chaque jour, la séance commence et se termine au son d'une cloche. Des dirigeants d'entreprises, des sportifs ou des célébrités sont invités à la faire sonner. C'est une tradition très suivie, qui rappelle les débuts plus artisanaux du marché.
+
+Le règlement d'origine, lui, a laissé une trace profonde. Il a posé un principe simple. Un marché fonctionne mieux quand tout le monde suit les mêmes règles. Et quand on peut faire confiance à ceux qui échangent.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : les commissions fixes de l'accord de 1792 ont duré presque deux siècles ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : vrai, ou presque. Les commissions minimales des courtiers de New York ont été supprimées en 1975. Depuis, les frais de courtage ont fortement baissé, jusqu'aux plateformes très bon marché d'aujourd'hui.
+
+Attention, grain de sable
+
+Il y a trois idées à retenir.
+
+Un : un marché a besoin de règles. Sans elles, les échanges restent désordonnés et risqués.
+
+Deux : les règles peuvent aussi protéger ceux qui les écrivent. Les commissions fixes avantageaient les courtiers, pas les clients.
+
+Trois : la concurrence fait baisser les prix. La fin des commissions fixes a rendu la Bourse beaucoup plus accessible.
+
+Ce qu'il faut retenir
+
+- Wall Street doit son nom à un mur construit en 1653
+- La Bourse de New York est née d'un accord signé sous un arbre
+- Les commissions fixes ont duré jusqu'en 1975
+
+En une phrase : la plus grande Bourse du monde est née d'un accord de deux phrases, signé sous un platane. Et toi, savais-tu que Wall Street signifiait la rue du mur ?
+
+Sources : S1 · Wikipédia, « Wall Street » (mur construit en 1653 à La Nouvelle-Amsterdam) et « Accord de Buttonwood » (17 mai 1792, 24 courtiers, 68 Wall Street, organisation formelle en 1817)
+S2 · Wikipédia, « New York Stock Exchange » (fin des commissions fixes en 1975) ; « Charging Bull » (installé par Arturo Di Modica en décembre 1989)
+
+===
+
+# Un singe aux fléchettes peut-il battre les experts ?
+
+En 1973, un professeur d'économie écrit qu'un singe aux yeux bandés ferait aussi bien que les experts. Il lui suffirait de lancer des fléchettes sur les pages boursières. Un journal a pris la blague au sérieux et a organisé un concours pendant des années. Qui a gagné ?
+
+La provocation de Malkiel
+
+Burton Malkiel est professeur d'économie à l'université de Princeton. En 1973, il publie un livre qui deviendra un classique : Une marche au hasard à travers la Bourse. Il y défend une idée dérangeante.
+
+Selon lui, les prix des actions reflètent rapidement toutes les informations disponibles. Il devient donc très difficile de prévoir quelles actions feront mieux que les autres. Les mouvements à court terme ressemblent à une marche au hasard.
+
+Pour illustrer son propos, il imagine un singe qui lance des fléchettes sur la liste des actions. Ses choix vaudraient ceux des experts. La phrase fait scandale chez les professionnels.
+
+Le concours du Wall Street Journal
+
+En 1988, le grand quotidien financier The Wall Street Journal lance un concours. Des professionnels choisissent chacun une action. En face, des journalistes lancent des fléchettes sur une page de cotations. On compare les résultats après quelques mois.
+
+Le concours dure jusqu'en 2002. Au total, les professionnels gagnent plus souvent que les fléchettes. Un point pour eux. Mais l'écart reste bien plus faible que ce que leur métier laisserait croire.
+
+Et il y a un biais. Quand un expert recommande une action dans un journal très lu, beaucoup de lecteurs l'achètent. Son prix monte un peu, juste grâce à la publication. Les fléchettes, elles, n'ont aucun fan club.
+
+Ce que disent les grandes études
+
+Au-delà de ce jeu, des études sérieuses comparent les fonds gérés par des professionnels à leurs indices. Les plus connues sont publiées chaque année par l'agence S&P Dow Jones Indices, sous le nom SPIVA.
+
+Leurs conclusions sont frappantes. Sur quinze ans, environ 9 fonds d'actions américaines sur 10 font moins bien que leur indice de référence, frais déduits. Les résultats en Europe vont dans le même sens.
+
+Pourquoi ? Les gérants ne sont pas incompétents. Mais ils sont nombreux, bien informés, et se font concurrence. Ensemble, ils forment le marché. Après déduction de leurs frais, la plupart finissent donc un peu en dessous.
+
+Les exceptions
+
+Certains gérants battent le marché pendant longtemps. Warren Buffett ou Peter Lynch en sont des exemples célèbres. Mais il est très difficile de les repérer à l'avance. Les meilleurs d'une décennie sont rarement les meilleurs de la suivante.
+
+C'est la grande difficulté. Choisir un bon gérant demande presque autant de chance que choisir une bonne action.
+
+Le vrai message du singe
+
+L'image du singe n'est pas une insulte aux professionnels. Elle rappelle une idée simple. Avant de payer pour un choix d'actions, il faut se demander s'il fera vraiment mieux que la moyenne. C'est de cette idée que sont nés les fonds indiciels, qui achètent tout le marché.
+
+Les singes et les vrais animaux
+
+L'idée a inspiré d'autres expériences amusantes. En Russie, un cirque a fait choisir des actions par une guenon. En Suède, des journalistes ont comparé les choix d'un chimpanzé et ceux d'experts. Les résultats varient, mais l'animal fait souvent bonne figure.
+
+Ces jeux ne prouvent pas grand-chose scientifiquement. Mais ils rappellent qu'en Bourse, une bonne performance sur quelques mois peut venir de la chance.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : un fonds qui a battu le marché les cinq dernières années le battra sûrement les cinq prochaines ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Les études montrent que les bonnes performances passées se répètent assez peu. C'est pour ça que les documents officiels rappellent toujours que les performances passées ne préjugent pas des performances futures.
+
+Attention, grain de sable
+
+Il y a trois idées reçues à éviter.
+
+Un : croire que le hasard bat toujours les experts. Dans le concours, les professionnels ont gagné plus souvent.
+
+Deux : penser qu'un expert est forcément utile. Une fois ses frais payés, l'avantage disparaît souvent.
+
+Trois : juger un gérant sur une seule bonne année. La chance peut expliquer beaucoup de choses sur une courte période.
+
+Ce qu'il faut retenir
+
+- Il est très difficile de battre le marché de façon durable
+- Environ 9 fonds sur 10 font moins bien que leur indice sur quinze ans
+- Les frais expliquent une grande partie de cet écart
+
+En une phrase : le singe aux fléchettes rappelle qu'il est très dur de battre le marché, frais payés. Et toi, ferais-tu confiance à un expert ou à une fléchette ?
+
+Sources : S1 · Wikipédia, « Burton Malkiel » et « A Random Walk Down Wall Street » (1973) ; concours des fléchettes du Wall Street Journal de 1988 à 2002
+S2 · S&P Dow Jones Indices, rapports SPIVA (environ 9 fonds d'actions américaines sur 10 sous leur indice sur quinze ans, frais déduits)
+
+===
+
+# Le pari à 1 million de dollars de Warren Buffett
+
+En 2008, Warren Buffett parie 1 million de dollars. Selon lui, sur dix ans, un simple fonds indiciel fera mieux que des fonds choisis par des professionnels. En face, une société de gestion relève le défi. Dix ans plus tard, le résultat est sans appel. Qui a gagné ?
+
+Le défi
+
+Warren Buffett est l'un des investisseurs les plus célèbres au monde. Pourtant, il répète depuis des années qu'un particulier ferait souvent mieux d'acheter un fonds indiciel peu cher. Pour le prouver, il lance un défi public.
+
+Son idée : sur dix ans, un fonds qui suit les 500 plus grandes entreprises américaines battra des hedge funds. Ces fonds spéculatifs, très chers, sont gérés par des professionnels réputés.
+
+Le challenger
+
+Une société de gestion new-yorkaise, Protégé Partners, accepte le pari. Son dirigeant, Ted Seides, choisit cinq fonds de hedge funds. Chacun investit dans de nombreux hedge funds. Au total, plus d'une centaine de fonds sont représentés.
+
+Le pari commence le 1er janvier 2008 et se termine le 31 décembre 2017. Les deux camps placent de l'argent pour la mise. Le gain ira à une association caritative choisie par le gagnant.
+
+Un départ catastrophique
+
+La première année est terrible pour le fonds indiciel. En 2008, la crise financière fait plonger la Bourse. L'indice perd environ 37 %. Les hedge funds, mieux protégés, perdent beaucoup moins.
+
+Au bout d'un an, Buffett est donc largement derrière. Beaucoup pensent qu'il va perdre. Mais il le sait : dix ans, c'est long.
+
+La remontée
+
+À partir de 2009, la Bourse américaine entame une longue hausse. Le fonds indiciel en profite pleinement. Les hedge funds, eux, montent beaucoup moins. Et surtout, ils prélèvent des frais très élevés chaque année.
+
+Ces frais sont le cœur du problème. Un hedge fund prend souvent environ 2 % de l'argent géré chaque année, plus environ 20 % des gains. Et les fonds de fonds ajoutent leurs propres frais par-dessus.
+
+Le résultat
+
+À la fin de 2017, le verdict tombe. Le fonds indiciel a progressé en moyenne d'environ 7,1 % par an. Les cinq fonds de hedge funds, en moyenne, d'environ 2,2 % par an. L'écart est énorme.
+
+Sur dix ans, cela représente un gain cumulé d'environ 126 % pour le fonds indiciel. Contre environ 36 % en moyenne pour les fonds de professionnels. Ted Seides reconnaît sa défaite avant même la fin du pari.
+
+Le million de dollars va à une association de Omaha qui aide les jeunes filles. Grâce à un placement intermédiaire, la somme versée dépasse même 2 millions de dollars.
+
+La leçon de Buffett
+
+Dans sa lettre aux actionnaires, Buffett tire la leçon. Les gestionnaires de hedge funds ne sont pas sots. Mais leurs frais énormes et leurs mouvements fréquents rongent les gains de leurs clients.
+
+Il insiste sur un point : la performance doit être jugée sur une longue période. Une première année catastrophique ne disait rien du résultat final.
+
+Ses conseils à sa propre famille
+
+Buffett a aussi révélé ce qu'il a prévu pour l'argent de sa femme après sa mort. Il l'écrit dans sa lettre de 2013. Une grande partie ira dans un simple fonds indiciel très peu cher. Le reste en obligations d'État à court terme. Pas de hedge funds, pas de gérants vedettes.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : les hedge funds ont fait mieux que le fonds indiciel la première année ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : vrai. En 2008, ils ont beaucoup moins baissé. Mais sur dix ans, l'avantage s'est inversé. Juger un placement sur une seule année aurait donné une conclusion fausse.
+
+Attention, grain de sable
+
+Il y a trois idées à nuancer.
+
+Un : ce pari ne prouve pas que tous les professionnels perdent toujours. Il montre un résultat sur une période et une sélection données.
+
+Deux : la Bourse américaine a été particulièrement forte sur cette décennie. Sur d'autres périodes, l'écart aurait pu être différent.
+
+Trois : un fonds indiciel n'est pas protégé des baisses. En 2008, il a perdu bien plus que les hedge funds.
+
+Ce qu'il faut retenir
+
+- Les frais élevés pèsent lourd sur dix ans
+- Une mauvaise première année ne dit rien du résultat final
+- Un fonds indiciel suit le marché, dans la hausse comme dans la baisse
+
+En une phrase : Buffett a gagné son pari, car un fonds indiciel peu cher a battu des professionnels très chers. Et toi, aurais-tu parié sur Buffett ou sur les experts ?
+
+Sources : S1 · Lettre de Warren Buffett aux actionnaires de Berkshire Hathaway, 2017 (pari de 1 million de dollars du 1er janvier 2008 au 31 décembre 2017, fonds indiciel d'environ 7,1 % par an et gain cumulé d'environ 126 %, cinq fonds de fonds d'environ 2,2 % par an et environ 36 %, plus d'une centaine de hedge funds, plus de 2 millions de dollars versés à Girls Inc. d'Omaha ; 500 plus grandes entreprises américaines)
+S3 · Lettre de Warren Buffett aux actionnaires, 2013 (placement prévu pour sa femme)
+S2 · Wikipédia, « Krach de 2008 » (indice américain environ −37 % en 2008) ; frais habituels des hedge funds d'environ 2 % par an et 20 % des gains ; dix ans entre 2008 et 2017
+
+===
+
+# Deux pizzas pour 10 000 bitcoins
+
+Le 22 mai 2010, un programmeur américain paie deux pizzas avec 10 000 bitcoins. C'est le premier achat connu d'un objet réel avec cette cryptomonnaie. Quelques années plus tard, ces bitcoins valent des centaines de millions de dollars. Quelle est l'histoire de ces pizzas les plus chères du monde ?
+
+Le bitcoin, en 2010
+
+Le bitcoin est créé en 2009 par une personne ou un groupe se faisant appeler Satoshi Nakamoto. Personne ne sait encore qui se cache derrière ce nom. Le bitcoin est une monnaie numérique, sans banque centrale.
+
+En 2010, il n'intéresse qu'une petite communauté de passionnés d'informatique. On le fabrique avec son ordinateur, en participant à la sécurité du réseau. On appelle ça le minage. À l'époque, un ordinateur personnel suffit pour en obtenir beaucoup.
+
+Mais le bitcoin ne sert presque à rien de concret. On ne peut rien acheter avec. Sa valeur est quasi nulle. Les passionnés se demandent : est-ce qu'il pourrait servir de vraie monnaie ?
+
+L'offre de Laszlo
+
+Laszlo Hanyecz est un programmeur de Floride. Il a miné beaucoup de bitcoins. Le 18 mai 2010, il publie un message sur un forum. Il propose 10 000 bitcoins à qui lui fera livrer deux grandes pizzas.
+
+Quelques jours passent sans réponse. Puis, le 22 mai 2010, un jeune Britannique accepte. Il commande deux pizzas dans une chaîne de restauration et les fait livrer chez Laszlo. Il paie environ 25 dollars, et reçoit en échange les 10 000 bitcoins.
+
+Laszlo poste fièrement une photo de ses pizzas. Pour la première fois, le bitcoin a servi à acheter un objet réel. Ce jour-là, chaque bitcoin vaut donc environ un quart de centime.
+
+La valeur folle des pizzas
+
+Les années passent et le bitcoin monte. Fortement, avec des chutes brutales en chemin. En 2013, il dépasse les 1 000 dollars. En 2017, il approche les 20 000 dollars. En décembre 2024, il franchit les 100 000 dollars.
+
+À ce prix, les 10 000 bitcoins de Laszlo vaudraient environ 1 milliard de dollars. Les deux pizzas les plus chères de l'histoire. Chaque année, le 22 mai, des passionnés célèbrent le Bitcoin Pizza Day.
+
+Laszlo regrette-t-il ?
+
+Interrogé par des journalistes, Laszlo a souvent dit qu'il ne regrettait pas. Selon lui, il a participé à quelque chose de nouveau. Son achat a montré que le bitcoin pouvait servir à payer. Il a même acheté d'autres pizzas ensuite avec des bitcoins.
+
+Et personne ne pouvait savoir. En 2010, rien ne garantissait que le bitcoin vaudrait un jour quoi que ce soit. Beaucoup d'autres monnaies numériques de cette époque ont disparu.
+
+Un actif très volatil
+
+L'histoire des pizzas fait rêver. Mais elle cache la réalité du bitcoin : une volatilité extrême. Son prix a perdu plus de 70 % à plusieurs reprises. En 2018, puis en 2022, des investisseurs ont vu fondre la plus grande partie de leur mise.
+
+En France, l'Autorité des marchés financiers rappelle régulièrement que les cryptoactifs sont très risqués. On peut y perdre tout ou partie de son argent. Leur valeur repose uniquement sur ce que d'autres acceptent de payer.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : Laszlo aurait forcément été milliardaire s'il avait gardé ses bitcoins ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : pas forcément. Il aurait fallu les garder pendant des années, sans paniquer pendant des chutes de plus de 70 %. Sans perdre ses clés d'accès. Et sans les vendre bien avant. Très peu de gens en sont capables.
+
+Attention, grain de sable
+
+Il y a trois erreurs de raisonnement courantes.
+
+Un : regarder le passé en connaissant la fin. En 2010, personne ne savait ce que deviendrait le bitcoin.
+
+Deux : oublier tous les perdants. Pour une cryptomonnaie qui a réussi, des milliers ont disparu.
+
+Trois : confondre une histoire extraordinaire et une règle générale. Ce qui est arrivé au bitcoin n'arrivera pas forcément à la prochaine nouveauté.
+
+Ce qu'il faut retenir
+
+- Le premier achat connu en bitcoin date du 22 mai 2010
+- Un actif peut monter énormément, et chuter très fort en chemin
+- On juge mal une décision quand on connaît déjà la suite
+
+En une phrase : ces deux pizzas vaudraient aujourd'hui une fortune, mais personne ne pouvait le savoir. Et toi, as-tu déjà payé quelque chose qui vaudrait une fortune aujourd'hui ?
+
+Sources : S1 · Wikipédia, « Bitcoin » et « Laszlo Hanyecz » (création en 2009 par Satoshi Nakamoto, message du 18 mai 2010, achat du 22 mai 2010 de deux pizzas pour 10 000 bitcoins, environ 25 dollars, plus de 1 000 dollars en 2013, près de 20 000 dollars en 2017, plus de 100 000 dollars en décembre 2024, baisses de plus de 70 % en 2018 et en 2022)
+S2 · Calcul de la chaîne : 10 000 × 100 000 dollars = 1 milliard de dollars ; 25 dollars ÷ 10 000 ≈ un quart de centime ; AMF, mises en garde sur les cryptoactifs
+
+===
+
+# Kodak a inventé l'appareil photo numérique… et en est mort
+
+En 1975, un ingénieur de Kodak invente le premier appareil photo numérique. En janvier 2012, Kodak fait faillite, tuée en grande partie par la photo numérique. Comment une entreprise peut-elle être détruite par sa propre invention ?
+
+Le géant de la photo
+
+Kodak est fondée à la fin du dix-neuvième siècle par George Eastman, aux États-Unis. Son idée : rendre la photographie accessible à tous. Son slogan promet : vous appuyez sur le bouton, nous faisons le reste.
+
+Pendant près d'un siècle, Kodak domine le marché. Elle vend des appareils peu chers, et surtout des pellicules, des produits chimiques et des tirages. C'est là qu'elle gagne vraiment de l'argent. Chaque photo prise lui rapporte quelque chose.
+
+Dans les années 1970, Kodak vend la très grande majorité des pellicules photo aux États-Unis. Son nom est presque synonyme de photographie. Le « moment Kodak » désigne un instant à immortaliser.
+
+L'invention de 1975
+
+En 1975, un jeune ingénieur de Kodak, Steve Sasson, construit un prototype étonnant. Un appareil qui enregistre les images sur une cassette, sans pellicule. Il pèse plusieurs kilos. Une photo met plus de vingt secondes à s'enregistrer.
+
+L'image est en noir et blanc, avec une définition minuscule. Mais c'est le premier appareil photo numérique. Sasson le présente à la direction.
+
+La réaction est prudente. Selon Sasson lui-même, on lui demande pourquoi quelqu'un voudrait regarder ses photos sur un écran. Et surtout, cette invention menace le cœur de l'entreprise : la pellicule.
+
+Le dilemme de l'innovateur
+
+Kodak ne néglige pas complètement le numérique. Elle dépose des brevets, développe des capteurs, lance même des appareils numériques. Mais elle protège avant tout son activité principale, si rentable.
+
+Les économistes appellent ce piège le dilemme de l'innovateur. Une entreprise qui réussit hésite à développer une nouveauté qui détruirait ses propres profits. Pendant ce temps, des concurrents sans rien à perdre foncent.
+
+La chute
+
+Dans les années 2000, la photo numérique explose. Puis les téléphones portables intègrent des appareils photo. Plus besoin de pellicule, ni de tirages. Le cœur de l'activité de Kodak s'effondre en quelques années.
+
+Kodak tente de se réinventer : imprimantes, appareils numériques, services en ligne. Trop tard, face à une concurrence très forte. Le 19 janvier 2012, l'entreprise se place sous la protection de la loi américaine sur les faillites.
+
+Ironie de l'histoire : Kodak vend ensuite des brevets sur l'image numérique, pour plus de 500 millions de dollars. Ses inventions valaient de l'argent, mais pour les autres.
+
+L'après-faillite
+
+Kodak n'a pas complètement disparu. Elle sort de la faillite en 2013, beaucoup plus petite. Elle se concentre sur l'impression professionnelle et certains produits chimiques. Le nom existe encore, mais l'empire a disparu.
+
+Fujifilm, l'autre chemin
+
+Le concurrent japonais de Kodak, Fujifilm, a connu exactement le même choc. Sa pellicule photo s'est effondrée en même temps. Mais il a choisi une autre stratégie.
+
+Fujifilm a utilisé son savoir-faire en chimie pour se diversifier. Il s'est lancé dans l'imagerie médicale et les médicaments. Et même dans les cosmétiques, grâce au collagène qu'il maîtrisait pour ses films photo.
+
+Résultat : Fujifilm a survécu et prospère encore. Face à la même tempête, deux entreprises ont fait deux choix très différents. L'une s'est accrochée à son passé. L'autre a cherché un nouvel usage à ses compétences.
+
+Un exemple souvent enseigné
+
+Le cas Kodak est aujourd'hui étudié dans les écoles de commerce du monde entier. Il sert d'avertissement à toutes les entreprises qui dominent leur marché. La question qu'il pose est simple : qu'est-ce qui pourrait rendre notre produit inutile dans dix ans ?
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : Kodak a fait faillite parce qu'elle n'avait pas vu venir le numérique ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Kodak avait vu venir le numérique. Elle l'avait même inventé. Le problème, c'est qu'elle n'a pas voulu ou pas su sacrifier assez vite son activité la plus rentable.
+
+Attention, grain de sable
+
+Il y a trois leçons à retenir pour un investisseur.
+
+Un : une entreprise dominante peut décliner. Être le leader aujourd'hui ne garantit rien pour dans vingt ans.
+
+Deux : une invention ne garantit pas le succès. Il faut aussi savoir en tirer un modèle rentable.
+
+Trois : les grandes ruptures vont parfois très vite. Kodak a perdu son marché principal en une dizaine d'années.
+
+Ce qu'il faut retenir
+
+- Kodak a inventé l'appareil photo numérique en 1975
+- Protéger ses profits actuels peut faire rater l'avenir
+- Aucune entreprise dominante n'est éternelle
+
+En une phrase : Kodak a inventé le numérique mais l'a freiné pour protéger sa pellicule, et le numérique l'a emportée. Et toi, quelle entreprise dominante d'aujourd'hui pourrait connaître le même sort ?
+
+Sources : S1 · Wikipédia, « Eastman Kodak » (fondée par George Eastman à la fin du dix-neuvième siècle, faillite le 19 janvier 2012, sortie de faillite en 2013, vente de brevets pour plus de 500 millions de dollars ; années 1970 et 2000)
+S2 · Wikipédia, « Steven Sasson » (prototype de 1975, enregistrement de plus de vingt secondes) ; Clayton Christensen, « The Innovator's Dilemma », 1997
+
+===
+
+# GameStop : quand des petits porteurs ont fait trembler Wall Street
+
+En janvier 2021, l'action d'une chaîne de magasins de jeux vidéo passe d'environ 17 dollars à 483 dollars en séance. Derrière ce mouvement, des milliers de petits investisseurs réunis sur un forum internet. Face à eux, des fonds qui pariaient sur la baisse. Que s'est-il passé ?
+
+Une entreprise en difficulté
+
+GameStop est une chaîne américaine de magasins qui vend des jeux vidéo et des consoles. Mais à la fin des années 2010, les jeux se téléchargent de plus en plus. Les magasins perdent des clients. L'entreprise perd de l'argent.
+
+Beaucoup de fonds d'investissement pensent qu'elle va continuer de décliner. Ils parient sur la baisse de son action. On appelle ça la vente à découvert. Ils empruntent des actions, les vendent, et espèrent les racheter moins cher plus tard.
+
+Au début de 2021, ces paris sont énormes. Selon les données de l'époque, plus d'actions ont été vendues à découvert qu'il n'en existe réellement en circulation. Une situation explosive.
+
+Le forum
+
+Sur Reddit, un forum appelé WallStreetBets rassemble des millions de petits investisseurs. Le ton est provocateur, plein d'humour et de mèmes. Un de ses membres, Keith Gill, publie depuis 2019 ses analyses sur GameStop. Il pense que l'action est sous-évaluée.
+
+En janvier 2021, une idée se répand. Si beaucoup de gens achètent l'action en même temps, les vendeurs à découvert seront piégés. Pour limiter leurs pertes, ils devront racheter des actions. Ce qui fera encore monter le prix.
+
+Le piège se referme
+
+C'est ce qu'on appelle un « short squeeze ». Les vendeurs à découvert sont pressés comme des citrons. Plus le prix monte, plus leurs pertes grandissent. Ils doivent racheter, ce qui alimente la hausse.
+
+L'action de GameStop s'envole. Elle valait environ 17 dollars début janvier. Le 28 janvier 2021, elle atteint 483 dollars en séance. En quelques semaines, elle a été multipliée par plus de vingt-cinq.
+
+Un fonds new-yorkais, Melvin Capital, qui pariait fortement sur la baisse, perd des milliards. Il doit être renfloué par d'autres fonds. Il fermera ses portes en 2022.
+
+La polémique Robinhood
+
+Le 28 janvier, coup de théâtre. L'application de courtage Robinhood, très utilisée par les petits investisseurs, bloque les achats de l'action GameStop. On ne peut plus que vendre.
+
+La colère est immense. Les petits investisseurs accusent la plateforme de protéger les fonds. Robinhood explique qu'elle devait déposer d'énormes garanties auprès de l'organisme qui règle les échanges. Elle manquait d'argent pour suivre le mouvement.
+
+La suite
+
+Après le pic, le prix redescend très vite. Ceux qui avaient acheté au plus haut perdent une grande partie de leur mise. Ceux qui étaient entrés tôt et avaient vendu à temps, comme Keith Gill, réalisent des gains énormes.
+
+L'histoire est racontée en 2023 dans un film, Dumb Money. Elle reste le symbole d'un moment où des particuliers connectés ont pesé sur des professionnels.
+
+Les autres « actions mèmes »
+
+GameStop n'est pas seule. Dans la même période, d'autres actions sont emportées par la même vague. La chaîne de cinémas AMC, par exemple, ou l'entreprise de téléphones BlackBerry. On les surnomme les « actions mèmes ».
+
+Ce qui les rassemble, ce n'est pas la santé de l'entreprise. C'est leur popularité sur les réseaux sociaux. Leur prix dépend alors surtout de l'humeur collective, et peut changer du tout au tout en quelques heures.
+
+Les autorités enquêtent
+
+Après l'épisode, les autorités américaines et le Congrès examinent ce qui s'est passé. Des auditions publiques ont lieu en février 2021. On y entend le patron de Robinhood, celui de Melvin Capital, et Keith Gill lui-même. Sa phrase reste célèbre : « J'aime l'action ».
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : tous les petits investisseurs qui ont participé à l'aventure GameStop ont gagné de l'argent ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Beaucoup sont arrivés tard, quand le prix était déjà très haut. Ils ont acheté cher et ont vu le cours retomber. Les gagnants sont surtout ceux entrés tôt et sortis à temps.
+
+Attention, grain de sable
+
+Il y a trois leçons à tirer.
+
+Un : un mouvement collectif peut faire monter un prix très haut, mais pas pour toujours.
+
+Deux : parier sur la baisse comporte un risque sans limite. Si le prix monte sans fin, la perte aussi.
+
+Trois : arriver tard dans une hausse spectaculaire, c'est souvent payer pour les gains des premiers.
+
+Ce qu'il faut retenir
+
+- Un « short squeeze » piège ceux qui parient sur la baisse
+- Les hausses collectives peuvent retomber aussi vite
+- Ceux qui arrivent les derniers paient souvent les gains des premiers
+
+En une phrase : des petits investisseurs unis ont piégé des fonds, mais beaucoup se sont brûlé les ailes. Et toi, aurais-tu suivi le mouvement en janvier 2021 ?
+
+Sources : S1 · Wikipédia, « Short squeeze de GameStop » (action à environ 17 dollars début janvier 2021, 483 dollars en séance le 28 janvier 2021, multiplication par plus de vingt-cinq, blocage des achats par Robinhood le 28 janvier, Melvin Capital renfloué puis fermé en 2022, analyses de Keith Gill depuis 2019 ; fin des années 2010)
+S2 · Wikipédia, « Dumb Money » (film de 2023) ; auditions du Congrès en février 2021
+
+===
+
+# Facebook : l'entrée en Bourse ratée d'une future star
+
+Le 18 mai 2012, Facebook entre en Bourse au prix de 38 dollars par action. C'est l'une des plus grosses introductions de l'histoire. Quatre mois plus tard, l'action ne vaut plus qu'environ 18 dollars. Puis elle finit par s'envoler. Que nous apprend ce départ raté ?
+
+Qu'est-ce qu'une introduction en Bourse ?
+
+Une introduction en Bourse, c'est le moment où une entreprise vend ses actions au public, pour la première fois. Avant, seuls les fondateurs, les salariés et quelques investisseurs les possèdent. Après, n'importe qui peut les acheter.
+
+L'entreprise y gagne souvent de l'argent frais pour se développer. Ses premiers actionnaires peuvent aussi vendre une partie de leurs parts. C'est un grand moment, très médiatisé.
+
+Le grand jour de Facebook
+
+En 2012, Facebook compte déjà environ 900 millions d'utilisateurs. Son fondateur, Mark Zuckerberg, n'a que 28 ans. L'entreprise vaut environ 104 milliards de dollars au prix d'introduction. Un record pour une entreprise du numérique à son arrivée en Bourse.
+
+Les banques chargées de l'opération relèvent le prix et le nombre d'actions vendues, tant la demande semble forte. Tout le monde veut sa part du réseau social le plus célèbre du monde.
+
+Un premier jour chaotique
+
+Le 18 mai 2012, rien ne se passe comme prévu. La Bourse électronique Nasdaq connaît un problème informatique. Pendant des heures, des investisseurs ne savent pas si leurs ordres ont été exécutés.
+
+Certains achètent deux fois, d'autres pas du tout. À la clôture, l'action termine à peu près à son prix d'introduction, autour de 38 dollars. Les banques ont dû l'acheter elles-mêmes pour éviter qu'elle tombe en dessous.
+
+La descente
+
+Dans les semaines suivantes, l'action baisse. Les investisseurs s'inquiètent. Facebook gagne peu d'argent sur les téléphones portables. Or ses utilisateurs y passent de plus en plus de temps. Sa publicité est surtout adaptée aux ordinateurs.
+
+Au début de septembre 2012, l'action tombe autour de 18 dollars. Elle a perdu plus de la moitié de sa valeur. Les journaux parlent d'un fiasco. Des investisseurs portent plainte contre les banques et le Nasdaq.
+
+La revanche
+
+Puis Facebook s'adapte. L'entreprise développe la publicité sur téléphone portable avec succès. Elle rachète Instagram en 2012, puis WhatsApp en 2014. Ses revenus explosent.
+
+En 2013, l'action repasse au-dessus de son prix d'introduction. Les années suivantes, elle continue de monter fortement. En 2021, l'entreprise prend le nom de Meta. Ceux qui avaient acheté au plus bas de 2012 ont fait une très belle opération.
+
+Mais ceux qui avaient vendu en panique, à 18 dollars, ont raté toute la suite.
+
+Les autres introductions célèbres
+
+Facebook n'est pas un cas isolé. Beaucoup d'entreprises célèbres ont connu des débuts difficiles en Bourse. D'autres, au contraire, ont flambé le premier jour avant de chuter longtemps.
+
+Selon de nombreuses études, les actions nouvellement introduites font souvent moins bien que le marché les années suivantes. L'enthousiasme du premier jour se paie parfois plus tard.
+
+Le calcul
+
+Prenons celui qui a acheté une action à 38 dollars le premier jour. Au début de septembre, elle vaut environ 18 dollars. Il a donc perdu environ 20 dollars, soit plus de la moitié de sa mise. S'il vend à ce moment-là, la perte devient définitive.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : une action qui baisse juste après son entrée en Bourse est forcément un mauvais placement ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Les premiers mois sont souvent agités, car l'entreprise est encore mal connue des investisseurs. Mais l'inverse est aussi vrai : beaucoup d'introductions décevantes ne remontent jamais.
+
+Attention, grain de sable
+
+Il y a trois idées reçues sur les introductions en Bourse.
+
+Un : croire qu'acheter dès le premier jour est forcément une bonne affaire. Le prix d'introduction est souvent fixé haut, pour satisfaire les vendeurs.
+
+Deux : penser qu'une entreprise célèbre est un bon placement à tout prix. Le prix payé compte autant que la notoriété.
+
+Trois : tirer des conclusions trop vite. Quatre mois ont semblé donner tort à Facebook. Dix ans ont raconté une autre histoire.
+
+Ce qu'il faut retenir
+
+- Une introduction en Bourse ouvre le capital au public
+- Le premier prix est souvent élevé et les débuts agités
+- Le succès d'une entreprise se juge sur des années, pas des semaines
+
+En une phrase : Facebook a raté son entrée en Bourse, puis s'est envolé en s'adaptant au téléphone. Et toi, aurais-tu acheté une action d'une entreprise célèbre le jour de son arrivée en Bourse ?
+
+Sources : S1 · Wikipédia, « Introduction en Bourse de Facebook » (18 mai 2012, prix de 38 dollars, valeur d'environ 104 milliards de dollars, environ 900 millions d'utilisateurs, Zuckerberg âgé de 28 ans, problème du Nasdaq, environ 18 dollars début septembre 2012, retour au-dessus du prix d'introduction en 2013)
+S3 · Calcul de la chaîne : 38 − 18 = 20 dollars de perte par action
+S2 · Wikipédia, « Meta Platforms » (rachat d'Instagram en 2012, de WhatsApp en 2014, changement de nom en 2021)
+
+===
+
+# Le CAC 40 a mis 21 ans à battre son record… vraiment ?
+
+Le 4 septembre 2000, le CAC 40 atteint 6 922 points. Il ne dépassera ce niveau qu'en 2021. 21 ans d'attente ! Pourtant, un investisseur qui avait acheté ces entreprises en 2000 avait gagné de l'argent bien avant. Où est le secret ?
+
+Qu'est-ce que le CAC 40 ?
+
+Le CAC 40 est l'indice phare de la Bourse de Paris. Il regroupe 40 grandes entreprises françaises cotées, choisies selon leur taille et la quantité d'actions échangées. On y trouve des banques, de l'énergie, du luxe, de l'industrie.
+
+Il a été créé avec une base de 1 000 points au 31 décembre 1987. Si le CAC 40 vaut 7 000 points, son niveau a été multiplié par sept depuis ce départ.
+
+Le sommet de 2000
+
+À la fin des années 1990, la bulle internet fait flamber la Bourse. Les valeurs de télécommunications et de technologie s'envolent. Le 4 septembre 2000, le CAC 40 termine à 6 922 points, un record.
+
+Puis la bulle éclate. En mars 2003, l'indice tombe autour de 2 400 points. Il remonte, puis rechute en 2008 avec la crise financière. Et encore en 2011 avec la crise des dettes européennes. Il faut attendre 2021 pour qu'il dépasse enfin son sommet de 2000.
+
+Le détail qui change tout
+
+Voici le secret : le CAC 40 classique ne compte pas les dividendes. Les dividendes, ce sont les parts de bénéfices versées chaque année aux actionnaires. Quand une entreprise verse un dividende, son action baisse à peu près d'autant.
+
+Le CAC 40 que l'on voit au journal télévisé est un indice de prix. Il ignore donc tout cet argent versé aux actionnaires. Or les grandes entreprises françaises versent des dividendes importants, souvent autour de 2 à 3 % par an.
+
+Le CAC 40 dividendes réinvestis
+
+Il existe un autre indice : le CAC 40 « dividendes réinvestis ». Il suppose que chaque dividende reçu est aussitôt replacé dans l'indice. C'est ce qu'aurait vécu un investisseur qui garde tout et réinvestit ses gains.
+
+Avec cet indice, le record de septembre 2000 est dépassé bien avant 2021. Au milieu des années 2010, il était déjà largement au-dessus. L'attente réelle a donc été beaucoup plus courte que ce que laisse croire l'indice classique.
+
+Pourquoi ça compte
+
+Quand on compare la Bourse française à d'autres placements, il faut comparer ce qui est comparable. Un livret rapporte des intérêts. Une action rapporte une hausse de prix et des dividendes. Oublier les dividendes, c'est oublier une grande partie du résultat.
+
+Sur longue période, les dividendes réinvestis représentent même une part très importante de la performance totale de la Bourse française. Plus la durée est longue, plus leur poids grandit, grâce aux intérêts composés.
+
+Les entreprises changent
+
+Autre détail important : les 40 entreprises du CAC 40 ne sont pas toujours les mêmes. Chaque trimestre, un comité peut faire entrer ou sortir des sociétés. Celles qui grandissent entrent, celles qui déclinent sortent.
+
+En 2000, l'indice comptait plusieurs valeurs de télécommunications et de technologie très chères. Vingt ans plus tard, le luxe y pèse beaucoup plus lourd. Un indice est donc un panier qui évolue, pas une photo figée.
+
+Le calcul de l'écart
+
+Imagine 10 000 euros placés en septembre 2000 sur un panier qui suit le CAC 40 classique. En 2021, tu retrouves à peu près ta mise. Mais réinvestis environ 2,5 % de dividendes par an. Ton capital est alors multiplié par environ 1,7 en 21 ans. Cela ferait environ 17 000 euros. C'est un calcul simplifié, sans frais ni impôts.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : le CAC 40 affiché à la télévision compte les dividendes versés par les entreprises ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. L'indice affiché d'habitude est un indice de prix, sans dividendes. Pour mesurer le vrai résultat d'un investisseur, il faut regarder l'indice dividendes réinvestis.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes avec les indices.
+
+Un : comparer un indice sans dividendes à un placement qui compte ses intérêts. La comparaison est faussée.
+
+Deux : penser qu'un record non battu signifie aucune hausse. Les dividendes ont continué de tomber chaque année.
+
+Trois : oublier les frais et les impôts. Un investisseur réel ne touche pas exactement l'indice, ni dans un sens ni dans l'autre.
+
+Ce qu'il faut retenir
+
+- Le CAC 40 regroupe 40 grandes entreprises cotées à Paris
+- L'indice classique ignore les dividendes
+- Avec les dividendes réinvestis, le record de 2000 a été battu bien plus tôt
+
+En une phrase : avec les dividendes, le CAC 40 a battu son record de 2000 bien avant 2021. Et toi, savais-tu que l'indice de la télévision oubliait les dividendes ?
+
+Sources : S1 · Wikipédia, « CAC 40 » (40 entreprises, base 1 000 points au 31 décembre 1987, record de 6 922 points le 4 septembre 2000, environ 2 400 points en mars 2003, crises de 2008 et 2011, record dépassé en 2021 ; niveau autour de 7 000 points ; fin des années 1990)
+S3 · Calcul de la chaîne : 1,025²¹ ≈ 1,7, soit environ 17 000 euros pour 10 000 euros (dividendes d'environ 2,5 % par an réinvestis, sans frais ni impôts)
+S2 · Euronext, « CAC 40 Gross Total Return » (dividendes réinvestis, record de 2000 dépassé au milieu des années 2010) ; dividendes habituels de 2 à 3 % par an ; Calcul de la chaîne : 2021 moins 2000 = 21 ans
+
+===
+
+# Le Monopoly a été inventé pour dénoncer les monopoles
+
+Le Monopoly, le jeu où l'on ruine ses adversaires en achetant des rues, a plus de 120 ans d'histoire. Mais saviez-tu que son ancêtre, breveté en 1904, avait été créé par une femme pour montrer… les dangers de l'accumulation des richesses ?
+
+Lizzie Magie
+
+Elizabeth Magie, surnommée Lizzie, est une Américaine née en 1866. Elle est sténographe, écrivaine, comédienne à ses heures. Elle a des idées très avancées pour son temps. À une époque où les femmes ont peu de droits, elle dépose elle-même un brevet.
+
+Elle est séduite par les idées d'un économiste, Henry George. Selon lui, les propriétaires de terrains s'enrichissent sans travailler, juste grâce à la hausse de la valeur du sol. Il propose de taxer fortement la terre pour redistribuer cette richesse.
+
+Le jeu du propriétaire
+
+Pour faire comprendre ces idées, Lizzie Magie invente un jeu de plateau : The Landlord's Game, le jeu du propriétaire. Elle dépose son brevet en 1904. Le plateau ressemble déjà beaucoup au Monopoly : un parcours carré, des propriétés, une prison.
+
+Le jeu propose deux séries de règles. Dans la première, chaque joueur cherche à créer un monopole et à ruiner les autres. Dans la seconde, la richesse créée est partagée entre tous. Le but : montrer que les premières règles mènent à l'injustice, et les secondes à la prospérité.
+
+Un jeu qui circule
+
+Pendant des années, le jeu circule de façon artisanale. Des étudiants, des enseignants, des communautés le recopient à la main. Chacun adapte les noms des rues à sa ville. La règle du monopole, plus amusante, prend le dessus.
+
+Au début des années 1930, un certain Charles Darrow découvre une de ces versions. Ses rues sont celles d'Atlantic City. Il la reprend, l'embellit, et la présente comme sa propre invention.
+
+Le succès
+
+En 1935, l'entreprise de jeux Parker Brothers achète le jeu à Charles Darrow. Elle rachète aussi le brevet de Lizzie Magie, pour quelques centaines de dollars seulement selon les historiens. Le Monopoly devient un succès planétaire.
+
+Pendant des décennies, l'histoire officielle présente Charles Darrow comme l'inventeur génial du jeu. Il devient riche. Lizzie Magie, elle, est presque oubliée. Il faudra attendre les recherches d'un professeur d'économie, dans les années 1970, pour que son rôle soit redécouvert.
+
+Le message inversé
+
+L'ironie est totale. Le jeu, conçu pour critiquer l'enrichissement par les loyers, est devenu le symbole du plaisir de ruiner ses voisins. La règle du partage a disparu. Il ne reste que celle du monopole.
+
+Pourtant, le message d'origine se voit encore. À la fin d'une partie de Monopoly, un seul joueur possède presque tout. Les autres sont ruinés. C'est exactement ce que voulait montrer Lizzie Magie.
+
+Le Monopoly et l'économie
+
+Le jeu illustre aussi des notions réelles. L'effet boule de neige : plus on possède, plus on gagne, plus on peut acheter. La valeur de l'emplacement. Et l'importance de garder de l'argent disponible pour payer les loyers imprévus.
+
+Un jeu qui voyage
+
+Le Monopoly est aujourd'hui vendu dans plus de cent pays. Chaque version adapte les noms des rues. En France, on achète la rue de la Paix, l'avenue des Champs-Élysées ou la gare Montparnasse.
+
+Pendant la Seconde Guerre mondiale, les services secrets britanniques auraient même truqué des boîtes de Monopoly. Ils y cachaient des cartes, des boussoles et de l'argent pour des prisonniers de guerre. Ces boîtes spéciales devaient les aider à s'évader.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : au Monopoly, avoir toutes les rues d'une couleur fait payer des loyers plus élevés ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : vrai. C'est le cœur du jeu. Un monopole sur un groupe permet de construire et d'augmenter les loyers. C'est exactement ce que les lois sur la concurrence cherchent à éviter dans la vraie économie.
+
+Attention, grain de sable
+
+Il y a trois idées reçues sur ce jeu.
+
+Un : croire que Charles Darrow l'a inventé seul. Il a repris un jeu existant, né des idées de Lizzie Magie.
+
+Deux : penser que le Monopoly fait l'éloge des monopoles. À l'origine, c'était exactement l'inverse.
+
+Trois : le confondre avec l'économie réelle. Dans la vraie vie, les monopoles sont encadrés par la loi.
+
+Ce qu'il faut retenir
+
+- Le Monopoly vient du jeu du propriétaire, breveté en 1904
+- Il devait montrer les dangers de l'accumulation des richesses
+- Son inventrice a longtemps été oubliée
+
+En une phrase : le Monopoly devait dénoncer les monopoles, il est devenu le jeu de ceux qui les adorent. Et toi, gagnes-tu souvent au Monopoly ?
+
+Sources : S1 · Wikipédia, « Lizzie Magie » et « The Landlord's Game » (née en 1866, brevet de 1904, deux séries de règles, inspiration d'Henry George)
+S3 · Vendu dans plus de cent pays ; brevet de 1904, soit plus de 120 ans
+S2 · Wikipédia, « Monopoly » (Charles Darrow au début des années 1930, achat par Parker Brothers en 1935, rôle de Lizzie Magie redécouvert dans les années 1970 par l'économiste Ralph Anspach)
+
+===
+
+# Pourquoi le dollar s'appelle-t-il le dollar ?
+
+Le dollar, la monnaie la plus utilisée au monde, doit son nom à une vallée de Bohême. Une histoire de plus de 500 ans. Au seizième siècle, on y frappait une pièce d'argent appelée le thaler. Comment ce nom a-t-il traversé l'Atlantique ?
+
+Une mine d'argent en Bohême
+
+Au début du seizième siècle, on découvre un riche gisement d'argent dans une vallée de Bohême. Le lieu s'appelle Joachimsthal, la vallée de Saint-Joachim. Une ville minière y grandit très vite.
+
+À partir de 1520, on y frappe de grosses pièces d'argent. On les appelle des Joachimsthaler, c'est-à-dire « celles de la vallée de Joachim ». Le nom est long. On le raccourcit vite en thaler.
+
+Le thaler conquiert l'Europe
+
+Ces pièces sont grandes, lourdes, d'un argent de bonne qualité. Elles inspirent confiance. D'autres régions frappent des pièces semblables et reprennent le nom. Le thaler devient une monnaie de référence en Europe centrale.
+
+Le mot se transforme selon les langues. Les Néerlandais disent daalder. Les Scandinaves daler. Les Anglais, qui les rencontrent dans le commerce, parlent de dollar. Le mot circule avec les marchands.
+
+Le dollar espagnol
+
+Aux seizième et dix-septième siècles, l'Espagne exploite d'immenses mines d'argent en Amérique, notamment à Potosí, dans l'actuelle Bolivie. Elle frappe une pièce d'argent appelée la pièce de huit réaux.
+
+Cette pièce circule dans le monde entier, jusqu'en Chine. Elle ressemble au thaler par sa taille et sa valeur. Les Anglais et les colons d'Amérique du Nord l'appellent donc le « dollar espagnol ».
+
+Dans les colonies anglaises d'Amérique, les pièces britanniques sont rares. Le dollar espagnol devient la monnaie du quotidien. Les colons comptent en dollars, même s'ils sont officiellement sujets du roi d'Angleterre.
+
+Le choix des États-Unis
+
+Après leur indépendance, les États-Unis doivent choisir leur monnaie. En 1785, le Congrès décide d'adopter le dollar. Un nom déjà familier à tous, et qui marque une différence avec la livre britannique.
+
+En 1792, une loi crée officiellement le dollar américain et l'hôtel de la Monnaie. Le système est décimal : un dollar vaut cent cents. Une idée moderne pour l'époque, quand beaucoup de monnaies se divisaient en 12 ou en 20.
+
+Et le symbole $ ?
+
+L'origine du symbole du dollar est discutée. L'explication la plus répandue le fait venir de l'abréviation des pesos espagnols. On écrivait « ps », et avec le temps, le « s » aurait été écrit par-dessus le « p ». Le trait vertical serait le reste du « p ».
+
+D'autres explications existent, comme les colonnes d'Hercule dessinées sur certaines pièces espagnoles. Aucune n'est prouvée de façon certaine.
+
+Le dollar, monnaie du monde
+
+Aujourd'hui, le dollar américain n'est pas seulement la monnaie des États-Unis. C'est la principale monnaie de réserve du monde. Les banques centrales en gardent une grande partie de leurs réserves de change.
+
+Le pétrole, de nombreuses matières premières et une grande partie du commerce international s'échangent en dollars. Selon le Fonds monétaire international, il représente encore plus de la moitié des réserves de change des banques centrales.
+
+Cette domination date surtout de 1944, avec les accords de Bretton Woods. À la fin de la guerre, les grandes puissances organisent le système monétaire autour du dollar. Le dollar, lui, est lié à l'or.
+
+Et l'euro ?
+
+Le nom « euro » a été choisi en 1995, lors d'un sommet européen à Madrid. On cherchait un nom simple, prononçable dans toutes les langues. Et surtout neutre : aucun pays ne voulait reprendre le nom de la monnaie d'un autre.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : les États-Unis sont le seul pays à utiliser une monnaie appelée dollar ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Le Canada, l'Australie, la Nouvelle-Zélande, Singapour ou Hong Kong ont aussi leur dollar. Et plusieurs pays utilisent directement le dollar américain comme monnaie officielle.
+
+Attention, grain de sable
+
+Il y a trois idées reçues sur le dollar.
+
+Un : croire que le mot est américain. Il vient d'une vallée d'Europe centrale.
+
+Deux : penser que la valeur d'une monnaie dépend de son nom. Elle dépend de la confiance et de l'économie qui la soutient.
+
+Trois : imaginer que le symbole $ a une origine certaine. Il existe plusieurs explications, aucune n'est prouvée.
+
+Ce qu'il faut retenir
+
+- Le mot dollar vient du thaler, une pièce de Bohême
+- Le dollar espagnol était la monnaie du quotidien en Amérique
+- Les États-Unis ont adopté le dollar en 1785 et l'ont créé en 1792
+
+En une phrase : le dollar doit son nom à une vallée de Bohême, en passant par les pièces espagnoles. Et toi, sais-tu d'où vient le mot euro ?
+
+Sources : S1 · Wikipédia, « Thaler » et « Joachimsthaler » (Joachimsthal, pièces frappées à partir de 1520 ; seizième siècle)
+S3 · FMI, statistiques COFER (dollar à plus de la moitié des réserves) ; Wikipédia, « Accords de Bretton Woods » (1944) et « Euro » (nom choisi à Madrid en 1995) ; 1520, soit plus de 500 ans
+S2 · Wikipédia, « Dollar américain » (adopté par le Congrès en 1785, Coinage Act de 1792, cent cents ; monnaies divisées en 12 ou en 20) ; « Pièce de huit » (Potosí) ; « Symbole dollar »

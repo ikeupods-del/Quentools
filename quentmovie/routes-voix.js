@@ -145,6 +145,8 @@ function creer({ BASE, MEDIAS, FFMPEG, opts, run, probe, send, readJson, travail
         return send(res, 200, { ok: !!opts.ouvrirDossier, dossier });
       }
     }
+    // banque d'idées : scripts prêts à lire, rangés par thème (idees-quentinvest.js)
+    if (req.method === 'GET' && p === '/api/quentinvest/idees') return send(res, 200, { themes: require('./idees-quentinvest').charger() });
     // ton script (texte libre) → fiche de Pico, par le programme seul ; numéro = le suivant des épisodes déjà faits
     if (req.method === 'POST' && p === '/api/quentinvest/script') {
       const b = await readJson(req), texte = String(b.texte || '').slice(0, 60000);

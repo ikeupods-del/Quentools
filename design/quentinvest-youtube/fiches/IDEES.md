@@ -1,6 +1,8 @@
 # Idées d'épisodes (à transformer en fiche)
 
 Chaque idée devient `fiches/NN-sujet.json` (copier `_modele.json`) puis `node fabrication/episode.js fiches/NN-sujet.json`.
+Banque de 101 scripts déjà rédigés (histoires de la Bourse, PEA, assurance-vie, crédit lombard, économie, pièges du cerveau…) : `quentmovie/quentinvest-idees/`, bouton « 📚 Idées de vidéos prêtes à lire » de QuentMovie, ou `node quentmovie/idees-quentinvest.js` pour la liste.
+
 Règle : chaque chiffre a une source officielle (Insee, Banque de France, AMF, service-public.fr…) ou un calcul de la chaîne montré à l'écran ; jamais de taux de produit inventé. Le propriétaire valide avant toute publication.
 
 | Sujet | Question d'accroche | Source à chercher |

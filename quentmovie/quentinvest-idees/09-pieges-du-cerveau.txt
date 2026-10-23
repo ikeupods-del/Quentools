@@ -1,0 +1,894 @@
+@theme Pièges du cerveau et arnaques
+
+# L'aversion aux pertes : pourquoi perdre fait deux fois plus mal
+
+Perdre 100 euros fait environ deux fois plus mal que gagner 100 euros ne fait plaisir. C'est ce qu'ont montré deux psychologues, dont l'un a reçu le prix Nobel d'économie en 2002. Ce biais explique beaucoup de mauvaises décisions avec l'argent. Lesquelles ?
+
+Deux chercheurs
+
+Daniel Kahneman et Amos Tversky sont deux psychologues israéliens. Dans les années 1970, ils étudient comment les gens prennent réellement leurs décisions. Pas comme le supposent les manuels d'économie, mais dans la vraie vie.
+
+En 1979, ils publient un article devenu célèbre sur la théorie des perspectives. Il montre que nous ne jugeons pas un résultat en lui-même. Nous le jugeons par rapport à un point de départ. Et nous ne traitons pas les gains et les pertes de la même façon.
+
+L'expérience
+
+Imagine qu'on te propose un pari. Pile, tu gagnes 150 euros. Face, tu perds 100 euros. En moyenne, ce pari est favorable : tu gagnes plus que tu ne perds. Pourtant, la plupart des gens refusent.
+
+Les expériences montrent qu'il faut souvent proposer un gain d'environ deux fois la perte pour que les gens acceptent. Gagner 200 euros contre en perdre 100. C'est ce qu'on appelle l'aversion aux pertes.
+
+Notre cerveau est fait comme ça. Pendant des millénaires, une perte pouvait mettre la survie en danger. Un gain, lui, était seulement agréable. La prudence l'a emporté.
+
+Les effets sur l'argent
+
+Ce biais a des conséquences très concrètes. D'abord, beaucoup de gens gardent trop longtemps un placement qui baisse. Le vendre, ce serait rendre la perte réelle. Alors ils attendent, en espérant revenir au prix d'achat.
+
+Ensuite, certains refusent tout placement qui peut baisser, même un peu. Ils laissent tout sur un compte courant ou un livret. Ils évitent les petites pertes passagères, mais acceptent sans le voir la perte lente due à l'inflation.
+
+Enfin, l'aversion aux pertes pousse à paniquer pendant les baisses. Voir son épargne fondre de 20 % est si douloureux que l'on vend, souvent au plus bas.
+
+Le prix Nobel
+
+En 2002, Daniel Kahneman reçoit le prix Nobel d'économie pour ces travaux. Amos Tversky, mort en 1996, ne peut pas le recevoir : il n'est pas attribué à titre posthume. Kahneman a toujours dit que ce prix était aussi celui de son ami.
+
+Leurs travaux ont donné naissance à une nouvelle discipline : l'économie comportementale. Elle étudie les erreurs systématiques que nous faisons avec l'argent.
+
+Comment s'en protéger
+
+On ne supprime pas un biais. Mais on peut limiter ses effets. Première idée : regarder ses placements moins souvent. Plus on regarde, plus on voit de petites baisses, et plus on souffre.
+
+Deuxième idée : décider à l'avance. Écrire ses règles avant une baisse, quand on est calme. Par exemple, continuer ses versements quoi qu'il arrive.
+
+Troisième idée : juger un placement sur sa durée totale, pas sur une mauvaise semaine.
+
+L'effet de cadrage
+
+Kahneman et Tversky ont aussi montré que la façon de présenter un choix change la décision. Un traitement qui sauve 200 personnes sur 600 est préféré à un traitement qui en laisse mourir 400. Pourtant, c'est exactement la même chose.
+
+En finance, c'est pareil. « 90 % de chances de gain » attire plus que « 10 % de risque de perte ». Pour le même placement. Les vendeurs le savent. Il faut toujours reformuler une offre dans les deux sens pour la juger.
+
+L'assurance
+
+L'aversion aux pertes explique aussi pourquoi nous aimons tant les garanties. Nous sommes prêts à payer cher pour éviter une petite perte possible. C'est utile pour les gros risques, comme l'incendie d'une maison. Mais beaucoup moins pour de petits risques, comme la casse d'un objet bon marché.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : un pari où l'on gagne 150 euros ou perd 100 euros, à pile ou face, est défavorable ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. En moyenne, il rapporte 25 euros par partie. Mais la peur de perdre pousse la plupart des gens à le refuser. C'est l'aversion aux pertes en action.
+
+Attention, grain de sable
+
+Il y a trois erreurs que provoque ce biais.
+
+Un : garder un mauvais placement pour ne pas « encaisser » la perte. La perte existe déjà, qu'on vende ou non.
+
+Deux : fuir toute baisse possible, et laisser l'inflation grignoter son épargne.
+
+Trois : vendre en panique pendant une chute, parce que la douleur devient insupportable.
+
+Ce qu'il faut retenir
+
+- Une perte fait environ deux fois plus mal qu'un gain équivalent ne fait plaisir
+- Ce biais pousse à garder les perdants et à paniquer pendant les baisses
+- Regarder moins souvent et décider à l'avance aide à s'en protéger
+
+En une phrase : notre cerveau déteste perdre, et cette peur nous fait souvent prendre de mauvaises décisions. Et toi, as-tu déjà gardé un placement juste pour ne pas encaisser la perte ?
+
+Sources : S1 · Daniel Kahneman et Amos Tversky, « Prospect Theory », Econometrica, 1979 (pertes ressenties environ deux fois plus fortement que les gains) ; années 1970
+S2 · Prix Nobel d'économie 2002 attribué à Daniel Kahneman ; Amos Tversky mort en 1996
+S3 · Calcul de la chaîne : (150 − 100) ÷ 2 = 25 euros en moyenne par partie ; exemples de 100, 150 et 200 euros, baisse de 20 %
+S4 · Tversky et Kahneman, « The Framing of Decisions », Science, 1981 (200 personnes sauvées sur 600, 400 morts) ; exemple de 90 % et 10 %
+
+===
+
+# La peur de rater une occasion : le piège du FOMO
+
+Tes amis parlent tous d'une cryptomonnaie qui a pris 300 % en trois mois. Tu sens une urgence : il faut y aller, maintenant. Cette sensation a un nom : le FOMO, la peur de rater quelque chose. Pourquoi est-elle si dangereuse pour ton argent ?
+
+Un acronyme moderne
+
+FOMO vient de l'anglais « fear of missing out ». La peur de rater quelque chose. L'expression s'est répandue avec les réseaux sociaux, où l'on voit en permanence ce que font les autres.
+
+En finance, c'est la peur de passer à côté d'une hausse. Voir les autres gagner de l'argent sans soi est vécu comme une perte. Même si on n'a rien perdu du tout.
+
+Un sentiment très ancien
+
+Ce sentiment n'a rien de nouveau. En 1720, Isaac Newton rachète des actions de la Compagnie des mers du Sud après les avoir vendues avec profit. Il voit ses amis s'enrichir. Il revient au pire moment.
+
+En 1637, pendant la tulipomanie aux Pays-Bas, on achète des bulbes à des prix fous. Parce que tout le monde le fait. En 1999, ce sont les actions internet. Le décor change, l'émotion reste la même.
+
+Comment il se déclenche
+
+Le FOMO apparaît presque toujours après une forte hausse. Quand un placement a déjà beaucoup monté, il attire l'attention. Les médias en parlent. Les amis racontent leurs gains. Les réseaux sociaux s'enflamment.
+
+C'est justement à ce moment-là que le risque est le plus grand. Le prix a déjà intégré beaucoup d'espoirs. Les premiers arrivés commencent parfois à vendre. Ceux qui entrent en dernier achètent au plus cher.
+
+Les vendeurs le savent
+
+Les vendeurs de produits financiers connaissent bien ce sentiment. Ils l'utilisent. « Offre limitée », « plus que quelques places », « ne ratez pas le train ». Ces formules créent une urgence artificielle.
+
+Les escrocs l'utilisent encore plus. Ils montrent des captures d'écran de gains énormes. Ils te pressent de décider aujourd'hui. L'urgence empêche de réfléchir et de vérifier.
+
+Ce que disent les chiffres
+
+Plusieurs études montrent que l'argent des épargnants afflue vers les fonds juste après leurs meilleures années. Et en sort après les mauvaises. Résultat : beaucoup achètent cher et vendent bas. Leur rendement réel est inférieur à celui des fonds eux-mêmes.
+
+C'est le paradoxe de Peter Lynch. Son fonds a fait environ 29 % par an, mais beaucoup de ses clients ont perdu de l'argent.
+
+Comment résister
+
+Première arme : le temps. Une vraie bonne occasion d'investissement sera encore là dans une semaine. Si quelqu'un te presse, c'est souvent mauvais signe.
+
+Deuxième arme : se demander pourquoi on a envie d'acheter. Parce qu'on comprend le placement ? Ou parce que d'autres ont gagné ?
+
+Troisième arme : une méthode fixée à l'avance. Investir régulièrement, selon un plan, laisse moins de place aux coups de tête.
+
+L'inverse : la joie de rater
+
+Face au FOMO, certains parlent de JOMO : « joy of missing out », la joie de rater quelque chose. Accepter de ne pas participer à toutes les modes. Laisser passer certaines occasions sans regret.
+
+En investissement, c'est une vraie force. Personne ne peut profiter de toutes les hausses. Ceux qui essaient finissent souvent par acheter au mauvais moment. Accepter de rater certaines hausses permet aussi d'éviter certaines chutes.
+
+Le rôle des réseaux sociaux
+
+Sur les réseaux sociaux, on voit surtout les gagnants. Les captures d'écran de gains énormes circulent beaucoup. Les pertes, elles, se montrent rarement. Cette vision déformée nourrit le sentiment que tout le monde s'enrichit, sauf soi.
+
+En France, les influenceurs qui parlent de placements doivent respecter des règles. Une loi de 2023 encadre leurs publicités et interdit la promotion de certains produits financiers risqués.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : quand tout le monde parle d'un placement, c'est le meilleur moment pour y entrer ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : souvent faux. Quand tout le monde en parle, le prix a souvent déjà beaucoup monté. C'est parfois le signe que la hausse touche à sa fin.
+
+Attention, grain de sable
+
+Il y a trois réflexes à éviter.
+
+Un : décider sous la pression du temps. L'urgence est l'arme préférée des escrocs.
+
+Deux : juger un placement sur les gains passés des autres. Leurs gains ne seront pas les tiens.
+
+Trois : investir de l'argent dont on aura besoin bientôt. Le FOMO pousse à prendre des risques qu'on ne peut pas se permettre.
+
+Ce qu'il faut retenir
+
+- Le FOMO est la peur de rater une hausse que d'autres ont vécue
+- Il pousse à acheter après une forte hausse, souvent au plus cher
+- Prendre son temps et suivre un plan permet d'y résister
+
+En une phrase : la peur de rater une occasion pousse à acheter trop tard et trop cher. Et toi, as-tu déjà ressenti cette envie pressante d'acheter ?
+
+Sources : S1 · Exemples historiques de la chaîne : bulle des mers du Sud en 1720, tulipomanie en 1637, bulle internet en 1999 ; Peter Lynch, fonds Magellan, environ 29 % par an
+S3 · Loi du 9 juin 2023 encadrant l'influence commerciale
+S2 · Études sur les flux des fonds et l'écart entre rendement des fonds et rendement des épargnants (Morningstar, « Mind the Gap ») ; exemple de 300 % en trois mois
+
+===
+
+# L'effet de troupeau : pourquoi on suit la foule
+
+En 1951, un psychologue montre que 3 personnes sur 4 cèdent au moins une fois à l'avis d'un groupe. Même quand il a visiblement tort. En Bourse, ce réflexe crée des bulles et des krachs. Qu'est-ce que l'effet de troupeau ?
+
+L'expérience des lignes
+
+En 1951, le psychologue Solomon Asch réunit des étudiants pour un test de vision. On leur montre une ligne, puis trois autres. Ils doivent dire laquelle a la même longueur que la première. La réponse est évidente.
+
+Mais dans la salle, tous les autres participants sont des complices. Ils donnent volontairement la même mauvaise réponse. Le vrai participant répond en dernier. Que fait-il ?
+
+Dans de nombreux essais, il suit le groupe, malgré l'évidence. Environ 3 participants sur 4 cèdent au moins une fois. Pour beaucoup, il est plus difficile de contredire la foule que de croire ses propres yeux.
+
+Pourquoi on suit la foule
+
+Suivre le groupe n'est pas toujours idiot. Pendant des millénaires, c'était une stratégie de survie. Si tout le monde court, mieux vaut courir aussi, sans attendre de voir le lion.
+
+Et souvent, la foule a des informations qu'on n'a pas. Un restaurant plein est souvent un bon restaurant. Le problème, c'est quand tout le monde suit tout le monde, et que plus personne ne réfléchit vraiment.
+
+En Bourse
+
+Sur les marchés, l'effet de troupeau est partout. Quand les prix montent, de plus en plus d'investisseurs achètent, parce que les autres achètent. La hausse attire la hausse. C'est ainsi que naissent les bulles.
+
+Quand les prix baissent, c'est l'inverse. La peur se propage. Tout le monde vend en même temps. Les prix s'effondrent bien plus que ce que justifieraient les nouvelles. C'est ainsi que se déroulent les krachs.
+
+Les professionnels n'y échappent pas. Un gérant qui se trompe avec tout le monde sera pardonné. Un gérant qui se trompe seul risque sa carrière. Beaucoup préfèrent donc faire comme les autres.
+
+Les réseaux sociaux
+
+Les réseaux sociaux ont amplifié le phénomène. Une idée peut être reprise par des millions de personnes en quelques heures. En janvier 2021, l'affaire GameStop a montré la puissance d'un troupeau connecté.
+
+Les algorithmes montrent souvent ce qui est populaire. Ils renforcent ainsi l'impression que « tout le monde » fait la même chose. Même si c'est seulement ton fil d'actualité.
+
+Être à contre-courant ?
+
+Certains investisseurs célèbres prônent d'aller contre la foule. Warren Buffett le résume ainsi : être craintif quand les autres sont avides, et avide quand les autres sont craintifs.
+
+Mais aller systématiquement contre la foule n'est pas une stratégie non plus. La foule a souvent raison pendant longtemps. L'important est de comprendre pourquoi on agit, plutôt que de suivre ou de s'opposer par réflexe.
+
+Les cascades d'information
+
+Les économistes parlent de cascades d'information. Imagine deux restaurants vides, côte à côte. Le premier client choisit au hasard. Le deuxième voit un client dans le premier restaurant, et le choisit aussi. Le troisième voit deux clients, et fait pareil.
+
+Très vite, tout le monde va dans le même restaurant, alors que personne ne sait vraiment s'il est meilleur. Chacun a suivi les autres plutôt que son propre avis. En Bourse, des cascades semblables peuvent pousser un prix très loin de sa valeur.
+
+Les paniques bancaires
+
+L'effet de troupeau explique aussi les paniques bancaires. Si quelques clients retirent leur argent par peur, d'autres les imitent. Même une banque solide peut alors manquer de liquidités. La peur devient réalité, simplement parce que tout le monde agit en même temps.
+
+En 2023, la banque américaine Silicon Valley Bank s'est effondrée en quelques jours. Ses clients ont retiré des dizaines de milliards de dollars. Souvent après des messages alarmants sur les réseaux sociaux.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : dans l'expérience d'Asch, presque personne ne suivait le groupe quand la réponse était évidente ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Environ trois participants sur quatre ont suivi au moins une fois le groupe, malgré une réponse évidente. La pression sociale est très puissante.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : prendre la popularité pour une preuve. Ce que beaucoup de gens achètent n'est pas forcément un bon placement.
+
+Deux : croire que les professionnels sont à l'abri. Eux aussi suivent souvent le troupeau.
+
+Trois : faire systématiquement l'inverse de la foule. Ce n'est pas plus réfléchi que de la suivre.
+
+Ce qu'il faut retenir
+
+- L'effet de troupeau pousse à imiter les autres, même contre l'évidence
+- En Bourse, il alimente les bulles et les krachs
+- Comprendre pourquoi on agit protège mieux que suivre ou s'opposer par réflexe
+
+En une phrase : l'effet de troupeau nous pousse à faire comme les autres, même quand ils ont tort. Et toi, t'arrive-t-il de suivre l'avis du groupe contre le tien ?
+
+Sources : S1 · Solomon Asch, expériences de conformité, 1951 (environ 3 participants sur 4 cèdent au moins une fois au groupe) ; GameStop en janvier 2021
+S3 · Wikipédia, « Faillite de la Silicon Valley Bank » (mars 2023, retraits de dizaines de milliards de dollars)
+S2 · Warren Buffett, New York Times, octobre 2008 (« craintif quand les autres sont avides ») ; Robert Shiller, « Irrational Exuberance »
+
+===
+
+# Le biais de confirmation : on ne voit que ce qu'on veut voir
+
+Quand tu crois qu'une action va monter, tu lis surtout les articles qui te donnent raison. Et tu oublies ceux qui disent l'inverse. Ce réflexe a été mis en évidence par une expérience célèbre il y a plus de 60 ans. Il s'appelle le biais de confirmation. Comment nous trompe-t-il avec notre argent ?
+
+La règle des trois nombres
+
+En 1960, le psychologue britannique Peter Wason propose un petit jeu. Il donne aux participants une suite de trois nombres : 2, 4, 6. Il leur dit que cette suite respecte une règle secrète. À eux de la trouver.
+
+Les participants proposent d'autres suites pour tester leur idée. La plupart pensent à une règle comme « des nombres pairs qui augmentent de 2 ». Ils proposent 8, 10, 12. Puis 20, 22, 24. Chaque fois, on leur répond oui.
+
+Ils annoncent fièrement leur règle. Et ils ont tort. La vraie règle était beaucoup plus simple : trois nombres qui augmentent. Ils n'ont jamais testé une suite qui aurait pu contredire leur idée.
+
+Le principe
+
+Le biais de confirmation, c'est la tendance à retenir surtout ce qui confirme ce que l'on croit déjà. Et à ignorer celles qui le contredisent.
+
+Ce n'est pas de la mauvaise foi. C'est un fonctionnement normal de notre cerveau. Il cherche la cohérence et le confort. Être contredit est désagréable. Être conforté est agréable.
+
+En investissement
+
+Imagine que tu as acheté une action. Désormais, tu as envie qu'elle monte. Tu remarques les bonnes nouvelles sur l'entreprise. Tu cliques sur les articles optimistes. Tu suis les personnes qui pensent comme toi.
+
+Les mauvaises nouvelles, tu les minimises. « Ce n'est que temporaire. » « Ce journaliste n'a rien compris. » Peu à peu, ta conviction se renforce, même si les faits devraient la faire vaciller.
+
+Les réseaux sociaux et les algorithmes aggravent ce biais. Ils te montrent surtout ce qui ressemble à ce que tu aimes déjà. Tu finis dans une bulle d'informations qui pensent toutes comme toi.
+
+Les conséquences
+
+Ce biais peut coûter cher. On garde un placement malgré des signaux d'alerte évidents. On augmente sa mise au lieu de se poser des questions. On ne voit pas venir le problème.
+
+De nombreux épargnants floués par des escroqueries célèbres avaient reçu des avertissements. Ils ne les ont pas écoutés. Parce qu'ils voulaient croire à la belle histoire.
+
+Les antidotes
+
+Première méthode : chercher activement l'avis contraire. Avant de prendre une décision, se demander quels sont les meilleurs arguments contre son idée.
+
+Deuxième méthode : écrire à l'avance pourquoi on achète, et ce qui nous ferait changer d'avis. Si ces signaux apparaissent, on les reconnaît plus facilement.
+
+Troisième méthode : demander l'avis de quelqu'un qui n'a pas d'intérêt dans l'affaire. Un regard extérieur voit souvent ce qu'on refuse de voir.
+
+Le cas des prévisions
+
+Le biais de confirmation touche aussi les prévisionnistes. Un analyste qui a annoncé une hausse cherchera des arguments pour la défendre. Un autre qui a prévu une crise trouvera toujours des signes inquiétants.
+
+Certains commentateurs annoncent un krach chaque année pendant des années. Quand il finit par arriver, ils disent avoir eu raison. On oublie toutes les fois où ils se sont trompés. Leur conviction était plus forte que les faits.
+
+L'avocat du diable
+
+Certaines entreprises et certains fonds désignent volontairement une personne chargée de contester chaque décision importante. On l'appelle l'avocat du diable. Son rôle : chercher toutes les raisons pour lesquelles le projet pourrait échouer.
+
+Chacun peut appliquer cette méthode pour lui-même. Avant un choix d'argent important, prendre cinq minutes pour défendre l'avis inverse. C'est inconfortable, mais très efficace.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : dans l'expérience de Wason, les participants testaient surtout des suites qui pouvaient contredire leur idée ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Ils testaient presque toujours des suites qui confirmaient leur idée. C'est pour ça qu'ils ne trouvaient pas la vraie règle.
+
+Attention, grain de sable
+
+Il y a trois réflexes à surveiller.
+
+Un : ne lire que les avis qui te donnent raison. Ton fil d'actualité n'est pas un reflet neutre du monde.
+
+Deux : écarter une mauvaise nouvelle comme « pas importante » sans l'examiner.
+
+Trois : confondre conviction et preuve. Être sûr de soi ne prouve rien.
+
+Ce qu'il faut retenir
+
+- Le biais de confirmation pousse à chercher ce qui confirme nos idées
+- En investissement, il fait ignorer les signaux d'alerte
+- Chercher l'avis contraire est le meilleur antidote
+
+En une phrase : nous cherchons naturellement ce qui nous donne raison, et ce réflexe peut nous coûter cher. Et toi, quand as-tu changé d'avis pour la dernière fois ?
+
+Sources : S1 · Peter Wason, « On the failure to eliminate hypotheses in a conceptual task », 1960 (suite 2, 4, 6 ; exemples 8, 10, 12 et 20, 22, 24 ; plus de 60 ans)
+S2 · Raymond Nickerson, « Confirmation Bias: A Ubiquitous Phenomenon in Many Guises », 1998
+
+===
+
+# L'effet d'ancrage : quand un chiffre te piège
+
+Dans une expérience célèbre, des participants voyaient une roue s'arrêter sur 10 ou sur 65. Ensuite, ils devaient estimer un pourcentage sans aucun rapport. Ceux qui avaient vu 65 donnaient des réponses bien plus élevées. Ce piège s'appelle l'ancrage. Il te touche chaque fois que tu achètes ou que tu vends.
+
+La roue de la fortune
+
+En 1974, Amos Tversky et Daniel Kahneman font tourner une roue devant des participants. Elle est truquée : elle s'arrête soit sur 10, soit sur 65. Puis ils posent une question sans rapport. Quel est le pourcentage de pays africains membres des Nations unies ?
+
+Ceux qui ont vu la roue s'arrêter sur 10 répondent en moyenne environ 25 %. Ceux qui ont vu 65 répondent en moyenne environ 45 %. Un nombre totalement arbitraire a influencé leur estimation.
+
+C'est l'effet d'ancrage. Le premier chiffre que l'on voit sert de point de repère. On ajuste ensuite à partir de lui, mais jamais assez.
+
+Dans les magasins
+
+Les commerçants connaissent très bien ce mécanisme. Un prix barré à 200 euros, puis un prix soldé à 120 euros. Le premier prix sert d'ancre. Le second paraît alors très avantageux, même si le produit ne valait jamais 200 euros.
+
+Dans une négociation, celui qui annonce le premier chiffre fixe souvent l'ancre. Un vendeur qui commence très haut tire le prix final vers le haut.
+
+En Bourse : le prix d'achat
+
+En investissement, l'ancre la plus courante est le prix d'achat. Tu as acheté une action 50 euros. Elle tombe à 30 euros. Tu te dis : je vendrai quand elle reviendra à 50 euros.
+
+Mais le marché ignore complètement le prix auquel tu as acheté. Il n'a aucune raison de revenir à 50 euros. La seule question utile est : aujourd'hui, à 30 euros, est-ce que je l'achèterais ? Si la réponse est non, ton ancre te trompe.
+
+Le plus haut historique
+
+Une autre ancre fréquente, c'est le plus haut historique. Une action qui valait 100 euros et qui est tombée à 40 euros paraît « bon marché ». Elle a perdu 60 %, se dit-on.
+
+Mais elle n'est peut-être pas bon marché du tout. Peut-être valait-elle beaucoup trop cher à 100 euros. Peut-être que l'entreprise a changé. Un ancien prix ne dit rien de la valeur actuelle.
+
+Les prévisions
+
+Les ancres touchent aussi les experts. Les analystes ajustent souvent leurs prévisions par petites touches, à partir de leurs anciennes estimations. Même quand la situation a radicalement changé.
+
+Comment s'en protéger
+
+On ne peut pas faire disparaître ce biais. Mais on peut le repérer. Face à un chiffre, se demander d'où il vient. Est-ce une vraie référence, ou juste le premier nombre entendu ?
+
+Et pour ses placements, se poser régulièrement une question simple. Si je ne possédais pas ce placement aujourd'hui, l'achèterais-je à ce prix ?
+
+Les prix ronds
+
+Les ancres se cachent aussi dans les prix ronds. Une action qui approche les 100 euros attire l'attention. Beaucoup d'investisseurs placent des ordres autour de ces chiffres. Le prix peut alors hésiter longtemps autour de ce seuil symbolique.
+
+Le même phénomène existe pour les indices. Quand le CAC 40 approche un nombre rond, comme 8 000 points, les médias en parlent beaucoup. Pourtant, ce chiffre n'a aucune signification économique particulière.
+
+Le salaire et les négociations
+
+L'ancrage joue aussi dans la vie de tous les jours. Lors d'une négociation de salaire, le premier chiffre annoncé influence fortement le résultat final. C'est pourquoi il est souvent conseillé de bien préparer son chiffre, en s'appuyant sur des références réelles.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : une action qui a perdu 60 % depuis son plus haut est forcément une bonne affaire ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Son ancien prix était peut-être trop élevé, ou l'entreprise peut aller beaucoup plus mal. La baisse seule ne dit rien de sa valeur.
+
+Attention, grain de sable
+
+Il y a trois pièges courants.
+
+Un : attendre de revenir à son prix d'achat avant de vendre. Le marché ne connaît pas ton prix d'achat.
+
+Deux : juger une affaire à partir d'un prix barré ou d'un ancien prix.
+
+Trois : laisser le premier chiffre d'une négociation fixer tout le reste.
+
+Ce qu'il faut retenir
+
+- L'ancrage fait dépendre nos estimations du premier chiffre vu
+- Le prix d'achat est l'ancre la plus fréquente en Bourse
+- La bonne question : l'achèterais-je aujourd'hui, à ce prix ?
+
+En une phrase : un premier chiffre, même absurde, influence nos décisions bien plus qu'on ne le croit. Et toi, attends-tu qu'un placement revienne à ton prix d'achat ?
+
+Sources : S1 · Amos Tversky et Daniel Kahneman, « Judgment under Uncertainty: Heuristics and Biases », Science, 1974 (roue arrêtée sur 10 ou 65, estimations moyennes d'environ 25 % et 45 %)
+S3 · Exemples de seuils ronds : 100 euros, 8 000 points
+S2 · Exemples de la chaîne : prix barré de 200 euros et soldé à 120 euros ; achat à 50 euros, baisse à 30 euros ; plus haut à 100 euros, baisse à 40 euros, soit 60 %
+
+===
+
+# L'excès de confiance : pourquoi ceux qui achètent et vendent le plus gagnent le moins
+
+Une étude célèbre a suivi 66 000 foyers américains de 1991 à 1996. Ceux qui achetaient et vendaient le plus souvent ont obtenu environ 11,4 % par an. Le marché faisait environ 17,9 %. La cause ? L'excès de confiance. Comment ce biais nous coûte-t-il de l'argent ?
+
+Tous au-dessus de la moyenne
+
+Demande à un groupe de conducteurs s'ils conduisent mieux que la moyenne. Dans plusieurs études, une large majorité répond oui. Ce qui est mathématiquement impossible : tout le monde ne peut pas être au-dessus de la moyenne.
+
+C'est l'excès de confiance. Nous surestimons nos compétences, nos connaissances et notre capacité à prévoir l'avenir. Ce biais est très répandu, et il touche particulièrement l'argent.
+
+L'étude des 66 000 foyers
+
+Deux chercheurs américains, Brad Barber et Terrance Odean, étudient 66 000 foyers clients d'un courtier, de 1991 à 1996. Ils comparent leurs résultats selon la fréquence de leurs achats et de leurs ventes.
+
+Le résultat est frappant. Les foyers qui échangeaient le plus ont obtenu environ 11,4 % par an. Le marché, lui, a progressé d'environ 17,9 % par an sur la même période. Plus ils agissaient, moins ils gagnaient.
+
+Leur article porte un titre éloquent : faire du trading est dangereux pour votre richesse.
+
+Pourquoi ils perdent
+
+D'abord à cause des frais. Chaque achat et chaque vente coûtent des frais de courtage et un écart de prix. Multipliés par des centaines d'opérations, ils pèsent très lourd.
+
+Ensuite parce que leurs choix ne sont pas meilleurs que le hasard. Souvent, les actions qu'ils vendent font ensuite mieux que celles qu'ils achètent. Ils changent, mais pas pour mieux.
+
+Enfin parce que l'excès de confiance pousse à croire qu'on a trouvé une information que le marché ignore. Alors que des milliers de professionnels ont déjà analysé la même chose.
+
+Les hommes et les femmes
+
+Dans une autre étude, les mêmes chercheurs comparent les hommes et les femmes. Les hommes échangent environ 45 % plus souvent que les femmes. Et leur rendement net en souffre davantage.
+
+Les chercheurs y voient un effet de l'excès de confiance, plus marqué chez les hommes dans ce domaine. Ce n'est pas une question de compétence, mais de comportement.
+
+L'illusion de contrôle
+
+L'excès de confiance s'accompagne souvent d'une illusion de contrôle. Le sentiment de maîtriser une situation qui dépend en grande partie du hasard. Les applications de Bourse, avec leurs graphiques en direct et leurs notifications, renforcent ce sentiment.
+
+On a l'impression d'agir, de piloter. En réalité, les mouvements de court terme sont largement imprévisibles.
+
+Les antidotes
+
+Tenir un journal de ses décisions aide beaucoup. Noter pourquoi on achète, ce qu'on prévoit, puis comparer avec la réalité. On découvre vite que nos prévisions sont moins justes qu'on ne le pensait.
+
+Agir moins souvent est aussi une protection. Moins d'opérations, c'est moins de frais et moins d'occasions de se tromper.
+
+Les applications gratuites
+
+Depuis quelques années, des applications permettent d'acheter et vendre des actions sans frais de courtage apparents. Ça paraît idéal. Mais ces applications gagnent de l'argent autrement, notamment sur l'écart entre prix d'achat et de vente.
+
+Leur conception pousse souvent à agir. Notifications, couleurs vives, confettis après un achat. Ces petits signaux encouragent l'activité. Or les études montrent que plus on agit, plus le résultat risque d'en souffrir.
+
+Le rôle de la chance
+
+En Bourse, la chance joue un grand rôle à court terme. Un débutant peut gagner beaucoup en quelques semaines, simplement parce que le marché monte. Il en conclut qu'il est doué. Il augmente ses mises. Puis le marché se retourne.
+
+Distinguer la compétence de la chance demande beaucoup de temps et beaucoup d'opérations. Quelques bons coups ne prouvent rien.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : dans l'étude de Barber et Odean, les foyers les plus actifs ont battu le marché ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Ils ont obtenu environ 11,4 % par an, contre environ 17,9 % pour le marché. Agir beaucoup leur a coûté cher.
+
+Attention, grain de sable
+
+Il y a trois pièges courants.
+
+Un : confondre activité et performance. Agir souvent ne fait pas gagner plus.
+
+Deux : attribuer ses gains à son talent, et ses pertes à la malchance.
+
+Trois : croire qu'on sait quelque chose que le marché ignore.
+
+Ce qu'il faut retenir
+
+- L'excès de confiance nous fait surestimer nos capacités
+- Les investisseurs les plus actifs gagnent souvent le moins
+- Agir moins et noter ses décisions aide à s'en protéger
+
+En une phrase : l'excès de confiance pousse à trop agir, et chaque opération en trop coûte de l'argent. Et toi, penses-tu être meilleur que la moyenne pour choisir des placements ?
+
+Sources : S1 · Brad Barber et Terrance Odean, « Trading Is Hazardous to Your Wealth », Journal of Finance, 2000 (66 000 foyers, 1991 à 1996, environ 11,4 % par an pour les plus actifs contre environ 17,9 % pour le marché)
+S2 · Brad Barber et Terrance Odean, « Boys Will Be Boys », Quarterly Journal of Economics, 2001 (hommes échangeant environ 45 % plus souvent que les femmes) ; études sur les conducteurs (Ola Svenson, 1981)
+
+===
+
+# Le biais du survivant : les avions qui ne sont pas revenus
+
+Pendant la Seconde Guerre mondiale, l'armée américaine veut renforcer ses avions là où ils sont le plus touchés. Un mathématicien lui répond : il faut faire l'inverse. Cette histoire de plus de 80 ans explique un piège qui fausse notre vision de l'argent. Lequel ?
+
+Les avions criblés de balles
+
+Pendant la guerre, les bombardiers alliés reviennent de mission couverts d'impacts de balles. Les militaires étudient où se trouvent ces trous. Ils en voient beaucoup sur les ailes et le fuselage. Beaucoup moins sur les moteurs.
+
+Leur idée : ajouter du blindage là où les avions sont le plus touchés. Mais le blindage est lourd. On ne peut pas en mettre partout. Il faut choisir.
+
+L'intuition de Wald
+
+Le mathématicien Abraham Wald travaille alors pour un groupe de recherche de l'armée américaine. Il fait remarquer un détail essentiel. On n'étudie que les avions qui sont revenus.
+
+Les avions touchés aux moteurs, eux, ne sont jamais rentrés. Ils se sont écrasés. Les trous sur les ailes montrent seulement les endroits où un avion peut être touché et survivre. Il faut donc renforcer les zones où les survivants n'ont pas de trous : les moteurs.
+
+Le principe
+
+C'est le biais du survivant. On tire des conclusions en regardant seulement ceux qui ont réussi, ou survécu. Et on oublie tous ceux qui ont disparu. Ce qui fausse complètement le tableau.
+
+En investissement
+
+Ce biais est partout en finance. On cite les entreprises géantes nées à l'époque de la bulle internet. On oublie les centaines qui ont fait faillite. On parle des gagnants du bitcoin, pas des milliers de cryptomonnaies disparues.
+
+Les fonds d'investissement aussi. Les sociétés de gestion ferment souvent leurs fonds les moins performants, ou les fusionnent avec d'autres. Quand on regarde les fonds qui existent encore, on ne voit que les survivants. Leur performance moyenne paraît meilleure qu'elle ne l'était vraiment.
+
+Selon certaines études, ce biais peut améliorer artificiellement la performance moyenne apparente d'un ensemble de fonds. Il faut corriger les données pour avoir une image juste.
+
+Les histoires de réussite
+
+Les livres et les vidéos de réussite tombent souvent dans ce piège. On raconte l'histoire d'un entrepreneur qui a quitté ses études et a réussi. On en conclut qu'il faut quitter ses études.
+
+Mais on ne raconte pas l'histoire de tous ceux qui ont fait la même chose et ont échoué. Ils ne font pas de conférences. Ils n'écrivent pas de livres. Leur silence fausse la leçon.
+
+Comment s'en protéger
+
+La bonne question est toujours la même. Qui est-ce que je ne vois pas ? Où sont passés ceux qui ont échoué ? Combien étaient-ils au départ ?
+
+Avant de suivre l'exemple d'un gagnant, il faut chercher à connaître le nombre total de joueurs. Un gagnant sur dix, ce n'est pas un gagnant sur mille.
+
+Le cas des indices
+
+Même les indices boursiers ont un petit biais du survivant. Les entreprises qui déclinent en sortent, et sont remplacées par celles qui grandissent. Regarder l'indice sur cinquante ans, c'est donc regarder un panier qui a été renouvelé en permanence.
+
+Ce n'est pas un défaut : un fonds qui suit l'indice fait la même chose, automatiquement. Mais ça rappelle qu'une entreprise prise seule peut disparaître, même si l'indice, lui, continue de monter.
+
+Les méthodes miracles
+
+Sur internet, on trouve beaucoup de méthodes présentées comme infaillibles. Elles s'appuient souvent sur quelques exemples réussis, choisis après coup. Les cas où la méthode a échoué sont rarement montrés.
+
+Une méthode sérieuse doit être testée sur tous les cas, y compris les mauvais. Et sur une longue période. Sans ça, elle risque d'être un simple récit de survivants.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : selon Wald, il fallait renforcer les zones les plus touchées sur les avions revenus ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Il fallait renforcer les zones intactes sur les avions revenus. Car les avions touchés à ces endroits n'étaient justement pas revenus.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : tirer une règle de l'histoire d'un seul gagnant. On ne voit pas tous ceux qui ont échoué de la même façon.
+
+Deux : juger une catégorie de placements sur les seuls survivants. Les fonds fermés et les entreprises disparues ont aussi existé.
+
+Trois : croire qu'une méthode marche parce que ceux qui l'ont suivie ont réussi. Peut-être que beaucoup d'autres l'ont suivie et ont échoué.
+
+Ce qu'il faut retenir
+
+- Le biais du survivant fait oublier ceux qui ont échoué
+- Il rend les placements et les réussites plus brillants qu'ils ne le sont
+- La bonne question : qui est-ce que je ne vois pas ?
+
+En une phrase : en ne regardant que les gagnants, on se fait une idée fausse de ses chances. Et toi, quelle histoire de réussite t'a peut-être trompé ?
+
+Sources : S1 · Wikipédia, « Abraham Wald » et « Biais du survivant » (bombardiers de la Seconde Guerre mondiale, Statistical Research Group, travaux de 1943, soit plus de 80 ans)
+S3 · Indices sur cinquante ans, renouvellement de leur composition
+S2 · Études sur le biais du survivant dans les fonds d'investissement (Elton, Gruber et Blake, 1996 ; rapports SPIVA sur la survie des fonds)
+
+===
+
+# La comptabilité mentale : pourquoi un euro n'est pas toujours un euro
+
+Tu gagnes 500 euros au loto et tu les dépenses en un week-end. Mais 500 euros de salaire, tu les aurais gérés avec soin. Pourtant, c'est exactement le même argent. Ce piège a valu le prix Nobel d'économie 2017 à Richard Thaler. Qu'est-ce que la comptabilité mentale ?
+
+Des petites boîtes dans la tête
+
+Dans notre tête, nous rangeons l'argent dans des boîtes différentes. L'argent du loyer. L'argent des vacances. L'argent des courses. L'argent gagné par chance. L'argent « pour plus tard ».
+
+Ce rangement n'est pas absurde. Il aide à organiser un budget. Mais il a un défaut. Il nous fait traiter l'argent différemment selon sa boîte. Alors qu'un euro reste un euro, d'où qu'il vienne.
+
+L'argent vite dépensé
+
+L'économiste Richard Thaler a étudié ce phénomène. L'argent reçu par surprise, un cadeau, un remboursement, un gain au jeu, est souvent dépensé plus vite. On le considère comme un bonus, qui « ne compte pas vraiment ».
+
+Les casinos le savent bien. Ceux qui gagnent un peu misent souvent à nouveau leurs gains plus facilement. On parle de l'effet « argent de la maison » : on joue avec l'argent du casino, pas avec le sien.
+
+Épargner et s'endetter en même temps
+
+L'exemple le plus coûteux de la comptabilité mentale est fréquent. Des gens gardent de l'argent sur un livret qui rapporte peu. Et en même temps, ils remboursent un crédit renouvelable très cher.
+
+Logiquement, utiliser l'épargne pour rembourser la dette chère ferait économiser beaucoup d'intérêts. Mais dans leur tête, l'épargne est « intouchable ». Elle appartient à une autre boîte.
+
+Il peut y avoir de bonnes raisons de garder une réserve, comme l'épargne de précaution. Mais il faut faire le calcul, plutôt que de laisser les boîtes décider.
+
+Les remboursements d'impôts
+
+Beaucoup de ménages se réjouissent d'un remboursement d'impôt, comme d'un cadeau. Pourtant, c'est simplement leur propre argent, prêté gratuitement à l'État pendant des mois. La boîte « remboursement » rend l'argent plus joyeux, et plus facile à dépenser.
+
+Les placements
+
+La comptabilité mentale touche aussi les investisseurs. Beaucoup jugent chaque placement séparément, au lieu de regarder l'ensemble. Ils se réjouissent d'un gain ici, se désolent d'une perte là. Alors que c'est le résultat global qui compte.
+
+Le prix Nobel
+
+En 2017, Richard Thaler reçoit le prix Nobel d'économie. Il est récompensé pour ses travaux sur l'économie comportementale, dont la comptabilité mentale. Il a aussi popularisé l'idée de « coup de pouce ». De petits changements qui aident à mieux décider, comme l'épargne automatique.
+
+L'utiliser à son avantage
+
+La comptabilité mentale peut aussi être utile. Créer une boîte « épargne » alimentée automatiquement chaque mois aide à épargner. Séparer son épargne de précaution de ses placements de long terme aide à ne pas tout mélanger.
+
+L'important est de savoir que ces boîtes existent. Et de vérifier de temps en temps qu'elles ne coûtent pas cher.
+
+La carte bancaire
+
+Payer par carte change aussi notre perception de l'argent. Plusieurs études montrent qu'on dépense souvent plus avec une carte qu'avec des billets. Voir les billets quitter son portefeuille rend la dépense plus concrète. Avec une carte, et encore plus avec un téléphone, l'argent devient abstrait.
+
+C'est pour ça que certaines personnes retirent en liquide leur budget de la semaine. Une fois l'enveloppe vide, plus de dépenses. C'est une façon d'utiliser la comptabilité mentale à son avantage.
+
+La prime de fin d'année
+
+Une prime ou un treizième mois arrive souvent comme une bonne surprise, même quand on le savait. Beaucoup le dépensent dans des achats plaisir. Décider à l'avance de sa répartition, par exemple une partie pour l'épargne, permet d'éviter qu'il disparaisse sans y penser.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : 2 000 euros sur un livret à 2 %, avec un crédit à 18 %, ça peut coûter cher ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : vrai. Sur 2 000 euros, l'écart représente environ 320 euros par an. Les boîtes de la comptabilité mentale cachent souvent ce genre de calcul.
+
+Attention, grain de sable
+
+Il y a trois pièges courants.
+
+Un : dépenser plus facilement l'argent reçu par surprise. C'est de l'argent comme un autre.
+
+Deux : épargner à faible taux tout en remboursant une dette chère.
+
+Trois : juger chaque placement séparément au lieu de regarder l'ensemble.
+
+Ce qu'il faut retenir
+
+- Nous rangeons l'argent dans des boîtes mentales
+- Ces boîtes nous font traiter le même euro différemment
+- Elles peuvent aussi aider, si on les utilise consciemment
+
+En une phrase : un euro reste un euro, même si notre cerveau le range dans des boîtes différentes. Et toi, dans quelle boîte ranges-tu l'argent que tu reçois par surprise ?
+
+Sources : S1 · Richard Thaler, « Mental Accounting Matters », 1999 ; prix Nobel d'économie 2017 (économie comportementale, comptabilité mentale, « Nudge »)
+S2 · Calcul de la chaîne : 2 000 euros × (18 % − 2 %) = 320 euros par an ; exemples de 500 euros ; treizième mois
+
+===
+
+# Les arnaques au placement : comment les reconnaître
+
+Un rendement « assuré » de 10 % par mois. Un conseiller qui t'appelle sans que tu l'aies sollicité. Une plateforme qui bloque ton argent. Chaque année, des milliers de Français se font piéger par de faux placements. Comment repérer une arnaque avant qu'il ne soit trop tard ?
+
+Le premier contact
+
+Tout commence souvent par un contact. Une publicité sur les réseaux sociaux, avec une célébrité dont l'image a été volée. Un appel d'un « conseiller » très aimable. Un message sur une application de rencontre. Parfois un formulaire rempli par curiosité.
+
+Les escrocs se présentent comme des professionnels. Ils utilisent parfois le nom d'une vraie banque ou d'une vraie société, en le modifiant légèrement. Leurs sites sont soignés, leurs documents ressemblent à de vrais contrats.
+
+La promesse
+
+Vient ensuite la promesse. Un rendement très élevé, sans danger apparent. Des placements à la mode : cryptomonnaies, diamants, vins rares, forêts, panneaux solaires, livrets à taux exceptionnel.
+
+Le discours est rassurant. « Capital protégé. » « Rendement sûr. » « Réservé à quelques clients. » Ces formules doivent alerter. Aucun placement réel ne combine un rendement élevé et une absence totale de risque.
+
+Le piège se referme
+
+Au début, tout semble fonctionner. Ton compte en ligne affiche des gains. Parfois, tu peux même retirer une petite somme. Ça rassure, et ça pousse à verser davantage.
+
+Puis, quand tu veux récupérer ton argent, les problèmes commencent. On te demande de payer des frais, des taxes, une caution. Chaque paiement en appelle un autre. Finalement, le conseiller ne répond plus. Le site disparaît.
+
+L'arnaque à la récupération
+
+Le pire vient parfois après. Des victimes sont recontactées par de faux avocats ou de faux enquêteurs. Ils promettent de récupérer l'argent perdu, contre paiement. C'est une deuxième arnaque, qui vise des personnes déjà fragilisées.
+
+Les signaux d'alerte
+
+Plusieurs signaux doivent faire réagir immédiatement.
+
+- Un contact que tu n'as pas sollicité
+- Un rendement élevé présenté comme sûr
+- Une pression pour décider vite
+- Un paiement demandé vers un compte à l'étranger ou en cryptomonnaie
+- Des frais à payer avant de pouvoir retirer ton argent
+
+Les bons réflexes
+
+Avant de confier de l'argent, il faut vérifier que l'intermédiaire est autorisé. Le registre officiel des intermédiaires financiers, appelé Orias, et les listes de l'AMF et de l'ACPR sont en ligne. L'AMF publie aussi des listes noires de sites non autorisés.
+
+En cas de doute, l'AMF propose un service d'information gratuit, AMF Épargne Info Service. On peut aussi signaler une arnaque sur la plateforme publique dédiée aux escroqueries en ligne.
+
+Si tu as déjà versé de l'argent, il faut prévenir ta banque au plus vite et déposer plainte. Et ne jamais payer quelqu'un qui promet de récupérer les fonds.
+
+Les arnaques sentimentales
+
+Une forme d'arnaque se développe beaucoup : l'arnaque sentimentale à l'investissement. Un inconnu engage la conversation sur un réseau social ou une application de rencontre. Pendant des semaines, il crée une relation de confiance, parfois amoureuse.
+
+Puis il évoque ses propres gains en cryptomonnaies, et propose de t'aider à investir. La victime verse de l'argent sur une plateforme contrôlée par l'escroc. Les pertes peuvent être considérables. Ces arnaques sont parfois menées par de véritables réseaux organisés.
+
+L'usurpation d'identité
+
+Les escrocs copient aussi l'identité de vraies sociétés autorisées. Même nom, même adresse, parfois même numéro d'enregistrement. Il faut donc vérifier les coordonnées sur le site officiel de la société. Jamais sur les documents envoyés par l'interlocuteur.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : si une plateforme te laisse retirer une petite somme, c'est la preuve qu'elle est honnête ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Les escrocs laissent souvent retirer une petite somme au début. C'est une technique pour gagner ta confiance, et te pousser à verser davantage.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : croire qu'on est trop malin pour se faire avoir. Des personnes de tous âges et de tous milieux sont victimes.
+
+Deux : faire confiance à une célébrité dans une publicité. Son image est souvent utilisée sans son accord.
+
+Trois : payer des frais pour débloquer ses gains. C'est presque toujours le signe d'une arnaque.
+
+Ce qu'il faut retenir
+
+- Un rendement élevé présenté comme sûr est un signal d'alerte
+- Il faut vérifier l'intermédiaire sur les registres officiels avant de verser
+- Ne jamais payer pour récupérer des fonds perdus
+
+En une phrase : les arnaques au placement promettent des gains sûrs et rapides, puis bloquent ton argent. Et toi, connais-tu quelqu'un qui a reçu ce genre de proposition ?
+
+Sources : S1 · Autorité des marchés financiers et ACPR, mises en garde et listes noires des sites non autorisés ; registre Orias ; AMF Épargne Info Service
+S2 · Plateforme publique de signalement des escroqueries en ligne ; faux placements en cryptomonnaies, diamants, vins et livrets (alertes de l'AMF et de la Banque de France) ; exemple de 10 % par mois ; plusieurs milliers de victimes par an
+
+===
+
+# La règle de 72 : en combien de temps ton argent double-t-il ?
+
+À 6 % par an, ton argent double en environ 12 ans. À 3 %, en environ 24 ans. Pour le savoir, il suffit de diviser 72 par le taux. Cette astuce de calcul a plus de 500 ans. Comment fonctionne la règle de 72 ?
+
+La règle
+
+La règle de 72 est un calcul mental très simple. On divise 72 par le taux de rendement annuel. Le résultat donne, à peu près, le nombre d'années nécessaires pour doubler un capital.
+
+À 8 % par an : 72 divisé par 8, ça fait 9. Ton argent double en environ 9 ans. À 4 % par an : 72 divisé par 4, ça fait 18 ans. À 1 % par an : 72 ans.
+
+Pourquoi ça marche
+
+Cette règle repose sur les intérêts composés. Chaque année, les intérêts s'ajoutent au capital, et rapportent à leur tour des intérêts. Le capital grandit de plus en plus vite.
+
+Le calcul exact demande des logarithmes. La règle de 72 en est une approximation, très précise pour des taux entre 4 % et 12 % environ. Et 72 a un avantage : il se divise facilement par 2, 3, 4, 6, 8, 9 et 12.
+
+Une règle très ancienne
+
+La règle de 72 apparaît dans un livre de mathématiques publié en 1494 par le moine italien Luca Pacioli. Il est aussi connu comme l'un des pères de la comptabilité moderne, avec la comptabilité en partie double.
+
+Pacioli la présente sans explication, comme une règle connue des marchands. Elle était donc probablement utilisée avant lui. Les marchands de la Renaissance s'en servaient pour estimer leurs placements et leurs prêts.
+
+L'inflation aussi
+
+La règle de 72 fonctionne aussi à l'envers. Elle permet de savoir en combien de temps les prix doublent avec l'inflation. Avec 3 % d'inflation par an, les prix doublent en environ 24 ans.
+
+Autrement dit, ton argent perd la moitié de son pouvoir d'achat en 24 ans, s'il ne rapporte rien. Avec 6 % d'inflation, il faudrait seulement 12 ans. C'est une façon frappante de comprendre l'effet de l'inflation.
+
+Les dettes aussi
+
+La règle s'applique aussi aux dettes. Une dette à 18 % par an, non remboursée, double en environ 4 ans. C'est pour ça que les dettes chères, comme certains crédits renouvelables ou découverts, peuvent devenir si lourdes.
+
+L'effet des frais
+
+La règle de 72 montre aussi l'importance des frais. Un placement qui rapporte 6 % double en 12 ans. Avec 2 % de frais par an, il ne rapporte plus que 4 %. Il double alors en 18 ans. Six ans de plus, à cause des frais.
+
+Sur toute une vie d'épargne, ces années perdues représentent un doublement en moins. Une différence énorme.
+
+Le pouvoir du temps
+
+Faisons un dernier calcul. À 6 % par an, un capital double tous les 12 ans environ. En 36 ans, il double trois fois. Il est donc multiplié par 8. Mille euros deviennent environ 8 000 euros.
+
+C'est pour ça que l'on dit souvent que le temps est le meilleur allié de l'épargnant. Commencer tôt, c'est donner à son argent le temps de doubler plusieurs fois.
+
+Les cousines de la règle
+
+Il existe aussi la règle de 70, parfois plus précise pour les taux faibles. Et la règle de 69,3, encore plus exacte quand les intérêts sont calculés en continu. Pour un calcul mental rapide, 72 reste la plus pratique.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : à 9 % par an, un capital double en environ 8 ans ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : vrai. 72 divisé par 9, ça fait 8. Le calcul exact donne un peu plus de 8 ans, mais la règle est très proche.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : prendre un rendement passé pour une promesse. La règle suppose un taux constant, ce qui n'arrive jamais vraiment en Bourse.
+
+Deux : oublier l'inflation. Doubler son argent en euros ne veut pas dire doubler son pouvoir d'achat.
+
+Trois : oublier les frais et les impôts, qui réduisent le taux réel.
+
+Ce qu'il faut retenir
+
+- 72 divisé par le taux donne le nombre d'années pour doubler
+- La règle fonctionne pour les placements, l'inflation et les dettes
+- Les frais et le temps changent énormément le résultat
+
+En une phrase : divise 72 par le taux, et tu sais en combien d'années ton argent double. Et toi, en combien d'années ton épargne doublerait-elle à son taux actuel ?
+
+Sources : S1 · Luca Pacioli, « Summa de arithmetica », 1494 (règle de 72) ; Wikipédia, « Règle de 72 » ; 2026 moins 1494, soit plus de 500 ans
+S2 · Calcul de la chaîne : 72 ÷ 6 = 12 ans, 72 ÷ 3 = 24 ans, 72 ÷ 8 = 9 ans, 72 ÷ 4 = 18 ans, 72 ÷ 1 = 72 ans, 72 ÷ 18 = 4 ans, 72 ÷ 9 = 8 ans ; à 6 %, trois doublements en 36 ans, soit 1 000 euros devenus environ 8 000 euros ; frais de 2 % ; taux de 4 % à 12 % ; règles de 70 et de 69,3
+
+===
+
+# Vendre ses gagnants, garder ses perdants : l'erreur de presque tout le monde
+
+Une étude portant sur 10 000 comptes de particuliers l'a montré. On vend bien plus volontiers une action en gain qu'une action en perte. Résultat, les gagnants partent trop tôt et les perdants restent trop longtemps. Ce piège a un nom : l'effet de disposition. Pourquoi le fait-on ?
+
+Le constat
+
+En 1985, deux économistes, Hersh Shefrin et Meir Statman, donnent un nom à ce comportement : l'effet de disposition. Les investisseurs ont tendance à vendre trop tôt les placements qui ont monté. Et à garder trop longtemps ceux qui ont baissé.
+
+En 1998, Terrance Odean vérifie cette idée sur les comptes de 10 000 clients d'un courtier américain. Le résultat est net. Les clients réalisent leurs gains bien plus volontiers que leurs pertes.
+
+Pourquoi on vend les gagnants
+
+Vendre un placement en gain procure un plaisir immédiat. On « encaisse » sa réussite. On se sent compétent. Et on a peur que le gain disparaisse si on attend.
+
+C'est un peu comme quitter une table de jeu juste après avoir gagné. On veut sécuriser le plaisir de la victoire.
+
+Pourquoi on garde les perdants
+
+À l'inverse, vendre un placement en perte oblige à reconnaître son erreur. C'est douloureux. Tant qu'on ne vend pas, on peut se dire que la perte n'est pas réelle. Qu'elle n'est que « sur le papier ».
+
+On espère que le prix revienne à son niveau d'achat. On attend, parfois des années. C'est le lien avec l'aversion aux pertes et l'effet d'ancrage, deux autres biais très puissants.
+
+Pourquoi c'est une erreur
+
+Dans l'étude d'Odean, les actions vendues en gain ont ensuite fait mieux, en moyenne, que les actions gardées en perte. Autrement dit, les investisseurs se séparaient des meilleures et gardaient les moins bonnes.
+
+C'est l'inverse de ce que conseillait déjà le spéculateur Jesse Livermore : couper vite ses pertes, et laisser courir ses gains. Une règle simple à dire, très difficile à appliquer.
+
+La fiscalité s'en mêle
+
+Ce comportement coûte parfois aussi en impôts. Sur un compte-titres, vendre un gain déclenche un impôt. Vendre une perte permet au contraire de réduire l'impôt sur d'autres gains. En vendant ses gagnants et en gardant ses perdants, on fait souvent le pire choix fiscal.
+
+La question à se poser
+
+Le prix d'achat ne devrait pas décider de la vente. Ce qui compte, c'est l'avenir du placement, pas son passé. La bonne question reste la même : si je n'avais pas ce placement, l'achèterais-je aujourd'hui, à ce prix ?
+
+Si la réponse est non, la perte ou le gain passé ne change rien. Et si la réponse est oui, il n'y a pas forcément de raison de vendre, même avec un beau gain.
+
+Une méthode simple
+
+Pour les placements de long terme, une méthode régulière évite beaucoup de ces erreurs. Par exemple, un fonds diversifié, alimenté chaque mois, et rééquilibré une fois par an. On décide selon une règle, pas selon l'émotion du moment.
+
+Le rééquilibrage
+
+Le rééquilibrage est une méthode qui va dans le bon sens, sans dépendre de l'émotion. On fixe une répartition, par exemple 60 % en actions et 40 % en placements prudents. Une fois par an, on revient à cette répartition.
+
+Si les actions ont beaucoup monté, on en vend un peu pour revenir à 60 %. Si elles ont baissé, on en rachète. La règle décide, pas l'humeur. Et on finit, mécaniquement, par vendre un peu cher et racheter un peu moins cher.
+
+Les professionnels aussi
+
+Les professionnels ne sont pas à l'abri de ce biais. Des études montrent que certains gérants de fonds le subissent aussi. En général moins fort que les particuliers. Les règles internes de gestion, comme les limites de perte, servent justement à le combattre.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : une perte n'existe vraiment que lorsqu'on vend son placement ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. La perte de valeur existe déjà, que tu vendes ou non. Vendre la rend seulement visible dans tes comptes. Ton patrimoine, lui, a déjà baissé.
+
+Attention, grain de sable
+
+Il y a trois pièges courants.
+
+Un : vendre un placement simplement parce qu'il a monté. Ce n'est pas une raison suffisante.
+
+Deux : garder un placement simplement pour ne pas reconnaître une perte.
+
+Trois : laisser le prix d'achat décider, au lieu de l'avenir du placement.
+
+Ce qu'il faut retenir
+
+- L'effet de disposition pousse à vendre les gagnants et garder les perdants
+- Il vient du plaisir de gagner et de la douleur d'admettre une erreur
+- Le prix d'achat ne devrait pas décider de la vente
+
+En une phrase : par émotion, on vend trop vite ce qui monte et on garde trop longtemps ce qui baisse. Et toi, as-tu déjà gardé un placement juste pour ne pas admettre une erreur ?
+
+Sources : S1 · Hersh Shefrin et Meir Statman, « The Disposition to Sell Winners Too Early and Ride Losers Too Long », Journal of Finance, 1985
+S2 · Terrance Odean, « Are Investors Reluctant to Realize Their Losses? », Journal of Finance, 1998 (10 000 comptes d'un courtier américain, actions vendues en gain faisant ensuite mieux que les actions gardées en perte) ; exemple de rééquilibrage à 60 % et 40 %

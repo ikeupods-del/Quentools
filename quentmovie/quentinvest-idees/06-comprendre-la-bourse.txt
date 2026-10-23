@@ -1,0 +1,962 @@
+@theme Comprendre la Bourse
+
+# Qu'est-ce qu'une action ?
+
+Quand tu achètes une action à 50 euros, tu deviens propriétaire d'un tout petit morceau d'une entreprise. Une boulangerie géante découpée en millions de parts. Mais qu'est-ce que ça te donne vraiment, et pourquoi son prix bouge-t-il tout le temps ?
+
+Une part d'entreprise
+
+Une entreprise a besoin d'argent pour démarrer ou grandir. Elle peut emprunter à une banque. Ou trouver des associés, qui apportent de l'argent en échange d'une part de la propriété. Chaque part s'appelle une action.
+
+Imagine une entreprise découpée en un million d'actions. Si tu en possèdes une, tu détiens un millionième de l'entreprise. Tu es actionnaire. Tu possèdes une petite partie de ses bâtiments, de ses machines, de ses marques et de ses bénéfices futurs.
+
+Ce que donne une action
+
+Être actionnaire donne des droits. Le droit de recevoir une partie des bénéfices, quand l'entreprise décide d'en distribuer. C'est le dividende. Il n'est jamais obligatoire.
+
+Le droit de voter aux assemblées générales. Les actionnaires y approuvent les comptes, élisent les administrateurs, se prononcent sur les grandes décisions. En général, une action donne une voix.
+
+Et le droit à l'information. L'entreprise cotée doit publier régulièrement ses comptes et informer ses actionnaires des événements importants.
+
+Pourquoi le prix bouge
+
+Le prix d'une action en Bourse n'est pas fixé par l'entreprise. Il résulte de la rencontre entre des acheteurs et des vendeurs. S'il y a plus d'acheteurs que de vendeurs à un prix donné, le prix monte. Sinon, il baisse.
+
+Et pourquoi les acheteurs et les vendeurs changent-ils d'avis ? Parce qu'ils essaient d'estimer ce que l'entreprise gagnera dans le futur. Une bonne nouvelle, un nouveau produit, un bon résultat : le prix monte. Un scandale, une crise, une perte : il baisse.
+
+L'humeur générale compte aussi. Quand les investisseurs sont optimistes, ils acceptent de payer plus cher. Quand ils ont peur, ils vendent, même des entreprises en bonne santé.
+
+Le risque
+
+Une action peut monter fortement. Elle peut aussi baisser fortement, et même tomber à zéro si l'entreprise fait faillite. Dans ce cas, l'actionnaire passe après tous les créanciers. Il récupère rarement quelque chose.
+
+En revanche, l'actionnaire ne peut pas perdre plus que ce qu'il a mis. Si tu achètes une action 50 euros, ta perte maximale est de 50 euros. Sauf si tu as emprunté pour l'acheter.
+
+Pourquoi en acheter ?
+
+Sur longue période, les actions ont historiquement rapporté plus que les livrets ou les obligations. C'est la récompense du risque pris. Mais ce n'est jamais garanti, et le chemin est fait de hauts et de bas.
+
+C'est pour réduire ce risque que l'on répartit souvent son argent entre de nombreuses entreprises. Si l'une va mal, les autres compensent. On appelle ça la diversification.
+
+Différents types d'actions
+
+Toutes les actions ne se ressemblent pas. Il existe des actions ordinaires, les plus courantes. Des actions de préférence, qui donnent par exemple un dividende plus élevé mais moins de droits de vote. Et parfois des actions à droits de vote double.
+
+En France, une loi de 2014 donne un droit de vote double aux actionnaires fidèles. Il faut garder ses actions au nominatif au moins deux ans. Sauf si l'entreprise le refuse dans ses statuts. L'idée : récompenser les actionnaires fidèles.
+
+Combien d'actionnaires en France ?
+
+Selon les enquêtes de l'Autorité des marchés financiers, quelques millions de Français détiennent des actions en direct. Bien plus en possèdent indirectement, sans toujours le savoir, à travers leur assurance-vie, leur épargne salariale ou leur retraite.
+
+Autrement dit, beaucoup de gens sont déjà un peu actionnaires. Ils financent des entreprises sans les avoir choisies eux-mêmes.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : une entreprise reçoit de l'argent chaque fois que son action est achetée en Bourse ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. En Bourse, l'action passe d'un investisseur à un autre. L'entreprise ne reçoit de l'argent que quand elle émet de nouvelles actions, par exemple lors de son introduction en Bourse.
+
+Attention, grain de sable
+
+Il y a trois idées reçues sur les actions.
+
+Un : croire qu'une action est un billet de loterie. C'est une part d'une vraie entreprise, avec des bénéfices et des dettes.
+
+Deux : penser qu'une action bon marché, à 2 euros, est forcément une bonne affaire. Le prix seul ne dit rien. Il faut le comparer à ce que vaut l'entreprise.
+
+Trois : oublier que l'actionnaire est payé en dernier en cas de faillite.
+
+Ce qu'il faut retenir
+
+- Une action est une part de propriété d'une entreprise
+- Elle donne droit aux dividendes, au vote et à l'information
+- Son prix dépend de l'offre, de la demande et des perspectives de l'entreprise
+
+En une phrase : une action est un petit morceau d'entreprise, dont le prix bouge selon ses perspectives. Et toi, de quelle entreprise aimerais-tu posséder un morceau ?
+
+Sources : S1 · Autorité des marchés financiers, « Qu'est-ce qu'une action ? » (droits de l'actionnaire, dividende, vote, information, perte limitée à la mise sans emprunt)
+S2 · Exemple de la chaîne : action à 50 euros, perte maximale de 50 euros ; action à 2 euros
+S3 · Loi Florange de 2014 (droit de vote double après deux ans au nominatif)
+
+===
+
+# Qu'est-ce qu'une obligation ?
+
+Quand tu achètes une obligation de 1 000 euros, tu prêtes de l'argent à un État ou à une entreprise. En échange, il te verse des intérêts, puis te rembourse à une date fixée. Simple ? Pas tout à fait : son prix peut bouger. Pourquoi ?
+
+Un prêt découpé en morceaux
+
+Un État ou une grande entreprise a parfois besoin de milliards. Aucune banque ne veut prêter seule une telle somme. Alors l'emprunteur découpe son prêt en milliers de petits morceaux. Chaque morceau s'appelle une obligation.
+
+Des investisseurs achètent ces obligations. Des banques, des assureurs, des fonds, parfois des particuliers. Chacun prête un petit bout de la somme totale.
+
+Le fonctionnement
+
+Une obligation a trois caractéristiques principales. Sa valeur de remboursement, appelée valeur nominale, par exemple 1 000 euros. Son taux d'intérêt, appelé coupon, par exemple 3 % par an. Et sa date de remboursement, appelée échéance.
+
+Avec ces chiffres, tu reçois 30 euros d'intérêts chaque année. Et à l'échéance, on te rembourse tes 1 000 euros. Si tout se passe bien, tu sais dès le départ ce que tu toucheras.
+
+En France, l'État emprunte ainsi grâce aux obligations assimilables du Trésor, les OAT. Elles servent à financer le budget de l'État.
+
+Pourquoi le prix change
+
+Une obligation peut être revendue avant son échéance, sur un marché. Et là, son prix varie. La principale raison : les taux d'intérêt.
+
+Imagine que tu possèdes une obligation à 3 %. Si les nouveaux emprunts rapportent 5 %, personne ne voudra de ton obligation au même prix. Pour la vendre, tu devras baisser son prix. Quand les taux montent, le prix des obligations existantes baisse.
+
+Et à l'inverse, si les taux baissent à 1 %, ton obligation à 3 % devient très recherchée. Son prix monte. C'est la règle de base : prix et taux évoluent en sens inverse.
+
+Le risque de défaut
+
+L'autre grand risque, c'est que l'emprunteur ne rembourse pas. On appelle ça un défaut. Une entreprise en faillite ou un État en crise peuvent cesser de payer les intérêts. Ou ne pas rembourser le capital.
+
+Pour mesurer ce risque, des agences de notation donnent des notes aux emprunteurs. Les plus sûrs obtiennent un triple A. Les plus risqués des notes très basses. Plus un emprunteur est risqué, plus il doit payer des intérêts élevés pour attirer des prêteurs.
+
+L'année 2022
+
+En 2022, les banques centrales relèvent leurs taux très vite pour lutter contre l'inflation. Résultat : les obligations anciennes, à taux faibles, perdent beaucoup de valeur. Certains fonds d'obligations, réputés prudents, affichent des pertes importantes cette année-là.
+
+Ceux qui gardaient leurs obligations jusqu'à l'échéance n'ont pas forcément perdu : ils seront remboursés au prix prévu. Mais ceux qui devaient vendre ont subi la baisse.
+
+Les obligations d'entreprise
+
+Les entreprises aussi émettent des obligations. Les plus solides, notées en catégorie dite « investissement », paient des taux modestes. Les plus fragiles émettent des obligations dites à haut rendement. Elles paient plus, car le risque de défaut est plus élevé.
+
+En cas de faillite, les détenteurs d'obligations sont remboursés avant les actionnaires. Mais ils ne récupèrent pas toujours tout. Parfois seulement une partie de leur argent, après des années de procédure.
+
+Comment un particulier en achète
+
+Il est possible d'acheter des obligations en direct, mais c'est souvent compliqué. Les montants minimums sont parfois élevés et les échanges peu nombreux. La plupart des particuliers passent donc par des fonds d'obligations, ou par le fonds en euros de leur assurance-vie.
+
+Il existe aussi des fonds à échéance, qui regroupent des obligations arrivant à terme la même année. Ils permettent de connaître à peu près le rendement attendu, si on les garde jusqu'au bout.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : quand les taux d'intérêt montent, le prix des obligations déjà émises monte aussi ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. C'est l'inverse. Quand les taux montent, les anciennes obligations, qui rapportent moins, deviennent moins attractives. Leur prix baisse.
+
+Attention, grain de sable
+
+Il y a trois idées reçues sur les obligations.
+
+Un : croire qu'elles ne baissent jamais. Leur prix varie avec les taux, et peut baisser fortement.
+
+Deux : penser qu'un taux élevé est toujours une bonne affaire. Il récompense souvent un risque de défaut plus élevé.
+
+Trois : confondre obligation et action. L'obligataire est un prêteur, l'actionnaire un propriétaire. En cas de faillite, le prêteur passe avant.
+
+Ce qu'il faut retenir
+
+- Une obligation est un prêt à un État ou à une entreprise
+- Elle rapporte des intérêts et est remboursée à l'échéance
+- Son prix baisse quand les taux montent, et inversement
+
+En une phrase : une obligation est un prêt qui rapporte des intérêts, mais dont le prix bouge avec les taux. Et toi, préférerais-tu être prêteur ou propriétaire ?
+
+Sources : S1 · Autorité des marchés financiers, « Qu'est-ce qu'une obligation ? » (valeur nominale, coupon, échéance, risque de taux, risque de défaut, notation)
+S2 · Agence France Trésor (OAT) ; remontée des taux et baisse des obligations en 2022 ; Calcul de la chaîne : 3 % de 1 000 euros = 30 euros par an ; exemples de taux à 1 % et 5 %
+
+===
+
+# Le dividende : quand une entreprise partage ses bénéfices
+
+Les entreprises du CAC 40 versent chaque année plusieurs dizaines de milliards d'euros de dividendes à leurs actionnaires. Mais comment fonctionne un dividende ? Et pourquoi certaines entreprises très rentables n'en versent jamais ?
+
+Le partage des bénéfices
+
+Quand une entreprise gagne de l'argent, elle a plusieurs choix. Garder ses bénéfices pour investir : nouvelles usines, recherche, rachats d'autres entreprises. Rembourser ses dettes. Ou en reverser une partie à ses actionnaires. Cette part reversée s'appelle le dividende.
+
+Le dividende est décidé chaque année. Le conseil d'administration fait une proposition, puis l'assemblée générale des actionnaires vote. Rien n'oblige une entreprise à en verser.
+
+Un exemple
+
+Imagine une entreprise qui gagne 100 millions d'euros dans l'année. Elle a 10 millions d'actions. Elle décide de reverser la moitié de son bénéfice. Elle distribue donc 50 millions d'euros.
+
+Chaque action reçoit 5 euros. Si tu possèdes 20 actions, tu reçois 100 euros. Avant impôts et prélèvements sociaux.
+
+On parle souvent du rendement du dividende. Si l'action vaut 100 euros et verse 5 euros, son rendement est de 5 %. Attention : ce chiffre change chaque fois que le prix de l'action bouge.
+
+Le détachement
+
+Le dividende est versé à une date précise. Juste avant, a lieu le détachement. Ce jour-là, le prix de l'action baisse à peu près du montant du dividende.
+
+C'est logique. L'argent sort de l'entreprise pour aller dans la poche des actionnaires. L'entreprise vaut donc un peu moins. Acheter une action juste avant le dividende ne fait pas gagner d'argent par magie.
+
+Pourquoi certaines n'en versent pas
+
+Certaines entreprises très rentables versent peu ou pas de dividendes. Pendant longtemps, des géants du numérique ont préféré garder leurs bénéfices pour investir et grandir.
+
+Leur logique : si l'argent rapporte plus en restant dans l'entreprise, autant le garder. Les actionnaires y gagnent par la hausse du prix de l'action, plutôt que par des versements.
+
+Berkshire Hathaway, l'entreprise de Warren Buffett, n'a quasiment jamais versé de dividende. Buffett estime qu'il réinvestit mieux l'argent que ses actionnaires ne le feraient.
+
+Le dividende réinvesti
+
+Beaucoup d'investisseurs réinvestissent leurs dividendes. Ils rachètent des actions avec l'argent reçu. Ces nouvelles actions rapportent à leur tour des dividendes. C'est l'effet boule de neige des intérêts composés.
+
+Sur des décennies, les dividendes réinvestis représentent une part importante de la performance totale de la Bourse. C'est pour ça qu'il existe des indices « dividendes réinvestis ».
+
+Le taux de distribution
+
+On appelle taux de distribution la part du bénéfice reversée en dividendes. Une entreprise qui verse 50 % de ses bénéfices a un taux de distribution de 50 %. Elle garde l'autre moitié pour investir ou se désendetter.
+
+Un taux de distribution très élevé, proche ou au-dessus de 100 %, peut être un signal d'alerte. L'entreprise verse alors plus qu'elle ne gagne. Elle peut le faire quelque temps, en puisant dans ses réserves ou en s'endettant. Mais pas éternellement.
+
+Les aristocrates du dividende
+
+Certaines entreprises sont connues pour augmenter leur dividende chaque année, pendant des décennies. Aux États-Unis, on les appelle les aristocrates du dividende. Certaines l'augmentent depuis plus de cinquante ans d'affilée.
+
+Ces séries impressionnantes attirent les investisseurs qui cherchent des revenus réguliers. Mais une longue série peut aussi s'arrêter. Lors de crises graves, même des entreprises réputées ont dû réduire leur dividende.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : acheter une action la veille du dividende permet de gagner de l'argent à coup sûr ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Le jour du détachement, le prix de l'action baisse à peu près du montant du dividende. Et le dividende reçu est imposé. Il n'y a pas d'argent gratuit.
+
+Attention, grain de sable
+
+Il y a trois idées reçues sur les dividendes.
+
+Un : croire qu'un dividende élevé est toujours bon signe. Une entreprise en difficulté peut afficher un rendement élevé parce que son action s'est effondrée. Et elle peut couper son dividende.
+
+Deux : penser que le dividende est garanti. Il peut baisser ou disparaître, comme en 2020, quand beaucoup d'entreprises l'ont suspendu.
+
+Trois : oublier la fiscalité. Selon l'enveloppe, le dividende est imposé tout de suite ou plus tard.
+
+Ce qu'il faut retenir
+
+- Le dividende est une part des bénéfices reversée aux actionnaires
+- Il est voté chaque année et n'est jamais garanti
+- Le prix de l'action baisse d'autant le jour du détachement
+
+En une phrase : le dividende partage une partie des bénéfices, sans jamais être garanti. Et toi, préférerais-tu toucher des dividendes ou voir l'entreprise réinvestir ?
+
+Sources : S1 · Autorité des marchés financiers, « Le dividende » (vote en assemblée générale, détachement, aucune obligation de versement ; suspensions de 2020)
+S2 · Calcul de la chaîne : 100 millions d'euros de bénéfice, moitié distribuée = 50 millions ÷ 10 millions d'actions = 5 euros par action ; 20 actions = 100 euros ; 5 euros pour une action à 100 euros = 5 % ; dividendes du CAC 40 de plusieurs dizaines de milliards d'euros par an (presse financière, Vernimmen)
+
+===
+
+# Un indice boursier, comment ça marche ?
+
+Chaque soir, on entend que le CAC 40 a gagné 1 % ou que le Dow Jones a perdu 2 %. Mais qu'est-ce qu'un indice boursier ? Comment est-il calculé, et pourquoi ne reflète-t-il pas toujours l'économie réelle ?
+
+Un thermomètre
+
+Un indice boursier est un thermomètre. Il mesure l'évolution moyenne d'un groupe d'actions. Plutôt que de suivre des centaines d'entreprises une par une, on regarde un seul chiffre.
+
+Chaque grande Bourse a son indice phare. Le CAC 40 à Paris, le DAX à Francfort, le FTSE 100 à Londres, le Nikkei à Tokyo. Aux États-Unis, le Dow Jones et le S&P 500.
+
+Comment est-il calculé ?
+
+Le CAC 40 regroupe 40 grandes entreprises cotées à Paris. Mais elles ne pèsent pas toutes le même poids. Plus une entreprise vaut cher en Bourse, plus elle compte dans l'indice. On dit qu'il est pondéré par la capitalisation.
+
+En pratique, on ne compte que les actions réellement disponibles à l'achat, ce qu'on appelle le flottant. Et le poids de chaque entreprise est plafonné, pour qu'aucune ne domine trop.
+
+Le Dow Jones, lui, est calculé différemment. Il est pondéré par le prix des actions, pas par la taille des entreprises. Une action à 500 dollars y pèse plus qu'une action à 50 dollars, même si l'entreprise est plus petite. C'est une méthode ancienne, souvent critiquée.
+
+Qui entre et qui sort ?
+
+La composition d'un indice change régulièrement. Pour le CAC 40, un comité se réunit chaque trimestre. Il peut faire entrer une entreprise qui a beaucoup grandi, et en faire sortir une qui a reculé.
+
+Le Dow Jones date de 1896. Parmi ses 12 entreprises d'origine, aucune n'y figure encore aujourd'hui. General Electric a été la dernière à le quitter, en 2018. Un indice raconte donc aussi l'histoire de l'économie.
+
+Les points
+
+Un indice s'exprime en points. Ce chiffre n'a pas de sens en lui-même. Il compare le niveau actuel à une date de départ. Le CAC 40 valait 1 000 points le 31 décembre 1987. S'il vaut 8 000 points, son niveau a été multiplié par huit depuis.
+
+C'est pour ça qu'on regarde surtout les pourcentages. Une baisse de 100 points n'a pas la même importance à 1 000 points qu'à 8 000 points.
+
+Indice et économie
+
+Un indice ne reflète pas toujours l'économie d'un pays. Les entreprises du CAC 40 réalisent une grande partie de leur chiffre d'affaires à l'étranger. Le luxe, l'énergie, l'aéronautique vendent dans le monde entier.
+
+L'indice peut donc monter alors que l'économie française ralentit, ou l'inverse. Et il ne compte que de grandes entreprises, pas les PME ni les commerces de quartier.
+
+Les indices larges
+
+Le CAC 40 ne représente que 40 entreprises. Pour avoir une vision plus large, il existe d'autres indices. Le SBF 120 regroupe 120 entreprises cotées à Paris. Et le CAC All-Tradable regroupe la plupart des entreprises françaises cotées.
+
+En Europe, l'Euro Stoxx 50 réunit 50 grandes entreprises de la zone euro. Et pour le monde entier, l'indice MSCI World suit plus d'un millier d'entreprises de pays développés.
+
+Les indices et l'épargne
+
+Les indices ne servent pas seulement aux journaux télévisés. Beaucoup de fonds se comparent à un indice de référence. Si un fonds d'actions françaises fait moins bien que le CAC 40, ses gérants doivent expliquer pourquoi.
+
+Et des fonds suivent directement les indices, comme les ETF. Aujourd'hui, une part énorme de l'épargne mondiale est placée de cette façon. Quand une entreprise entre dans un grand indice, ces fonds doivent l'acheter. Son cours monte souvent à l'annonce.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : on peut acheter directement le CAC 40 ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : pas directement. Un indice est un calcul, pas un produit. Mais il existe des fonds, notamment des ETF, qui reproduisent l'évolution d'un indice. En les achetant, on suit l'indice.
+
+Attention, grain de sable
+
+Il y a trois idées reçues sur les indices.
+
+Un : croire que tous les indices se calculent pareil. Le Dow Jones et le CAC 40 suivent des méthodes très différentes.
+
+Deux : penser qu'un indice montre la santé de tout le pays. Il suit seulement un groupe d'entreprises, souvent mondialisées.
+
+Trois : oublier les dividendes. Les indices les plus cités ne les comptent pas.
+
+Ce qu'il faut retenir
+
+- Un indice mesure l'évolution moyenne d'un groupe d'actions
+- Le CAC 40 regroupe 40 grandes entreprises, pondérées par leur taille
+- Sa composition change régulièrement
+
+En une phrase : un indice boursier est un thermomètre qui suit un groupe d'entreprises, pas toute l'économie. Et toi, saurais-tu citer trois entreprises du CAC 40 ?
+
+Sources : S1 · Euronext, règles du CAC 40 (40 entreprises, pondération par la capitalisation flottante, plafonnement, revue trimestrielle, base 1 000 points au 31 décembre 1987)
+S3 · Euronext (SBF 120 : 120 entreprises ; CAC All-Tradable) ; Stoxx (Euro Stoxx 50 : 50 entreprises)
+S2 · Wikipédia, « Dow Jones Industrial Average » (créé en 1896 avec 12 entreprises, pondération par le prix, sortie de General Electric en 2018) ; exemples de la chaîne : 1 %, 2 %, 8 000 points, 100 points, actions à 500 et 50 dollars
+
+===
+
+# Qu'est-ce qu'un ETF ?
+
+Avec un seul achat, parfois de quelques dizaines d'euros, un ETF fait posséder un morceau de centaines d'entreprises. Ses frais annuels descendent souvent sous 0,3 %. Mais qu'est-ce que c'est, et quels sont ses pièges ?
+
+Trois lettres anglaises
+
+ETF veut dire « exchange traded fund », un fonds coté en Bourse. En France, on parle aussi de tracker, ou de fonds indiciel coté. C'est un fonds qui reproduit l'évolution d'un indice.
+
+Par exemple, un ETF sur le CAC 40 suit le CAC 40. Si l'indice monte de 10 %, l'ETF monte d'environ 10 %. S'il baisse de 10 %, l'ETF baisse d'autant. Il ne cherche pas à faire mieux que l'indice, seulement à le suivre.
+
+Un panier d'actions
+
+Un indice comme le MSCI World regroupe environ 1 500 grandes entreprises de pays développés. Les acheter une à une serait impossible pour un particulier. Avec un ETF qui le suit, une seule part suffit.
+
+C'est un moyen très simple de diversifier. Ton argent est réparti entre des centaines d'entreprises, de secteurs et de pays différents. Si l'une va mal, son poids reste limité.
+
+Coté comme une action
+
+Contrairement à un fonds classique, l'ETF s'achète et se vend en Bourse, comme une action. Son prix évolue toute la journée. On passe un ordre chez son courtier ou sa banque.
+
+Il peut être logé sur un compte-titres, et certains sur un PEA ou dans une assurance-vie. Pour le PEA, il doit respecter des règles d'éligibilité. Certains ETF y parviennent grâce à un montage technique, même quand ils suivent des indices mondiaux.
+
+Des frais faibles
+
+Comme un ETF ne choisit pas les entreprises, il n'a pas besoin d'une équipe d'analystes. Ses frais sont donc bas. Les frais annuels d'un ETF sur un grand indice sont souvent inférieurs à 0,3 %. Ceux d'un fonds géré activement dépassent souvent 1,5 %.
+
+Sur des décennies, cet écart compte énormément. Prenons 10 000 euros placés 30 ans, à 6 % par an avant frais. Entre 0,2 % et 1,5 % de frais, la différence dépasse 15 000 euros.
+
+Les pièges
+
+Un ETF n'est pas forcément prudent. S'il suit un indice d'actions, il baisse quand les actions baissent. En 2008 ou en 2020, les ETF d'actions ont fortement chuté.
+
+Il existe aussi des ETF plus risqués : sur un seul secteur, un seul pays, ou à effet de levier. Ces derniers multiplient les variations de l'indice, à la hausse comme à la baisse. Ils ne sont pas faits pour un placement de long terme.
+
+Enfin, tous les ETF ne se valent pas. Il faut regarder l'indice suivi, les frais, la taille du fonds et sa capacité à bien suivre l'indice.
+
+Le saviez-vous ?
+
+En Europe, les ETF dits capitalisants réinvestissent automatiquement les dividendes. Les ETF distribuants les versent à leurs porteurs. Ce choix change la fiscalité, selon l'enveloppe utilisée.
+
+Réplication physique ou synthétique
+
+Il existe deux grandes façons de suivre un indice. La réplication physique consiste à acheter réellement les actions de l'indice. Le fonds possède vraiment les entreprises.
+
+La réplication synthétique passe par un contrat d'échange avec une banque. Le fonds détient d'autres titres, et la banque s'engage à lui verser la performance de l'indice. C'est grâce à ce montage que certains ETF mondiaux sont éligibles au PEA. Le contrat est encadré, mais il ajoute un risque lié à la banque partenaire.
+
+La croissance des ETF
+
+Les ETF existent depuis les années 1990. Leur succès a explosé ces quinze dernières années. Selon les estimations du secteur, ils dépassent aujourd'hui 10 000 milliards de dollars d'encours dans le monde. Beaucoup de particuliers les utilisent pour investir simplement et à bas coût.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : un ETF sur un grand indice d'actions ne peut pas perdre d'argent ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Il suit son indice dans les deux sens. Si la Bourse baisse de 30 %, un ETF sur cet indice baisse d'environ 30 %.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes avec les ETF.
+
+Un : croire qu'un placement diversifié ne peut pas baisser. Un ETF mondial réduit le risque lié à une entreprise, pas celui d'une baisse générale.
+
+Deux : acheter un ETF à effet de levier en pensant à un placement tranquille. Il est conçu pour des opérations de courte durée.
+
+Trois : regarder seulement les frais. L'indice suivi compte encore plus.
+
+Ce qu'il faut retenir
+
+- Un ETF est un fonds coté qui suit un indice
+- Il permet de diversifier avec un seul achat
+- Ses frais sont faibles, mais il baisse quand son indice baisse
+
+En une phrase : un ETF suit un indice à petits frais, dans la hausse comme dans la baisse. Et toi, savais-tu qu'on pouvait acheter des centaines d'entreprises en une fois ?
+
+Sources : S1 · Autorité des marchés financiers, « Les ETF ou trackers » (fonds indiciels cotés, réplication, ETF à effet de levier, capitalisants et distribuants, éligibilité au PEA)
+S2 · MSCI, composition du MSCI World (environ 1 500 entreprises) ; frais habituels de moins de 0,3 % pour un ETF et plus de 1,5 % pour un fonds actif (AMF, presse spécialisée) ; baisses de 2008 et 2020
+S4 · ETF apparus dans les années 1990, plus de 10 000 milliards de dollars d'encours mondial (ETFGI, 2024)
+S3 · Calcul de la chaîne : 10 000 × 1,058³⁰ ≈ 54 300 euros et 10 000 × 1,045³⁰ ≈ 37 500 euros, écart de plus de 15 000 euros (rendement de 6 % avant frais de 0,2 % ou 1,5 %, 30 ans) ; exemples de 10 % et 30 %
+
+===
+
+# Ordre au marché, ordre à cours limité : comment acheter en Bourse ?
+
+Pour acheter une action, il ne suffit pas de cliquer sur « acheter ». Il faut choisir un type d'ordre. Un mauvais choix peut te faire payer 5 % ou 10 % plus cher que prévu, dans un marché agité. Quels sont les principaux ordres, et à quoi servent-ils ?
+
+Le carnet d'ordres
+
+En Bourse, chaque action a un carnet d'ordres. On y voit les acheteurs, avec le prix maximum qu'ils acceptent de payer. Et les vendeurs, avec le prix minimum qu'ils acceptent de recevoir.
+
+Quand un acheteur et un vendeur sont d'accord sur un prix, l'échange se fait. C'est ce qu'on appelle la cotation en continu. Le dernier prix échangé devient le cours de l'action.
+
+L'écart entre le meilleur prix d'achat et le meilleur prix de vente s'appelle la fourchette, ou spread. Sur une grande entreprise, elle est très faible. Sur une petite entreprise peu échangée, elle peut être importante.
+
+L'ordre au marché
+
+L'ordre au marché est le plus simple. Tu dis : j'achète, au prix disponible. Il est exécuté immédiatement, si la Bourse est ouverte. Tu es sûr d'acheter, mais pas du prix.
+
+Sur une grande action très échangée, le prix sera proche du dernier cours. Mais sur une action peu échangée, ou en pleine agitation, ton ordre peut passer à un prix très différent. Il « mange » les offres du carnet, à des prix de plus en plus élevés.
+
+L'ordre à cours limité
+
+Avec l'ordre à cours limité, tu fixes un prix maximum pour acheter. Ou un prix minimum pour vendre. Ton ordre ne sera exécuté qu'à ce prix, ou à un meilleur prix.
+
+Par exemple, l'action vaut 50 euros. Tu passes un ordre d'achat limité à 49 euros. Ton ordre attend dans le carnet. Il ne sera exécuté que si un vendeur accepte ce prix.
+
+Tu maîtrises ainsi le prix. En revanche, tu n'es pas sûr que ton ordre soit exécuté. Si l'action ne redescend pas à 49 euros, tu n'achètes rien.
+
+Les ordres de stop
+
+Il existe aussi des ordres déclenchés automatiquement. L'ordre à seuil de déclenchement, souvent appelé stop, se transforme en ordre au marché quand un prix est atteint.
+
+Il sert souvent à limiter une perte. Par exemple, tu possèdes une action à 50 euros. Tu places un stop à 45 euros. Si le cours tombe à 45 euros, l'ordre de vente part tout seul.
+
+Attention : un stop peut être exécuté bien en dessous du seuil. En cas de chute brutale, le premier prix disponible peut être très bas. C'est ce qui s'est produit pendant le Flash Crash de 2010.
+
+La durée de validité
+
+Un ordre peut être valable pour la journée, jusqu'à une date choisie, ou jusqu'à son annulation. Il faut vérifier cette durée. Un vieil ordre oublié peut être exécuté des semaines plus tard, à un moment inattendu.
+
+Les horaires de la Bourse
+
+La Bourse de Paris fonctionne en continu de 9 heures à 17 heures 30, du lundi au vendredi. Avant l'ouverture et après la fermeture, il y a des phases appelées « fixing ». Les ordres sont alors rassemblés, et un prix unique est calculé pour maximiser les échanges.
+
+Si tu passes un ordre pendant la nuit, il attend l'ouverture. Un ordre au marché passé le soir part donc le lendemain matin. Si une nouvelle est tombée entre-temps, le prix peut être très différent.
+
+Les frais de courtage
+
+Chaque ordre exécuté entraîne en général des frais de courtage. Ils peuvent être fixes, proportionnels au montant, ou les deux. Sur de petits montants, ils pèsent proportionnellement plus lourd. C'est pour ça qu'il faut toujours vérifier la grille tarifaire de son courtier.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : un ordre au marché garantit le prix auquel tu achètes ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Il garantit seulement l'exécution. Le prix est celui qui est disponible à ce moment-là. C'est l'ordre à cours limité qui permet de fixer un prix.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes avec les ordres.
+
+Un : passer un ordre au marché sur une petite action peu échangée. Le prix payé peut surprendre.
+
+Deux : croire qu'un stop protège parfaitement. En cas de chute brutale, il peut être exécuté bien plus bas.
+
+Trois : oublier un ordre en attente. Il peut s'exécuter longtemps après, quand tu n'y penses plus.
+
+Ce qu'il faut retenir
+
+- L'ordre au marché garantit l'exécution, pas le prix
+- L'ordre à cours limité garantit le prix, pas l'exécution
+- Un ordre stop se déclenche à un seuil, sans prix garanti
+
+En une phrase : choisir son type d'ordre, c'est choisir entre la certitude d'acheter et la maîtrise du prix. Et toi, savais-tu qu'il existait plusieurs façons d'acheter une action ?
+
+Sources : S1 · Autorité des marchés financiers et Euronext, « Les différents types d'ordres » (au marché, à cours limité, à seuil de déclenchement, carnet d'ordres, fourchette, durée de validité)
+S3 · Euronext Paris, séance continue de 9 heures à 17 heures 30
+S2 · Exemples de la chaîne : action à 50 euros, limite à 49 euros, stop à 45 euros ; écarts de 5 % ou 10 % ; Flash Crash du 6 mai 2010
+
+===
+
+# La capitalisation boursière : combien vaut une entreprise ?
+
+Certaines entreprises valent plus de 3 000 milliards de dollars en Bourse. Plus que l'économie entière de la plupart des pays. Mais d'où vient ce chiffre, et que veut-il vraiment dire ?
+
+Une multiplication simple
+
+La capitalisation boursière, c'est la valeur d'une entreprise selon la Bourse. On la calcule très simplement. On multiplie le nombre d'actions par le prix d'une action.
+
+Prenons une entreprise qui a 100 millions d'actions. Son action vaut 50 euros. Sa capitalisation est de 5 milliards d'euros. C'est le prix qu'il faudrait payer, en théorie, pour acheter toutes ses actions au cours du jour.
+
+Elle change à chaque seconde
+
+Comme le prix de l'action bouge sans arrêt pendant la séance, la capitalisation bouge aussi. Une entreprise peut gagner ou perdre des milliards en une journée, sans que rien ne change dans ses usines.
+
+Ce chiffre ne mesure donc pas ce que l'entreprise possède. Il mesure ce que les investisseurs sont prêts à payer aujourd'hui pour ses bénéfices futurs. C'est une estimation collective, qui varie avec l'humeur et les nouvelles.
+
+Les géants
+
+Aujourd'hui, les plus grandes capitalisations du monde sont surtout des entreprises technologiques américaines. Certaines dépassent 3 000 milliards de dollars. Leur valeur repose sur des bénéfices énormes, et sur l'espoir que ces bénéfices continuent de grandir.
+
+En France, les plus grandes capitalisations sont souvent dans le luxe, l'énergie, la beauté ou l'aéronautique. Elles valent des dizaines, voire plus d'une centaine de milliards d'euros.
+
+On classe d'ailleurs les entreprises selon leur taille. Les grandes capitalisations, les moyennes et les petites. Elles n'ont pas le même risque ni le même comportement en Bourse.
+
+Capitalisation et chiffre d'affaires
+
+Attention à ne pas confondre la capitalisation et le chiffre d'affaires. Le chiffre d'affaires, c'est ce que l'entreprise vend en un an. La capitalisation, c'est ce qu'elle vaut en Bourse.
+
+Une entreprise peut vendre énormément mais valoir peu, si elle gagne peu d'argent. Une autre peut vendre moins mais valoir beaucoup, si ses bénéfices sont élevés et en croissance.
+
+Et la valeur d'entreprise ?
+
+Les professionnels utilisent aussi la valeur d'entreprise. Elle ajoute à la capitalisation les dettes de l'entreprise, et retire sa trésorerie. Car en rachetant une entreprise, on rachète aussi ses dettes.
+
+Deux entreprises avec la même capitalisation peuvent donc avoir des valeurs d'entreprise très différentes. L'une peut être très endettée, l'autre avoir beaucoup d'argent de côté.
+
+Comparer aux pays ?
+
+On entend souvent qu'une entreprise vaut plus qu'un pays. C'est une comparaison bancale. Le produit intérieur brut d'un pays mesure ce qu'il produit en un an. La capitalisation mesure la valeur d'une entreprise à un instant. Ce sont deux choses différentes.
+
+Le flottant
+
+Toutes les actions d'une entreprise ne s'échangent pas en Bourse. Une partie appartient parfois à une famille fondatrice, à l'État, ou à un grand actionnaire qui ne vend pas. La partie réellement disponible à l'achat s'appelle le flottant.
+
+Une entreprise peut donc avoir une énorme capitalisation, mais un faible flottant. Dans ce cas, peu d'actions circulent. Son prix peut alors bouger plus fortement, car une petite quantité d'ordres suffit à le faire varier.
+
+Les grandes familles
+
+En France, plusieurs grandes entreprises cotées sont contrôlées par des familles. C'est le cas dans le luxe, par exemple. La capitalisation de ces entreprises fait de leurs propriétaires certaines des plus grandes fortunes mondiales. Quand le cours monte ou baisse de quelques pour cent, leur fortune varie de milliards.
+
+C'est d'ailleurs pour ça que les classements de grandes fortunes changent tous les jours. Ils reposent en grande partie sur des capitalisations boursières.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : quand la capitalisation d'une entreprise baisse de 10 milliards, cet argent part dans la poche de quelqu'un ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. La capitalisation est une valeur théorique. Quand elle baisse, c'est la valeur estimée qui diminue. L'argent n'est pas transféré à quelqu'un d'autre.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : confondre capitalisation et chiffre d'affaires. L'un est une valeur, l'autre des ventes.
+
+Deux : croire qu'une grosse capitalisation est forcément sûre. Les géants peuvent aussi chuter fortement.
+
+Trois : comparer une entreprise et un pays sans précaution. Ce ne sont pas les mêmes mesures.
+
+Ce qu'il faut retenir
+
+- La capitalisation est le nombre d'actions multiplié par le prix de l'action
+- Elle change en permanence avec le cours
+- Elle mesure une estimation des investisseurs, pas ce que l'entreprise possède
+
+En une phrase : la capitalisation boursière est le prix de toutes les actions d'une entreprise, selon le marché du jour. Et toi, quelle entreprise penses-tu être la plus grosse de France ?
+
+Sources : S1 · Autorité des marchés financiers, glossaire (capitalisation boursière, valeur d'entreprise)
+S2 · Classements de capitalisations mondiales, entreprises technologiques américaines au-delà de 3 000 milliards de dollars (presse financière, 2024 et 2025) ; Calcul de la chaîne : 100 millions d'actions × 50 euros = 5 milliards d'euros ; exemple de 10 milliards
+
+===
+
+# Le PER : une action est-elle chère ?
+
+Une action à 10 euros peut être plus chère qu'une action à 500 euros. Pour le savoir, les investisseurs utilisent un ratio : le PER. Qu'est-ce qu'il mesure, et pourquoi ne faut-il jamais le regarder seul ?
+
+Le prix ne suffit pas
+
+Le prix d'une action seul ne dit rien. Une action à 10 euros n'est pas forcément bon marché. Une action à 500 euros n'est pas forcément chère. Tout dépend de ce que l'entreprise gagne.
+
+Il faut donc comparer le prix aux bénéfices. C'est exactement ce que fait le PER, en anglais « price earnings ratio ». En français, on parle de ratio cours sur bénéfice.
+
+Le calcul
+
+Le PER, c'est le prix de l'action divisé par le bénéfice par action. Une action vaut 100 euros. L'entreprise gagne 5 euros par action et par an. Son PER est de 20.
+
+On peut le lire ainsi : tu paies 20 fois le bénéfice annuel. Ou encore : si le bénéfice restait stable, il faudrait 20 ans de bénéfices pour « rembourser » le prix payé.
+
+Attention, ce PER n'a rien à voir avec le plan d'épargne retraite, qui porte le même sigle. Même abréviation, sens complètement différent.
+
+Que veut dire un PER élevé ?
+
+Un PER élevé signifie que les investisseurs paient cher chaque euro de bénéfice. En général, c'est parce qu'ils espèrent une forte croissance. Une entreprise qui grandit vite peut justifier un PER de 30, 40 ou plus.
+
+Mais un PER élevé est aussi un risque. Si la croissance déçoit, le prix peut chuter fortement. C'est ce qui s'est passé pendant la bulle internet, quand des entreprises affichaient des PER délirants.
+
+Et un PER faible ?
+
+Un PER faible peut signaler une action bon marché. Les investisseurs « valeur », comme Benjamin Graham, aiment ces situations.
+
+Mais il peut aussi signaler un problème. Une entreprise en déclin, un secteur menacé, des bénéfices exceptionnels qui ne se reproduiront pas. Un PER bas n'est pas toujours une affaire. On parle parfois de piège à valeur.
+
+Les limites
+
+Le PER a plusieurs limites. Il ne fonctionne pas quand l'entreprise perd de l'argent : il n'y a pas de bénéfice à diviser. Il varie selon qu'on utilise les bénéfices passés ou estimés pour l'année suivante.
+
+Il dépend aussi du secteur. Les entreprises technologiques ont souvent des PER plus élevés que les banques ou les compagnies pétrolières. Comparer le PER d'une banque et d'un éditeur de logiciels n'a pas beaucoup de sens.
+
+Et il dépend des taux d'intérêt. Quand les taux sont bas, les investisseurs acceptent des PER plus élevés. Quand ils montent, les PER ont tendance à baisser.
+
+Le PER du marché
+
+On calcule aussi le PER d'un indice entier. Sur longue période, celui de la Bourse américaine tourne souvent autour de 15 à 20. Quand il monte beaucoup plus haut, certains analystes s'inquiètent d'une Bourse chère.
+
+Le PER ajusté de Shiller
+
+Pour lisser les variations des bénéfices d'une année sur l'autre, l'économiste Robert Shiller a proposé une variante. Elle compare le prix à la moyenne des bénéfices des dix dernières années, corrigés de l'inflation. On l'appelle souvent le CAPE.
+
+Cet indicateur a atteint des niveaux records juste avant l'éclatement de la bulle internet, en 2000. Il est souvent cité pour dire si la Bourse américaine est chère par rapport à son histoire. Mais il ne dit pas quand une baisse arrivera. Il peut rester élevé pendant des années.
+
+Les autres ratios
+
+Le PER n'est pas le seul outil. Les analystes regardent aussi la valeur de l'entreprise par rapport à ses ventes, à sa trésorerie ou à ses actifs. Chaque ratio éclaire un aspect différent. Aucun ne suffit seul.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : une action à 2 euros est forcément moins chère qu'une action à 200 euros ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Tout dépend des bénéfices. Si l'entreprise à 2 euros gagne très peu, son PER peut être bien plus élevé que celle à 200 euros.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes avec le PER.
+
+Un : le regarder seul. Il faut le comparer à la croissance, au secteur et à l'historique de l'entreprise.
+
+Deux : croire qu'un PER bas est toujours une affaire. Il peut cacher une entreprise en difficulté.
+
+Trois : le confondre avec le plan d'épargne retraite. Même sigle, sens différent.
+
+Ce qu'il faut retenir
+
+- Le PER compare le prix d'une action à son bénéfice
+- Un PER élevé reflète souvent des espoirs de croissance
+- Il faut le comparer à des entreprises du même secteur
+
+En une phrase : le PER indique combien d'années de bénéfices on paie en achetant une action. Et toi, préférerais-tu une entreprise chère qui grandit ou une entreprise bon marché qui stagne ?
+
+Sources : S1 · Autorité des marchés financiers, glossaire (« price earnings ratio », cours sur bénéfice) ; Vernimmen, finance d'entreprise (PER, piège à valeur, influence des taux)
+S2 · Calcul de la chaîne : 100 euros ÷ 5 euros = 20 ; exemples de PER de 30 et 40, actions à 10, 500, 2 et 200 euros ; PER historique de la Bourse américaine souvent entre 15 et 20 (Robert Shiller, données de long terme ; CAPE sur dix ans, record en 2000)
+
+===
+
+# OPA : quand une entreprise en rachète une autre
+
+Une OPA, c'est une offre publique d'achat. Une entreprise propose d'acheter les actions d'une autre, souvent avec une prime de 20 % à 40 % sur le cours. Les actionnaires choisissent d'accepter ou non. Comment ça marche, et que se passe-t-il pour toi si tu possèdes l'action visée ?
+
+L'offre publique d'achat
+
+Une entreprise veut prendre le contrôle d'une autre, cotée en Bourse. Plutôt que d'acheter les actions petit à petit, elle annonce publiquement une offre. Elle propose à tous les actionnaires de leur racheter leurs actions, à un prix fixé.
+
+Ce prix est en général supérieur au cours de Bourse. C'est la prime. Elle sert à convaincre les actionnaires de vendre. Elle est souvent de 20 % à 40 % au-dessus du cours d'avant l'annonce.
+
+Il existe aussi l'offre publique d'échange, l'OPE. Au lieu de payer en argent, l'acheteur propose ses propres actions en échange.
+
+Une procédure encadrée
+
+En France, une OPA est surveillée par l'Autorité des marchés financiers. Elle vérifie que tous les actionnaires sont traités de la même façon. Et qu'ils disposent d'informations suffisantes pour décider.
+
+Il existe aussi des règles de seuils. Un actionnaire dépasse 30 % du capital ou des droits de vote d'une entreprise cotée ? Il doit en principe lancer une offre sur le reste. C'est pour protéger les petits actionnaires.
+
+Amicale ou hostile
+
+Une OPA est dite amicale quand la direction de l'entreprise visée la soutient. Les deux équipes se sont mises d'accord avant l'annonce.
+
+Elle est dite hostile quand la direction s'y oppose. Commence alors une bataille. L'entreprise visée peut chercher un autre acheteur plus amical, qu'on appelle un chevalier blanc. Ou tenter de convaincre ses actionnaires que l'offre est trop basse.
+
+Ces batailles peuvent durer des mois, avec des surenchères. Le prix proposé monte parfois plusieurs fois.
+
+Une bataille célèbre
+
+En 1999, la banque BNP lance une offre sur deux autres banques françaises, la Société Générale et Paribas. La Société Générale résiste et reste indépendante. BNP réussit en revanche à prendre le contrôle de Paribas. C'est la naissance de BNP Paribas.
+
+Cette bataille, très médiatisée, a duré plusieurs mois. Elle montre qu'une OPA peut transformer tout un secteur.
+
+Et pour toi, petit actionnaire ?
+
+Si tu possèdes une action visée par une OPA, tu as le choix. Apporter tes actions à l'offre, et toucher le prix proposé. Ou les garder.
+
+Souvent, le cours de Bourse monte jusqu'au niveau du prix proposé, juste après l'annonce. Tu peux donc aussi vendre en Bourse, sans attendre la fin de l'offre.
+
+Avec au moins 90 % du capital et des droits de vote, l'acheteur peut forcer les derniers actionnaires à vendre. C'est le retrait obligatoire. L'action quitte alors la Bourse.
+
+Les défenses anti-OPA
+
+Les entreprises peuvent se protéger contre une OPA hostile. Elles peuvent renforcer la part de leurs actionnaires fidèles. Ou s'appuyer sur des droits de vote double pour les actionnaires de long terme.
+
+Certaines OPA posent aussi des questions de souveraineté. Quand une entreprise étrangère veut racheter une entreprise jugée stratégique, l'État français peut exiger son autorisation. C'est le cas dans la défense, l'énergie ou certaines technologies.
+
+Après l'OPA
+
+Une fois l'opération réussie, l'acheteur doit intégrer l'entreprise rachetée. Les études montrent qu'une partie importante des fusions déçoit. Les économies promises ne se réalisent pas, les cultures d'entreprise s'opposent, et le prix payé était trop élevé.
+
+C'est pour ça que l'action de l'acheteur baisse parfois à l'annonce d'une OPA. Ses actionnaires craignent qu'il paie trop cher.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : un petit actionnaire est obligé de vendre ses actions dès qu'une OPA est lancée ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Il choisit. Sauf en cas de retrait obligatoire, quand l'acheteur détient déjà au moins 90 % du capital et des droits de vote.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : acheter une action en espérant une OPA à cause d'une rumeur. Les rumeurs sont souvent fausses, et le cours peut retomber.
+
+Deux : croire qu'une OPA est toujours bonne pour les actionnaires de l'acheteur. Payer trop cher peut détruire de la valeur pour eux.
+
+Trois : utiliser une information confidentielle sur une future OPA. C'est un délit d'initié, puni par la loi.
+
+Ce qu'il faut retenir
+
+- Une OPA est une offre publique pour racheter les actions d'une entreprise
+- Elle comporte souvent une prime sur le cours de Bourse
+- Les actionnaires choisissent, sauf retrait obligatoire
+
+En une phrase : une OPA propose aux actionnaires de vendre leurs actions avec une prime, sous le contrôle de l'AMF. Et toi, aurais-tu accepté de vendre ou gardé tes actions ?
+
+Sources : S1 · Autorité des marchés financiers, « Les offres publiques » (OPA, OPE, seuil de 30 % du capital ou des droits de vote, retrait obligatoire à partir de 90 %)
+S2 · Wikipédia, « Bataille BNP, Société Générale, Paribas » (1999) ; primes habituelles de 20 % à 40 % (études de marché, presse financière)
+
+===
+
+# Rachats d'actions et divisions d'actions : deux astuces expliquées
+
+Apple rachète ses propres actions pour plus de 50 milliards de dollars par an. D'autres divisent leur action en 10 ou en 20. Pourquoi font-elles ça, et qu'est-ce que ça change vraiment pour les actionnaires ?
+
+Le rachat d'actions
+
+Une entreprise qui gagne de l'argent peut le reverser à ses actionnaires de deux façons. Verser un dividende. Ou racheter ses propres actions en Bourse, puis les annuler.
+
+Quand elle rachète et annule des actions, il en reste moins en circulation. Chaque action restante représente donc une part un peu plus grande de l'entreprise. Et des bénéfices.
+
+Un exemple
+
+Imagine une entreprise de 100 millions d'actions, qui gagne 500 millions d'euros. Chaque action correspond à 5 euros de bénéfice. L'entreprise rachète et annule 10 millions d'actions.
+
+Il en reste 90 millions. Le même bénéfice de 500 millions représente maintenant environ 5,56 euros par action. Sans que l'entreprise ait gagné un euro de plus, le bénéfice par action a augmenté.
+
+Pourquoi c'est controversé
+
+Les rachats d'actions ont leurs partisans. Ils permettent de rendre de l'argent aux actionnaires de façon souple. Et quand l'action est bon marché, c'est un bon usage de l'argent.
+
+Mais ils ont aussi des critiques. Une entreprise qui rachète ses actions n'investit pas cet argent dans de nouvelles usines, la recherche ou les salaires. Et quand elle rachète des actions très chères, elle gaspille l'argent de ses actionnaires.
+
+Certains dénoncent aussi le fait que les rémunérations des dirigeants sont souvent liées au bénéfice par action. Les rachats peuvent l'améliorer artificiellement.
+
+La division d'actions
+
+La division d'actions est une opération différente. On l'appelle aussi « split ». L'entreprise découpe chaque action en plusieurs.
+
+Par exemple, une action vaut 1 000 euros. L'entreprise la divise en 10. Chaque actionnaire reçoit 10 actions à 100 euros à la place d'une action à 1 000 euros. Sa fortune ne change pas. Il a toujours 1 000 euros.
+
+C'est comme couper une pizza en 10 parts plutôt qu'en 1. Il n'y a pas plus de pizza. Les parts sont juste plus petites.
+
+Pourquoi diviser ?
+
+Le but est surtout pratique. Une action très chère est difficile à acheter pour les petits épargnants. Avec un prix plus bas, il devient plus facile d'en acheter quelques-unes.
+
+Plusieurs grandes entreprises américaines ont ainsi divisé leur action ces dernières années. Apple l'a fait en 2020, en divisant chaque action en quatre. Nvidia l'a fait en 2024, en divisant chaque action en dix.
+
+Il existe aussi le regroupement d'actions, l'inverse. Il est souvent utilisé par des entreprises dont l'action est tombée très bas.
+
+La taxe sur les rachats
+
+Aux États-Unis, une taxe de 1 % sur les rachats d'actions est entrée en vigueur en 2023. Le but est de pousser les entreprises à investir plutôt qu'à racheter. Son effet reste limité : les rachats se poursuivent à grande échelle.
+
+En France aussi, le sujet revient régulièrement dans les débats. Certains souhaitent encadrer davantage les rachats, d'autres défendent la liberté des entreprises d'utiliser leurs bénéfices.
+
+Le fractionnement chez les courtiers
+
+Aujourd'hui, certains courtiers permettent d'acheter des fractions d'actions. Tu peux par exemple acheter un dixième d'une action chère. Cette possibilité rend les divisions d'actions moins nécessaires. Mais elle n'existe pas partout, et pas sur toutes les enveloppes.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : quand une action est divisée en dix, les actionnaires deviennent dix fois plus riches ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Ils ont dix fois plus d'actions, mais chacune vaut dix fois moins. Leur fortune reste la même. Seule la taille des parts change.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : croire qu'un split rend une action moins chère au sens de la valeur. Son prix baisse, pas sa valeur relative à l'entreprise.
+
+Deux : penser que tout rachat d'actions est une bonne nouvelle. Racheter trop cher peut détruire de la valeur.
+
+Trois : regarder le bénéfice par action sans vérifier le bénéfice total. Il peut monter grâce aux rachats, sans que l'activité progresse.
+
+Ce qu'il faut retenir
+
+- Le rachat d'actions réduit le nombre d'actions en circulation
+- Il augmente le bénéfice par action, sans hausse du bénéfice total
+- La division d'actions change le prix, pas la valeur détenue
+
+En une phrase : racheter ses actions concentre la propriété, les diviser en fait juste des parts plus petites. Et toi, préfères-tu une grosse part de pizza ou dix petites ?
+
+Sources : S1 · Autorité des marchés financiers, glossaire (rachat d'actions, division et regroupement d'actions) ; programmes de rachat de dizaines de milliards de dollars par an des grandes entreprises américaines (presse financière)
+S2 · Apple, rapports annuels (rachats de plus de 50 milliards de dollars chaque année de 2018 à 2024), division par quatre en 2020 ; Nvidia, division par dix en 2024 ; taxe américaine de 1 % sur les rachats d'actions depuis 2023 (Inflation Reduction Act) ; Calcul de la chaîne : 500 millions ÷ 100 millions = 5 euros, 500 millions ÷ 90 millions ≈ 5,56 euros ; 1 000 euros = 10 actions de 100 euros ; division en 10 ou en 20
+
+===
+
+# Correction, marché baissier, krach : comment mesurer une baisse ?
+
+Pour les professionnels, une baisse de 10 % s'appelle une correction, et une baisse de 20 % un marché baissier. Ces seuils sont des conventions, mais ils aident à garder la tête froide. Comment mesurer les baisses, et à quelle fréquence arrivent-elles ?
+
+La volatilité
+
+En Bourse, les prix montent et descendent sans arrêt. On appelle volatilité l'ampleur de ces mouvements. Une action très volatile peut gagner ou perdre beaucoup en peu de temps. Une action peu volatile bouge lentement.
+
+La volatilité n'est pas un défaut. C'est le prix à payer pour un rendement espéré plus élevé. Les actions sont plus volatiles que les obligations, elles-mêmes plus volatiles qu'un livret.
+
+Les mots des baisses
+
+Les professionnels utilisent des mots précis. Une baisse de 10 % depuis le dernier sommet s'appelle une correction. C'est assez fréquent.
+
+Une baisse de 20 % ou plus s'appelle un marché baissier. On dit aussi « bear market », du nom de l'ours. Elle est plus rare, et souvent liée à une crise économique.
+
+Le krach, lui, n'a pas de définition chiffrée. Il désigne une chute très brutale, en quelques jours, comme en 1929, en 1987 ou en mars 2020.
+
+La fréquence
+
+Les baisses sont plus fréquentes qu'on ne le pense. Selon des études sur la Bourse américaine, une correction de 10 % arrive environ tous les un à deux ans. Un marché baissier tous les quelques années.
+
+Même dans les très bonnes années, la Bourse connaît souvent un recul de 5 % ou 10 % en cours d'année. Ces baisses font partie du fonctionnement normal du marché.
+
+Le calcul trompeur des pertes
+
+Il y a une règle mathématique importante. Une baisse et une hausse du même pourcentage ne s'annulent pas.
+
+Si un placement de 100 euros baisse de 50 %, il tombe à 50 euros. Pour revenir à 100 euros, il ne suffit pas d'une hausse de 50 %. Il faut une hausse de 100 %. Il faut doubler.
+
+Plus la baisse est forte, plus la remontée nécessaire est importante. Une baisse de 20 % demande une hausse de 25 % pour revenir au départ. Une baisse de 80 % demande une hausse de 400 %.
+
+Le maximum drawdown
+
+Les professionnels mesurent aussi la plus forte baisse d'un placement, depuis un sommet jusqu'au point le plus bas. En anglais, on parle de « maximum drawdown ». C'est une bonne façon de comprendre le pire scénario vécu dans le passé.
+
+Par exemple, entre 2007 et 2009, les grandes Bourses mondiales ont perdu environ la moitié de leur valeur. Ce chiffre aide chacun à se demander s'il supporterait une telle baisse sans paniquer.
+
+Le temps comme amortisseur
+
+Plus la durée de placement est longue, moins la volatilité de court terme compte. Sur une journée, la Bourse peut faire n'importe quoi. Sur vingt ans, les grandes Bourses mondiales ont historiquement fini en hausse, même si ce n'est jamais garanti.
+
+L'indice de la peur
+
+Il existe un indicateur surnommé l'indice de la peur : le VIX. Il mesure la volatilité attendue de la Bourse américaine, déduite des prix des options. Plus les investisseurs ont peur, plus il monte.
+
+En temps calme, il reste souvent bas. Pendant les crises, il s'envole. En mars 2020, il a atteint des niveaux proches de ceux de la crise de 2008. En Europe, un indicateur semblable existe pour l'Euro Stoxx 50.
+
+Le temps pour revenir
+
+Après un marché baissier, combien de temps faut-il pour retrouver le sommet ? Ça dépend énormément. Quelques mois en 2020. Plusieurs années après 2000 et 2008. Et 34 ans au Japon après 1989. Il n'existe aucune règle.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : après une baisse de 50 %, une hausse de 50 % suffit pour revenir au point de départ ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. Il faut une hausse de 100 %. Après la baisse, la hausse s'applique à une somme deux fois plus petite.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : paniquer à chaque correction. Une baisse de 10 % est un événement fréquent.
+
+Deux : oublier l'asymétrie des pertes. Une grosse baisse demande une remontée encore plus grosse.
+
+Trois : placer à court terme de l'argent soumis à une forte volatilité. On risque de devoir vendre au plus bas.
+
+Ce qu'il faut retenir
+
+- Une correction est une baisse de 10 %, un marché baissier de 20 %
+- Les baisses font partie du fonctionnement normal de la Bourse
+- Après une baisse de 50 %, il faut une hausse de 100 % pour revenir
+
+En une phrase : connaître les baisses habituelles aide à ne pas paniquer quand elles arrivent. Et toi, jusqu'à quelle baisse resterais-tu calme ?
+
+Sources : S1 · Autorité des marchés financiers, glossaire (volatilité, marché baissier) ; conventions de marché : correction de 10 %, marché baissier de 20 %
+S2 · Études historiques sur le S&P 500 (fréquence des corrections, reculs de 5 % ou 10 % en cours d'année ; baisse d'environ la moitié entre 2007 et 2009) ; krachs de 1929, 1987 et mars 2020
+S4 · Cboe, indice VIX (pic de mars 2020 proche de 2008) ; retour au sommet : quelques mois en 2020, plusieurs années après 2000 et 2008, 34 ans au Japon après 1989
+S3 · Calcul de la chaîne : 100 euros − 50 % = 50 euros, + 100 % = 100 euros ; −20 % demande +25 % ; −80 % demande +400 % ; horizon de vingt ans
+
+===
+
+# Investir un peu chaque mois : la méthode du DCA
+
+Placer 100 euros chaque mois, quel que soit le prix, plutôt que tout d'un coup. Cette méthode a un nom : le DCA, ou investissement programmé. Elle évite d'avoir à deviner le bon moment. Comment fonctionne-t-elle, et a-t-elle des limites ?
+
+Trois lettres de plus
+
+DCA vient de l'anglais « dollar cost averaging ». En français, on parle d'investissement programmé, ou de versements réguliers. Le principe : placer la même somme à intervalles réguliers, par exemple chaque mois.
+
+On ne cherche pas à acheter au plus bas. On achète simplement, mois après mois, au prix du moment. Parfois cher, parfois bon marché.
+
+Un exemple chiffré
+
+Imagine que tu places 100 euros par mois sur un fonds pendant trois mois. Le premier mois, la part vaut 10 euros : tu en achètes 10. Le deuxième mois, elle tombe à 5 euros : tu en achètes 20. Le troisième mois, elle remonte à 10 euros : tu en achètes 10.
+
+Tu as versé 300 euros et tu possèdes 40 parts. Ton prix moyen est donc de 7,50 euros par part. Pourtant, la part vaut 10 euros à la fin. Tu es en gain, alors que le prix est revenu à son point de départ.
+
+C'est l'effet du DCA. Quand le prix baisse, la même somme achète plus de parts. Les baisses deviennent des occasions d'acheter à bon prix.
+
+Le grand avantage : la tranquillité
+
+Personne ne sait prévoir le meilleur moment pour investir. Même les professionnels se trompent souvent. Le DCA supprime cette question.
+
+Il limite aussi le regret. Si tu places tout d'un coup juste avant une baisse, le choc est violent. Avec des versements réguliers, une baisse touche seulement une partie de ton argent.
+
+Et il crée une habitude. Avec un virement automatique, l'épargne devient régulière, sans effort ni décision à prendre chaque mois.
+
+La limite
+
+Le DCA n'est pas magique. Sur un marché qui monte régulièrement, investir tout de suite une grosse somme a souvent donné un meilleur résultat. Car l'argent reste plus longtemps placé.
+
+Plusieurs études ont comparé les deux méthodes. Placer tout d'un coup a fait mieux dans une majorité des cas historiques. Mais pas toujours. Et l'écart est souvent modeste face au confort psychologique du DCA.
+
+Pour la plupart des épargnants, la question ne se pose d'ailleurs pas. Ils n'ont pas une grosse somme à placer. Ils épargnent une partie de leur salaire chaque mois. Le DCA est alors la méthode naturelle.
+
+Les frais
+
+Attention aux frais. Si chaque achat coûte des frais fixes, de petits versements fréquents peuvent coûter cher. Beaucoup de courtiers et d'assurances-vie proposent des versements programmés à frais réduits. Il faut vérifier avant de choisir.
+
+La discipline
+
+Le plus difficile n'est pas de commencer. C'est de continuer pendant les baisses. C'est justement à ce moment que le DCA est le plus utile. Arrêter ses versements quand le marché baisse, c'est renoncer à acheter moins cher.
+
+Un exemple sur dix ans
+
+Prenons quelqu'un qui place 100 euros par mois pendant dix ans. Il aura versé 12 000 euros. Pendant cette période, le marché aura sans doute connu des baisses et des hausses.
+
+Chaque baisse lui aura permis d'acheter plus de parts. Chaque hausse aura fait grandir la valeur de celles qu'il possède déjà. Au bout du compte, ce qui compte, c'est la tendance sur l'ensemble de la période, pas le chemin.
+
+Les plateformes de versements programmés
+
+Beaucoup de banques, de courtiers et d'assurances proposent aujourd'hui des plans d'investissement programmé. On choisit le support, le montant et la date. Les achats se font ensuite tout seuls. Certains permettent de commencer avec quelques dizaines d'euros par mois.
+
+Petite question
+
+Petite question pour toi. Vrai ou faux : avec le DCA, on achète toujours au prix le plus bas ? Mets la vidéo en pause si tu veux réfléchir.
+
+Réponse : faux. On achète à un prix moyen. Parfois cher, parfois bon marché. L'objectif n'est pas d'acheter au plus bas, mais d'éviter de tout acheter au plus haut.
+
+Attention, grain de sable
+
+Il y a trois erreurs courantes.
+
+Un : arrêter ses versements quand la Bourse baisse. C'est le moment où ils achètent le plus de parts.
+
+Deux : croire que le DCA supprime le risque. Si le marché baisse pendant des années, le placement reste en perte.
+
+Trois : ignorer les frais. Sur de petits versements, des frais fixes peuvent peser lourd.
+
+Ce qu'il faut retenir
+
+- Le DCA consiste à investir la même somme à intervalles réguliers
+- Il lisse le prix d'achat et évite de deviner le bon moment
+- Sa vraie force est la discipline, surtout pendant les baisses
+
+En une phrase : investir un peu chaque mois évite de chercher le bon moment et transforme les baisses en occasions. Et toi, as-tu déjà mis en place un virement automatique ?
+
+Sources : S1 · Autorité des marchés financiers, « Investir régulièrement : les versements programmés »
+S2 · Calcul de la chaîne : 100 euros à 10 euros = 10 parts, à 5 euros = 20 parts, à 10 euros = 10 parts ; 300 euros pour 40 parts = 7,50 euros en moyenne ; part à 10 euros à la fin
+S4 · Calcul de la chaîne : 100 euros × 12 mois × 10 ans = 12 000 euros
+S3 · Études comparant placement en une fois et versements programmés (Vanguard, 2012 et mises à jour)

@@ -1,6 +1,6 @@
 {
   "name": "quentmovie",
-  "version": "2.8.4",
+  "version": "2.8.5",
   "description": "QuentMovie : logiciel de montage vidéo pour Mac",
   "author": "QuenTools",
   "private": true,
@@ -67,6 +67,8 @@
     "navigateur-pont.js",
     "navigateur-electron.js",
     "fiche-quentinvest.js",
+    "idees-quentinvest.js",
+    "quentinvest-idees/**",
     "fiche-ia.js", "relecture-ecrans.js", "retour-ecran.js",
     "prononciation-controle.js",
     "voix-clone/**",
