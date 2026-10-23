@@ -29,3 +29,7 @@ quentmovie/scripts/__pycache__/
 
 # Application Studio Posts : fichiers générés
 marketing/generateur-posts/dist/
+
+# Jeu Pax Mythica : fichiers générés
+paxmythica/dist/
+paxmythica/autotest.json

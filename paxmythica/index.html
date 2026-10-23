@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; object-src 'none'">
+<title>Pax Mythica</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- accueil -->
+<section id="accueil" class="ecran actif">
+  <canvas id="fondAccueil"></canvas>
+  <div class="voile"></div>
+  <div class="accueil-centre">
+    <div class="sceau">⚡</div>
+    <h1>Pax Mythica</h1>
+    <p class="devise">Bâtis un empire sous le regard des dieux</p>
+    <nav class="menu-principal" id="menuAccueil"></nav>
+    <p class="version" id="versionApp"></p>
+  </div>
+</section>
+
+<!-- création d'une partie (rapide ou personnalisée) -->
+<section id="creation" class="ecran"><div class="creation-fond"><div id="creationContenu" class="creation"></div></div></section>
+
+<!-- jeu (et éditeur de carte) -->
+<section id="jeu" class="ecran">
+  <canvas id="carte"></canvas>
+  <header id="barre"></header>
+  <aside id="gauche" class="panneau cache"></aside>
+  <aside id="droite" class="panneau">
+    <nav class="onglets" id="onglets"></nav>
+    <div id="ongletContenu" class="defile"></div>
+  </aside>
+  <div id="bandeauCible" class="bandeau cache"></div>
+  <form id="decret" class="decret" autocomplete="off">
+    <span class="decret-sceau">📜</span>
+    <textarea id="decretTexte" rows="1" maxlength="600" placeholder="Écris un décret : « lever 10 archers », « construire un temple », « guerre à … »"></textarea>
+    <button type="submit" class="btn or" id="decretBouton">Proclamer</button>
+  </form>
+  <div id="toasts"></div>
+</section>
+
+<div id="modal" class="modal cache"><div class="modal-boite" id="modalBoite"></div></div>
+<input type="file" id="fichierImport" accept=".json,application/json" hidden>
+
+<script src="donnees.js"></script>
+<script src="carte.js"></script>
+<script src="moteur.js"></script>
+<script src="alliances.js"></script>
+<script src="ia-nations.js"></script>
+<script src="oracle.js"></script>
+<script src="rendu.js"></script>
+<script src="son.js"></script>
+<script src="interface.js"></script>
+</body>
+</html>

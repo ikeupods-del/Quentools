@@ -1,0 +1,61 @@
+{
+  "name": "pax-mythica",
+  "productName": "Pax Mythica",
+  "version": "1.0.0",
+  "description": "Jeu de stratégie mythologique : panthéons, dieux, créatures et décrets libres",
+  "main": "main.js",
+  "private": true,
+  "author": "QuenTools",
+  "scripts": {
+    "start": "electron .",
+    "test": "node tests/moteur.js && node tests/interface.js",
+    "dist": "node ../tools/synchro-ia-locale.js && electron-builder --mac dmg --arm64 --publish never"
+  },
+  "build": {
+    "appId": "fr.quentools.paxmythica",
+    "productName": "Pax Mythica",
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "style.css",
+      "donnees.js",
+      "carte.js",
+      "moteur.js",
+      "alliances.js",
+      "ia-nations.js",
+      "oracle.js",
+      "rendu.js",
+      "son.js",
+      "interface.js",
+      "ia-locale.js",
+      "ia-worker.js",
+      "maj.js",
+      "package.json"
+    ],
+    "afterPack": "scripts/adhoc-sign.js",
+    "mac": {
+      "category": "public.app-category.strategy-games",
+      "identity": null,
+      "icon": "build/icon.png",
+      "artifactName": "Pax-Mythica-${version}-arm64.${ext}"
+    },
+    "dmg": {
+      "title": "Pax Mythica"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "asarUnpack": [
+      "node_modules/node-llama-cpp/**",
+      "node_modules/@node-llama-cpp/**"
+    ]
+  },
+  "devDependencies": {
+    "electron": "43.7.5",
+    "electron-builder": "^25.1.8"
+  },
+  "dependencies": {
+    "node-llama-cpp": "3.21.1"
+  }
+}

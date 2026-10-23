@@ -1,4 +1,4 @@
-/* Copie l'IA locale partagée (marketing/ia-locale/) dans chaque outil privé qui l'utilise : node tools/synchro-ia-locale.js [--verifier]
+/* Copie l'IA locale partagée (marketing/ia-locale/) dans chaque outil privé qui l'utilise (et dans le jeu Pax Mythica) : node tools/synchro-ia-locale.js [--verifier]
    Les copies sont des fichiers générés : on modifie toujours la source, jamais la copie.
    --verifier : n'écrit rien, échoue si une copie diffère de la source. */
 const fs = require('fs'), path = require('path');
@@ -14,6 +14,15 @@ for (const d of destinations) {
     const src = fs.readFileSync(src0, 'utf8'), cible = path.join(dir, f);
     if (verifier) { if (!fs.existsSync(cible) || fs.readFileSync(cible, 'utf8') !== src) { console.log('Différent : ' + path.relative(path.join(racine, '..'), cible)); ecart++; } }
     else { fs.writeFileSync(cible, src); console.log('copié : ' + path.relative(path.join(racine, '..'), cible)); }
+  }
+}
+// Pax Mythica (jeu, hors du dossier marketing) : l'IA locale (oracle des décrets) et les mises à jour
+{
+  const dir = path.join(racine, '..', 'paxmythica');
+  if (fs.existsSync(dir)) for (const [f, src0] of [['ia-locale.js', path.join(source, 'ia-locale.js')], ['ia-worker.js', path.join(source, 'ia-worker.js')], ...extras.map(([chemin, f]) => [f, chemin])]) {
+    const src = fs.readFileSync(src0, 'utf8'), cible = path.join(dir, f);
+    if (verifier) { if (!fs.existsSync(cible) || fs.readFileSync(cible, 'utf8') !== src) { console.log('Différent : paxmythica/' + f); ecart++; } }
+    else { fs.writeFileSync(cible, src); console.log('copié : paxmythica/' + f); }
   }
 }
 // QuentMovie (hors du dossier marketing) : seulement la mémoire

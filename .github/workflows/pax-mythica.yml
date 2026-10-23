@@ -1,0 +1,80 @@
+name: Pax Mythica — jeu Mac
+
+# Construit le jeu Pax Mythica (.dmg) sur un vrai Mac de GitHub, l'essaie, puis le publie dans « Releases »
+# (étiquette pax-mythica-vX.Y.Z). Nouvelle version = changer « version » dans paxmythica/package.json.
+# Une version déjà publiée n'est pas republiée.
+on:
+  workflow_dispatch:
+  push:
+    paths: ['paxmythica/**', 'marketing/ia-locale/**', 'quentmovie/maj.js', 'tools/synchro-ia-locale.js', '.github/workflows/pax-mythica.yml']
+
+concurrency:
+  group: pax-mythica-mac
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: paxmythica
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Installer les dépendances
+        env:
+          NODE_LLAMA_CPP_SKIP_DOWNLOAD: 'true'
+        run: npm ci
+      - name: Vérifier que les copies de l'IA locale et des mises à jour sont à jour
+        working-directory: .
+        run: node tools/synchro-ia-locale.js --verifier
+      - name: Essayer le moteur du jeu (parties entières, alliances, décrets, sauvegardes)
+        run: node tests/moteur.js
+      - name: Construire l'application
+        run: npm run dist
+      - name: Lancer l'application construite et l'essayer (dix ans de partie, carte, décret, sauvegarde)
+        run: |
+          PAX_AUTOTEST="$PWD/autotest.json" "dist/mac-arm64/Pax Mythica.app/Contents/MacOS/Pax Mythica" || true
+          cat autotest.json
+          node -e '
+            const r = require("./autotest.json"), ko = [];
+            if (r.erreur) ko.push("erreur : " + r.erreur);
+            if (r.erreursConsole) ko.push("console : " + r.erreursConsole.join(" | "));
+            const g = r.jeu || {};
+            if (!(g.mois >= 120)) ko.push("partie : " + JSON.stringify(g));
+            if (!g.carteDessinee) ko.push("carte non dessinée");
+            if (!g.decret || !g.rechargement) ko.push("décret ou sauvegarde");
+            if (!g.oracle || !r.oracle || !r.oracle.mo) ko.push("pont de l oracle : " + JSON.stringify(r.oracle));
+            if (!g.maj) ko.push("pont des mises à jour");
+            if (ko.length) { console.log("Échecs :", ko.join(" ; ")); process.exit(1); } else console.log("Application : tout fonctionne");'
+      - name: Contrôler que tous les fichiers du jeu sont dans l'application
+        run: |
+          npx --yes @electron/asar list "dist/mac-arm64/Pax Mythica.app/Contents/Resources/app.asar" > contenu.txt
+          for f in $(node -p "require('./package.json').build.files.join(' ')"); do grep -q "/$f$" contenu.txt || { echo "Fichier absent de l'application : $f"; exit 1; }; done
+          for f in $(grep -o 'src="[^"]*\.js"' index.html | sed 's/src="//;s/"//'); do node -e "process.exit(require('./package.json').build.files.includes('$f') ? 0 : 1)" || { echo "Script de index.html absent de build.files : $f"; exit 1; }; done
+      - name: Contrôler que l'application tourne sur puce Apple
+        run: |
+          a=$(lipo -archs "dist/mac-arm64/Pax Mythica.app/Contents/MacOS/Pax Mythica")
+          echo "Architectures : $a"; case " $a " in *" arm64 "*) ;; *) exit 1;; esac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pax-Mythica-mac
+          path: paxmythica/dist/*.dmg
+      - name: Publier la version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if gh release list --limit 100 --json tagName --jq '.[].tagName' | grep -qx "pax-mythica-v$VERSION"; then
+            echo "La version $VERSION est déjà publiée : rien à faire (changer la version dans package.json pour publier)."
+            exit 0
+          fi
+          printf '%s\n\n%s\n' "Pax Mythica : jeu de stratégie mythologique (panthéons, dieux, créatures, alliances, décrets libres)." \
+            "Installation : ouvrir le .dmg et glisser Pax Mythica dans Applications. Au premier lancement : clic droit sur l'application → Ouvrir." > notes.md
+          gh release create "pax-mythica-v$VERSION" "dist/Pax-Mythica-$VERSION-arm64.dmg" \
+            --title "Pax Mythica $VERSION" --notes-file notes.md --target "${{ github.sha }}"
