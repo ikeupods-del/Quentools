@@ -518,8 +518,11 @@ diffuseColor.rgb *= 0.86 + grain * 0.28;`);
       const w = this.cv.clientWidth, h = this.cv.clientHeight, dpr = Math.min(2, window.devicePixelRatio || 1);
       if (this.taille !== w + 'x' + h) { this.taille = w + 'x' + h; this.renderer.setSize(w, h, false); this.camera.aspect = w / h; this.camera.updateProjectionMatrix(); this.et.width = w * dpr; this.et.height = h * dpr; }
       const r = this.r2d, v = r.version;
-      if (v.base !== this.vus.base && this.vus.base >= 0) { this.hauteurs(); this.peindreSol(); this.construireSol(); this.construireNature(); this.sigVilles = ''; }
-      if (v.base !== this.vus.base || v.calque !== this.vus.calque || v.halo !== this.vus.halo) { this.peindreTerritoires(); Object.assign(this.vus, v); }
+      // relief modifié (éditeur) : reconstruit une fois les retouches finies, pas à chaque clic
+      if (v.base !== this.vus.base && this.vus.base >= 0) { this.vus.base = v.base; this.reliefA = this.temps + 900; }
+      if (this.reliefA && this.temps >= this.reliefA) { this.reliefA = 0; this.hauteurs(); this.peindreSol(); this.construireSol(); this.construireNature(); this.sigVilles = ''; this.vus.calque = -1; }
+      // frontières : au plus quatre fois par seconde (l'éditeur peint en glissant)
+      if ((v.base !== this.vus.base || v.calque !== this.vus.calque || v.halo !== this.vus.halo) && !(this.territoiresA > this.temps)) { this.peindreTerritoires(); Object.assign(this.vus, v); this.territoiresA = this.temps + 250; }
       this.construireVilles();
       this.placerCamera(dt); this.majArmees();
       this.eau.material.uniforms.uT.value = this.temps / 1000;

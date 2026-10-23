@@ -106,6 +106,7 @@ const ok = (c, m) => { n++; if (!c) { ko++; console.log('✗ ' + m); } };
   ok(await p.locator('table.peuples tr').count() === 8, 'peuple ajouté');
   await p.selectOption('#pForme', 'archipel'); await p.selectOption('#pTaille', 'petite');
   await p.click('[data-act=p-editeur]');
+  await ev(() => { if (UI.mode3d) UI.ACT.vue(); }); // éditeur essayé sur la carte 2D (même code ; la 3D sans carte graphique est trop lente ici)
   ok(await p.isVisible('#gauche >> text=Éditeur de carte'), 'éditeur ouvert');
   const pr = await ev(() => { UI.vue().stabiliser(); const E = UI.j.etat; for (const q of E.provinces.filter(x => x.owner < 0)) { const c = UI.j.carte.provinces[q.id], e = UI.vue().versEcran(c.lx, c.ly); if (['carte', 'carte3d'].includes((document.elementFromPoint(e.x, e.y) || {}).id) && UI.vue().provinceA(e.x, e.y) === q.id) return { id: q.id, ...e }; } return null; });
   await p.mouse.click(pr.x, pr.y);
@@ -117,6 +118,7 @@ const ok = (c, m) => { n++; if (!c) { ko++; console.log('✗ ' + m); } };
   await p.click('[data-act=ed-scenario]'); await p.fill('#nomSaisi', 'Mon monde'); await p.click('#nomOk');
   await p.click('[data-act=ed-lancer]'); await fermerModals();
   ok(await ev(() => !UI.editeur && UI.ecran === 'jeu' && UI.j.etat.provinces.some(x => x.nom === 'Olympie')), 'partie lancée depuis l’éditeur');
+  await ev(() => { if (!UI.mode3d) UI.ACT.vue(); });
 
   // scénarios
   await ev(() => UI.ACT.accueil()); await p.click('[data-act=scenarios]');
