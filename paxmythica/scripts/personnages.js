@@ -52,7 +52,7 @@ function garder(nom, motif) {
   for (const l of lignes) {
     // dossier Google Drive (gdown, installé par le workflow) : téléchargé dans /tmp/paquets/<nom>, contenu listé
     if (l.startsWith('gdrive ')) { const [, url, nom] = l.split(/\s+/), dest = path.join('/tmp/paquets', nom); fs.mkdirSync(dest, { recursive: true });
-      try { execSync(`gdown --folder "${url}" -O "${dest}" --quiet --remaining-ok`, { stdio: 'inherit', timeout: 900000 });
+      try { execSync(`gdown --folder "${url}" -O "${dest}" --quiet`, { stdio: 'inherit', timeout: 900000 });
         for (const z of execSync(`find "${dest}" -name "*.zip"`).toString().split('\n').filter(Boolean)) execSync(`unzip -o -q "${z}" -d "${path.dirname(z)}"`);
         const liste = execSync(`cd "${dest}" && find . -type f -printf "%s %p\\n" | sort -k2`).toString(); fs.writeFileSync(path.join(DOSSIER, nom + '.contenu.txt'), liste); journal.push(`gdrive ${url} → ${nom} : ${liste.split('\n').length - 1} fichiers`); }
       catch (e) { journal.push(`ERREUR gdrive ${url} : ${e.message.slice(0, 300)}`); }
