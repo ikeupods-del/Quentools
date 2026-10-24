@@ -616,6 +616,8 @@ void main() {
         this.scene.fog.color.copy(c.horizon).multiplyScalar((P.fond || 1) * k * (P.brumeTeinte || 1));
         if (this.eau) { const w = this.eau.material.uniforms; w.tCiel.value = c.tex; w.uCielI.value = (P.fond || 1) * k; w.uCielMoy.value.copy(c.moyenne).multiplyScalar(k); w.uPret.value = 1; }
         this.U.uSoleil.value.copy(this.dirSoleil); this.U.uSoleilC.value.copy(this.soleil.color).multiplyScalar(this.soleil.intensity * 0.3);
+        // fumées teintées par la lumière du ciel (claires le jour, bleutées et discrètes la nuit)
+        if (this.matFumee) this.matFumee.uniforms.uTeinte.value.copy(c.moyenne).multiplyScalar(k * 0.9).lerp(new THREE.Color(0.75, 0.75, 0.76), P.nuit ? 0.15 : 0.6);
         for (const n in this.ciels) if (n !== nom) { this.ciels[n].tex.dispose(); this.ciels[n].rt.dispose(); delete this.ciels[n]; }
       };
       if (this.ciels[nom]) return appliquer(this.ciels[nom]);
@@ -1049,7 +1051,8 @@ void main() {
       if (this.fumee) { this.monde.remove(this.fumee); this.fumee.geometry.dispose(); this.fumee = null; }
       if (F.length) { const n = F.length / 5, pos = new Float32Array(n * 3), ph = new Float32Array(n), fo = new Float32Array(n); for (let i = 0; i < n; i++) { pos[i * 3] = F[i * 5]; pos[i * 3 + 1] = F[i * 5 + 1]; pos[i * 3 + 2] = F[i * 5 + 2]; ph[i] = F[i * 5 + 3]; fo[i] = F[i * 5 + 4]; }
         const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('phase', new THREE.BufferAttribute(ph, 1)); g.setAttribute('force', new THREE.BufferAttribute(fo, 1));
-        this.fumee = new THREE.Points(g, this.matFumee || (this.matFumee = materiauFumee(this.U.uT))); this.fumee.frustumCulled = false; this.fumee.renderOrder = 3; this.monde.add(this.fumee); }
+        if (!this.matFumee) { this.matFumee = materiauFumee(this.U.uT); this.majCiel(); }
+        this.fumee = new THREE.Points(g, this.matFumee); this.fumee.frustumCulled = false; this.fumee.renderOrder = 3; this.monde.add(this.fumee); }
       const TAILLES = { tonneau: 0.8, caisse: 0.9, jarre: 0.6, panier: 0.7, tonneaux: 2.2, navire: 11, 'statue-cheval': 1.9, 'statue-gothique': 1.3 };
       for (const nom in A) if (this.glb && this.glb[nom]) for (const m of this.instGLB(nom, A[nom], TAILLES[nom], nom.startsWith('statue') ? -1.0 : 0, nom === 'navire' ? -0.6 : null)) { this.accessoires.push(m); this.monde.add(m); }
     }

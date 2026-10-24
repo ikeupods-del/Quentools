@@ -68,11 +68,11 @@
     },
     nuit: {
       nom: 'Nuit étoilée', emoji: '🌙', desc: 'Clair de lune, villes illuminées, torches et étoiles. Superbe en gros plan.',
-      soleil: { dir: [0.4, 0.55, -0.5], couleur: 0x8ea6ff, force: 0.55 }, hemi: { ciel: 0x2a3a6a, sol: 0x100c14, force: 0.45 }, exposition: 1.1, nuit: true, kCiel: 0.55, fond: 0.6, ambiance: 0.5, brumeTeinte: 0.5,
+      soleil: { dir: [0.4, 0.55, -0.5], couleur: 0x8ea6ff, force: 0.55 }, hemi: { ciel: 0x2a3a6a, sol: 0x100c14, force: 0.45 }, exposition: 1.1, nuit: true, kCiel: 0.55, fond: 0.6, ambiance: 0.75, brumeTeinte: 0.5,
       ciel: { haut: 0x060b1e, horizon: 0x1c2a4c, bas: 0x1a2236, halo: 0xb0c4ff }, etoiles: true, brume: 1.1,
       eau: { creux: [0.01, 0.03, 0.08], bas: [0.04, 0.12, 0.2], reflet: [0.7, 0.8, 1.0] },
       sol: { herbe: [70, 100, 60], foret: [40, 60, 40], sec: [110, 110, 80], sable: [170, 160, 140], roche: [100, 100, 110], neige: [220, 228, 255], fleurs: false },
-      neige: { niveau: 70, partout: 0 }, arbres: { sapin: [0x1f3a2a, 0x24402c, 0x1a3224], feuillu: [0x2e4a30, 0x355236, 0x3a5638], palmier: 0x2e4a30 },
+      neige: { niveau: 70, partout: 0 }, arbres: { sapin: [0x2a4a34, 0x30523a, 0x26442e], feuillu: [0x456a46, 0x4c7450, 0x527a54], palmier: 0x456a46 },
       herbe: [0x3a5a3a, 0x406240, 0x345234], nuages: { opacite: 0.35, ombres: 0.2 },
       post: { saturation: 1.0, contraste: 1.1, chaud: [1.15, 1.0, 0.85], froid: [0.85, 0.95, 1.2], vignette: 0.5, bloom: 0.95, seuil: 0.55, maquette: 0.8, grain: 0.04 }
     },
