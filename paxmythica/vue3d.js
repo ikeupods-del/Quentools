@@ -373,9 +373,12 @@ transformed.z += (cos(uT * 1.4 + baseI.z * 0.11) * 0.45 + cos(uT * 3.7 + baseI.x
   function avecVent(mat, ampleur, U, feuillage) {
     mat.customProgramCacheKey = () => 'vent' + ampleur + (feuillage ? 'f' : '');
     mat.onBeforeCompile = sh => {
-      sh.uniforms.uT = U.uT; sh.uniforms.uSoleilC = U.uSoleilC;
+      sh.uniforms.uT = U.uT; sh.uniforms.uSoleilC = U.uSoleilC; sh.uniforms.uSatF = U.uSatF; sh.uniforms.uNeigeF = U.uNeigeF;
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uT;').replace('#include <begin_vertex>', '#include <begin_vertex>\n' + GLSL_VENT(ampleur));
-      if (feuillage) sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uSoleilC;')
+      // feuillages : couleur de la photo plus ou moins désaturée selon le pack (hiver, automne), neige sur le dessus des branches
+      if (feuillage) sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uSoleilC; uniform float uSatF, uNeigeF;')
+        .replace('#include <map_fragment>', '#include <map_fragment>\ndiffuseColor.rgb = mix(vec3(dot(diffuseColor.rgb, vec3(0.3, 0.55, 0.15))), diffuseColor.rgb, uSatF);')
+        .replace('#include <color_fragment>', '#include <color_fragment>\n{ vec3 hautV = normalize((viewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz); float nei = uNeigeF * smoothstep(0.15, 0.65, dot(normalize(vNormal), hautV)); diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.82, 0.86, 0.9), nei * 0.85); }')
         // feuillages : normales arrondies gardées des deux côtés, lumière qui traverse les feuilles
         .replace('#include <normal_fragment_begin>', '#include <normal_fragment_begin>\n#ifdef DOUBLE_SIDED\nnormal *= faceDirection;\n#endif')
         .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * uSoleilC * 0.09;');
@@ -527,7 +530,7 @@ void main() {
       this.cam = { x: 0, z: 0, d: 600, lacet: 0 }; this.vise = { x: 0, z: 0, d: 600, lacet: 0 };
       this.temps = 0; this.boites = []; this.mats = {}; this.M = modeles(); this.ray = new THREE.Raycaster();
       // valeurs partagées par les nuanciers
-      this.U = { uT: { value: 0 }, uSoleil: { value: this.dirSoleil.clone() }, uSoleilC: { value: new THREE.Color(1, 0.95, 0.85) }, uPret: { value: 0 } };
+      this.U = { uT: { value: 0 }, uSatF: { value: 1 }, uNeigeF: { value: 0 }, uSoleil: { value: this.dirSoleil.clone() }, uSoleilC: { value: new THREE.Color(1, 0.95, 0.85) }, uPret: { value: 0 } };
       this.uMat = { uT: this.U.uT, uPret: this.U.uPret, uNuit: { value: 0 }, uFutur: { value: 0 }, uModerne: { value: 0 }, uFam: { value: TABLE_FAMILLES() },
         tBatC: { value: tableauUni(BATS.map(() => [200, 196, 186]), 4, true) }, tBatN: { value: tableauUni(BATS.map(() => [128, 128, 255]), 4) }, tBatR: { value: tableauUni(BATS.map(() => [200, 128, 255]), 4) } };
       this.idPack = PM.packGraphique ? PM.packGraphique() : 'olympe'; this.idQualite = PM.qualite ? PM.qualite() : 'haute';
@@ -934,8 +937,13 @@ void main() {
     // teintes des feuillages selon le pack (automne, hiver…), variées d'un arbre à l'autre (rapport à la couleur de référence)
     colorerNature() {
       if (!this.natureParNom) return;
-      const A = this.pack.arbres, ref = { sapin: col(0x2f5d2c), feuillu: col(0x5c9440) }, c = new THREE.Color();
-      const rapport = (h, r) => { const a = col(h); return new THREE.Color(Math.min(2.2, a.r / r.r), Math.min(2.2, a.g / r.g), Math.min(2.2, a.b / r.b)); };
+      const A = this.pack.arbres, ref = { sapin: col(0x2f5d2c), feuillu: col(0x5c9440) }, c = new THREE.Color(), hsl = {};
+      const sat = h => { col(h).getHSL(hsl); return hsl.s; }, lum = a => a.r * 0.3 + a.g * 0.55 + a.b * 0.15;
+      // saturation des feuillages du pack par rapport à la référence : 1 = photo telle quelle, proche de 0 = feuillage gris (hiver)
+      const sF = Math.max(0.12, Math.min(1.2, (A.feuillu.reduce((t, h) => t + sat(h), 0) / A.feuillu.length) / sat(0x5c9440)));
+      const roux = A.feuillu.some(h => { col(h).getHSL(hsl); return hsl.h < 0.12 && hsl.s > 0.4; });
+      this.U.uSatF.value = roux ? 0.35 : Math.min(1, sF); this.U.uNeigeF.value = this.pack.neige.partout || 0;
+      const rapport = (h, r) => { const a = col(h), k = this.U.uSatF.value; if (k >= 0.99) return new THREE.Color(Math.min(2.2, a.r / r.r), Math.min(2.2, a.g / r.g), Math.min(2.2, a.b / r.b)); const l = lum(r); return new THREE.Color(Math.min(2.4, a.r / l), Math.min(2.4, a.g / l), Math.min(2.4, a.b / l)).lerp(new THREE.Color(Math.min(2.2, a.r / r.r), Math.min(2.2, a.g / r.g), Math.min(2.2, a.b / r.b)), k * 0.3); };
       const teindre = (nom, liste, r, cle) => { const m = this.natureParNom[nom], l = this.listesNature[cle]; if (!m || !l || !m.instanceColor) return; l.forEach((a, i) => { c.copy(this.pret ? rapport(liste[Math.floor(a[3] * 9973) % liste.length], r) : col(liste[Math.floor(a[3] * 9973) % liste.length])); c.multiplyScalar(0.82 + ((a[0] * 3.7) % 1) * 0.3); m.setColorAt(i, c); }); m.instanceColor.needsUpdate = true; };
       teindre('sapinEtages', A.sapin, ref.sapin, 'sapin'); teindre('sapinProfil', A.sapin, ref.sapin, 'sapin'); teindre('feuilluFeuilles', A.feuillu, ref.feuillu, 'feuillu'); teindre('acaciaFeuilles', A.feuillu, ref.feuillu, 'acacia'); teindre('buisson', A.feuillu, ref.feuillu, 'buisson');
       teindre('sapinFeuilles', A.sapin, ref.sapin, 'sapin'); teindre('palmierFeuilles', [A.palmier], ref.feuillu, 'palmier');
@@ -1179,7 +1187,7 @@ vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, colo
       u.uSurvol.value = r.survol >= 0 && (r.cibleMode || (r.sel && r.sel.type === 'armee')) ? r.survol : -1; u.uCible.value = r.cibleMode ? 1 : 0;
       this.construireVilles();
       this.placerCamera(dt); this.majArmees();
-      if (this.herbe) this.herbe.visible = this.Q.herbe > 0 && this.cam.d < 420;
+      if (this.herbe) this.herbe.visible = this.Q.herbe > 0 && this.cam.d < 240 && !(this.pack.neige.partout > 0.3);
       if (this.composer) {
         if (this.etal) { this.etal.uniforms.uT.value = this.temps / 1000; this.etal.uniforms.uRes.value.set(w, h); }
         if (this.fxaa && this.fxaa.setSize) { /* taille suivie par le compositeur */ }
