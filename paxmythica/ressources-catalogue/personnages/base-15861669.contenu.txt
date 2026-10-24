@@ -1,0 +1,112 @@
+990808 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/Superhero_Female_FullBody.bin
+31656 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/Superhero_Female_FullBody.gltf
+720076 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/Superhero_Male_FullBody.bin
+30989 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/Superhero_Male_FullBody.gltf
+35958 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Eye_Brown.png
+15099 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Eye_Normal.png
+1570376 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Hair_1_BaseColor.png
+1570376 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Hair_1_BaseColor_png.png
+4326126 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Hair_1_Normal.png
+1729467 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Hair_2_BaseColor.png
+1729467 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Hair_2_BaseColor_png.png
+4710013 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Hair_2_Normal.png
+1319410 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Superhero_Female_Dark_BaseColor.png
+3940537 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Superhero_Female_Normal.png
+3277022 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Superhero_Female_Roughness.png
+1384380 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Superhero_Male_Dark.png
+4252937 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Superhero_Male_Normal.png
+3152049 ./Universal Base Characters[Standard]/Base Characters/Godot - UE/T_Superhero_Male_Roughness.png
+15099 ./Universal Base Characters[Standard]/Base Characters/Textures/Normals Unity - Godot/T_Eye_Normal.png
+4326126 ./Universal Base Characters[Standard]/Base Characters/Textures/Normals Unity - Godot/T_Hair_1_Normal.png
+4710013 ./Universal Base Characters[Standard]/Base Characters/Textures/Normals Unity - Godot/T_Hair_2_Normal.png
+3940537 ./Universal Base Characters[Standard]/Base Characters/Textures/Normals Unity - Godot/T_Superhero_Female_Normal.png
+4252937 ./Universal Base Characters[Standard]/Base Characters/Textures/Normals Unity - Godot/T_Superhero_Male_Normal.png
+35958 ./Universal Base Characters[Standard]/Base Characters/Textures/T_Eye_Brown.png
+15097 ./Universal Base Characters[Standard]/Base Characters/Textures/T_Eye_Normal.png
+1570376 ./Universal Base Characters[Standard]/Base Characters/Textures/T_Hair_1_BaseColor.png
+3770683 ./Universal Base Characters[Standard]/Base Characters/Textures/T_Hair_1_Normal.png
+1729467 ./Universal Base Characters[Standard]/Base Characters/Textures/T_Hair_2_BaseColor.png
+4109628 ./Universal Base Characters[Standard]/Base Characters/Textures/T_Hair_2_Normal.png
+1319410 ./Universal Base Characters[Standard]/Base Characters/Textures/T_Superhero_Female_Dark_BaseColor.png
+1317541 ./Universal Base Characters[Standard]/Base Characters/Textures/T_Superhero_Female_Light_BaseColor.png
+3420584 ./Universal Base Characters[Standard]/Base Characters/Textures/T_Superhero_Female_Normal.png
+1997719 ./Universal Base Characters[Standard]/Base Characters/Textures/T_Superhero_Female_Roughness.png
+1384380 ./Universal Base Characters[Standard]/Base Characters/Textures/T_Superhero_Male_Dark.png
+1389170 ./Universal Base Characters[Standard]/Base Characters/Textures/T_Superhero_Male_Ligh.png
+3687166 ./Universal Base Characters[Standard]/Base Characters/Textures/T_Superhero_Male_Normal.png
+1912686 ./Universal Base Characters[Standard]/Base Characters/Textures/T_Superhero_Male_Roughness.png
+1006508 ./Universal Base Characters[Standard]/Base Characters/Unity/Superhero_Female_FullBody.fbx
+826876 ./Universal Base Characters[Standard]/Base Characters/Unity/Superhero_Male_FullBody.fbx
+289 ./Universal Base Characters[Standard]/Base Characters/Unreal-Engine-README.txt
+73596 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unity)/Eyebrows_Female.fbx
+47132 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unity)/Eyebrows_Regular.fbx
+48444 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unity)/Hair_Beard.fbx
+135388 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unity)/Hair_Buns.fbx
+45036 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unity)/Hair_Buzzed.fbx
+43004 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unity)/Hair_BuzzedFemale.fbx
+125036 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unity)/Hair_Long.fbx
+62668 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unity)/Hair_SimpleParted.fbx
+73548 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unreal Engine)/Eyebrows_Female.fbx
+47276 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unreal Engine)/Eyebrows_Regular.fbx
+48540 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unreal Engine)/Hair_Beard.fbx
+134476 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unreal Engine)/Hair_Buns.fbx
+44716 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unreal Engine)/Hair_Buzzed.fbx
+43036 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unreal Engine)/Hair_BuzzedFemale.fbx
+123612 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unreal Engine)/Hair_Long.fbx
+61932 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/FBX (Unreal Engine)/Hair_SimpleParted.fbx
+67248 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Eyebrows_Female.bin
+2855 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Eyebrows_Female.gltf
+26576 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Eyebrows_Regular.bin
+2018 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Eyebrows_Regular.gltf
+25276 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_Beard.bin
+2005 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_Beard.gltf
+131768 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_Buns.bin
+2243 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_Buns.gltf
+19892 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_Buzzed.bin
+2006 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_Buzzed.gltf
+19892 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_BuzzedFemale.bin
+2191 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_BuzzedFemale.gltf
+115996 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_Long.bin
+2056 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_Long.gltf
+32032 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_SimpleParted.bin
+2010 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_SimpleParted.gltf
+1570376 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/T_Hair_1_BaseColor.png
+4326126 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/T_Hair_1_Normal.png
+1729467 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/T_Hair_2_BaseColor.png
+4710013 ./Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/T_Hair_2_Normal.png
+194428 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/FBX (Unity)/Eyebrows_Female.fbx
+168636 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/FBX (Unity)/Eyebrows_Regular.fbx
+169804 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/FBX (Unity)/Hair_Beard.fbx
+259420 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/FBX (Unity)/Hair_Buns.fbx
+165884 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/FBX (Unity)/Hair_Buzzed.fbx
+164492 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/FBX (Unity)/Hair_BuzzedFemale.fbx
+249404 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/FBX (Unity)/Hair_Long.fbx
+181628 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/FBX (Unity)/Hair_SimpleParted.fbx
+100592 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Eyebrows_Female.bin
+25053 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Eyebrows_Female.gltf
+43656 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Eyebrows_Regular.bin
+23117 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Eyebrows_Regular.gltf
+41356 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Hair_Beard.bin
+23104 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Hair_Beard.gltf
+205916 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Hair_Buns.bin
+23807 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Hair_Buns.gltf
+33372 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Hair_Buzzed.bin
+23108 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Hair_Buzzed.gltf
+33372 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Hair_BuzzedFemale.bin
+23779 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Hair_BuzzedFemale.gltf
+181756 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Hair_Long.bin
+23813 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Hair_Long.gltf
+51332 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Hair_SimpleParted.bin
+23114 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/Hair_SimpleParted.gltf
+1570376 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/T_Hair_1_BaseColor.png
+4326126 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/T_Hair_1_Normal.png
+1729467 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/T_Hair_2_BaseColor.png
+4710013 ./Universal Base Characters[Standard]/Hairstyles/Rigged to Head Bone/glTF (Godot -Unreal)/T_Hair_2_Normal.png
+4326126 ./Universal Base Characters[Standard]/Hairstyles/Textures/Normals Unity - Godot/T_Hair_1_Normal.png
+4710013 ./Universal Base Characters[Standard]/Hairstyles/Textures/Normals Unity - Godot/T_Hair_2_Normal.png
+1570376 ./Universal Base Characters[Standard]/Hairstyles/Textures/T_Hair_1_BaseColor.png
+3770683 ./Universal Base Characters[Standard]/Hairstyles/Textures/T_Hair_1_Normal.png
+1729467 ./Universal Base Characters[Standard]/Hairstyles/Textures/T_Hair_2_BaseColor.png
+4109628 ./Universal Base Characters[Standard]/Hairstyles/Textures/T_Hair_2_Normal.png
+806 ./Universal Base Characters[Standard]/License_Standard.txt
+2109533 ./Universal Base Characters[Standard]/Preview.png

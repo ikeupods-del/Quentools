@@ -1,0 +1,121 @@
+368204 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Female_Peasant_Arms.fbx
+239212 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Female_Peasant_Body.fbx
+228572 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Female_Peasant_Feet.fbx
+204956 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Female_Peasant_Legs.fbx
+184220 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Female_Ranger_Acc_Pauldrons.fbx
+500428 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Female_Ranger_Arms.fbx
+474188 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Female_Ranger_Body.fbx
+463884 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Female_Ranger_Feet.fbx
+234540 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Female_Ranger_Head_Hood.fbx
+185276 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Female_Ranger_Legs.fbx
+368316 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Male_Peasant_Arms.fbx
+302524 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Male_Peasant_Body.fbx
+226316 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Male_Peasant_Feet.fbx
+175884 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Male_Peasant_Legs.fbx
+182668 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Male_Ranger_Acc_Pauldron.fbx
+525548 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Male_Ranger_Arms.fbx
+478524 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Male_Ranger_Body.fbx
+440540 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Male_Ranger_Feet_Boots.fbx
+226940 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Male_Ranger_Head_Hood.fbx
+181020 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Modular Parts/Male_Ranger_Legs.fbx
+807980 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Outfits/Female_Peasant.fbx
+1657932 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Outfits/Female_Ranger.fbx
+840556 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Outfits/Male_Peasant.fbx
+1648444 ./Modular Character Outfits - Fantasy[Standard]/Exports/FBX (Unity)/Outfits/Male_Ranger.fbx
+327920 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Peasant_Arms.bin
+23970 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Peasant_Arms.gltf
+203524 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Peasant_Body.bin
+88739 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Peasant_Body.gltf
+140776 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Peasant_Feet.bin
+24397 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Peasant_Feet.gltf
+74376 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Peasant_Legs.bin
+23962 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Peasant_Legs.gltf
+91040 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Ranger_Acc_Pauldrons.bin
+24621 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Ranger_Acc_Pauldrons.gltf
+557480 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Ranger_Arms.bin
+29655 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Ranger_Arms.gltf
+421432 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Ranger_Body.bin
+29451 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Ranger_Body.gltf
+791720 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Ranger_Feet.bin
+24625 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Ranger_Feet.gltf
+106256 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Ranger_Head_Hood.bin
+24614 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Ranger_Head_Hood.gltf
+74404 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Ranger_Legs.bin
+24978 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Female_Ranger_Legs.gltf
+274868 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Peasant_Arms.bin
+26703 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Peasant_Arms.gltf
+219680 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Peasant_Body.bin
+23738 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Peasant_Body.gltf
+139880 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Peasant_Feet.bin
+23740 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Peasant_Feet.gltf
+52816 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Peasant_Legs.bin
+23721 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Peasant_Legs.gltf
+69200 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Ranger_Acc_Pauldron.bin
+23314 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Ranger_Acc_Pauldron.gltf
+252752 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Ranger_Arms.bin
+26704 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Ranger_Arms.gltf
+309108 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Ranger_Body.bin
+26865 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Ranger_Body.gltf
+710328 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Ranger_Feet_Boots.bin
+23762 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Ranger_Feet_Boots.gltf
+96336 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Ranger_Head_Hood.bin
+23737 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Ranger_Head_Hood.gltf
+52144 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Ranger_Legs.bin
+23712 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/Male_Ranger_Legs.gltf
+5055760 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/T_Peasant_BaseColor.png
+14110336 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/T_Peasant_Normal.png
+9903835 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/T_Peasant_ORM.png
+6630927 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/T_Ranger_BaseColor.png
+12713653 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/T_Ranger_Normal.png
+10792085 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/T_Ranger_ORM.png
+1348542 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/T_Regular_Female_Dark_BaseColor.png
+3913459 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/T_Regular_Female_Normal.png
+3274215 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/T_Regular_Female_Roughness.png
+1316151 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/T_Regular_Male_Dark_BaseColor.png
+4064184 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/T_Regular_Male_Normal.png
+3160102 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Modular Parts/T_Regular_Male_Roughness.png
+658600 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/Female_Peasant.bin
+29529 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/Female_Peasant.gltf
+1959556 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/Female_Ranger.bin
+45461 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/Female_Ranger.gltf
+674764 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/Male_Peasant.bin
+32681 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/Male_Peasant.gltf
+1746884 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/Male_Ranger.bin
+41447 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/Male_Ranger.gltf
+5055760 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/T_Peasant_BaseColor.png
+14110336 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/T_Peasant_Normal.png
+9903835 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/T_Peasant_ORM.png
+6630927 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/T_Ranger_BaseColor.png
+12713653 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/T_Ranger_Normal.png
+10792085 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/T_Ranger_ORM.png
+1348542 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/T_Regular_Female_Dark_BaseColor.png
+3913459 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/T_Regular_Female_Normal.png
+3274215 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/T_Regular_Female_Roughness.png
+1316151 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/T_Regular_Male_Dark_BaseColor.png
+4064184 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/T_Regular_Male_Normal.png
+3160102 ./Modular Character Outfits - Fantasy[Standard]/Exports/glTF (Godot-Unreal)/Outfits/T_Regular_Male_Roughness.png
+728 ./Modular Character Outfits - Fantasy[Standard]/License_Standard.txt
+413244 ./Modular Character Outfits - Fantasy[Standard]/Preview.jpg
+311 ./Modular Character Outfits - Fantasy[Standard]/Readme.txt
+1348542 ./Modular Character Outfits - Fantasy[Standard]/Textures/Base/T_Regular_Female_Dark_BaseColor.png
+3913459 ./Modular Character Outfits - Fantasy[Standard]/Textures/Base/T_Regular_Female_Normal.png
+3274215 ./Modular Character Outfits - Fantasy[Standard]/Textures/Base/T_Regular_Female_Roughness.png
+1316151 ./Modular Character Outfits - Fantasy[Standard]/Textures/Base/T_Regular_Male_Dark_BaseColor.png
+4064184 ./Modular Character Outfits - Fantasy[Standard]/Textures/Base/T_Regular_Male_Normal.png
+3160102 ./Modular Character Outfits - Fantasy[Standard]/Textures/Base/T_Regular_Male_Roughness.png
+14228086 ./Modular Character Outfits - Fantasy[Standard]/Textures/Peasant/Normals-UnrealEngine/T_Peasant_Normal.png
+4699929 ./Modular Character Outfits - Fantasy[Standard]/Textures/Peasant/T_Peasant_2_BaseColor.png
+5055760 ./Modular Character Outfits - Fantasy[Standard]/Textures/Peasant/T_Peasant_BaseColor.png
+14110336 ./Modular Character Outfits - Fantasy[Standard]/Textures/Peasant/T_Peasant_Normal.png
+9903835 ./Modular Character Outfits - Fantasy[Standard]/Textures/Peasant/T_Peasant_ORM.png
+1348542 ./Modular Character Outfits - Fantasy[Standard]/Textures/Ranger/Base Chars/T_Regular_Female_Dark_BaseColor.png
+3913459 ./Modular Character Outfits - Fantasy[Standard]/Textures/Ranger/Base Chars/T_Regular_Female_Normal.png
+3274215 ./Modular Character Outfits - Fantasy[Standard]/Textures/Ranger/Base Chars/T_Regular_Female_Roughness.png
+1316151 ./Modular Character Outfits - Fantasy[Standard]/Textures/Ranger/Base Chars/T_Regular_Male_Dark_BaseColor.png
+4064184 ./Modular Character Outfits - Fantasy[Standard]/Textures/Ranger/Base Chars/T_Regular_Male_Normal.png
+3160102 ./Modular Character Outfits - Fantasy[Standard]/Textures/Ranger/Base Chars/T_Regular_Male_Roughness.png
+12679906 ./Modular Character Outfits - Fantasy[Standard]/Textures/Ranger/Normals-UnrealEngine/T_Ranger_Normal.png
+6180183 ./Modular Character Outfits - Fantasy[Standard]/Textures/Ranger/T_Ranger_3_BaseColor.png
+6630927 ./Modular Character Outfits - Fantasy[Standard]/Textures/Ranger/T_Ranger_BaseColor.png
+12713653 ./Modular Character Outfits - Fantasy[Standard]/Textures/Ranger/T_Ranger_Normal.png
+10792085 ./Modular Character Outfits - Fantasy[Standard]/Textures/Ranger/T_Ranger_ORM.png

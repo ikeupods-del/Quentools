@@ -1,6 +1,18 @@
 itch https://quaternius.itch.io/universal-base-characters : Universal Base Characters[Standard].zip (122 MB)
-  réponse sans adresse pour Universal Base Characters[Standard].zip (200, clé eyJleHBpcmVzIjoxNzkyODUyNDQxLCJpZCI6MzgyMjI1OX0%3D.jxnOIceudrfzH2ATLxTGlgo10Lk%3D, page https://quaternius.itch.io/universal-base-characters/download/eyJleHBpcmVzIjoxNzkyODUyNDQxLCJpZCI6MzgyMjI1OX0%3D.jxnOIceudrfzH2ATLxTGlgo10Lk%3D) : {"errors":["invalid key"]}
+  essai ?source=game_download&key=eyJpZCI6MzgyMjI1OSwiZXhwaXJlcyI6MTc5Mjg1MjUwN30%3D.DM4PlxAjmvcMrbVWFAUINyIZ%2Bj0%3D  → {"errors":["invalid key"]}
+  essai ?source=game_download (clé dans le formulaire) → {"errors":["invalid key"]}
+  essai ?source=game_download&key=eyJpZCI6MzgyMjI1OSwiZXhwaXJlcyI6MTc5Mjg1MjUwN30%3D.DM4PlxAjmvcMrbVWFAUINyIZ%2Bj0%3D (clé dans le formulaire) → {"errors":["invalid key"]}
+  essai (sans clé)  → {"external":false,"url":"https:\/\/itchio-mirror.cb031a832f44726753d6267436f3b414.r2.cloudflarestorage.com\/upload2\/gam
+  Universal Base Characters[Standard].zip : 128968391 octets, 112 fichiers → /tmp/paquets/base
 itch https://quaternius.itch.io/modular-character-outfits-fantasy : Modular Character Outfits - Fantasy[Standard].zip (280 MB)
-  réponse sans adresse pour Modular Character Outfits - Fantasy[Standard].zip (200, clé eyJpZCI6NDA0MDM3OCwiZXhwaXJlcyI6MTc5Mjg1MjQ0MX0%3D.DUUnYZKno3GjzJTL3DXT4chgsT8%3D, page https://quaternius.itch.io/modular-character-outfits-fantasy/download/eyJpZCI6NDA0MDM3OCwiZXhwaXJlcyI6MTc5Mjg1MjQ0MX0%3D.DUUnYZKno3GjzJTL3DXT4chgsT8%3D) : {"errors":["invalid key"]}
+  essai ?source=game_download&key=eyJpZCI6NDA0MDM3OCwiZXhwaXJlcyI6MTc5Mjg1MjUxMn0%3D.tUhoEOkG39ttsX5zLq1TWKoPpQI%3D  → {"errors":["invalid key"]}
+  essai ?source=game_download (clé dans le formulaire) → {"errors":["invalid key"]}
+  essai ?source=game_download&key=eyJpZCI6NDA0MDM3OCwiZXhwaXJlcyI6MTc5Mjg1MjUxMn0%3D.tUhoEOkG39ttsX5zLq1TWKoPpQI%3D (clé dans le formulaire) → {"errors":["invalid key"]}
+  essai (sans clé)  → {"external":false,"url":"https:\/\/itchio-mirror.cb031a832f44726753d6267436f3b414.r2.cloudflarestorage.com\/upload2\/gam
+  Modular Character Outfits - Fantasy[Standard].zip : 294347394 octets, 121 fichiers → /tmp/paquets/tenues
 itch https://quaternius.itch.io/universal-animation-library : Universal Animation Library[Standard].zip (15 MB)
-  réponse sans adresse pour Universal Animation Library[Standard].zip (200, clé eyJpZCI6MzQwODAzNCwiZXhwaXJlcyI6MTc5Mjg1MjQ0Mn0%3D.IIpKI2xk%2Fh%2FJhieBEUL3a2sxTdk%3D, page https://quaternius.itch.io/universal-animation-library/download/eyJpZCI6MzQwODAzNCwiZXhwaXJlcyI6MTc5Mjg1MjQ0Mn0%3D.IIpKI2xk%2Fh%2FJhieBEUL3a2sxTdk%3D) : {"errors":["invalid key"]}
+  essai ?source=game_download&key=eyJleHBpcmVzIjoxNzkyODUyNTE4LCJpZCI6MzQwODAzNH0%3D.%2FeH6yoJDIo77Balq%2FuwGfArDVKY%3D  → {"errors":["invalid key"]}
+  essai ?source=game_download (clé dans le formulaire) → {"errors":["invalid key"]}
+  essai ?source=game_download&key=eyJleHBpcmVzIjoxNzkyODUyNTE4LCJpZCI6MzQwODAzNH0%3D.%2FeH6yoJDIo77Balq%2FuwGfArDVKY%3D (clé dans le formulaire) → {"errors":["invalid key"]}
+  essai (sans clé)  → {"url":"https:\/\/itchio-mirror.cb031a832f44726753d6267436f3b414.r2.cloudflarestorage.com\/upload2\/game\/3408034\/17958
+  Universal Animation Library[Standard].zip : 15904933 octets, 9 fichiers → /tmp/paquets/animations
