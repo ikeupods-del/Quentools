@@ -1,0 +1,1 @@
+{"nom":"c_janissaire","sommets":1708,"triangles":2399,"images":74,"clips":[{"nom":"Idle_Loop","debut":0,"nb":30,"ips":12},{"nom":"Walk_Loop","debut":30,"nb":16,"ips":12},{"nom":"Pistol_Shoot","debut":46,"nb":8,"ips":12},{"nom":"Pistol_Idle_Loop","debut":54,"nb":20,"ips":12}],"decalages":[0,14396,28060,31476,1042612],"avant":{"sommets":4821,"triangles":7838},"erreur":0}

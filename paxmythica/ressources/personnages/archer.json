@@ -1,1 +1,0 @@
-{"nom":"archer","sommets":2378,"triangles":2383,"images":77,"clips":[{"nom":"Idle_Loop","debut":0,"nb":30,"ips":12},{"nom":"Walk_Loop","debut":30,"nb":16,"ips":12},{"nom":"Spell_Simple_Shoot","debut":46,"nb":6,"ips":12},{"nom":"Spell_Simple_Idle_Loop","debut":52,"nb":25,"ips":12}],"decalages":[0,14300,33324,38080,1502928],"avant":{"sommets":33567,"triangles":31790},"erreur":0}

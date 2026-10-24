@@ -1,0 +1,1 @@
+{"nom":"c_mousquetaire","sommets":1758,"triangles":2400,"images":74,"clips":[{"nom":"Idle_Loop","debut":0,"nb":30,"ips":12},{"nom":"Walk_Loop","debut":30,"nb":16,"ips":12},{"nom":"Pistol_Shoot","debut":46,"nb":8,"ips":12},{"nom":"Pistol_Idle_Loop","debut":54,"nb":20,"ips":12}],"decalages":[0,14400,28464,31980,1072716],"avant":{"sommets":4601,"triangles":7350},"erreur":0}

@@ -1,1 +1,0 @@
-{"nom":"hoplite_grec","sommets":2362,"triangles":2600,"images":84,"clips":[{"nom":"Sword_Idle","debut":0,"nb":20,"ips":12},{"nom":"Walk_Loop","debut":20,"nb":16,"ips":12},{"nom":"Sword_Attack","debut":36,"nb":18,"ips":12},{"nom":"Idle_Loop","debut":54,"nb":30,"ips":12}],"decalages":[0,15600,34496,39220,1626484],"avant":{"sommets":7566,"triangles":8230},"erreur":0}

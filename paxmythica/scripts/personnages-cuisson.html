@@ -65,6 +65,29 @@ const ACC = {
 };
 // types de personnages : parties des modèles (fichier, filtre des maillages, maillages aux couleurs du peuple), accessoires, animations
 const TETE = { fichier: 'base/Superhero_Male_FullBody.gltf', tete: true };
+// personnages créés pour le jeu (pack QuenTools-3D, squelette Mixamo) : [nom dans le jeu, identifiant, armes, jeu d'animations]
+// armes : rangées d'après leur nom (bouclier sur l'avant-bras gauche, arc à la main gauche, armes à feu le long des doigts, le reste dans le poing droit)
+const ANIMS = { melee: ['Sword_Idle', 'Walk_Loop', 'Sword_Attack', 'Idle_Loop'], arc: ['Idle_Loop', 'Walk_Loop', 'Spell_Simple_Shoot', 'Spell_Simple_Idle_Loop'], feu: ['Idle_Loop', 'Walk_Loop', 'Pistol_Shoot', 'Pistol_Idle_Loop'], civil: ['Idle_Loop', 'Walk_Loop', 'Interact', 'Fixing_Kneeling'], civile: ['Idle_Loop', 'Walk_Loop', 'Interact', 'PickUp_Table'] };
+const CREES = [
+  ['c_hoplite', 'hoplite-grec', ['1-antiquite/lance-dory', '1-antiquite/bouclier-hoplon'], 'melee'], ['c_heros_grec', 'heros-grec', ['1-antiquite/lance-dory', '1-antiquite/bouclier-hoplon'], 'melee'],
+  ['c_archere_scythe', 'archere-scythe', ['2-moyen-age/arc-composite'], 'arc'], ['c_egyptien', 'archer-egyptien', ['1-antiquite/khopesh'], 'melee'], ['c_nubien', 'guerrier-nubien', ['1-antiquite/arc-egyptien'], 'arc'],
+  ['c_pharaon', 'pharaon', ['1-antiquite/khopesh'], 'melee'], ['c_celte', 'guerrier-celte', ['1-antiquite/epee-celte', '1-antiquite/bouclier-celte'], 'melee'], ['c_legionnaire', 'legionnaire-romain', ['1-antiquite/gladius', '1-antiquite/scutum'], 'melee'],
+  ['c_immortel', 'immortel-perse', ['2-moyen-age/arc-composite'], 'arc'], ['c_qin', 'soldat-qin', ['1-antiquite/ji'], 'melee'], ['c_villageois_antique', 'villageois-antique', [], 'civil'], ['c_villageoise_antique', 'villageoise-antique', [], 'civile'],
+  ['c_chevalier', 'chevalier', ['2-moyen-age/epee-longue', '2-moyen-age/bouclier-ecu'], 'melee'], ['c_archer_anglais', 'archer-anglais', ['2-moyen-age/arc-long'], 'arc'], ['c_roi', 'roi-medieval', ['2-moyen-age/epee-longue'], 'melee'],
+  ['c_viking', 'viking', ['2-moyen-age/hache-viking', '2-moyen-age/bouclier-viking'], 'melee'], ['c_cataphracte', 'cataphracte', ['2-moyen-age/sabre', '2-moyen-age/bouclier-rond-orient'], 'melee'], ['c_sarrasin', 'guerrier-sarrasin', ['2-moyen-age/cimeterre', '2-moyen-age/bouclier-rond-orient'], 'melee'],
+  ['c_mongol', 'cavalier-mongol', ['2-moyen-age/arc-composite'], 'arc'], ['c_villageois_medieval', 'villageois-medieval', [], 'civil'], ['c_paysanne', 'paysanne-medievale', [], 'civile'],
+  ['c_napoleonien', 'soldat-napoleonien', ['3-epoque-moderne/fusil-baionnette'], 'feu'], ['c_janissaire', 'janissaire', ['3-epoque-moderne/mousquet'], 'feu'], ['c_mousquetaire', 'mousquetaire', ['3-epoque-moderne/mousquet'], 'feu'],
+  ['c_general', 'general-empire', ['2-moyen-age/sabre'], 'melee'], ['c_ouvriere', 'ouvriere-usine', [], 'civile'], ['c_cowboy', 'cowboy', ['4-industrielle/carabine'], 'feu'],
+  ['c_soldat_moderne', 'soldat-moderne', ['6-contemporain/fusil-assaut'], 'feu'], ['c_soldat_1940', 'soldat-1940', ['5-xxe-siecle/fusil-1940'], 'feu'], ['c_tireur', 'tireur-elite', ['6-contemporain/fusil-precision'], 'feu'],
+  ['c_officier', 'officier-1940', ['6-contemporain/pistolet'], 'feu'], ['c_ouvrier', 'ouvrier-chantier', [], 'civil'], ['c_infirmiere', 'infirmiere', [], 'civile'],
+  ['c_soldat_futur', 'soldat-futuriste', ['7-futur/fusil-laser'], 'feu'], ['c_androide', 'androide', ['7-futur/epee-energie'], 'melee'], ['c_cyborg', 'cyborg-ninja', ['7-futur/epee-energie'], 'melee'],
+  ['c_robot', 'robot-lourd', ['7-futur/canon-plasma'], 'feu'], ['c_technicien', 'technicien-futuriste', [], 'civil'], ['c_pilote', 'pilote-spatiale', ['7-futur/pistolet-laser'], 'civile'],
+  // créatures : gardent leur taille de géant (taille réelle / 1,9 m), armes agrandies d'autant
+  ['c_minotaure', 'minotaure', [['1-antiquite/hache-double', 1.35]], 'melee', 2.7], ['c_cyclope', 'cyclope', [['1-antiquite/massue', 1.6]], 'melee', 2.97], ['c_titan', 'titan', [['1-antiquite/massue', 2.2]], 'melee', 4.12],
+  ['c_anubite', 'anubite', [['1-antiquite/khopesh', 1.2]], 'melee', 2.3], ['c_valkyrie', 'valkyrie', ['1-antiquite/lance-dory', '2-moyen-age/bouclier-viking'], 'melee', 2.02], ['c_geant', 'geant-de-glace', [['2-moyen-age/hache-viking', 1.8]], 'melee', 3.37],
+  ['c_golem', 'golem', [], 'melee', 2.71], ['c_squelette', 'guerrier-squelette', ['2-moyen-age/epee-longue', '2-moyen-age/bouclier-rond-orient'], 'melee', 1.91]
+];
+const typeArme = n => /bouclier|scutum|chimalli/.test(n) ? 'bouclier' : /arc-/.test(n) ? 'arc' : /fusil|mousquet|arquebuse|carabine|canon|pistolet|revolver|arbalete/.test(n) ? 'fusil' : 'lame';
 const TYPES = {
   villageois: { parties: [{ fichier: 'tenues/Male_Peasant.gltf', teinte: /Body/ }, TETE, { fichier: 'base/Hair_SimpleParted.gltf' }, { fichier: 'base/Eyebrows_Regular.gltf' }], acc: [], clips: ['Idle_Loop', 'Walk_Loop', 'Interact', 'Fixing_Kneeling'], cible: 2200 },
   soldat_antique: { cheveux: '#2a1c14', parties: [{ fichier: 'tenues/Male_Peasant.gltf', garder: /Body|Feet/, teinte: /Body/ }, { fichier: 'base/Superhero_Male_FullBody.gltf', jambesNues: true }, TETE], acc: ['casque_corinthien', 'bouclier_rond', 'glaive', 'cape'], clips: ['Sword_Idle', 'Walk_Loop', 'Sword_Attack', 'Idle_Loop'], cible: 2200 },
@@ -85,7 +108,7 @@ const TYPES = {
   // animaux seuls (troupeaux des fermes)
   mouton: { monture: { fichier: 'animaux/Sheep.glb', hauteur: 1 }, parties: [], acc: [], hauteur: 1.35, cible: 700, clips: [{ nom: 'repos', monture: 'Armature|Idle' }, { nom: 'saut', monture: 'Armature|Jump' }] },
   vache: { monture: { fichier: 'animaux/Cow.glb', hauteur: 1 }, parties: [], acc: [], hauteur: 2.3, cible: 900, clips: [{ nom: 'repos', monture: 'Armature|Idle' }, { nom: 'Walk_Loop', monture: 'Armature|WalkSlow' }] },
-  hoplite_grec: { parties: [{ fichier: 'crees/hoplite-grec/hoplite-grec.glb', masque: 'crees/hoplite-grec/textures/hoplite-grec_couleur_joueur.png' }], acc: ['bouclier_rond', 'glaive'], clips: ['Sword_Idle', 'Walk_Loop', 'Sword_Attack', 'Idle_Loop'], cible: 2600 },
+  hoplite_grec: { parties: [{ fichier: 'crees/hoplite-grec/hoplite-grec.glb', masque: 'crees/hoplite-grec/textures/hoplite-grec_couleur_joueur.png' }], acc: [], armes: [['1-antiquite/lance-dory', 'lame'], ['1-antiquite/bouclier-hoplon', 'bouclier']], clips: ['Sword_Idle', 'Walk_Loop', 'Sword_Attack', 'Idle_Loop'], cible: 2600 },
   villageoise: { cheveux: '#7a4a26', parties: [{ fichier: 'tenues/Female_Peasant.gltf', teinte: /Body/ }, { fichier: 'base/Superhero_Female_FullBody.gltf', tete: true }, { fichier: 'base/Hair_Buns.gltf' }, { fichier: 'base/Eyebrows_Female.gltf' }], acc: [], clips: ['Idle_Loop', 'Walk_Loop', 'Interact', 'PickUp_Table'], cible: 2200 }
 };
 
@@ -143,6 +166,28 @@ async function cuire(nom) {
   // accessoires : couleur peinte dans la case palette (en bas à droite), rattachés à un os
   const os0 = {}; for (const sc of scenes) sc.traverse(o => { if (o.isBone && (!os0[o.name] || !sc.userData.monture)) os0[o.name] = o; });
   const osMonture = {}; if (monture) monture.scene.traverse(o => { if (o.isBone) osMonture[o.name] = o; });
+  // armes et boucliers créés (.glb : prise à l'origine, axe +Y ; bouclier face +Z) : orientés selon la main ou l'avant-bras qui les porte
+  // au repos (pose en T) : lame le long du pouce (+Z), canon le long des doigts (-X à droite), bouclier sur le dos de l'avant-bras (face vers le haut)
+  const RANGE = { lame: g => g.rotateX(Math.PI / 2).translate(-0.08, 0, 0), arme_g: g => g.rotateX(Math.PI / 2).translate(0.08, 0, 0), fusil: g => g.rotateZ(Math.PI / 2).translate(-0.06, 0.02, 0), arc: g => g.rotateX(Math.PI / 2).translate(0.06, 0, 0), bouclier: g => g.rotateX(-Math.PI / 2).rotateY(Math.PI).translate(0.14, 0.06, 0) };
+  const OS_TYPE = { lame: 'hand_r', fusil: 'hand_r', arme_g: 'hand_l', arc: 'hand_l', bouclier: 'lowerarm_l' };
+  for (const [fichier, type, echelle] of T.armes || []) {
+    const g = await charger('crees/accessoires/' + fichier + '/' + fichier.split('/').pop() + '.glb'); g.scene.updateMatrixWorld(true);
+    const nomOs = OS_TYPE[type], bone = os0[nomOs] || os0[nomMx(MIXAMO[nomOs])], repos = new THREE.Vector3().setFromMatrixPosition(bone.matrixWorld);
+    let masque = null; try { const img = await createImageBitmap(await (await fetch(SRC_DIR + 'crees/accessoires/' + fichier + '/textures/' + fichier.split('/').pop() + '_couleur_joueur.png')).blob()), c = new OffscreenCanvas(128, 128), x = c.getContext('2d'); x.drawImage(img, 0, 0, 128, 128); masque = x.getImageData(0, 0, 128, 128).data; } catch (e) { /* sans zone aux couleurs du peuple */ }
+    g.scene.traverse(o => {
+      if (!o.isMesh) return;
+      const geo = o.geometry.clone().applyMatrix4(o.matrixWorld); if (!geo.index) geo.setIndex([...Array(geo.attributes.position.count).keys()]); geo.scale(echelle || 1, echelle || 1, echelle || 1); RANGE[type](geo); geo.computeVertexNormals();
+      const map = o.material.map, coin = map ? caseDe(map.name || fichier, map.image) : null, uni = coin ? null : palette(o.material.color.getHex());
+      const base = vu.pos.length / 3, P = geo.attributes.position, N = geo.attributes.normal, UV = geo.attributes.uv, fr = t => t === 1 ? 1 : t - Math.floor(t);
+      for (let i = 0; i < P.count; i++) {
+        vu.pos.push(P.getX(i) + repos.x, P.getY(i) + repos.y, P.getZ(i) + repos.z); vu.nor.push(N.getX(i), N.getY(i), N.getZ(i));
+        const u = UV ? fr(UV.getX(i)) : 0.5, w = UV ? fr(UV.getY(i)) : 0.5;
+        if (uni) vu.uv.push(uni[0], uni[1]); else vu.uv.push((coin[0] + u * (coin[2] - 1) + 0.5) / 2048, (coin[1] + w * (coin[2] - 1) + 0.5) / 2048);
+        vu.teinte.push(masque ? (masque[(Math.min(127, Math.floor(w * 128)) * 128 + Math.min(127, Math.floor(u * 128))) * 4] > 127 ? 1 : 0) : 0); vu.lum.push(0); vu.ref.push([bone, i]);
+      }
+      const d0 = vu.idx.length; for (const i of geo.index.array) vu.idx.push(base + i); vu.parts.push([d0, vu.idx.length, true]);
+    });
+  }
   for (const a of T.acc.concat(T.accMonture || [])) for (const [geo, couleur, nomOs, teinte, lum] of ACC[a]) {
     const bone = (T.accMonture || []).includes(a) ? osMonture[nomOs] : (os0[nomOs] || os0[nomMx(MIXAMO[nomOs])]), repos = new THREE.Vector3().setFromMatrixPosition(bone.matrixWorld), g = geo.clone(); if (!g.index) g.setIndex([...Array(g.attributes.position.count).keys()]); g.computeVertexNormals();
     const [pu, pv] = palette(couleur);
@@ -227,7 +272,8 @@ async function cuire(nom) {
   for (const a of parts) { decal.push(o); bin.set(new Uint8Array(a.buffer, a.byteOffset, a.byteLength), o); o += Math.ceil(a.byteLength / 4) * 4; }
   const meta = { nom, sommets: n, triangles: index.length / 3, images: F, clips, decalages: decal, avant: { sommets: n0, triangles: tri0 }, erreur: err };
   const b64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
-  return { meta, bin: b64(bin), atlas: atlas.toDataURL('image/jpeg', 0.88).split(',')[1] };
+  return { meta, bin: b64(bin), atlas: (() => { const c = document.createElement('canvas'); c.width = c.height = 1024; c.getContext('2d').drawImage(atlas, 0, 0, 1024, 1024); return c.toDataURL('image/jpeg', 0.9).split(',')[1]; })() };
 }
+for (const [nom, id, armes, anims, taille] of CREES) TYPES[nom] = { parties: [{ fichier: `crees/${id}/${id}.glb`, masque: `crees/${id}/textures/${id}_couleur_joueur.png` }], acc: [], armes: armes.map(a => Array.isArray(a) ? [a[0], typeArme(a[0]), a[1]] : [a, typeArme(a)]), clips: ANIMS[anims], cible: 2400, hauteur: taille ? HAUTEUR * taille / 1.9 : undefined };
 window.cuire = cuire; window.TYPES = Object.keys(TYPES); document.title = 'pret';
 </script></body></html>

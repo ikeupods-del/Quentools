@@ -1,0 +1,1 @@
+{"nom":"c_infirmiere","sommets":1660,"triangles":2399,"images":80,"clips":[{"nom":"Idle_Loop","debut":0,"nb":30,"ips":12},{"nom":"Walk_Loop","debut":30,"nb":16,"ips":12},{"nom":"Interact","debut":46,"nb":24,"ips":12},{"nom":"PickUp_Table","debut":70,"nb":10,"ips":12}],"decalages":[0,14396,27676,30996,1093396],"avant":{"sommets":4711,"triangles":7828},"erreur":0}

@@ -197,7 +197,21 @@
   // la carte graphique lit la pose de chaque soldat selon son animation (aClip : première image, nombre d'images, vitesse, décalage)
   // navire de chaque époque : [modèle, longueur dans le jeu]
   const NAVIRES = { antique: ['navire-trireme', 14], medieval: ['navire-drakkar', 12], industriel: ['navire-galion', 16], moderne: ['navire-cuirasse', 24], futur: ['navire-croiseur', 20] };
-  const FOULES = ['villageois', 'villageoise', 'soldat_antique', 'soldat_medieval', 'soldat_industriel', 'soldat_moderne', 'soldat_futur', 'archer', 'cavalier_antique', 'cavalier_medieval', 'cavalier_industriel', 'mouton', 'vache'];
+  const FOULES = ['cavalier_antique', 'cavalier_medieval', 'cavalier_industriel', 'mouton', 'vache'];
+  // unités de chaque peuple à chaque époque (personnages créés pour le jeu) ; seules celles de l'époque jouée sont chargées
+  const DISTRIB = {
+    antique: { grecs: { inf: 'c_hoplite', archer: 'c_archere_scythe', heros: 'c_heros_grec', mythe: 'c_minotaure' }, egyptiens: { inf: 'c_egyptien', archer: 'c_nubien', heros: 'c_pharaon', mythe: 'c_anubite' },
+      nordiques: { inf: 'c_celte', archer: 'c_archere_scythe', heros: 'c_viking', mythe: 'c_geant' }, atlantes: { inf: 'c_legionnaire', archer: 'c_immortel', heros: 'c_qin', mythe: 'c_cyclope' }, villageois: 'c_villageois_antique', villageoise: 'c_villageoise_antique' },
+    medieval: { grecs: { inf: 'c_cataphracte', archer: 'c_archer_anglais', heros: 'c_roi', mythe: 'c_titan' }, egyptiens: { inf: 'c_sarrasin', archer: 'c_mongol', heros: 'c_sarrasin', mythe: 'c_squelette' },
+      nordiques: { inf: 'c_viking', archer: 'c_archer_anglais', heros: 'c_valkyrie', mythe: 'c_geant' }, atlantes: { inf: 'c_chevalier', archer: 'c_archer_anglais', heros: 'c_roi', mythe: 'c_golem' }, villageois: 'c_villageois_medieval', villageoise: 'c_paysanne' },
+    industriel: { grecs: { inf: 'c_napoleonien', archer: 'c_mousquetaire', heros: 'c_general' }, egyptiens: { inf: 'c_janissaire', archer: 'c_janissaire', heros: 'c_general' },
+      nordiques: { inf: 'c_napoleonien', archer: 'c_cowboy', heros: 'c_general' }, atlantes: { inf: 'c_mousquetaire', archer: 'c_cowboy', heros: 'c_general' }, villageois: 'c_villageois_medieval', villageoise: 'c_ouvriere' },
+    moderne: { grecs: { inf: 'c_soldat_moderne', archer: 'c_tireur', heros: 'c_officier' }, egyptiens: { inf: 'c_soldat_1940', archer: 'c_tireur', heros: 'c_officier' },
+      nordiques: { inf: 'c_soldat_1940', archer: 'c_tireur', heros: 'c_officier' }, atlantes: { inf: 'c_soldat_moderne', archer: 'c_tireur', heros: 'c_officier' }, villageois: 'c_ouvrier', villageoise: 'c_infirmiere' },
+    futur: { grecs: { inf: 'c_soldat_futur', archer: 'c_androide', heros: 'c_cyborg', mythe: 'c_robot' }, egyptiens: { inf: 'c_soldat_futur', archer: 'c_androide', heros: 'c_cyborg', mythe: 'c_robot' },
+      nordiques: { inf: 'c_soldat_futur', archer: 'c_androide', heros: 'c_cyborg', mythe: 'c_robot' }, atlantes: { inf: 'c_soldat_futur', archer: 'c_androide', heros: 'c_cyborg', mythe: 'c_robot' }, villageois: 'c_technicien', villageoise: 'c_pilote' }
+  };
+  const nomsEpoque = ep => { const D = DISTRIB[ep] || {}, l = new Set(); for (const k in D) if (typeof D[k] === 'string') l.add(D[k]); else for (const r in D[k]) l.add(D[k][r]); return [...l]; };
   function foule(meta, buf, img, uT) {
     const n = meta.sommets, F = meta.images, D = meta.decalages;
     const index = new Uint16Array(buf, D[0], meta.triangles * 3), uv = new Float32Array(buf, D[1], n * 2), at = new Uint8Array(buf, D[2], n * 2), pos = new Uint16Array(buf, D[3], n * F * 4), nor = new Uint8Array(buf, D[4], n * F * 4);
@@ -794,11 +808,18 @@ void main() {
         await Promise.all(['rocher1', 'rocher2', 'rocher3', 'rocher4', 'rochers-mousse', 'souche', 'tronc-mort', 'tonneau', 'tonneaux', 'caisse', 'jarre', 'panier', 'canon', 'navire', 'statue-cheval', 'statue-gothique', 'navire-trireme', 'navire-barque', 'navire-drakkar', 'navire-galion', 'navire-cuirasse', 'navire-vedette', 'navire-croiseur'].map(n => PM.chargerModele(`ressources/jeu/${n}.glb`).then(g => { this.glb[n] = g.scene; }).catch(() => null)));
         // personnages animés (facultatifs : sans eux, les figurines dessinées par le programme restent)
         this.foules = {};
-        await Promise.all(FOULES.map(async nom => { try { const [m, b, img] = await Promise.all([PM.lireFichier(`ressources/personnages/${nom}.json`), PM.lireFichier(`ressources/personnages/${nom}.bin`), PM.chargerImage(`ressources/personnages/${nom}.jpg`)]); this.foules[nom] = foule(JSON.parse(new TextDecoder().decode(m)), b, img, this.U.uT); } catch (e) { /* personnage absent */ } }));
+        await this.chargerFoules(FOULES.concat(nomsEpoque(this.epoque)));
         if (this.P) this.P.ep = '';
         this.U.uPret.value = 1; this.pret = true;
         if (this.j) this.habiller();
       } catch (e) { console.warn('Pax Mythica : ressources graphiques indisponibles —', e.message); this.pret = false; }
+    }
+    // personnages animés (facultatifs : sans eux, les figurines dessinées par le programme restent)
+    async chargerFoules(noms) {
+      this.foules = this.foules || {}; const manquants = noms.filter(n => !(n in this.foules)); if (!manquants.length) return;
+      for (const n of manquants) this.foules[n] = null; // en cours de chargement
+      await Promise.all(manquants.map(async nom => { try { const [m, b, img] = await Promise.all([PM.lireFichier(`ressources/personnages/${nom}.json`), PM.lireFichier(`ressources/personnages/${nom}.bin`), PM.chargerImage(`ressources/personnages/${nom}.jpg`)]); this.foules[nom] = foule(JSON.parse(new TextDecoder().decode(m)), b, img, this.U.uT); } catch (e) { /* personnage absent */ } }));
+      if (this.P) this.P.ep = '';
     }
     // une fois les photos chargées : sol, eau, arbres et accessoires prennent leurs vraies matières
     habiller() {
@@ -1443,8 +1464,11 @@ vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, colo
         const m = new THREE.InstancedMesh(g, f.mat, MAX); m.customDepthMaterial = f.ombre; m.setColorAt(0, new THREE.Color(1, 1, 1)); m.count = 0; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.castShadow = true; m.userData.foule = f; this.scene.add(m); return m; };
       if (this.V) for (const k in this.V) { this.scene.remove(this.V[k]); this.V[k].geometry.dispose(); }
       this.V = { villageois: mkF('villageois') || mk(F.villageois), villageoise: mkF('villageoise') || mk(F.villageois), mouton: mkF('mouton') || mk(F.mouton), vache: mkF('vache'), oiseau: mk(F.oiseau) }; if (!this.V.vache) delete this.V.vache; this.V.oiseau.castShadow = false;
+      if (this.pret && this.foules && nomsEpoque(ep).some(n => !(n in this.foules))) this.chargerFoules(nomsEpoque(ep));
       const SOLDAT = 'soldat_' + ep, arcs = ep === 'antique' || ep === 'medieval';
       this.P = { ep, inf: mkF(SOLDAT) || mk(F.inf), archer: (arcs ? mkF('archer') : mkF(SOLDAT)) || mk(F.archer || F.inf), cav: mkF('cavalier_' + ep) || mk(F.cav || M.char), siege: mk(F.siege || (futur ? M.char : M.engin)), mythe: mk(F.mythe), etendard: mk(M.etendard) };
+      for (const nom of nomsEpoque(ep)) { const m = mkF(nom); if (m) this.P[nom] = m; }
+      const DV = DISTRIB[ep]; if (DV) { const h = this.P[DV.villageois] ? mkF(DV.villageois) : null, f = this.P[DV.villageoise] ? mkF(DV.villageoise) : null; if (h) { this.scene.remove(this.V.villageois); this.V.villageois = h; } if (f) { this.scene.remove(this.V.villageoise); this.V.villageoise = f; } }
       // taille des créatures : un géant ou une machine domine la troupe
       this.P.echelleMythe = ep === 'antique' || ep === 'medieval' ? 2.2 : 1.6;
       return this.P;
@@ -1487,14 +1511,16 @@ vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, colo
         let z0 = 0, i = 0;
         for (const c of ORDRE) {
           const k = nb[c]; if (!k) continue;
-          const [nom, ecart, prof, W] = BLOCS[c], larg = Math.min(k, W);
+          const [nom0, ecart, prof, W] = BLOCS[c], larg = Math.min(k, W), D = DISTRIB[this.epoque] && DISTRIB[this.epoque][N.pantheon], role = c === 'milice' ? 'inf' : c;
+          const nom = D && D[role] && P[D[role]] ? D[role] : nom0, mytheC = c === 'mythe' && D && D.mythe && P[D.mythe] ? D.mythe : null;
           for (let q = 0; q < k; q++, i++) {
             const lig = Math.floor(q / larg), dans = Math.min(larg, k - lig * larg), gx = ((q % larg) - (dans - 1) / 2) * ecart + (lig % 2) * 0.25, gz = z0 - lig * prof;
             let x = pos.x + gx * cos + gz * sin, z = pos.z - gx * sin + gz * cos;
             if (combat) { x += Math.sin(t * 1.3 + i * 1.7) * 0.35; z += Math.cos(t * 1.1 + i) * 0.35; }
             const y = this.sol(x, z), ph = (a.id * 1.7 + i * 0.61) % 6.283;
-            if (c === 'mythe') ajouter('mythe', x, y, z, pos.dir, P.echelleMythe, new THREE.Color(coul).multiplyScalar(0.8).getHex(), mode, ph);
-            else ajouter(nom, x, y, z, pos.dir, c === 'heros' ? 1.25 : 1, c === 'heros' ? 0xf0c85a : coul, mode, marche ? (lig * 0.2 + (q % 2) * 3.14) : ph);
+            if (c === 'mythe') ajouter(mytheC || 'mythe', x, y, z, pos.dir, mytheC ? (mytheC === 'c_robot' ? 1.6 : 1.1) : P.echelleMythe, mytheC ? coul : new THREE.Color(coul).multiplyScalar(0.8).getHex(), mode, ph);
+            else if (c === 'heros') ajouter(nom, x, y, z, pos.dir, 1.18, nom.startsWith('c_') ? coul : 0xf0c85a, mode, ph);
+            else ajouter(nom, x, y, z, pos.dir, 1, coul, mode, marche ? (lig * 0.2 + (q % 2) * 3.14) : ph);
           }
           z0 -= Math.ceil(k / larg) * prof + 0.8;
         }

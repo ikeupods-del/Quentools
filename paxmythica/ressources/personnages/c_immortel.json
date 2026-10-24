@@ -1,0 +1,1 @@
+{"nom":"c_immortel","sommets":1725,"triangles":2399,"images":77,"clips":[{"nom":"Idle_Loop","debut":0,"nb":30,"ips":12},{"nom":"Walk_Loop","debut":30,"nb":16,"ips":12},{"nom":"Spell_Simple_Shoot","debut":46,"nb":6,"ips":12},{"nom":"Spell_Simple_Idle_Loop","debut":52,"nb":25,"ips":12}],"decalages":[0,14396,28196,31648,1094248],"avant":{"sommets":5175,"triangles":8220},"erreur":0}

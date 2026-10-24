@@ -1,0 +1,1 @@
+{"nom":"c_technicien","sommets":1702,"triangles":2399,"images":132,"clips":[{"nom":"Idle_Loop","debut":0,"nb":30,"ips":12},{"nom":"Walk_Loop","debut":30,"nb":16,"ips":12},{"nom":"Interact","debut":46,"nb":24,"ips":12},{"nom":"Fixing_Kneeling","debut":70,"nb":62,"ips":12}],"decalages":[0,14396,28012,31416,1828728],"avant":{"sommets":4829,"triangles":7798},"erreur":0}

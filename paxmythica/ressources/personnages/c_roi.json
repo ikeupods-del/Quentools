@@ -1,0 +1,1 @@
+{"nom":"c_roi","sommets":1871,"triangles":2399,"images":84,"clips":[{"nom":"Sword_Idle","debut":0,"nb":20,"ips":12},{"nom":"Walk_Loop","debut":20,"nb":16,"ips":12},{"nom":"Sword_Attack","debut":36,"nb":18,"ips":12},{"nom":"Idle_Loop","debut":54,"nb":30,"ips":12}],"decalages":[0,14396,29364,33108,1290420],"avant":{"sommets":4896,"triangles":7744},"erreur":0}

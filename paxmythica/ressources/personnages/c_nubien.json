@@ -1,0 +1,1 @@
+{"nom":"c_nubien","sommets":1713,"triangles":2400,"images":77,"clips":[{"nom":"Idle_Loop","debut":0,"nb":30,"ips":12},{"nom":"Walk_Loop","debut":30,"nb":16,"ips":12},{"nom":"Spell_Simple_Shoot","debut":46,"nb":6,"ips":12},{"nom":"Spell_Simple_Idle_Loop","debut":52,"nb":25,"ips":12}],"decalages":[0,14400,28104,31532,1086740],"avant":{"sommets":4969,"triangles":7876},"erreur":0}

@@ -1,0 +1,1 @@
+{"nom":"c_pilote","sommets":1772,"triangles":2400,"images":80,"clips":[{"nom":"Idle_Loop","debut":0,"nb":30,"ips":12},{"nom":"Walk_Loop","debut":30,"nb":16,"ips":12},{"nom":"Interact","debut":46,"nb":24,"ips":12},{"nom":"PickUp_Table","debut":70,"nb":10,"ips":12}],"decalages":[0,14400,28576,32120,1166200],"avant":{"sommets":5108,"triangles":8098},"erreur":0}

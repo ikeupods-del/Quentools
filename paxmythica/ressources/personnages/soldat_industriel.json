@@ -1,1 +1,0 @@
-{"nom":"soldat_industriel","sommets":2159,"triangles":2195,"images":74,"clips":[{"nom":"Idle_Loop","debut":0,"nb":30,"ips":12},{"nom":"Walk_Loop","debut":30,"nb":16,"ips":12},{"nom":"Pistol_Shoot","debut":46,"nb":8,"ips":12},{"nom":"Pistol_Idle_Loop","debut":54,"nb":20,"ips":12}],"decalages":[0,13172,30444,34764,1312892],"avant":{"sommets":17802,"triangles":17706},"erreur":0}
