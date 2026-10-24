@@ -88,7 +88,8 @@ function autotest() {
   const fs = require('fs'), res = { version: app.getVersion(), electron: process.versions.electron, arch: process.arch };
   const fin = () => { fs.writeFileSync(process.env.PAX_AUTOTEST, JSON.stringify(res, null, 2)); app.exit(0); };
   setTimeout(() => { res.erreur = 'délai dépassé'; fin(); }, 300000);
-  win.webContents.on('console-message', (e, niveau, msg) => { if (niveau >= 3) (res.erreursConsole = res.erreursConsole || []).push(msg); });
+  // Electron récent : un seul objet (level « error ») ; ancien : (événement, niveau 3, message)
+  win.webContents.on('console-message', (e, niveau, msg) => { const lv = e && e.level != null ? e.level : niveau, m = e && e.message != null ? e.message : msg; if (lv === 'error' || lv >= 3) (res.erreursConsole = res.erreursConsole || []).push(String(m).slice(0, 600)); });
   win.webContents.once('did-finish-load', async () => {
     try {
       res.jeu = await win.webContents.executeJavaScript(`(async () => {
@@ -111,6 +112,7 @@ function autotest() {
       // captures de la vue 3D sur la vraie carte graphique du Mac, et temps de calcul d'une image (PAX_CAPTURES=dossier)
       if (process.env.PAX_CAPTURES && res.jeu.vue3d) {
         const dir = process.env.PAX_CAPTURES; fs.mkdirSync(dir, { recursive: true }); res.captures = [];
+        await win.webContents.executeJavaScript("window.__erreurs = []; window.addEventListener('error', e => window.__erreurs.push(String(e.message) + ' ' + (e.error && e.error.stack || '').slice(0, 500)))");
         const plans = [['antique', 'olympe', 'haute', 70, 0.9], ['antique', 'olympe', 'haute', 260, -0.4], ['antique', 'olympe', 'ultra', 700, 0.2], ['antique', 'nuit', 'haute', 110, 0.5], ['antique', 'hiver', 'haute', 160, 0.3],
           ['antique', 'crepuscule', 'haute', 140, 1.4], ['antique', 'automne', 'haute', 200, -0.8], ['medieval', 'realiste', 'haute', 120, 0.7], ['futur', 'olympe', 'haute', 120, 0.6], ['futur', 'ragnarok', 'moyenne', 300, 0.2]];
         for (const [e, pk, q, d, l] of plans) {
@@ -123,7 +125,7 @@ function autotest() {
             const t = performance.now(); let n = 0; await new Promise(ok => { const f = () => { if (++n < 40) requestAnimationFrame(f); else ok(); }; requestAnimationFrame(f); });
             return (performance.now() - t) / 40; })()`);
           const img = await win.webContents.capturePage(), nom = `${e}-${pk}-${q}-${d}.jpg`;
-          fs.writeFileSync(path.join(dir, nom), img.toJPEG(80)); res.captures.push({ nom, msParImage: Math.round(ms * 10) / 10 });
+          fs.writeFileSync(path.join(dir, nom), img.toJPEG(80)); res.captures.push({ nom, msParImage: Math.round(ms * 10) / 10, erreurs: await win.webContents.executeJavaScript('(window.__erreurs || []).splice(0)') });
         }
       }
     } catch (e) { res.erreur = e.message; }
