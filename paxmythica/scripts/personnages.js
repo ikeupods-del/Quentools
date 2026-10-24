@@ -22,8 +22,14 @@ async function itch(url, nom, filtre) {
   journal.push(`itch ${url} : ${fichiers.map(f => f.nom + ' (' + f.taille + ')').join(' ; ') || 'aucun fichier repéré'}`);
   for (const f of fichiers) {
     if (!filtre || !new RegExp(filtre, 'i').test(f.nom)) continue;
-    r = avecCookies(await fetch(`${url}/file/${f.id}?source=game_download&key=${cle}`, { method: 'POST', headers: Object.assign(ent(), { 'content-type': 'application/x-www-form-urlencoded', 'x-requested-with': 'XMLHttpRequest' }), body: 'csrf_token=' + encodeURIComponent(csrf2) }));
-    const rep = await r.text(); let lien; try { lien = JSON.parse(rep).url; } catch (e) { /* réponse non JSON */ }
+    // plusieurs formes d'appel connues (la clé de la page, décodée ou non, en paramètre ou dans le formulaire)
+    const k = decodeURIComponent(cle), essais = [[`?source=game_download&key=${encodeURIComponent(k)}`, ''], [`?source=game_download`, '&key=' + encodeURIComponent(k)], [`?source=game_download&key=${encodeURIComponent(k)}`, '&key=' + encodeURIComponent(k)], ['', '']];
+    let rep = '', lien;
+    for (const [q, plus] of essais) {
+      r = avecCookies(await fetch(`${url}/file/${f.id}${q}`, { method: 'POST', headers: Object.assign(ent(), { 'content-type': 'application/x-www-form-urlencoded', 'x-requested-with': 'XMLHttpRequest', referer: dl }), body: 'csrf_token=' + encodeURIComponent(csrf2) + plus }));
+      rep = await r.text(); try { lien = JSON.parse(rep).url; } catch (e) { /* réponse non JSON */ }
+      journal.push(`  essai ${q || '(sans clé)'} ${plus ? '(clé dans le formulaire)' : ''} → ${rep.slice(0, 120)}`); if (lien) break;
+    }
     if (!lien) { journal.push(`  réponse sans adresse pour ${f.nom} (${r.status}, clé ${cle}, page ${dl}) : ${rep.slice(0, 300)}`); continue; } const z = Buffer.from(await (await fetch(lien)).arrayBuffer()), zip = path.join('/tmp', f.id + '.zip'); fs.writeFileSync(zip, z);
     const dest = path.join('/tmp/paquets', nom, f.nom.replace(/\.zip$/i, '').replace(/[^a-z0-9._-]+/gi, '_')); fs.mkdirSync(dest, { recursive: true });
     execSync(`unzip -o -q "${zip}" -d "${dest}"`);
