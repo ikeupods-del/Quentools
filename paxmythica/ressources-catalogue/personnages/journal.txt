@@ -1,3 +1,6 @@
-itch https://quaternius.itch.io/universal-base-characters : aucun fichier repéré
-itch https://quaternius.itch.io/modular-character-outfits-fantasy : aucun fichier repéré
-itch https://quaternius.itch.io/universal-animation-library : aucun fichier repéré
+itch https://quaternius.itch.io/universal-base-characters : Universal Base Characters[Standard].zip (122 MB)
+ERREUR itch https://quaternius.itch.io/universal-base-characters : Failed to parse URL from undefined
+itch https://quaternius.itch.io/modular-character-outfits-fantasy : Modular Character Outfits - Fantasy[Standard].zip (280 MB)
+ERREUR itch https://quaternius.itch.io/modular-character-outfits-fantasy : Failed to parse URL from undefined
+itch https://quaternius.itch.io/universal-animation-library : Universal Animation Library[Standard].zip (15 MB)
+ERREUR itch https://quaternius.itch.io/universal-animation-library : Failed to parse URL from undefined
