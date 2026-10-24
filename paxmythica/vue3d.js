@@ -674,6 +674,32 @@ void main() { vec4 c = texture2D(tFumee, gl_PointCoord); gl_FragColor = vec4(uTe
 }`
     });
   }
+  // poussière des troupes en marche et nuages des batailles (sol), étincelles des armes qui se croisent (lumineuses)
+  function materiauPoussiere(uT, tex, etincelle) {
+    return new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, fog: true, blending: etincelle ? THREE.AdditiveBlending : THREE.NormalBlending,
+      uniforms: Object.assign(THREE.UniformsUtils.clone(THREE.UniformsLib.fog), { uT, tFumee: { value: tex }, uEchelle: { value: 400 }, uTeinte: { value: etincelle ? new THREE.Color(2.4, 1.5, 0.6) : new THREE.Color(0.62, 0.54, 0.42) } }),
+      vertexShader: `attribute float phase; attribute float force; uniform float uT, uEchelle; varying float vA;
+#include <common>
+#include <fog_pars_vertex>
+void main() {
+  float t = fract(uT * ${etincelle ? '1.6' : '0.22'} + phase), a = phase * 43.0;
+  vec3 p = position + ${etincelle ? 'vec3(cos(a) * t * 1.2, 1.2 + t * 1.6 - t * t * 2.0, sin(a) * t * 1.2)' : 'vec3(cos(a) * t * 3.5, 0.4 + t * 2.6 * (0.5 + force), sin(a) * t * 3.5)'};
+  vec4 mvPosition = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mvPosition;
+  gl_PointSize = ${etincelle ? '0.35 * (1.0 - t)' : '(1.5 + t * 5.0) * (0.5 + force)'} * uEchelle / max(1.0, -mvPosition.z);
+  vA = ${etincelle ? 'step(0.5, fract(phase * 7.0 + floor(uT * 1.6 + phase) * 0.37)) * (1.0 - t)' : 'smoothstep(0.0, 0.15, t) * (1.0 - smoothstep(0.4, 1.0, t)) * (0.18 + force * 0.3)'};
+#include <fog_vertex>
+}`,
+      fragmentShader: `uniform sampler2D tFumee; uniform vec3 uTeinte; varying float vA;
+#include <common>
+#include <fog_pars_fragment>
+void main() { vec4 c = texture2D(tFumee, gl_PointCoord); gl_FragColor = vec4(uTeinte, c.a * vA);
+#include <tonemapping_fragment>
+#include <colorspace_fragment>
+#include <fog_fragment>
+}`
+    });
+  }
   // étalonnage final (après les tons cinéma) : saturation, contraste, tons chauds et froids, vignette, grain léger
   const ETALONNAGE = {
     uniforms: { tDiffuse: { value: null }, uSat: { value: 1 }, uContraste: { value: 1 }, uChaud: { value: new THREE.Vector3(1, 1, 1) }, uFroid: { value: new THREE.Vector3(1, 1, 1) }, uVignette: { value: 0.25 }, uGrain: { value: 0.01 }, uT: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) } },
@@ -1448,9 +1474,36 @@ vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, colo
           z0 -= Math.ceil(k / larg) * prof + 0.8;
         }
         { const ex = pos.x + 2.6 * cos + 1.2 * sin, ez = pos.z - 2.6 * sin + 1.2 * cos; ajouter('etendard', ex, this.sol(ex, ez) + (marche ? Math.abs(Math.sin(t * 7)) * 0.2 : 0), ez, pos.dir + Math.sin(t * 2 + a.id) * 0.25, 1, coul, 0, 0); }
-        this.positions.push({ id: a.id, x: pos.x, z: pos.z });
+        this.positions.push({ id: a.id, x: pos.x, z: pos.z, marche, combat, dir: pos.dir, prof: -z0, n: i });
       }
+      this.majPoussiere();
       for (const k in n) { const m = P[k]; m.count = Math.min(3500, n[k]); m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; (m.geometry.attributes.aAnim || m.geometry.attributes.aClip).needsUpdate = true; }
+    }
+    // poussière soulevée derrière les troupes en marche, nuages et étincelles au cœur des batailles
+    majPoussiere() {
+      const N = 1400, NE = 300;
+      if (!this.poussiere) {
+        const mk = (n, etincelle) => { const g = new THREE.BufferGeometry(), r = PM.aleatoire(etincelle ? 91 : 57), ph = new Float32Array(n), fo = new Float32Array(n); for (let i = 0; i < n; i++) { ph[i] = r(); fo[i] = r(); }
+          g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3).setUsage(THREE.DynamicDrawUsage)); g.setAttribute('phase', new THREE.BufferAttribute(ph, 1)); g.setAttribute('force', new THREE.BufferAttribute(fo, 1));
+          if (!this.matFumee) { this.matFumee = materiauFumee(this.U.uT); this.majCiel(); }
+          const m = new THREE.Points(g, materiauPoussiere(this.U.uT, this.matFumee.uniforms.tFumee.value, etincelle)); m.frustumCulled = false; m.renderOrder = 3; this.scene.add(m); return m; };
+        this.poussiere = mk(N, false); this.etincelles = mk(NE, true);
+      }
+      const P = this.poussiere.geometry.attributes.position, Q = this.etincelles.geometry.attributes.position, r = (i, k) => { const v = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return v - Math.floor(v); };
+      let n = 0, e = 0;
+      for (const a of this.positions || []) {
+        if (!a.marche && !a.combat) continue;
+        const cos = Math.cos(a.dir), sin = Math.sin(a.dir), nb = a.combat ? 70 : Math.min(36, 8 + a.n), ne = a.combat ? 40 : 0;
+        for (let k = 0; k < nb && n < N; k++, n++) {
+          // en marche : sous les pieds et derrière la troupe ; au combat : tout autour du front
+          const gx = (r(n, 1) - 0.5) * 12, gz = a.combat ? (r(n, 2) - 0.3) * -a.prof * 0.8 : -r(n, 2) * a.prof - 1, x = a.x + gx * cos + gz * sin, z = a.z - gx * sin + gz * cos;
+          P.setXYZ(n, x, this.sol(x, z), z);
+        }
+        for (let k = 0; k < ne && e < NE; k++, e++) { const gx = (r(e, 3) - 0.5) * 10, gz = (r(e, 4) - 0.2) * -6, x = a.x + gx * cos + gz * sin, z = a.z - gx * sin + gz * cos; Q.setXYZ(e, x, this.sol(x, z), z); }
+      }
+      for (; n < N; n++) P.setXYZ(n, 0, -1e4, 0); for (; e < NE; e++) Q.setXYZ(e, 0, -1e4, 0);
+      P.needsUpdate = Q.needsUpdate = true;
+      const ech = this.matFumee.uniforms.uEchelle.value; this.poussiere.material.uniforms.uEchelle.value = this.etincelles.material.uniforms.uEchelle.value = ech;
     }
     // ---------- caméra (avec inertie) ----------
     // inclinaison : rasante de près (on voit l'horizon et le ciel), plongeante de loin (vue de stratégie)
