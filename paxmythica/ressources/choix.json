@@ -346,6 +346,18 @@
   {
    "nom": "panier",
    "id": "wicker_basket_01"
+  },
+  {
+   "nom": "statue-cheval",
+   "id": "horse_statue_01"
+  },
+  {
+   "nom": "statue-gothique",
+   "id": "gothic_statue"
+  },
+  {
+   "nom": "brouette",
+   "id": "wooden_ladder"
   }
  ]
 }
