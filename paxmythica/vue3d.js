@@ -273,8 +273,8 @@ vec3 t1 = texture(tSolN, vec3(u1, float(i1))).xyz * 2.0 - 1.0, t2 = texture(tSol
 vec3 tn = normalize(t1 * b1 + t2 * b2 + t3 * b3);
 solRug = r1.r * b1 + r2.r * b2 + r3.r * b3; solAO = r1.b * b1 + r2.b * b2 + r3.b * b3;
 // repère du relief : vue de dessus (x, -z) ou flanc
-vec3 Tm = normalize(vec3(1.0, 0.0, 0.0) - N * N.x), Bm = normalize(cross(N, Tm));
-vec3 Tf = normalize(vec3(flanc.x, 0.0, flanc.y)), Bf = normalize(cross(N, Tf));
+vec3 Tm = vec3(1.0, 0.0, 0.0) - N * N.x; Tm = dot(Tm, Tm) > 1e-8 ? normalize(Tm) : vec3(0.0, 0.0, 1.0); vec3 Bm = normalize(cross(N, Tm));
+vec3 Tf = normalize(vec3(flanc.x, 0.0, flanc.y) + vec3(1e-5, 0.0, 0.0)), Bf = cross(N, Tf); Bf = dot(Bf, Bf) > 1e-8 ? normalize(Bf) : Bm;
 float f7 = (i1 == 7 ? b1 : 0.0) + (i2 == 7 ? b2 : 0.0) + (i3 == 7 ? b3 : 0.0);
 vec3 T = normalize(mix(Tm, Tf, f7)), Bv = normalize(mix(Bm, Bf, f7));
 solNor = normalize(T * tn.x * 1.2 + Bv * tn.y * 1.2 + N * tn.z);
@@ -329,7 +329,7 @@ mat3 cotangente(vec3 N, vec3 p, vec2 uv) { vec3 dp1 = dFdx(p), dp2 = dFdy(p); ve
       .replace('#include <color_fragment>', `#include <color_fragment>
 {
   // normale de la facette (et non lissée) : chaque face reçoit sa texture à plat, sans déformation sur les toits pointus
-  float m = floor(vMat + 0.5); vec3 nO = normalize(cross(dFdx(vPO), dFdy(vPO))); if (dot(nO, vNO) < 0.0) nO = -nO; float ay = abs(nO.y);
+  float m = floor(vMat + 0.5); vec3 nF = cross(dFdx(vPO), dFdy(vPO)); vec3 nO = dot(nF, nF) > 1e-24 ? normalize(nF) : normalize(vNO + vec3(0.0, 1e-5, 0.0)); if (dot(nO, vNO) < 0.0) nO = -nO; float ay = abs(nO.y);
   vec3 tO = ay > 0.96 ? vec3(1.0, 0.0, 0.0) : normalize(cross(vec3(0.0, 1.0, 0.0), nO)); vec3 bO = cross(nO, tO);
   bool dessus = ay > 0.96, pente = ay > 0.16 && !dessus, mur = ay <= 0.16;
   if (m == 6.0) { mE = diffuseColor.rgb * (2.6 + 0.5 * sin(uT * 2.0 + vPO.y * 0.4)); mR = 0.3; }
@@ -660,6 +660,8 @@ void main() {
         const rt = new THREE.WebGLRenderTarget(w * pr, h * pr, { type: THREE.HalfFloatType, samples: Q.ao ? 0 : 4 });
         const C = new THREE.EffectComposer(R, rt); C.setPixelRatio(pr); C.setSize(w, h);
         C.addPass(new THREE.RenderPass(this.scene, this.camera));
+        C.addPass(new THREE.ShaderPass({ uniforms: { tDiffuse: { value: null } }, vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+          fragmentShader: 'uniform sampler2D tDiffuse; varying vec2 vUv; void main() { vec4 c = texture2D(tDiffuse, vUv); bool ok = !(c.r != c.r || c.g != c.g || c.b != c.b) && max(c.r, max(c.g, c.b)) < 6e4; gl_FragColor = ok ? vec4(min(c.rgb, vec3(64.0)), 1.0) : vec4(0.0, 0.0, 0.0, 1.0); }' }));
         if (Q.ao && THREE.GTAOPass) { const ao = this.passeAO = new THREE.GTAOPass(this.scene, this.camera, w * pr, h * pr); ao.updateGtaoMaterial({ radius: 6, distanceExponent: 1.6, thickness: 4, scale: 1.2, samples: 12 }); ao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 12 }); ao.blendIntensity = 0.85; C.addPass(ao); }
         if (Q.bloom) { this.bloom = new THREE.UnrealBloomPass(new THREE.Vector2(w, h), 0.25, 0.5, 0.9); C.addPass(this.bloom); }
         C.addPass(new THREE.OutputPass());

@@ -123,9 +123,10 @@ function autotest() {
             v.appliquerQualite(${JSON.stringify(q)}); v.appliquerPack(${JSON.stringify(pk)}); v.centrerSur(UI.j.etat.nations[0].capitale); v.vise.d = ${d}; v.vise.lacet = ${l}; v.stabiliser();
             await new Promise(r => setTimeout(r, 3000));
             const t = performance.now(); let n = 0; await new Promise(ok => { const f = () => { if (++n < 40) requestAnimationFrame(f); else ok(); }; requestAnimationFrame(f); });
-            return (performance.now() - t) / 40; })()`);
+            const R = v.renderer.info.render; return { ms: (performance.now() - t) / 40, appels: R.calls, triangles: R.triangles, taille: v.taille, classes: document.querySelector('#carte3d').className + '|' + document.querySelector('#carte').className, perdu: v.renderer.getContext().isContextLost(), composer: !!v.composer }; })()`);
           const img = await win.webContents.capturePage(), nom = `${e}-${pk}-${q}-${d}.jpg`;
-          fs.writeFileSync(path.join(dir, nom), img.toJPEG(80)); res.captures.push({ nom, msParImage: Math.round(ms * 10) / 10, erreurs: await win.webContents.executeJavaScript('(window.__erreurs || []).splice(0)') });
+          const bm = img.toBitmap(); let lum = 0; for (let i = 0; i < bm.length; i += 4 * 97) lum += bm[i] + bm[i + 1] + bm[i + 2]; lum /= (bm.length / (4 * 97)) * 3;
+          fs.writeFileSync(path.join(dir, nom), img.toJPEG(80)); res.captures.push({ nom, msParImage: Math.round(ms.ms * 10) / 10, luminosite: Math.round(lum), etat: ms, erreurs: await win.webContents.executeJavaScript('(window.__erreurs || []).splice(0)') });
         }
       }
     } catch (e) { res.erreur = e.message; }
