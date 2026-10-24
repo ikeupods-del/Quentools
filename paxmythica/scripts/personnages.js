@@ -23,7 +23,8 @@ async function itch(url, nom, filtre) {
   for (const f of fichiers) {
     if (!filtre || !new RegExp(filtre, 'i').test(f.nom)) continue;
     r = avecCookies(await fetch(`${url}/file/${f.id}?source=game_download&key=${cle}`, { method: 'POST', headers: Object.assign(ent(), { 'content-type': 'application/x-www-form-urlencoded', 'x-requested-with': 'XMLHttpRequest' }), body: 'csrf_token=' + encodeURIComponent(csrf2) }));
-    const lien = (await r.json()).url; const z = Buffer.from(await (await fetch(lien)).arrayBuffer()), zip = path.join('/tmp', f.id + '.zip'); fs.writeFileSync(zip, z);
+    const rep = await r.text(); let lien; try { lien = JSON.parse(rep).url; } catch (e) { /* réponse non JSON */ }
+    if (!lien) { journal.push(`  réponse sans adresse pour ${f.nom} (${r.status}, clé ${cle}, page ${dl}) : ${rep.slice(0, 300)}`); continue; } const z = Buffer.from(await (await fetch(lien)).arrayBuffer()), zip = path.join('/tmp', f.id + '.zip'); fs.writeFileSync(zip, z);
     const dest = path.join('/tmp/paquets', nom, f.nom.replace(/\.zip$/i, '').replace(/[^a-z0-9._-]+/gi, '_')); fs.mkdirSync(dest, { recursive: true });
     execSync(`unzip -o -q "${zip}" -d "${dest}"`);
     const liste = execSync(`cd "${dest}" && find . -type f -printf "%s %p\\n" | sort -k2`).toString();
