@@ -18,7 +18,7 @@ const ok = (c, m) => { n++; if (!c) { ko++; console.log('✗ ' + m); } };
   const fermerModals = () => ev(() => { for (let k = 0; k < 8 && !document.querySelector('#modal').classList.contains('cache'); k++) { const x = document.querySelector('#modalBoite .carte-choix, #modalBoite .choix .btn:not([disabled]), #modalBoite [data-act$=oui], #modalBoite [data-act=fermer], #modalBoite [data-act=commencer]'); if (!x) break; x.click(); } });
   // qualité moyenne pendant l'essai (pas de carte graphique ici) ; les autres qualités sont essayées plus bas
   p.setDefaultTimeout(90000);
-  await p.addInitScript(() => { window.PM_ECHELLE = 0.3; try { if (!sessionStorage.getItem('essai')) { localStorage.setItem('pm:qualite', 'moyenne'); sessionStorage.setItem('essai', '1'); } } catch (e) { /* sans stockage */ } });
+  await p.addInitScript(() => { window.PM_ECHELLE = 0.3; window.PM_LEGER = true; try { if (!sessionStorage.getItem('essai')) { localStorage.setItem('pm:qualite', 'moyenne'); sessionStorage.setItem('essai', '1'); } } catch (e) { /* sans stockage */ } });
   await p.goto(url);
   ok(await p.isVisible('text=Nouvelle partie'), 'accueil');
   ok(await ev(() => PM.vue3dPossible()), 'WebGL disponible pour la vue 3D');
