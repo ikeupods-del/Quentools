@@ -17,6 +17,7 @@ async function itch(url, nom, filtre) {
   r = avecCookies(await fetch(url + '/download_url', { method: 'POST', headers: Object.assign(ent(), { 'content-type': 'application/x-www-form-urlencoded', 'x-requested-with': 'XMLHttpRequest' }), body: 'csrf_token=' + encodeURIComponent(csrf) }));
   const dl = (await r.json()).url; if (!dl) throw new Error('pas de lien de téléchargement');
   r = avecCookies(await fetch(dl, { headers: ent() })); const p2 = await r.text(), cle = (dl.match(/download\/([^?/]+)/) || [])[1], csrf2 = (p2.match(/name="csrf_token" value="([^"]+)"/) || [])[1] || csrf;
+  fs.writeFileSync(path.join(DOSSIER, nom + '.itch.html'), p2.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<svg[\s\S]*?<\/svg>/g, ''));
   const fichiers = [...p2.matchAll(/data-upload_id="(\d+)"[\s\S]{0,800}?class="name" title="([^"]+)"[\s\S]{0,400}?class="file_size"><span>([^<]+)</g)].map(m => ({ id: m[1], nom: m[2], taille: m[3] }));
   journal.push(`itch ${url} : ${fichiers.map(f => f.nom + ' (' + f.taille + ')').join(' ; ') || 'aucun fichier repéré'}`);
   for (const f of fichiers) {
