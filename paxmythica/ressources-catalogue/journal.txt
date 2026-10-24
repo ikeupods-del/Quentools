@@ -1,0 +1,29 @@
+catalogue ambientCG « grass » : 15
+catalogue ambientCG « forest floor » : 2
+catalogue ambientCG « ground » : 24
+catalogue ambientCG « dry ground » : 14
+catalogue ambientCG « sand » : 24
+catalogue ambientCG « rock » : 24
+catalogue ambientCG « cliff » : 24
+catalogue ambientCG « snow » : 24
+catalogue ambientCG « gravel » : 24
+catalogue ambientCG « paving stones » : 24
+catalogue ambientCG « roofing tiles » : 24
+ERREUR catalogue ambientCG thatch : Expected valid width, height and channels to create a new input image
+catalogue ambientCG « planks » : 24
+catalogue ambientCG « wood siding » : 13
+catalogue ambientCG « plaster » : 24
+catalogue ambientCG « bricks » : 24
+catalogue ambientCG « stone wall » : 24
+catalogue ambientCG « marble » : 24
+catalogue ambientCG « concrete » : 24
+catalogue ambientCG « metal plates » : 20
+catalogue ambientCG « facade » : 24
+catalogue ambientCG « lava » : 5
+catalogue ambientCG « tiles » : 24
+catalogue Poly Haven « hdris:skies » : 48
+catalogue Poly Haven « hdris:sunrise-sunset » : 48
+catalogue Poly Haven « hdris:night » : 48
+catalogue Poly Haven « models:nature » : 48
+catalogue Poly Haven « models » : 48
+catalogue Poly Haven « textures:terrain » : 48
