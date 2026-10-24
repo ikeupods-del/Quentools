@@ -200,7 +200,21 @@ def emballer():
         for racine, _, fichiers in os.walk(SORTIE):
             for f in sorted(fichiers):
                 ch = os.path.join(racine, f)
-                z.write(ch, os.path.join(racine_zip, os.path.relpath(ch, SORTIE)))
+                rel = os.path.join(racine_zip, os.path.relpath(ch, SORTIE))
+                if f.endswith('.png') and (f.startswith(('apercu', 'portrait')) or f.endswith('_basecolor.png')):
+                    # aperçus et couleur de base en JPEG haute qualité pour alléger le zip
+                    from PIL import Image
+                    import io
+                    im = Image.open(ch)
+                    if im.mode == 'RGBA':
+                        fond = Image.new('RGBA', im.size, (52, 60, 72, 255))
+                        fond.alpha_composite(im)
+                        im = fond
+                    b = io.BytesIO()
+                    im.convert('RGB').save(b, 'JPEG', quality=95 if f.endswith('_basecolor.png') else 90, subsampling=0)
+                    z.writestr(rel[:-4] + '.jpg', b.getvalue(), compress_type=zipfile.ZIP_STORED)
+                else:
+                    z.write(ch, rel)
     print('Zip : %s (%.1f Mo)' % (os.path.relpath(nom, ICI), os.path.getsize(nom) / 1e6))
 
 

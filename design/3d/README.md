@@ -70,10 +70,10 @@ boucliers et l'étendard).
 
 ```
 personnages/<ère>/<id>/<id>.glb                 personnage riggé, textures intégrées
-personnages/<ère>/<id>/textures/                couleur, rugosité, métal, masque couleur du joueur (PNG)
-personnages/<ère>/<id>/apercu.png               face, trois quarts, profil, dos
-personnages/<ère>/<id>/apercu-couleur-joueur.png  même chose teinté en bleu
-personnages/<ère>/<id>/portrait.png             vignette 512 × 512 pour l'interface du jeu
+personnages/<ère>/<id>/textures/                couleur (JPEG), rugosité, métal, masque couleur du joueur (PNG)
+personnages/<ère>/<id>/apercu.jpg               face, trois quarts, profil, dos
+personnages/<ère>/<id>/apercu-couleur-joueur.jpg  même chose teinté en bleu
+personnages/<ère>/<id>/portrait.jpg             vignette 512 × 512 pour l'interface du jeu
 montures/, machines/, navires/, accessoires/    même organisation
 apercus/                                        planches par ère et par famille, portraits
 catalogue.json, CATALOGUE.md                    liste complète
