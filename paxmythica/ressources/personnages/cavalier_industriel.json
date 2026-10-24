@@ -1,0 +1,1 @@
+{"nom":"cavalier_industriel","sommets":3750,"triangles":2997,"images":141,"clips":[{"nom":"repos","debut":0,"nb":75,"ips":12},{"nom":"Walk_Loop","debut":75,"nb":32,"ips":12},{"nom":"charge","debut":107,"nb":10,"ips":12},{"nom":"pas","debut":117,"nb":24,"ips":12}],"decalages":[0,17984,47984,55484,4285484],"avant":{"sommets":19318,"triangles":18432},"erreur":0}

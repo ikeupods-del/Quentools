@@ -1,0 +1,1 @@
+{"nom":"cavalier_antique","sommets":3484,"triangles":2996,"images":141,"clips":[{"nom":"repos","debut":0,"nb":75,"ips":12},{"nom":"Walk_Loop","debut":75,"nb":32,"ips":12},{"nom":"charge","debut":107,"nb":10,"ips":12},{"nom":"pas","debut":117,"nb":24,"ips":12}],"decalages":[0,17976,45848,52816,3982768],"avant":{"sommets":22438,"triangles":15364},"erreur":0}

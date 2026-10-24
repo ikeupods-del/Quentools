@@ -195,7 +195,7 @@
   // ---------- personnages animés (Quaternius, CC0, préparés par scripts/personnages-cuisson.js) ----------
   // chaque image de chaque animation est rangée dans une texture (une ligne par image, une colonne par sommet) :
   // la carte graphique lit la pose de chaque soldat selon son animation (aClip : première image, nombre d'images, vitesse, décalage)
-  const FOULES = ['villageois', 'villageoise', 'soldat_antique', 'soldat_medieval', 'soldat_industriel', 'soldat_moderne', 'soldat_futur', 'archer'];
+  const FOULES = ['villageois', 'villageoise', 'soldat_antique', 'soldat_medieval', 'soldat_industriel', 'soldat_moderne', 'soldat_futur', 'archer', 'cavalier_antique', 'cavalier_medieval', 'cavalier_industriel', 'mouton', 'vache'];
   function foule(meta, buf, img, uT) {
     const n = meta.sommets, F = meta.images, D = meta.decalages;
     const index = new Uint16Array(buf, D[0], meta.triangles * 3), uv = new Float32Array(buf, D[1], n * 2), at = new Uint8Array(buf, D[2], n * 2), pos = new Uint16Array(buf, D[3], n * F * 4), nor = new Uint8Array(buf, D[4], n * F * 4);
@@ -1309,7 +1309,7 @@ void main() {
         // moutons (avant l'ère moderne) dans les prés des fermes
         if (P.bat.ferme && ep !== 'moderne' && ep !== 'futur') for (let i = 0; i < 7; i++) {
           const a = 2.3 + (r2() - 0.5) * 1.4, r = 27 + r2() * 7, x = c.lx + Math.cos(a) * r, z = c.ly + Math.sin(a) * r;
-          if (x > 0 && z > 0 && x < C.w && z < C.h && C.pix[Math.round(z) * C.w + Math.round(x)] >= 0 && this.sol(x, z) > 0.5) T.push({ x, z, ph: r2() * 6.283, rot: r2() * 6.283 });
+          if (x > 0 && z > 0 && x < C.w && z < C.h && C.pix[Math.round(z) * C.w + Math.round(x)] >= 0 && this.sol(x, z) > 0.5) T.push({ x, z, ph: r2() * 6.283, rot: r2() * 6.283, vache: i % 3 === 2 });
         }
       }
       // vols d'oiseaux : mouettes près des côtes, corneilles et rapaces dans les terres
@@ -1361,11 +1361,13 @@ void main() {
         else poser(V.villageois, n++, x, this.sol(x, z), z, rot, 0.95, h.coul, marche ? 1 : 0, h.ph * 3);
       }
       fin(V.villageois, n); fin(V.villageoise, nf); n = 0;
+      let nv = 0;
       if (d < 420) for (const m of this.troupeaux) {
-        const x = m.x + Math.sin(t * 0.03 + m.ph) * 1.6, z = m.z + Math.cos(t * 0.025 + m.ph * 1.3) * 1.6;
-        poser(V.mouton, n++, x, this.sol(x, z), z, m.rot + Math.sin(t * 0.05 + m.ph) * 0.8, 1, 0xffffff, 0, m.ph);
+        const x = m.x + Math.sin(t * 0.03 + m.ph) * 1.6, z = m.z + Math.cos(t * 0.025 + m.ph * 1.3) * 1.6, rot = m.rot + Math.sin(t * 0.05 + m.ph) * 0.8;
+        if (m.vache && V.vache) poser(V.vache, nv++, x, this.sol(x, z), z, rot, 1, 0xffffff, 0, m.ph);
+        else poser(V.mouton, n++, x, this.sol(x, z), z, rot, 1, 0xffffff, 0, m.ph);
       }
-      fin(V.mouton, n); n = 0;
+      fin(V.mouton, n); if (V.vache) fin(V.vache, nv); n = 0;
       if (d < 950) for (const b of this.vols) {
         const a = t * b.w + b.off, R = b.R * (1 + 0.12 * Math.sin(t * 0.4 + b.ph)), x = b.cx + Math.cos(a) * R, z = b.cz + Math.sin(a) * R, sg = Math.sign(b.w);
         poser(V.oiseau, n++, x, Math.max(this.sol(x, z), 0) + b.h + Math.sin(t * 0.5 + b.ph) * 2.5, z, Math.atan2(-Math.sin(a) * sg, Math.cos(a) * sg), b.s * 1.25, b.coul, 0, b.ph, -0.35 * sg);
@@ -1426,9 +1428,9 @@ vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, colo
         g.setAttribute('aClip', new THREE.InstancedBufferAttribute(new Float32Array(MAX * 4), 4).setUsage(THREE.DynamicDrawUsage));
         const m = new THREE.InstancedMesh(g, f.mat, MAX); m.customDepthMaterial = f.ombre; m.setColorAt(0, new THREE.Color(1, 1, 1)); m.count = 0; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.castShadow = true; m.userData.foule = f; this.scene.add(m); return m; };
       if (this.V) for (const k in this.V) { this.scene.remove(this.V[k]); this.V[k].geometry.dispose(); }
-      this.V = { villageois: mkF('villageois') || mk(F.villageois), villageoise: mkF('villageoise') || mk(F.villageois), mouton: mk(F.mouton), oiseau: mk(F.oiseau) }; this.V.oiseau.castShadow = false;
+      this.V = { villageois: mkF('villageois') || mk(F.villageois), villageoise: mkF('villageoise') || mk(F.villageois), mouton: mkF('mouton') || mk(F.mouton), vache: mkF('vache'), oiseau: mk(F.oiseau) }; if (!this.V.vache) delete this.V.vache; this.V.oiseau.castShadow = false;
       const SOLDAT = 'soldat_' + ep, arcs = ep === 'antique' || ep === 'medieval';
-      this.P = { ep, inf: mkF(SOLDAT) || mk(F.inf), archer: (arcs ? mkF('archer') : mkF(SOLDAT)) || mk(F.archer || F.inf), cav: mk(F.cav || M.char), siege: mk(F.siege || (futur ? M.char : M.engin)), mythe: mk(F.mythe), etendard: mk(M.etendard) };
+      this.P = { ep, inf: mkF(SOLDAT) || mk(F.inf), archer: (arcs ? mkF('archer') : mkF(SOLDAT)) || mk(F.archer || F.inf), cav: mkF('cavalier_' + ep) || mk(F.cav || M.char), siege: mk(F.siege || (futur ? M.char : M.engin)), mythe: mk(F.mythe), etendard: mk(M.etendard) };
       // taille des créatures : un géant ou une machine domine la troupe
       this.P.echelleMythe = ep === 'antique' || ep === 'medieval' ? 2.2 : 1.6;
       return this.P;
@@ -1456,7 +1458,7 @@ vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, colo
       this.positions = [];
       const ajouter = (k, x, y, z, rot, s, couleur, mode, ph) => { const i = n[k]++; if (i >= 3500) return; o.position.set(x, y, z); o.rotation.set(0, rot, 0); o.scale.setScalar(s); o.updateMatrix(); P[k].setMatrixAt(i, o.matrix); P[k].setColorAt(i, col.set(couleur)); this.animer(P[k], i, mode, ph); };
       // formation en blocs : créatures et héros devant, puis fantassins, archers, cavaliers et machines ; [modèle, écart, profondeur, largeur maximale]
-      const BLOCS = { mythe: ['mythe', 4.4, 4.8, 3], heros: ['inf', 2.2, 2.2, 2], inf: ['inf', 1.5, 1.75, 8], milice: ['inf', 1.5, 1.75, 8], archer: ['archer', 1.55, 1.85, 8], cav: ['cav', 2.3, 3.6, 5], siege: ['siege', 4.2, 4.8, 3] };
+      const BLOCS = { mythe: ['mythe', 4.4, 4.8, 3], heros: ['inf', 2.2, 2.2, 2], inf: ['inf', 1.5, 1.75, 8], milice: ['inf', 1.5, 1.75, 8], archer: ['archer', 1.55, 1.85, 8], cav: ['cav', 2.2, 4.6, 5], siege: ['siege', 4.2, 4.8, 3] };
       for (const a of E.armees) {
         const rang = rangs[a.prov] = (rangs[a.prov] || 0) + 1, pos = this.positionArmee(a, rang - 1), N = E.nations[a.owner];
         const marche = a.chemin.length > 0, combat = combats.has(a.prov) || (E.provinces[a.prov].siege && E.provinces[a.prov].siege.par === a.owner);

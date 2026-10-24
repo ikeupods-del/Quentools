@@ -1,0 +1,1 @@
+{"nom":"cavalier_medieval","sommets":3786,"triangles":2977,"images":141,"clips":[{"nom":"repos","debut":0,"nb":75,"ips":12},{"nom":"Walk_Loop","debut":75,"nb":32,"ips":12},{"nom":"charge","debut":107,"nb":10,"ips":12},{"nom":"pas","debut":117,"nb":24,"ips":12}],"decalages":[0,17864,48152,55724,4326332],"avant":{"sommets":33967,"triangles":30502},"erreur":0}
