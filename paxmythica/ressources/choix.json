@@ -167,6 +167,30 @@
    "source": "polyhaven",
    "id": "clay_roof_tiles_02",
    "taille": 512
+  },
+  {
+   "nom": "bat-champ",
+   "source": "polyhaven",
+   "id": "farm_furrows",
+   "taille": 512
+  },
+  {
+   "nom": "bat-stuc",
+   "source": "polyhaven",
+   "id": "white_stucco",
+   "taille": 512
+  },
+  {
+   "nom": "bat-gres-blocs",
+   "source": "polyhaven",
+   "id": "large_sandstone_blocks_01",
+   "taille": 512
+  },
+  {
+   "nom": "bat-mosaique",
+   "source": "polyhaven",
+   "id": "old_mosaic_floor",
+   "taille": 512
   }
  ],
  "ciels": [
