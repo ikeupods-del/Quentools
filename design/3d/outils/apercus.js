@@ -17,6 +17,8 @@ for(const it of cat){const url='/s/'+it.chemin+'/'+it.id+'.glb';const dir=path.j
  if(it.type==='personnage'){save(await p.evaluate(([u])=>rendre(u,'perso',null,null),[url]),path.join(dir,'apercu.png'));
   save(await p.evaluate(([u])=>rendre(u,'perso','#2a5bd7',null),[url]),path.join(dir,'apercu-couleur-joueur.png'));
   save(await p.evaluate(([u])=>rendre(u,'portrait',null,'#2c3440'),[url]),path.join(dir,'portrait.png'));}
- else save(await p.evaluate(([u])=>rendre(u,'acc',null,null),[url]),path.join(dir,'apercu.png'));
+ else if(it.type==='accessoire')save(await p.evaluate(([u])=>rendre(u,'acc',null,null),[url]),path.join(dir,'apercu.png'));
+ else{save(await p.evaluate(([u])=>rendre(u,'unite',null,null),[url]),path.join(dir,'apercu.png'));
+  save(await p.evaluate(([u])=>rendre(u,'unite','#2a5bd7',null),[url]),path.join(dir,'apercu-couleur-joueur.png'));}
  console.log('rendu',it.id);}
 await b.close();})();

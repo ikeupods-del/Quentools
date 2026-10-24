@@ -66,17 +66,63 @@ NB = len(NOMS)
 MIROIR_OS = np.array([IDX[n.replace('Left', '#').replace('Right', 'Left').replace('#', 'Right')] for n in NOMS])
 
 
+class Squelette:
+    """Squelette quelconque : liste (nom, parent, position) ; gauche/droite reconnus par Left/Right ou _L/_R.
+    pref : {nom: enfant} pour choisir l'enfant qui donne la direction d'un os à plusieurs enfants."""
+
+    def __init__(self, os_liste, prefixe='', pref=None):
+        self.noms = [o[0] for o in os_liste]
+        self.idx = {n: i for i, n in enumerate(self.noms)}
+        self.parent = {o[0]: o[1] for o in os_liste}
+        self.J = {o[0]: np.array(o[2], float) for o in os_liste}
+        self.enfants = {n: [m for m in self.noms if self.parent[m] == n] for n in self.noms}
+        self.nb = len(self.noms)
+        self.prefixe = prefixe
+        self.pref = pref or {}
+
+        def opp(n):
+            for a, b in (('Left', 'Right'), ('_L', '_R')):
+                if a in n:
+                    return n.replace(a, b)
+                if b in n:
+                    return n.replace(b, a)
+            return n
+        self.miroir = np.array([self.idx.get(opp(n), self.idx[n]) for n in self.noms])
+
+    def bout(self, n):
+        if n in self.pref and self.pref[n] in self.J:
+            return self.J[self.pref[n]]
+        if self.enfants[n]:
+            return self.J[self.enfants[n][0]]
+        if self.parent[n] is None:
+            return self.J[n] + [0, 0.1, 0]
+        p = self.J[self.parent[n]]
+        return self.J[n] + (self.J[n] - p) * 0.5
+
+    def w_os(self, nom):
+        def f(P):
+            W = np.zeros((len(P), self.nb))
+            W[:, self.idx[nom]] = 1
+            return W
+        return f
+
+    def chaine(self, noms, fondu):
+        return lambda P: w_chaine(P, noms, fondu, self)
+
+
+_PREF = {n: n.replace('Hand', 'HandMiddle1') for n in NOMS if n.endswith('Hand')}
+_PREF.update({'Spine2': 'Neck', 'Hips': 'Spine'})
+HUMAIN = Squelette(OS, PREFIXE, _PREF)
+
+
+def humain_echelle(e):
+    """Squelette humain agrandi (géants, créatures) : mêmes noms et proportions, positions multipliées."""
+    return Squelette([(n, HUMAIN.parent[n], HUMAIN.J[n] * e) for n in NOMS], PREFIXE, _PREF)
+
+
 def bout(n):
-    """Extrémité d'un os : la tête de son enfant principal (ou un prolongement pour les feuilles)."""
-    pref = {'Hand': n.replace('Hand', 'HandMiddle1') if n.endswith('Hand') else None,
-            'Spine2': 'Neck', 'Hips': 'Spine'}
-    for cle, cible in pref.items():
-        if n.endswith(cle) and cible and cible in J:
-            return J[cible]
-    if ENFANTS[n]:
-        return J[ENFANTS[n][0]]
-    p = J[PARENT[n]]
-    return J[n] + (J[n] - p) * 0.5
+    """Extrémité d'un os humain : la tête de son enfant principal (ou un prolongement pour les feuilles)."""
+    return HUMAIN.bout(n)
 
 
 # ---------------------------------------------------------------------------------------------
@@ -210,11 +256,12 @@ def w_os(nom):
     return f
 
 
-def w_chaine(P, noms, fondu):
+def w_chaine(P, noms, fondu, sq=None):
     """Poids le long d'une chaîne d'os : segment le plus proche, fondu linéaire adouci aux articulations."""
+    sq = sq or HUMAIN
     n = len(noms)
-    tetes = [J[x] for x in noms]
-    bouts = [J[noms[i + 1]] if i + 1 < n else bout(noms[i]) for i in range(n)]
+    tetes = [sq.J[x] for x in noms]
+    bouts = [sq.J[noms[i + 1]] if i + 1 < n else sq.bout(noms[i]) for i in range(n)]
     D = np.zeros((len(P), n))
     S = np.zeros((len(P), n))
     Lg = np.zeros(n)
@@ -230,7 +277,7 @@ def w_chaine(P, noms, fondu):
     s = S[np.arange(len(P)), k]
     lk = Lg[k]
     fd = np.array(fondu if isinstance(fondu, (list, tuple)) else [fondu] * n, float)
-    W = np.zeros((len(P), NB))
+    W = np.zeros((len(P), sq.nb))
     cour = np.ones(len(P))
     autre = np.zeros(len(P), int) - 1
     # près du début du segment : fondu avec le précédent
@@ -245,7 +292,7 @@ def w_chaine(P, noms, fondu):
     f1 = 0.5 + 0.5 * ss(0, 1, (lk - s) / np.maximum(b1, 1e-6))
     cour = np.where(m1, f1, cour)
     autre = np.where(m1, k + 1, autre)
-    idx = np.array([IDX[x] for x in noms])
+    idx = np.array([sq.idx[x] for x in noms])
     r = np.arange(len(P))
     W[r, idx[k]] += cour
     sel = autre >= 0
@@ -699,8 +746,15 @@ def png(arr):
     return b.getvalue()
 
 
-def assembler(pieces, pal, tex):
-    """Maillage final, poids, atlas et textures peintes."""
+def jpeg(arr, qualite=93):
+    b = io.BytesIO()
+    Image.fromarray(arr).save(b, 'JPEG', quality=qualite, subsampling=0, optimize=True)
+    return b.getvalue()
+
+
+def assembler(pieces, pal, tex, sq=None):
+    """Maillage final, poids, atlas et textures peintes (sq : squelette, humain par défaut)."""
+    sq = sq or HUMAIN
     place, densite = ranger(pieces, tex)
     gb_id = np.full((tex, tex), -1, np.int32)
     gb_at = np.zeros((tex, tex, 8), np.float32)
@@ -719,16 +773,18 @@ def assembler(pieces, pal, tex):
         x0, y0, w, h = place[p.partage]
         UVpx = np.stack([x0 + 0.5 + ST[:, 0] * (w - 1), y0 + 0.5 + ST[:, 1] * (h - 1)], 1)
         if rig:
-            W = p.poids(P * [-1, 1, 1])[:, MIROIR_OS] if p.miroir else p.poids(P)
+            W = p.poids(P * [-1, 1, 1])[:, sq.miroir] if p.miroir else p.poids(P)
             Ws.append(W)
         if p.peindre:
             rasteriser({'id': gb_id, 'attr': gb_at}, pid, UVpx, F, np.concatenate([P, N, ST], 1))
         Ps.append(P); Ns.append(N); UVs.append(UVpx / tex); Fs.append(F + base)
         base += len(P)
-    out = {'P': np.vstack(Ps).astype(np.float32), 'N': np.vstack(Ns).astype(np.float32),
+    out = {'sq': sq, 'P': np.vstack(Ps).astype(np.float32), 'N': np.vstack(Ns).astype(np.float32),
            'UV': np.vstack(UVs).astype(np.float32), 'I': np.vstack(Fs), 'densite': densite}
     if rig:
         W = np.vstack(Ws)
+        if W.shape[1] < 4:  # squelettes de moins de 4 os : colonnes vides pour garder 4 influences
+            W = np.hstack([W, np.zeros((len(W), 4 - W.shape[1]))])
         ordre = np.argsort(-W, 1)[:, :4]
         JW = np.take_along_axis(W, ordre, 1)
         JW[JW < 0.01] = 0
@@ -787,7 +843,8 @@ def ecrire_glb(chemin, M, images, nom):
              'TEXCOORD_0': acc(M['UV'], 5126, 'VEC2', 34962)}
     rig = 'JI' in M
     if rig:
-        attrs['JOINTS_0'] = acc(M['JI'].astype(np.uint8), 5121, 'VEC4', 34962)
+        attrs['JOINTS_0'] = acc(M['JI'].astype(np.uint8 if M['sq'].nb < 256 else np.uint16),
+                                5121 if M['sq'].nb < 256 else 5123, 'VEC4', 34962)
         attrs['WEIGHTS_0'] = acc(M['JW'], 5126, 'VEC4', 34962)
     ind = M['I'].reshape(-1)
     aI = acc(ind.astype(np.uint16 if ind.max() < 65535 else np.uint32), 5123 if ind.max() < 65535 else 5125,
@@ -797,25 +854,31 @@ def ecrire_glb(chemin, M, images, nom):
     scene = [0]
     gltf_extra = {}
     if rig:
-        ibm = np.zeros((NB, 16), np.float32)
-        for i, n in enumerate(NOMS):
+        sq = M['sq']
+        ibm = np.zeros((sq.nb, 16), np.float32)
+        for i, n in enumerate(sq.noms):
             m = np.eye(4)
-            m[:3, 3] = -J[n]
+            m[:3, 3] = -sq.J[n]
             ibm[i] = m.T.reshape(-1)
         aB = acc(ibm, 5126, 'MAT4')
         base = 1
-        for i, n in enumerate(NOMS):
-            t = J[n] - (J[PARENT[n]] if PARENT[n] else 0)
-            nd = {'name': PREFIXE + n, 'translation': [round(float(v), 6) for v in t]}
-            enf = [base + IDX[c] for c in ENFANTS[n]]
+        racines = []
+        for i, n in enumerate(sq.noms):
+            par = sq.parent[n]
+            t = sq.J[n] - (sq.J[par] if par else 0)
+            nd = {'name': sq.prefixe + n, 'translation': [round(float(v), 6) for v in t]}
+            enf = [base + sq.idx[c] for c in sq.enfants[n]]
             if enf:
                 nd['children'] = enf
             nodes.append(nd)
+            if par is None:
+                racines.append(base + i)
         noeud['skin'] = 0
-        scene = [0, base]
-        gltf_extra['skins'] = [{'name': 'Squelette', 'joints': [base + i for i in range(NB)],
-                                'inverseBindMatrices': aB, 'skeleton': base}]
-    imgs = [{'bufferView': vue(data), 'mimeType': 'image/png', 'name': n} for n, data in images]
+        scene = [0] + racines
+        gltf_extra['skins'] = [{'name': 'Squelette', 'joints': [base + i for i in range(sq.nb)],
+                                'inverseBindMatrices': aB, 'skeleton': racines[0]}]
+    imgs = [{'bufferView': vue(data), 'mimeType': 'image/jpeg' if data[:2] == b'\xff\xd8' else 'image/png', 'name': n}
+            for n, data in images]
     gltf = {
         'asset': {'version': '2.0', 'generator': 'QuenTools moteur.py'},
         'scene': 0,
@@ -851,7 +914,7 @@ def exporter(M, dossier, ident, textures_a_part=True):
     k8 = (np.clip(M['rmm'][..., 2], 0, 1) * 255 + 0.5).astype(np.uint8)
     orm = np.stack([np.full_like(r8, 255), r8, m8], -1)  # glTF : G = rugosité, B = métal
     ecrire_glb(os.path.join(dossier, ident + '.glb'), M,
-               [(ident + '_basecolor', png(c8)), (ident + '_metal_rugosite', png(orm))], ident)
+               [(ident + '_basecolor', jpeg(c8)), (ident + '_metal_rugosite', png(orm))], ident)
     if textures_a_part:
         t = os.path.join(dossier, 'textures')
         os.makedirs(t, exist_ok=True)

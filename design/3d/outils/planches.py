@@ -9,9 +9,9 @@ from PIL import Image, ImageDraw, ImageFont
 ICI = os.path.dirname(os.path.abspath(__file__))
 SORTIE = os.path.join(ICI, '..', 'sortie')
 FOND = (52, 60, 72)
-ERES = {'1-antiquite': 'Antiquité', '2-moyen-age': 'Moyen Âge', '3-epoque-moderne': 'Époque moderne',
+ERES = {'0-montures': 'Montures', '1-antiquite': 'Antiquité', '2-moyen-age': 'Moyen Âge', '3-epoque-moderne': 'Époque moderne',
         '4-industrielle': 'Ère industrielle', '5-xxe-siecle': 'XXe siècle', '6-contemporain': 'Contemporain',
-        '7-futur': 'Futur'}
+        '7-futur': 'Futur', '8-mythologie': 'Mythologie'}
 
 
 def police(t):
@@ -50,7 +50,7 @@ def planche(items, titre, chemin, vues=(0, 1), fichier='apercu.png', n=4, cols=N
     ImageDraw.Draw(pl).text((16, 16), titre, fill=(255, 255, 255), font=police(34))
     for i, c in enumerate(cases):
         pl.paste(c, ((i % cols) * cw, 70 + (i // cols) * ch), c)
-    pl.save(chemin, optimize=True)
+    pl.save(chemin.replace('.png', '.jpg'), quality=88, optimize=True)
 
 
 def main():
@@ -65,10 +65,19 @@ def main():
             planche(p, 'Couleur du joueur (bleu) — ' + nom,
                     os.path.join(SORTIE, 'apercus', 'personnages-%s-couleur-joueur.png' % ere), fichier='apercu-couleur-joueur.png')
     planche(persos, 'Tous les personnages (même squelette)', os.path.join(SORTIE, 'apercus', 'tous-les-personnages.png'),
-            vues=(0,), cols=7, ech=0.75)
+            vues=(0,), cols=11, ech=0.6)
     planche(persos, 'Portraits', os.path.join(SORTIE, 'apercus', 'portraits.png'), vues=(0,), fichier='portrait.png', n=1,
-            cols=7, ech=0.5)
-    planche(accs, 'Accessoires', os.path.join(SORTIE, 'apercus', 'accessoires.png'), vues=(0, 1), n=3, cols=6, ech=0.6)
+            cols=11, ech=0.42)
+    for ere, nom in ERES.items():
+        a = [x for x in accs if x['ere'] == ere]
+        if a:
+            planche(a, 'Accessoires — ' + nom, os.path.join(SORTIE, 'apercus', 'accessoires-%s.png' % ere), vues=(0, 1),
+                    n=3, cols=6, ech=0.6)
+    for t, titre in (('monture', 'Montures'), ('machine', 'Machines de guerre et véhicules'), ('navire', 'Navires')):
+        u = [x for x in cat if x['type'] == t]
+        if u:
+            planche(u, titre + ' (couleur du joueur en bleu)', os.path.join(SORTIE, 'apercus', '%ss.png' % t), vues=(0, 1),
+                    fichier='apercu-couleur-joueur.png', cols=3, ech=0.8)
 
 
 if __name__ == '__main__':

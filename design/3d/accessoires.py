@@ -288,8 +288,10 @@ def _rond_deco(motif, bord, R, rx=None):
         r = np.hypot(c.x / (rx or R), c.y / R)
         c.poser(bord, r > 0.9)
         c.poser('bois', c.N[:, 2] < -0.3)
-        if motif == 'planches':
-            pass
+        if motif == 'rayons':
+            ang = np.arctan2(c.y, c.x)
+            m = (np.abs(((ang * 8 / (2 * np.pi)) % 1) - 0.5) < 0.12) & (c.N[:, 2] > 0.2) & (r < 0.9)
+            c.poser('or', m)
         if motif == 'planches':
             m = (np.abs(((c.x * 9) % 1) - 0.5) > 0.46) & (c.N[:, 2] > 0.2)
             c.col = np.where(m[:, None], c.col * 0.7, c.col)
@@ -545,6 +547,251 @@ def rapiere():
     return o.pieces, PAL, 'main, poignée'
 
 
+# --- armes et objets des unités complémentaires ---------------------------------------------------
+def baton_pretre():
+    o = Objet()
+    o.tube('baton', [(0, -0.9, 0), (0, 0.6, 0), (0.0, 0.85, 0)], [0.022, 0.02, 0.018], 'bois', K=8)
+    o.tube('crosse', [(0, 0.85, 0), (0.05, 0.98, 0), (0.12, 1.0, 0), (0.15, 0.93, 0)], [0.018, 0.018, 0.016, 0.0], 'bois', K=6)
+    o.tube('ruban', [(0, 0.55, 0), (0, 0.62, 0)], [0.026, 0.026], 'joueur_tissu', K=8, poles=False)
+    return o.pieces, PAL, 'main, milieu du bâton'
+
+
+def ankh():
+    o = Objet()
+    o.tube('tige', [(0, -0.12, 0), (0, 0.12, 0)], [0.018, 0.018], 'or', K=6, aplat=0.5)
+    o.tube('bras', [(-0.09, 0.12, 0), (0.09, 0.12, 0)], [0.018, 0.018], 'or', K=6, aplat=0.5)
+    th = np.linspace(0, 2 * math.pi, 14)
+    o.tube('boucle', [(0.06 * math.sin(t), 0.20 - 0.075 * math.cos(t), 0) for t in th], [0.016] * 14, 'or', K=6,
+           aplat=0.5, poles=False)
+    return o.pieces, PAL, 'main, tige'
+
+
+def sceptre():
+    o = Objet()
+    o.tube('tige', [(0, -0.35, 0), (0, 0.35, 0)], [0.018, 0.02], 'or', K=8)
+    o.boite('tete', (0, 0.42, 0), (0.08, 0.10, 0.08), 'or', arrondi=0.9, K=8)
+    o.boite('pierre', (0, 0.42, 0.035), (0.04, 0.05, 0.02), 'joueur', arrondi=0.9, K=6)
+    o.tube('croix', [(-0.04, 0.50, 0), (0.04, 0.50, 0)], [0.012, 0.012], 'or', K=6)
+    return o.pieces, PAL, 'main, tige'
+
+
+def arme_hast(type_):
+    """Armes d'hast : hallebarde, ji chinois, lance de cavalerie, sagaie, yari déjà ailleurs."""
+    o = Objet()
+    if type_ == 'hallebarde':
+        o.tube('hampe', [(0, -0.9, 0), (0, 1.15, 0)], [0.017, 0.016], 'bois', K=8)
+        o.lame('pointe', 1.12, 1.45, 0.022, 0.007, 'acier', pointe=0.6)
+        o.ajoute('hache', [np.array([(0.02, y, 0), (0.0, y, 0.008), (0.02 + w, y + d, 0), (0.0, y, -0.008)])
+                           for y, w, d in ((0.95, 0.0, 0.0), (1.0, 0.18, -0.06), (1.10, 0.22, 0.0), (1.16, 0.0, 0.0))],
+                 'acier', lisse=False, decor=[fil])
+        o.tube('crochet', [(0, 1.04, 0), (-0.10, 1.07, 0), (-0.14, 1.12, 0)], [0.012, 0.008, 0.0], 'acier', K=5)
+    elif type_ == 'ji':
+        o.tube('hampe', [(0, -0.9, 0), (0, 1.15, 0)], [0.016, 0.015], 'bois_fonce', K=8)
+        o.lame('pointe', 1.12, 1.40, 0.02, 0.006, 'bronze', pointe=0.6)
+        o.tube('dague', [(0, 1.08, 0), (0.12, 1.06, 0), (0.22, 1.02, 0)], [(0.02, 0.006), (0.015, 0.005), (0.0, 0.0)],
+               'bronze', K=4)
+        o.tube('pompon', [(0, 1.04, 0), (0, 0.98, 0)], [0.03, 0.0], 'joueur_tissu', K=6)
+    elif type_ == 'lance-cavalerie':
+        o.tube('hampe', [(0, -1.2, 0), (0, -0.15, 0), (0, 0.05, 0), (0, 2.2, 0)], [0.02, 0.022, 0.045, 0.012], 'bois', K=8,
+               decor=[lambda c: c.poser('joueur', (c.y > 1.2) & (c.y < 1.6))])
+        o.lame('pointe', 2.18, 2.42, 0.02, 0.008, 'acier', pointe=0.6)
+        o.ajoute('fanion', bande([np.array([[0.02, y, 0.0] for y in np.linspace(2.05, 1.85, 4)]),
+                                  np.array([[0.30, y, 0.0] for y in np.linspace(2.0, 1.95, 4)])],
+                                 [np.array([[0.02, y, 0.006] for y in np.linspace(2.05, 1.85, 4)]),
+                                  np.array([[0.30, y, 0.006] for y in np.linspace(2.0, 1.95, 4)])], fermer=True),
+                 'joueur_tissu')
+    elif type_ == 'sagaie':
+        o.tube('hampe', [(0, -0.55, 0), (0, 0.55, 0)], [0.014, 0.014], 'bois', K=8)
+        o.lame('fer', 0.53, 0.82, 0.028, 0.006, 'fer', pointe=0.45)
+    return o.pieces, PAL, 'main droite, tiers arrière de la hampe'
+
+
+def arbalete():
+    o = Objet()
+    o.boite('fut', (0, 0.0, 0.0), (0.05, 0.62, 0.06), 'bois', arrondi=0.4)
+    o.tube('arc', [(-0.30, 0.20, 0.02), (-0.15, 0.26, 0.0), (0, 0.27, 0.0), (0.15, 0.26, 0.0), (0.30, 0.20, 0.02)],
+           [0.008, 0.014, 0.016, 0.014, 0.008], 'acier', K=6)
+    o.tube('corde', [(-0.30, 0.20, 0.02), (0, 0.02, 0.02), (0.30, 0.20, 0.02)], [0.003] * 3, 'corde', K=4, poles=False)
+    o.tube('carreau', [(0, 0.0, 0.04), (0, 0.30, 0.04)], [0.006, 0.006], 'bois', K=4)
+    o.tube('etrier', [(-0.04, 0.32, 0), (0, 0.36, 0), (0.04, 0.32, 0)], [0.006] * 3, 'fer', K=4, poles=False)
+    return o.pieces, PAL, 'main droite sous le fût'
+
+
+def arc_long():
+    o = Objet()
+    pts = [(0.03 * math.sin(t * math.pi), -0.9 + 1.8 * t, -0.08 * math.sin(t * math.pi)) for t in np.linspace(0, 1, 13)]
+    rs = [0.008] + [0.013 + 0.007 * math.sin(t * math.pi) for t in np.linspace(0, 1, 13)[1:-1]] + [0.008]
+    o.tube('arc', pts, rs, 'bois_clair', K=8, decor=[lambda c: c.poser('cuir', np.abs(c.y) < 0.07)])
+    o.tube('corde', [pts[0], (0, 0, 0.0), pts[-1]], [0.003] * 3, 'corde', K=4)
+    return o.pieces, PAL, 'main gauche, au milieu de l\'arc'
+
+
+def cimeterre():
+    o = Objet()
+    o.lame('lame', 0.05, 0.78, 0.022, 0.006, 'acier', pointe=0.12, courbe=-0.14, tranchant=False, larg_fin=0.03, decor=[fil])
+    o.tube('garde', [(-0.06, 0.045, 0), (0, 0.05, 0), (0.06, 0.045, 0)], [0.008, 0.012, 0.008], 'or', K=6)
+    o.tube('poignee', [(0, -0.11, 0), (0, 0.04, 0)], [0.015, 0.015], 'cuir', K=8, decor=[poignee_cuir])
+    o.tube('pommeau', [(0, -0.11, 0), (-0.03, -0.14, 0)], [0.016, 0.0], 'or', K=6)
+    return o.pieces, PAL, 'main, poignée'
+
+
+def bouclier_rond_orient():
+    o = Objet()
+    o.disque('bouclier', 0.30, 0.03, zones('joueur'), K=26, bombe=0.06, centre=(0, 0, 0.03), rebord=0.004,
+             decor=[_rond_deco('rayons', 'or', 0.30)])
+    o.disque('umbo', 0.05, 0.02, 'or', K=12, bombe=0.03, centre=(0, 0, 0.07))
+    o.tube('poignee', [(-0.05, 0, -0.01), (0, 0, -0.03), (0.05, 0, -0.01)], [0.01] * 3, 'cuir', K=6)
+    return o.pieces, PAL, 'main gauche (poignée derrière l\'umbo)'
+
+
+def fronde():
+    o = Objet()
+    o.tube('corde', [(0, 0.0, 0), (0.02, -0.30, 0), (0, -0.55, 0)], [0.005, 0.005, 0.005], 'corde', K=4, poles=False)
+    o.tube('corde2', [(0, 0.0, 0.01), (-0.02, -0.30, 0.01), (0, -0.55, 0.01)], [0.005] * 3, 'corde', K=4, poles=False)
+    o.boite('poche', (0, -0.57, 0), (0.06, 0.04, 0.05), 'cuir', arrondi=0.9)
+    o.boite('pierre', (0, -0.56, 0), (0.035, 0.035, 0.035), 'pierre', arrondi=0.95)
+    return o.pieces, PAL, 'main, extrémité des cordes'
+
+
+def massue(type_='bois'):
+    o = Objet()
+    if type_ == 'etoile':
+        o.tube('manche', [(0, -0.35, 0), (0, 0.40, 0)], [0.016, 0.016], 'bois', K=8)
+        o.boite('tete', (0, 0.45, 0), (0.09, 0.05, 0.09), 'bronze', arrondi=0.8)
+        for i in range(6):
+            a = i * math.pi / 3
+            o.tube('pointe%d' % i, [(0.04 * math.cos(a), 0.45, 0.04 * math.sin(a)), (0.09 * math.cos(a), 0.45, 0.09 * math.sin(a))],
+                   [0.022, 0.0], 'bronze', K=5)
+        return o.pieces, PAL, 'main, bas du manche'
+    o.tube('massue', [(0, -0.30, 0), (0, 0.10, 0), (0, 0.55, 0), (0, 0.85, 0), (0, 0.92, 0)], [0.04, 0.06, 0.10, 0.13, 0.0],
+           'bois_fonce', K=10, decor=[lambda c: setattr(c, 'col', c.col * (0.8 + 0.3 * (np.sin(c.y * 60 + np.arctan2(c.z, c.x) * 3) > 0.6))[:, None])])
+    o.tube('bande', [(0, -0.18, 0), (0, -0.08, 0)], [0.048, 0.05], 'joueur_tissu', K=8, poles=False)
+    return o.pieces, PAL, 'main, bas du manche (arme de géant : à agrandir avec le personnage)'
+
+
+def pistolet_silex():
+    o = Objet()
+    o.ajoute('crosse', boite((0, -0.04, -0.02), (0.035, 0.12, 0.05), K=8, arrondi=0.6, rot=rot_x(0.6)), 'bois')
+    o.tube('canon', [(0, 0.04, 0.0), (0, 0.04, 0.26)], [0.013, 0.012], 'fer', K=8)
+    o.boite('platine', (0.0, 0.04, 0.02), (0.03, 0.04, 0.05), 'or', arrondi=0.4)
+    o.tube('fut', [(0, 0.02, 0.0), (0, 0.025, 0.18)], [0.02, 0.016], 'bois', K=8)
+    return _redresser(o.pieces), PAL, 'main, poignée'
+
+
+def tomahawk():
+    o = Objet()
+    o.tube('manche', [(0, -0.25, 0), (0, 0.25, 0)], [0.015, 0.014], 'bois', K=8,
+           decor=[lambda c: c.poser('joueur_tissu', (c.y > -0.20) & (c.y < -0.14))])
+    o.boite('fer', (0.06, 0.22, 0), (0.12, 0.06, 0.02), 'fer', arrondi=0.4, decor=[fil])
+    o.tube('plume', [(0, -0.22, 0.02), (0.02, -0.30, 0.04), (0.03, -0.36, 0.05)], [(0.012, 0.003), (0.012, 0.003), (0, 0)], 'plumes', K=4)
+    return o.pieces, PAL, 'main, bas du manche'
+
+
+def bouclier_zoulou():
+    o = Objet()
+    o.disque('bouclier', 0.62, 0.02, zones('joueur'), K=24, rx=0.30, bombe=0.04, centre=(0, 0, 0.02),
+             decor=[_vache])
+    o.tube('baton', [(0, -0.72, -0.02), (0, 0.72, -0.02)], [0.014, 0.014], 'bois', K=6)
+    o.tube('pompon', [(0, 0.72, -0.02), (0, 0.80, -0.02)], [0.03, 0.0], 'fourrure_n', K=6)
+    return o.pieces, PAL, 'main gauche, au bâton central'
+
+
+def _vache(c):
+    from moteur import bruit
+    n = bruit(c.P, 7, 13)
+    c.poser('blanc_mat', (n > 0.55) & (c.N[:, 2] > 0.2))
+    c.poser('peau_vache', c.N[:, 2] < -0.3)
+    ligne = (c.N[:, 2] > 0.2) & (np.abs(c.x) < 0.02)
+    c.col = np.where(ligne[:, None], c.col * 0.4, c.col)
+
+
+def objet(type_):
+    o = Objet()
+    if type_ == 'trousse-soin':
+        o.boite('sac', (0, 0, 0), (0.30, 0.20, 0.12), 'blanc', arrondi=0.5,
+                decor=[lambda c: c.poser('rouge_p', (c.z > 0.05) & (((np.abs(c.x) < 0.02) & (np.abs(c.y) < 0.06)) | ((np.abs(c.y) < 0.02) & (np.abs(c.x) < 0.06))))])
+        o.tube('anse', [(-0.06, 0.10, 0), (0, 0.14, 0), (0.06, 0.10, 0)], [0.01] * 3, 'joueur', K=6)
+        return o.pieces, PAL, 'main, anse'
+    if type_ == 'jumelles':
+        for s in (1, -1):
+            o.tube('tube%d' % (s > 0), [(s * 0.035, 0, -0.06), (s * 0.035, 0, 0.08)], [0.025, 0.028], 'noir', K=8)
+        o.boite('pont', (0, 0.0, 0.0), (0.04, 0.02, 0.05), 'noir', arrondi=0.4)
+        return o.pieces, PAL, 'deux mains'
+    if type_ == 'bouclier-anti-emeute':
+        o.boite('bouclier', (0, 0, 0.02), (0.55, 1.0, 0.02), 'vitre_p', arrondi=0.3,
+                decor=[lambda c: c.poser('joueur', np.abs(c.y - 0.30) < 0.05)])
+        o.tube('poignee', [(-0.05, 0, -0.01), (0, 0, -0.04), (0.05, 0, -0.01)], [0.012] * 3, 'noir', K=6)
+        return o.pieces, PAL, 'avant-bras gauche'
+    if type_ == 'hache-pompier':
+        o.tube('manche', [(0, -0.40, 0), (0, 0.40, 0)], [0.018, 0.017], 'rouge_p', K=8)
+        o.boite('fer', (0.06, 0.38, 0), (0.16, 0.07, 0.03), 'acier', arrondi=0.3, decor=[fil])
+        o.tube('pic', [(-0.02, 0.38, 0), (-0.14, 0.36, 0)], [0.02, 0.0], 'acier', K=5)
+        return o.pieces, PAL, 'main, bas du manche'
+    if type_ == 'extincteur':
+        o.tube('corps', [(0, -0.25, 0), (0, -0.24, 0), (0, 0.20, 0), (0, 0.25, 0)], [0.0, 0.08, 0.08, 0.04], 'rouge_p', K=12,
+               decor=[lambda c: c.poser('joueur', np.abs(c.y + 0.02) < 0.05)])
+        o.boite('tete', (0, 0.29, 0), (0.06, 0.06, 0.05), 'noir', arrondi=0.5)
+        o.tube('tuyau', [(0, 0.29, 0.02), (0.06, 0.20, 0.08), (0.08, 0.05, 0.10)], [0.012] * 3, 'noir', K=5)
+        return o.pieces, PAL, 'main, poignée de la tête'
+    if type_ == 'fusil-precision':
+        o.boite('carcasse', (0, 0.06, 0.05), (0.045, 0.07, 0.40), 'polymere', arrondi=0.35)
+        o.tube('canon', [(0, 0.075, 0.25), (0, 0.075, 0.85)], [0.012, 0.010], 'noir', K=8)
+        o.tube('lunette', [(0, 0.13, -0.05), (0, 0.13, 0.22)], [0.022, 0.025], 'noir', K=8)
+        o.ajoute('crosse', boite((0, 0.03, -0.27), (0.04, 0.12, 0.26), K=8, arrondi=0.45), 'polymere',
+                 decor=[lambda c: c.poser('joueur', np.abs(c.z + 0.27) < 0.04)])
+        o.boite('poignee', (0, -0.04, 0.0), (0.03, 0.10, 0.045), 'polymere', arrondi=0.5, rot=rot_x(0.3))
+        o.tube('bipied', [(0.03, 0.05, 0.60), (0.06, -0.12, 0.62)], [0.006, 0.006], 'noir', K=4)
+        return _redresser(o.pieces), PAL, 'main droite, poignée'
+    if type_ == 'canon-plasma':
+        o.tube('corps', [(0, 0.0, -0.35), (0, 0.0, 0.0), (0, 0.0, 0.55)], [0.10, 0.12, 0.08], 'blanc', K=12,
+               decor=[lambda c: c.poser('joueur', np.abs(c.z) < 0.06)])
+        o.tube('bouche', [(0, 0, 0.55), (0, 0, 0.62)], [0.07, 0.05], 'cyan', K=10)
+        o.boite('poignee', (0, -0.12, -0.05), (0.04, 0.12, 0.05), 'noir', arrondi=0.5)
+        o.boite('cellule', (0, 0.12, -0.15), (0.08, 0.06, 0.18), 'cyan', arrondi=0.5)
+        return _redresser(o.pieces), PAL, 'deux mains (arme lourde ou bras du méca)'
+    if type_ == 'hache-double':
+        o.tube('manche', [(0, -0.7, 0), (0, 0.55, 0)], [0.025, 0.022], 'bois_fonce', K=8)
+        for s in (1, -1):
+            o.ajoute('lame%d' % (s > 0), [np.array([(0, y, 0.012), (0, y, -0.012), (s * w, y + d, -0.004), (s * w, y + d, 0.004)])
+                                           for y, w, d in ((0.30, 0.04, 0.0), (0.33, 0.22, -0.12), (0.43, 0.26, 0.0), (0.53, 0.22, 0.12), (0.56, 0.04, 0.0))],
+                     'bronze', lisse=False, decor=[fil])
+        return o.pieces, PAL, 'deux mains, bas du manche (arme de géant)'
+    raise ValueError(type_)
+
+
+ACCESSOIRES_2 = [
+    ('1-antiquite', 'baton-pretre', 'Bâton de prêtre', baton_pretre, 512),
+    ('1-antiquite', 'ankh', 'Ankh', ankh, 512),
+    ('1-antiquite', 'sceptre', 'Sceptre', sceptre, 512),
+    ('1-antiquite', 'ji', 'Hallebarde chinoise (ji)', lambda: arme_hast('ji'), 512),
+    ('1-antiquite', 'arbalete', 'Arbalète', arbalete, 512),
+    ('1-antiquite', 'hache-double', 'Hache double (labrys)', lambda: objet('hache-double'), 512),
+    ('1-antiquite', 'massue', 'Massue de géant', massue, 512),
+    ('2-moyen-age', 'arc-long', 'Arc long', arc_long, 512),
+    ('2-moyen-age', 'cimeterre', 'Cimeterre', cimeterre, 512),
+    ('2-moyen-age', 'bouclier-rond-orient', 'Bouclier rond oriental', bouclier_rond_orient, 1024),
+    ('2-moyen-age', 'lance-cavalerie', 'Lance de cavalerie', lambda: arme_hast('lance-cavalerie'), 512),
+    ('2-moyen-age', 'fronde', 'Fronde', fronde, 512),
+    ('2-moyen-age', 'massue-etoile', 'Massue étoilée', lambda: massue('etoile'), 512),
+    ('3-epoque-moderne', 'pistolet-silex', 'Pistolet à silex', pistolet_silex, 512),
+    ('3-epoque-moderne', 'tomahawk', 'Tomahawk', tomahawk, 512),
+    ('3-epoque-moderne', 'hallebarde', 'Hallebarde', lambda: arme_hast('hallebarde'), 512),
+    ('4-industrielle', 'sagaie', 'Sagaie', lambda: arme_hast('sagaie'), 512),
+    ('4-industrielle', 'bouclier-zoulou', 'Bouclier zoulou', bouclier_zoulou, 1024),
+    ('5-xxe-siecle', 'trousse-soin', 'Trousse de soin', lambda: objet('trousse-soin'), 512),
+    ('5-xxe-siecle', 'jumelles', 'Jumelles', lambda: objet('jumelles'), 512),
+    ('6-contemporain', 'bouclier-anti-emeute', 'Bouclier anti-émeute', lambda: objet('bouclier-anti-emeute'), 1024),
+    ('6-contemporain', 'hache-pompier', 'Hache de pompier', lambda: objet('hache-pompier'), 512),
+    ('6-contemporain', 'extincteur', 'Extincteur', lambda: objet('extincteur'), 512),
+    ('6-contemporain', 'fusil-precision', 'Fusil de précision', lambda: objet('fusil-precision'), 512),
+    ('7-futur', 'canon-plasma', 'Canon plasma', lambda: objet('canon-plasma'), 512),
+]
+
+PAL.update({'blanc_mat': Mat('peinture', (0.92, 0.90, 0.86), rug=0.8), 'peau_vache': Mat('cuir', (0.30, 0.20, 0.12)),
+            'fourrure_n': Mat('fourrure', (0.10, 0.08, 0.07)), 'rouge_p': Mat('peinture', (0.75, 0.10, 0.08), rug=0.4),
+            'vitre_p': Mat('peinture', (0.55, 0.65, 0.72), rug=0.1, metal=0.3)})
+
+
 # ---------------------------------------------------------------------------------------------
 ACCESSOIRES = [
     ('1-antiquite', 'lance-dory', 'Lance (dory)', lance_dory, 512),
@@ -592,4 +839,5 @@ ACCESSOIRES = [
     ('7-futur', 'epee-energie', 'Épée à énergie', epee_energie, 512),
     ('7-futur', 'bouclier-energie', 'Bouclier à énergie', bouclier_energie, 1024),
     ('7-futur', 'drone', 'Drone', drone, 512),
-]
+] + ACCESSOIRES_2
+ACCESSOIRES.sort(key=lambda e: e[0])

@@ -1355,3 +1355,301 @@ def reacteur(p, m, flamme='lumiere'):
         p.ajoute('tuyere%d' % (s > 0), chemin([(s * 0.08, 1.24, z - 0.04), (s * 0.08, 1.08, z - 0.05)], [0.045, 0.055],
                                               p.k(10)), m, lambda P: _w_dos(P),
                  decor=[lambda c: c.poser(flamme, c.y < 1.10)])
+
+
+# ---------------------------------------------------------------------------------------------
+# Coiffes supplémentaires
+# ---------------------------------------------------------------------------------------------
+def anneau_tete(p, nom, m, y, r_off=0.006, h=0.025, ep=0.014, pointes=0, h_pointe=0.05, decor=(), dy=None):
+    """Anneau autour du crâne (couronne, bandeau, laurier, diadème) ; pointes = fleurons dressés."""
+    K = p.k(28)
+    th = np.arange(K) * 2 * np.pi / K
+    d = dy(th) if dy else 0 * th
+
+    def cour(o, yy):
+        pt = point_tete(th, np.full(K, y), r_off + o)
+        pt[:, 1] = yy + d
+        return pt
+    haut = h + (h_pointe * np.clip(np.cos(th * pointes), 0, 1) ** 3 if pointes else 0)
+    ann = [cour(-0.004, y), cour(ep, y), cour(ep, y + haut), cour(-0.004, y + haut)]
+    p.ajoute(nom, ann, m, w_os('Head'), decor=decor, xf=p.tete_xf())
+
+
+def laurier(p, m):
+    def feuilles(c):
+        f = np.sin(np.arctan2(c.z, c.x) * 30) > 0.2
+        c.col = c.col * (0.75 + 0.35 * f)[:, None]
+    anneau_tete(p, 'laurier', m, 1.775, 0.008, 0.022, 0.016, dy=lambda th: -0.02 * np.clip(-np.sin(th), 0, 1),
+                decor=[feuilles])
+
+
+def couronne(p, m, pierres='joueur_metal'):
+    def deco(c):
+        g = (np.abs(c.y - 1.80) < 0.007) & (np.abs(((np.arctan2(c.z, c.x) * 4 / np.pi) % 1) - 0.5) < 0.15)
+        c.poser(pierres, g)
+    anneau_tete(p, 'couronne', m, 1.785, 0.008, 0.035, 0.012, pointes=8, h_pointe=0.035, decor=[deco])
+
+
+def turban(p, m, pointe=None, plume=None):
+    """Turban enroulé (relief de bandes) ; pointe = casque à pointe sous le turban."""
+    def ligne(th):
+        s = np.sin(th)
+        return 1.72 + 0.03 * np.clip(s, 0, 1) - 0.02 * np.clip(-s, 0, 1)
+
+    def plis(c):
+        r = np.sin((c.y + 0.3 * np.arctan2(c.z, c.x) / np.pi * 0.05) * 160)
+        c.col = c.col * (0.82 + 0.18 * (r > -0.2))[:, None]
+    calotte(p, 'turban', m, ligne, off=0.045, y_haut=1.86, epais=0.04, decor=[plis])
+    if pointe:
+        p.ajoute('pointe', chemin([(0, 1.90, 0.01), (0, 1.97, 0.01), (0, 2.02, 0.01)], [0.03, 0.012, 0.0], p.k(8)),
+                 pointe, w_os('Head'), xf=p.tete_xf())
+    if plume:
+        p.ajoute('plume', chemin([(0, 1.86, 0.10), (0, 1.94, 0.12), (0, 2.02, 0.10), (0, 2.06, 0.06)],
+                                 [0.01, 0.02, 0.018, 0.0], p.k(8), haut=(1, 0, 0), aplat=0.3), plume, w_os('Head'),
+                 xf=p.tete_xf())
+
+
+def bonnet_phrygien(p, m):
+    """Bonnet souple à pointe rabattue vers l'avant (Perses, Scythes)."""
+    def ligne(th):
+        return 1.70 + 0.05 * np.clip(np.sin(th), 0, 1) - 0.08 * np.clip(-np.sin(th), 0, 1)
+    calotte(p, 'bonnet', m, ligne, off=0.016, y_haut=1.90, epais=0.012)
+    p.ajoute('pointe', chemin([(0, 1.86, 0.0), (0, 1.93, 0.02), (0, 1.95, 0.07), (0, 1.92, 0.11)],
+                              [0.06, 0.045, 0.03, 0.0], p.k(10)), m, w_os('Head'), xf=p.tete_xf())
+    for s in (1, -1):
+        p.ajoute('rabat%d' % (s > 0), chemin([(s * 0.09, 1.70, 0.0), (s * 0.085, 1.62, 0.02), (s * 0.07, 1.56, 0.04)],
+                                             [(0.012, 0.035), (0.012, 0.03), (0.0, 0.0)], p.k(6), haut=(0, 0, 1)),
+                 m, w_os('Head'), xf=p.tete_xf())
+
+
+def bicorne(p, m, cocarde='joueur', galon='or'):
+    niv = [(1.742, 0.096, 0.104, 0.110), (1.74, 0.099, 0.106, 0.112), (1.80, 0.096, 0.100, 0.106),
+           (1.83, 0.07, 0.074, 0.078), (1.835, 0, 0, 0)]
+    xf = p.tete_xf()
+    coque(p, 'calotte', niv, m, K=20, xf=xf)
+    K = p.k(14)
+    for s, nom in ((1, 'avant'), (-1, 'arriere')):
+        xs = np.linspace(-0.27, 0.27, K)
+        ext, inte = [], []
+        for t in (0.0, 0.5, 1.0):
+            h = 1.745 + (0.17 - 0.75 * xs ** 2) * t + 0.0
+            e = np.stack([xs, h, s * (0.095 + 0.02 * t) + 0.012 + 0 * xs], 1)
+            ext.append(e)
+            inte.append(e - [0, 0, s * 0.012])
+        dec = [lambda c: c.poser(galon, c.ST[:, 1] > 0.9)]
+        if s > 0:
+            dec.append(lambda c: c.poser(cocarde, np.hypot(c.x - 0.11, c.y - 1.84) < 0.03))
+        p.ajoute('bicorne_' + nom, bande(ext, inte, fermer=True), m, w_os('Head'), decor=dec, xf=xf)
+
+
+def casquette(p, m, visiere='cuir_noir', bandeau=None, insigne='or'):
+    """Casquette à visière (officier, policier) : bandeau, plateau, visière."""
+    niv = [(1.742, 0.097, 0.105, 0.111), (1.74, 0.100, 0.108, 0.114), (1.80, 0.102, 0.110, 0.114),
+           (1.84, 0.125, 0.135, 0.125), (1.855, 0.12, 0.13, 0.12), (1.858, 0, 0, 0)]
+
+    def deco(c):
+        if bandeau:
+            c.poser(bandeau, (c.y < 1.79))
+        c.poser(insigne, (c.z > 0.09) & (np.hypot(c.x, c.y - 1.80) < 0.016))
+    coque(p, 'casquette', niv, m, K=22, decor=[deco])
+    bord(p, visiere, 1.745, (0.098, 0.106, 0.112), 0.055, 0.006, avant_seul=True, nom='visiere')
+
+
+def casque_adrian(p, m):
+    casque_rond(p, m, '1940', decor=[lambda c: c.relief(np.where(c.ax < 0.02, c.ax - 0.01, 1), 0.004, 1.0)])
+    p.ajoute('cimier', chemin([(0, 1.86, 0.10), (0, 1.905, 0.03), (0, 1.905, -0.05), (0, 1.86, -0.12)],
+                              [(0.006, 0.02), (0.006, 0.025), (0.006, 0.025), (0.006, 0.02)], p.k(6), haut=(1, 0, 0)),
+             m, w_os('Head'), xf=p.tete_xf())
+
+
+def coiffe_plumes(p, m_bandeau, m_plumes, n=14, grande=True, plume_pointe=None):
+    """Coiffe de plumes : bandeau et plumes en éventail (grande) ou quelques plumes à l'arrière."""
+    anneau_tete(p, 'bandeau', m_bandeau, 1.735, 0.006, 0.03, 0.01,
+                decor=[lambda c: c.poser('joueur', np.abs(((np.arctan2(c.z, c.x) * 3) % 1) - 0.5) < 0.2)])
+    xf = p.tete_xf()
+    angles = np.linspace(-0.15 * np.pi, 1.15 * np.pi, n) if grande else np.linspace(1.35 * np.pi, 1.65 * np.pi, n)
+    for i, a in enumerate(angles):
+        base = point_tete(np.array([a]), np.array([1.76]), 0.015)[0]
+        d = np.array([np.cos(a) * 0.35, 1.0, np.sin(a) * 0.35 - (0.35 if grande else 0.0)])
+        d /= np.linalg.norm(d)
+        L = 0.20 if grande else 0.16
+        pts = [base, base + d * L * 0.5, base + d * L]
+        p.ajoute('plume%02d' % i, chemin(pts, [(0.004, 0.012), (0.004, 0.02), (0.0, 0.0)], p.k(6),
+                                         haut=(-np.sin(a), 0, np.cos(a)), aplat=1.0),
+                 m_plumes, w_os('Head'), xf=xf, decor=[_bout_noir], partage='plume')
+        p.pieces[-1].peindre = (i == 0)
+
+
+def _bout_noir(c):
+    c.col = mix(c.col, [0.05, 0.05, 0.05], ss(0.75, 0.85, c.ST[:, 1]))
+
+
+def foulard(p, m, noeud=True):
+    def ligne(th):
+        s = np.sin(th)
+        return 1.745 + 0.03 * np.clip(s, 0, 1) - 0.12 * np.clip(-s, 0, 1)
+    calotte(p, 'foulard', m, ligne, off=0.014, epais=0.01)
+    if noeud:
+        p.ajoute('noeud', chemin([(0, 1.66, -0.11), (0, 1.60, -0.13), (0, 1.55, -0.12)], [0.03, 0.025, 0.0], p.k(8)),
+                 m, _w_tete_dos, xf=p.tete_xf())
+
+
+def cagoule_pilote(p, m, verre='verre'):
+    def ligne(th):
+        s, c = np.sin(th), np.cos(th)
+        return 1.62 + 0.13 * np.clip(s, 0, 1) ** 2 - 0.02 * np.clip(-s, 0, 1)
+    calotte(p, 'cagoule', m, ligne, off=0.012, epais=0.01)
+    xf = p.tete_xf()
+    for s in (1, -1):
+        p.ajoute('lunette%d' % (s > 0), boite((s * 0.036, 1.79, 0.10), (0.05, 0.04, 0.025), K=p.k(8), arrondi=0.8),
+                 verre, w_os('Head'), xf=xf)
+    anneau_tete(p, 'sangle', 'cuir', 1.775, 0.016, 0.012, 0.006)
+
+
+def barbe_postiche(p, m='or'):
+    p.ajoute('barbe_postiche', chemin([(0, 1.605, 0.075), (0, 1.56, 0.085), (0, 1.52, 0.09)], [(0.016, 0.012), (0.014, 0.012), (0.012, 0.01)],
+                                      p.k(8)), m, w_os('Head'), xf=p.tete_xf(),
+             decor=[lambda c: setattr(c, 'col', c.col * (0.8 + 0.2 * (np.sin(c.y * 300) > 0))[:, None])])
+
+
+def bonnet_haut(p, m, rabat=True):
+    """Bonnet de feutre haut (janissaire) avec rabat tombant dans le dos."""
+    niv = [(1.742, 0.096, 0.104, 0.110), (1.74, 0.099, 0.106, 0.112), (1.82, 0.094, 0.10, 0.104),
+           (1.95, 0.085, 0.09, 0.094), (2.02, 0.07, 0.075, 0.078), (2.03, 0, 0, 0)]
+    coque(p, 'bonnet', niv, m, K=20)
+    if rabat:
+        p.ajoute('rabat', chemin([(0, 2.0, -0.06), (0, 1.90, -0.14), (0, 1.72, -0.18), (0, 1.52, -0.18)],
+                                 [(0.07, 0.012), (0.075, 0.012), (0.07, 0.012), (0.06, 0.01)], p.k(8), haut=(0, 0, 1)),
+                 m, _w_tete_dos, xf=p.tete_xf())
+    anneau_tete(p, 'bandeau', 'or', 1.745, 0.01, 0.025, 0.008)
+
+
+def casque_pointe(p, m, aventail='mailles', pointe=True):
+    """Casque conique à pointe et camail de mailles (Byzance, Orient, Russie)."""
+    casque_conique(p, m, nasal=False, bandes='or')
+    K = p.k(18)
+    ext, inte = [], []
+    for y, o in ((1.74, 0.012), (1.68, 0.024), (1.62, 0.04), (1.56, 0.06)):
+        th = np.linspace(np.pi * 0.85, np.pi * 2.15, K)
+        e = point_tete(th, np.full(K, max(y, 1.60)), o)
+        e[:, 1] = y
+        ext.append(e); inte.append(point_tete(th, np.full(K, max(y, 1.60)), o - 0.01) * [1, 0, 1] + [0, y, 0])
+    p.ajoute('camail', bande(ext, inte, fermer=True), aventail, _w_tete_dos, xf=p.tete_xf())
+
+
+# ---------------------------------------------------------------------------------------------
+# Motifs peints
+# ---------------------------------------------------------------------------------------------
+def ecailles(cle=None, pas=0.024):
+    """Armure d'écailles : arcs empilés, reflets."""
+    def f(c):
+        u = c.ST[:, 0] * c.piece.taille[0] / pas
+        v = c.ST[:, 1] * c.piece.taille[1] / (pas * 0.8)
+        dec = (np.floor(v) % 2) * 0.5
+        fu = ((u + dec) % 1) - 0.5
+        fv = v % 1
+        arc = fv - (1 - 4 * fu ** 2) * 0.6
+        c.col = c.col * (1 - 0.35 * (np.abs(arc) < 0.12))[:, None]
+        c.col = c.col * (1 + 0.12 * (fv > 0.7))[:, None]
+    return f
+
+
+def matelasse(pas=0.05):
+    """Gambeson matelassé : coutures en losanges."""
+    def f(c):
+        u = c.ST[:, 0] * c.piece.taille[0] / pas
+        v = c.ST[:, 1] * c.piece.taille[1] / pas
+        m = (np.abs(((u + v) % 1) - 0.5) > 0.45) | (np.abs(((u - v) % 1) - 0.5) > 0.45)
+        c.col = c.col * (1 - 0.22 * m)[:, None]
+    return f
+
+
+def damier(cle, pas=0.06, motif=True):
+    """Damier inca (unku) : carrés alternés et petit motif."""
+    def f(c):
+        u = np.floor(c.ST[:, 0] * c.piece.taille[0] / pas)
+        v = np.floor(c.ST[:, 1] * c.piece.taille[1] / pas)
+        m = ((u + v) % 2) == 0
+        c.poser(cle, m & (c.y > 0.8))
+        if motif:
+            fu = (c.ST[:, 0] * c.piece.taille[0] / pas) % 1
+            fv = (c.ST[:, 1] * c.piece.taille[1] / pas) % 1
+            pt = (np.abs(fu - 0.5) < 0.12) & (np.abs(fv - 0.5) < 0.12)
+            c.col = np.where(pt[:, None], c.col * 0.4, c.col)
+    return f
+
+
+def franges(axe='x', seuil=0.0, sens=1, cle=None):
+    """Franges de daim (Amérindiens) : petites bandes au bord des manches ou du bas."""
+    def f(c):
+        v = c.ax if axe == 'x' else c.y
+        m = (v * sens > seuil * sens) & (np.sin(c.ST[:, 0] * c.piece.taille[0] * 260) > 0.3)
+        c.col = np.where(m[:, None], c.col * 0.75, c.col)
+    return f
+
+
+def croix_rouge(y=1.32, taille=0.05, larg=0.016, dos=True):
+    def f(c):
+        for s in ((1, -1) if dos else (1,)):
+            v = (c.z * s > 0.03) & (c.ax < larg) & (np.abs(c.y - y) < taille)
+            h = (c.z * s > 0.03) & (np.abs(c.y - y) < larg) & (c.ax < taille)
+            c.col = np.where((v | h)[:, None], np.array([0.80, 0.08, 0.08]), c.col)
+            c.msk = np.where(v | h, 0.0, c.msk)
+    return f
+
+
+def bande_verticale(cle, larg=0.06, devant=True, derriere=True):
+    """Étole, scapulaire, bande centrale d'un vêtement."""
+    def f(c):
+        m = (c.ax < larg) & (((c.z > 0) & devant) | ((c.z < 0) & derriere))
+        c.poser(cle, m)
+    return f
+
+
+def peinture_visage(couleur, motif='bandes'):
+    couleur = np.array(couleur)
+
+    def f(c):
+        av = c.z > 0.03
+        if motif == 'bandes':
+            m = av & ((np.abs(c.y - 1.69) < 0.007) | (np.abs(c.y - 1.675) < 0.005)) & (c.ax > 0.025)
+        elif motif == 'masque':
+            m = av & (np.abs(c.y - 1.712) < 0.02) & (c.ax < 0.07) & ~(np.hypot(c.ax - 0.034, (c.y - 1.712) / 0.6) < 0.012)
+        else:  # crâne (mort-vivant)
+            m = av & ((np.hypot(c.ax - 0.034, c.y - 1.712) < 0.022) | ((c.ax < 0.012) & (np.abs(c.y - 1.668) < 0.012)))
+        c.col = np.where(m[:, None], couleur, c.col)
+    return f
+
+
+def cache_oeil(c):
+    m = (c.z > 0.03) & (np.hypot(c.x + 0.034, c.y - 1.712) < 0.016)
+    m |= (np.abs(c.y - (1.75 + (c.x + 0.034) * 0.9)) < 0.004) & (c.z > -0.1)
+    c.col = np.where(m[:, None], np.array([0.05, 0.05, 0.05]), c.col)
+
+
+def tatouages(couleur=(0.10, 0.12, 0.20)):
+    couleur = np.array(couleur)
+
+    def f(c):
+        m = (np.abs(np.sin(c.y * 60 + np.sin(c.ax * 50) * 1.5)) < 0.12) & (c.y > 1.2)
+        c.col = np.where(m[:, None], mix(c.col, couleur, 0.7), c.col)
+    return f
+
+
+def ailes(p, m, envergure=0.55, hauteur=0.75):
+    """Ailes dans le dos (valkyrie, ange) : deux ailes dressées en V, plumes peintes."""
+    a, zf, zb = profil_torse(p.m, 1.35, 0.0)
+    z0 = -zb - 0.03
+    K = p.k(10)
+    for s in (1, -1):
+        ext, inte = [], []
+        for t in np.linspace(0, 1, 8):
+            x = s * (0.06 + envergure * t)
+            ytop = 1.46 + 0.42 * t - 0.1 * t ** 3
+            ybot = 1.18 - hauteur * 0.35 * math.sin(t * math.pi * 0.9) + 0.40 * t ** 1.6
+            ys = np.linspace(ytop, min(ybot, ytop - 0.02), K)
+            z = z0 - 0.05 - 0.16 * t
+            e = np.stack([np.full(K, x), ys, np.full(K, z)], 1)
+            ext.append(e); inte.append(e + [0, 0, 0.016])
+        p.ajoute('aile%d' % (s > 0), bande(ext, inte, fermer=True), m, lambda P: _w_dos(P),
+                 decor=[lambda c: setattr(c, 'col', c.col * (0.72 + 0.32 * (np.sin(c.ST[:, 0] * 46) > -0.2))[:, None])])
