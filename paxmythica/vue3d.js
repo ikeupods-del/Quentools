@@ -96,6 +96,15 @@
         ...facade(3.6, 3.2, 1.3, [-1.1, 1.1]), ...fenetre(-0.7, 3.2, 1.62, 1), ...[0.55, 1.65].map(x => [Cy(0.14, 0.16, 0.8, 8, x, 2.65, 1.45), 0xf6f1e4, MAT.colonne])]),
       maison_grecs3: fusion([socle(4.4, 2.4, 0, -0.9), socle(1.9, 2.2, -1.25, 1.4), [B(4.4, 2.1, 2.4, 0, 0, -0.9), pierre], [toit(4.4, 2.4, 1.3, 0, 2.1, -0.9), tuile], [B(1.9, 1.8, 2.2, -1.25, 0, 1.4), pierre], [toit(1.9, 2.2, 1.05, -1.25, 1.8, 1.4), tuile],
         [B(2.4, 0.9, 0.3, 1.0, 0, 2.35), pierre], [B(0.8, 1.25, 0.12, -1.25, 0, 2.52), porte], ...fenetre(1.0, 1.2, 0.32, 1), ...fenetre(-1.0, 1.2, 0.32, 1), [Cy(0.45, 0.5, 0.55, 8, 1.2, 0, 1.3), 0x8a6a48], [Sp(0.42, 1.2, 0.85, 1.3, 1), 0x5c8a3c, 0]]),
+      // maison à toit-terrasse : parapet, escalier extérieur, pergola couverte de vigne, jarre devant la porte
+      maison_grecs4: fusion([socle(3.4, 3.4), [B(3.4, 2.4, 3.4), pierre], ...[[0, 1.68, 3.5, 0.16], [0, -1.68, 3.5, 0.16]].map(([x, z, w, d]) => [B(w, 0.42, d, x, 2.4, z), pierre]), ...[[1.68, 0], [-1.68, 0]].map(([x, z]) => [B(0.16, 0.42, 3.5, x, 2.4, z), pierre]),
+        ...[0, 1, 2, 3, 4, 5].map(k => [B(0.75, 0.4 * (k + 1), 0.42, 2.12, 0, -1.25 + k * 0.42), 0xa8a294, MAT.pierre]), ...facade(3.4, 3.4, 1.3, [-1.05, 1.05]),
+        ...[[-1.25, 2.85], [1.25, 2.85]].map(([x, z]) => [Cy(0.07, 0.08, 2.1, 6, x, 0, z), bois, MAT.bois]), ...[1.75, 2.85].map(z => [B(2.9, 0.09, 0.09, 0, 2.05, z), bois, MAT.bois]), ...[-1, -0.33, 0.33, 1].map(x => [B(0.07, 0.07, 1.4, x * 1.3, 2.14, 2.3), bois, MAT.bois]),
+        ...[[-0.9, 2.3], [0.1, 2.5], [0.95, 2.2], [-0.3, 2.0]].map(([x, z], k) => [new THREE.IcosahedronGeometry(0.42 + (k % 2) * 0.1, 1).scale(1, 0.55, 1).translate(x, 2.3, z), 0x5c8a3c, 0]), [Cy(0.16, 0.24, 0.62, 8, 0.75, 0, 2.05), 0xb0603a, 0], [Cy(0.1, 0.16, 0.12, 8, 0.75, 0.62, 2.05), 0xb0603a, 0]]),
+      // maison à étage : balcon de bois sur poteaux, porte-fenêtre à l'étage, toit de tuiles
+      maison_grecs5: fusion([socle(3.2, 3.6), [B(3.2, 4.3, 3.6), pierre], [B(3.4, 0.18, 3.8, 0, 4.25), 0xd8cfbe], [toit(3.2, 3.6, 1.35, 0, 4.4, 0), tuile], ...facade(3.2, 3.6, 1.3, [-1.0, 1.0]),
+        [B(2.7, 0.12, 0.95, 0, 2.15, 2.27), bois, MAT.bois], [B(2.7, 0.5, 0.06, 0, 2.27, 2.72), bois, MAT.bois], ...[-1.3, 1.3].map(x => [B(0.06, 0.5, 0.95, x, 2.27, 2.27), bois, MAT.bois]), ...[-1.25, 1.25].map(x => [Cy(0.06, 0.07, 2.15, 6, x, 0, 2.68), bois, MAT.bois]),
+        [B(0.62, 1.15, 0.1, 0, 2.27, 1.83), porte, MAT.bois], ...fenetre(-1.0, 3.0, 1.83, 1), ...fenetre(1.0, 3.0, 1.83, 1), [Cy(0.25, 0.3, 1.2, 6, 1.0, 4.4, -0.9), 0x8a7a6a, MAT.pierre]]),
       maison_egyptiens2: fusion([[B(4, 2, 3), sable], [B(2, 1.6, 3, -1, 2), sable], [B(4.2, 0.22, 3.2, 0, 2), 0xc9a86a], [B(2.2, 0.22, 3.2, -1, 3.6), 0xc9a86a], ...facade(4, 3, 1.2, [-1.3, 1.3]), [B(1.6, 0.06, 1.4, 1, 2.6, 0), 0xe8d8b0], ...[0.3, 1.7].map(x => [Cy(0.06, 0.06, 0.6, 4, x, 2.0, 0.6), bois])]),
       maison_nordiques2: fusion([socle(5.4, 2.4), [B(5.4, 1.7, 2.4), bois], [pignon(5.6, 2.6, 2.1, 0, 1.7, 0), sombre], [B(0.8, 1.3, 0.12, 0, 0, 1.22), porte], [Cy(0.2, 0.25, 1.2, 6, -1.8, 2.6, 0), 0x5a5048], [B(1.6, 1.2, 1.6, 3.1, 0, 0.6), bois], [toit(1.6, 1.6, 0.9, 3.1, 1.2, 0.6), sombre]]),
       maison_medieval2: fusion([socle(3.6, 3), [B(3.6, 1.6, 3), 0xa8a294], [B(3.8, 2.2, 3.2, 0, 1.6), 0xe8dcc0], [B(3.9, 0.2, 3.3, 0, 1.6), bois], ...[-1.8, 0, 1.8].map(x => [B(0.18, 2.2, 0.06, x, 1.6, 1.62), bois]), [pignon(3.9, 3.4, 2.2, 0, 3.8, 0), 0x55585e], ...facade(3.6, 3, 2.5, [-0.9, 0.9])]),
@@ -717,9 +726,9 @@ void main() {
 }`
   };
   // distance de la façade au centre de chaque maison (fenêtre allumée la nuit)
-  const FACADE = { maison_atlantes: 1.75, maison_futur: 1.75, maison_grecs: 1.58, maison_grecs2: 1.66, maison_grecs3: 0.4, maison_egyptiens: 1.66, maison_egyptiens2: 1.56, maison_nordiques: 1.36, maison_nordiques2: 1.26, maison_medieval: 1.76, maison_medieval2: 1.56, maison_industriel: 1.56, hutte: 1.5 };
+  const FACADE = { maison_atlantes: 1.75, maison_futur: 1.75, maison_grecs: 1.58, maison_grecs2: 1.66, maison_grecs3: 0.4, maison_grecs4: 1.7, maison_grecs5: 1.8, maison_egyptiens: 1.66, maison_egyptiens2: 1.56, maison_nordiques: 1.36, maison_nordiques2: 1.26, maison_medieval: 1.76, maison_medieval2: 1.56, maison_industriel: 1.56, hutte: 1.5 };
   const SANS_MATIERE = new Set(['drapeau', 'lumiere', 'flamme', 'poteau', 'bouclier', 'etendard']);
-  const MAISONS = { grecs: ['maison_grecs', 'maison_grecs2', 'maison_grecs3'], egyptiens: ['maison_egyptiens', 'maison_egyptiens2'], nordiques: ['maison_nordiques', 'maison_nordiques2'], atlantes: ['maison_atlantes'],
+  const MAISONS = { grecs: ['maison_grecs', 'maison_grecs2', 'maison_grecs3', 'maison_grecs4', 'maison_grecs5'], egyptiens: ['maison_egyptiens', 'maison_egyptiens2'], nordiques: ['maison_nordiques', 'maison_nordiques2'], atlantes: ['maison_atlantes'],
     medieval: ['maison_medieval', 'maison_medieval2'], industriel: ['maison_industriel'], moderne: ['maison_moderne', 'tour_moderne', 'immeuble_moderne'], futur: ['maison_futur', 'tour_futur', 'tour_futur2', 'arche_futur'] };
   const TEMPLE_EPOQUE = { medieval: 'temple_medieval', industriel: 'temple_industriel', moderne: 'temple_moderne', futur: 'temple_futur' };
   const v3 = a => new THREE.Vector3(a[0], a[1], a[2]);
