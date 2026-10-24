@@ -370,5 +370,29 @@
   "source": "Poly Haven",
   "page": "https://polyhaven.com/a/wicker_basket_01",
   "licence": "CC0 1.0"
+ },
+ "materiaux/bat-champ": {
+  "id": "farm_furrows",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/farm_furrows",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-stuc": {
+  "id": "white_stucco",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/white_stucco",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-gres-blocs": {
+  "id": "large_sandstone_blocks_01",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/large_sandstone_blocks_01",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-mosaique": {
+  "id": "old_mosaic_floor",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/old_mosaic_floor",
+  "licence": "CC0 1.0"
  }
 }
