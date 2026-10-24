@@ -195,6 +195,8 @@
   // ---------- personnages animés (Quaternius, CC0, préparés par scripts/personnages-cuisson.js) ----------
   // chaque image de chaque animation est rangée dans une texture (une ligne par image, une colonne par sommet) :
   // la carte graphique lit la pose de chaque soldat selon son animation (aClip : première image, nombre d'images, vitesse, décalage)
+  // navire de chaque époque : [modèle, longueur dans le jeu]
+  const NAVIRES = { antique: ['navire-trireme', 14], medieval: ['navire-drakkar', 12], industriel: ['navire-galion', 16], moderne: ['navire-cuirasse', 24], futur: ['navire-croiseur', 20] };
   const FOULES = ['villageois', 'villageoise', 'soldat_antique', 'soldat_medieval', 'soldat_industriel', 'soldat_moderne', 'soldat_futur', 'archer', 'cavalier_antique', 'cavalier_medieval', 'cavalier_industriel', 'mouton', 'vache'];
   function foule(meta, buf, img, uT) {
     const n = meta.sommets, F = meta.images, D = meta.decalages;
@@ -789,7 +791,7 @@ void main() {
         this.texF = { feuillu, acacia, sapinE, sapinP, herbe, buisson, ecorce, ecorceN };
         // modèles de jeu (rochers, souches, accessoires)
         this.glb = {};
-        await Promise.all(['rocher1', 'rocher2', 'rocher3', 'rocher4', 'rochers-mousse', 'souche', 'tronc-mort', 'tonneau', 'tonneaux', 'caisse', 'jarre', 'panier', 'canon', 'navire', 'statue-cheval', 'statue-gothique'].map(n => PM.chargerModele(`ressources/jeu/${n}.glb`).then(g => { this.glb[n] = g.scene; }).catch(() => null)));
+        await Promise.all(['rocher1', 'rocher2', 'rocher3', 'rocher4', 'rochers-mousse', 'souche', 'tronc-mort', 'tonneau', 'tonneaux', 'caisse', 'jarre', 'panier', 'canon', 'navire', 'statue-cheval', 'statue-gothique', 'navire-trireme', 'navire-barque', 'navire-drakkar', 'navire-galion', 'navire-cuirasse', 'navire-vedette', 'navire-croiseur'].map(n => PM.chargerModele(`ressources/jeu/${n}.glb`).then(g => { this.glb[n] = g.scene; }).catch(() => null)));
         // personnages animés (facultatifs : sans eux, les figurines dessinées par le programme restent)
         this.foules = {};
         await Promise.all(FOULES.map(async nom => { try { const [m, b, img] = await Promise.all([PM.lireFichier(`ressources/personnages/${nom}.json`), PM.lireFichier(`ressources/personnages/${nom}.bin`), PM.chargerImage(`ressources/personnages/${nom}.jpg`)]); this.foules[nom] = foule(JSON.parse(new TextDecoder().decode(m)), b, img, this.U.uT); } catch (e) { /* personnage absent */ } }));
@@ -1155,13 +1157,13 @@ void main() {
       for (const m of this.nature) this.monde.add(m);
     }
     // instances d'un modèle photographié (glb) : taille ramenée à « taille » unités, posé sur le sol
-    instGLB(nom, liste, taille, enfonce, yFixe) {
+    instGLB(nom, liste, taille, enfonce, yFixe, flottaison) {
       const out = []; if (!liste.length) return out;
       const sc = this.glb[nom]; sc.updateMatrixWorld(true);
       const boite = new THREE.Box3().setFromObject(sc), dim = boite.getSize(new THREE.Vector3()), k = taille / Math.max(dim.x, dim.z, 0.01);
       sc.traverse(o => {
         if (!o.isMesh) return;
-        const g = o.geometry.clone().applyMatrix4(o.matrixWorld).translate(-(boite.min.x + boite.max.x) / 2, -boite.min.y, -(boite.min.z + boite.max.z) / 2); g.partage = true; g.morphAttributes = {}; // pas d'animation de forme sur les instances
+        const g = o.geometry.clone().applyMatrix4(o.matrixWorld).translate(-(boite.min.x + boite.max.x) / 2, flottaison ? 0 : -boite.min.y, -(boite.min.z + boite.max.z) / 2); g.partage = true; g.morphAttributes = {}; // pas d'animation de forme sur les instances
         const m = new THREE.InstancedMesh(g, o.material, liste.length), ob = new THREE.Object3D();
         liste.forEach((a, i) => { ob.position.set(a[0], yFixe != null ? yFixe : this.sol(a[0], a[1]) - enfonce * a[2], a[1]); ob.rotation.set(0, a[3] * 6.28, 0); ob.scale.setScalar(a[2] * k); ob.updateMatrix(); m.setMatrixAt(i, ob.matrix); });
         m.castShadow = true; m.receiveShadow = true; m.userData.nom = nom; out.push(m);
@@ -1269,8 +1271,12 @@ void main() {
         }
         if (P.merveille) mettre('merveille_' + (ep === 'antique' ? 'antique' : ep), x0 - 4, z0 + 16, 0.4, 1);
         // navires au mouillage devant les villes côtières (du Moyen Âge à l'ère industrielle)
-        if (N && this.pret && (ep === 'medieval' || ep === 'industriel') && C.provinces[P.id].mer && C.provinces[P.id].mer.length) {
-          for (let t = 0; t < 40; t++) { const a = rnd() * 6.28, r = 22 + rnd() * 26, x = x0 + Math.cos(a) * r, z = z0 + Math.sin(a) * r; if (x < 0 || z < 0 || x >= C.w || z >= C.h) continue; if (C.pix[Math.round(z) * C.w + Math.round(x)] < 0 && this.sol(x, z) < -5) { poser('navire', x, z, 1); break; } }
+        // navire de l'époque au mouillage et barques de pêche (jusqu'à l'ère industrielle) devant les villes côtières
+        const mouille = this.glb && NAVIRES[ep] && this.glb[NAVIRES[ep][0]] ? NAVIRES[ep][0] : (ep === 'medieval' || ep === 'industriel') ? 'navire' : null;
+        if (N && this.pret && mouille && C.provinces[P.id].mer && C.provinces[P.id].mer.length) {
+          const eau = (x, z, p) => x >= 0 && z >= 0 && x < C.w && z < C.h && C.pix[Math.round(z) * C.w + Math.round(x)] < 0 && this.sol(x, z) < p;
+          for (let t = 0; t < 40; t++) { const a = rnd() * 6.28, r = 22 + rnd() * 26, x = x0 + Math.cos(a) * r, z = z0 + Math.sin(a) * r; if (eau(x, z, -5)) { poser(mouille, x, z, 1); break; } }
+          if (ep !== 'moderne' && ep !== 'futur') for (let b = 0, t = 0; b < 2 && t < 40; t++) { const a = rnd() * 6.28, r = 16 + rnd() * 18, x = x0 + Math.cos(a) * r, z = z0 + Math.sin(a) * r; if (eau(x, z, -1.5)) { poser('navire-barque', x, z, 1); b++; } }
         }
       }
       this.instances = {};
@@ -1290,8 +1296,9 @@ void main() {
         const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('phase', new THREE.BufferAttribute(ph, 1)); g.setAttribute('force', new THREE.BufferAttribute(fo, 1));
         if (!this.matFumee) { this.matFumee = materiauFumee(this.U.uT); this.majCiel(); }
         this.fumee = new THREE.Points(g, this.matFumee); this.fumee.frustumCulled = false; this.fumee.renderOrder = 3; this.monde.add(this.fumee); }
-      const TAILLES = { tonneau: 0.8, caisse: 0.9, jarre: 0.6, panier: 0.7, tonneaux: 2.2, navire: 11, 'statue-cheval': 1.9, 'statue-gothique': 1.3 };
-      for (const nom in A) if (this.glb && this.glb[nom]) for (const m of this.instGLB(nom, A[nom], TAILLES[nom], nom.startsWith('statue') ? -1.0 : 0, nom === 'navire' ? -0.6 : null)) { this.accessoires.push(m); this.monde.add(m); }
+      const TAILLES = { tonneau: 0.8, caisse: 0.9, jarre: 0.6, panier: 0.7, tonneaux: 2.2, navire: 11, 'statue-cheval': 1.9, 'statue-gothique': 1.3, 'navire-barque': 3.6 };
+      for (const v of Object.values(NAVIRES)) TAILLES[v[0]] = v[1];
+      for (const nom in A) if (this.glb && this.glb[nom]) { const cree = nom.startsWith('navire-'); for (const m of this.instGLB(nom, A[nom], TAILLES[nom], nom.startsWith('statue') ? -1.0 : 0, nom === 'navire' ? -0.6 : cree ? 0 : null, cree)) { this.accessoires.push(m); this.monde.add(m); } }
       this.pieces(); this.construireVie();
     }
     // ---------- armées : figurines en formation ----------
@@ -1334,15 +1341,22 @@ void main() {
       this.flotte = null;
       if (routes.length) {
         const ancien = ep === 'antique' || ep === 'medieval' || ep === 'industriel';
+        // navires de chaque époque (trirème, drakkar, galion, cuirassé, croiseur), sinon les anciens modèles
+        const N = NAVIRES[ep];
         let meshes = [], k = 1;
-        if (ancien && this.glb && this.glb.navire) {
+        if (N && this.glb && this.glb[N[0]]) {
+          meshes = this.instGLB(N[0], routes.map(r => [r.cx, r.cz, 1, 0]), N[1], 0, 0, true);
+          const b = new THREE.Box3().setFromObject(this.glb[N[0]]), d = b.getSize(new THREE.Vector3()); k = N[1] / Math.max(d.x, d.z, 0.01);
+          for (const m of meshes) { m.userData.flottaison = true; }
+          this.flotte = { meshes, routes, k, ancien: true, cree: true };
+        } else if (ancien && this.glb && this.glb.navire) {
           meshes = this.instGLB('navire', routes.map(r => [r.cx, r.cz, 1, 0]), 11, 0, -0.6);
           const b = new THREE.Box3().setFromObject(this.glb.navire), d = b.getSize(new THREE.Vector3()); k = 11 / Math.max(d.x, d.z, 0.01);
         } else if (!ancien) {
           const m = this.inst(ep === 'futur' ? 'navire_futur' : 'cargo', routes.map(r => [r.cx, r.cz]), (o, a, c) => { o.position.set(a[0], 0, a[1]); c.set(0xffffff); }, null, this.matBat()); meshes = [m];
         }
         for (const m of meshes) { m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; this.monde.add(m); }
-        this.flotte = { meshes, routes, k: ancien ? k : 1, ancien };
+        if (!this.flotte) this.flotte = { meshes, routes, k: ancien ? k : 1, ancien };
       }
     }
     animerVie() {
@@ -1377,7 +1391,7 @@ void main() {
       const F = this.flotte;
       if (F) F.routes.forEach((r, i) => {
         const a = r.a0 + t * r.w, sg = Math.sign(r.w), x = r.cx + Math.cos(a) * r.R, z = r.cz + Math.sin(a) * r.R;
-        o.position.set(x, F.ancien ? -0.6 + Math.sin(t * 1.1 + i) * 0.12 : 0, z); o.rotation.set(Math.sin(t * 0.9 + i) * 0.03, Math.atan2(-Math.sin(a) * sg, Math.cos(a) * sg), Math.sin(t * 0.7 + i * 2) * 0.05 - 0.04 * sg); o.scale.setScalar(F.k); o.updateMatrix();
+        o.position.set(x, F.cree ? Math.sin(t * 1.1 + i) * 0.1 : F.ancien ? -0.6 + Math.sin(t * 1.1 + i) * 0.12 : 0, z); o.rotation.set(Math.sin(t * 0.9 + i) * 0.03, Math.atan2(-Math.sin(a) * sg, Math.cos(a) * sg), Math.sin(t * 0.7 + i * 2) * 0.05 - 0.04 * sg); o.scale.setScalar(F.k); o.updateMatrix();
         for (const m of F.meshes) m.setMatrixAt(i, o.matrix);
       });
       if (F) for (const m of F.meshes) m.instanceMatrix.needsUpdate = true;

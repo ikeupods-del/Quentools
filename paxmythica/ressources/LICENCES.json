@@ -419,5 +419,10 @@
   "page": "https://quaternius.com/packs/universalbasecharacters.html",
   "licence": "CC0 1.0",
   "note": "corps, tenues, cheveux et animations assemblés et simplifiés par scripts/personnages-cuisson.js ; casques, boucliers et armes dessinés pour le jeu"
+ },
+ "jeu/navire-*": {
+  "id": "trirème, drakkar, galion, cuirassé, vedette, croiseur, barque",
+  "source": "créés pour Pax Mythica (pack QuenTools-3D)",
+  "licence": "propriété du jeu"
  }
 }
