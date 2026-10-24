@@ -1,6 +1,7 @@
 # Fichiers recréés par fabriquer.py (tout est dans le zip) : seuls les planches et le catalogue sont versionnés
 __pycache__/
 QuenTools-unites-3D.zip
+livraison/
 QuenTools-personnages-3D.zip
 sortie/*/
 !sortie/apercus/

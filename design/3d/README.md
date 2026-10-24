@@ -66,7 +66,15 @@ Boucliers : origine à la poignée, face vers +Z. Dans le moteur, attacher l'arm
 d'arme. Pour un géant, agrandir l'arme du même facteur que le personnage. Textures 512 px (1024 pour les
 boucliers et l'étendard).
 
-## Fichiers livrés (dans le zip)
+## Livraison : 14 zips de 30 Mo au plus
+
+`python3 design/3d/fabriquer.py --emballer` range la livraison dans `livraison/` : un zip par famille et par ère
+(`QuenTools-3D-personnages-1-antiquite.zip`, `…-montures.zip`, `…-machines.zip`, `…-navires.zip`,
+`…-accessoires.zip`, `…-00-apercus-et-catalogue.zip`…), coupé en parties quand une ère dépasse 30 Mo. Chaque zip
+contient le mode d'emploi et le catalogue ; décompressés dans le même dossier, ils reforment l'arborescence
+complète `QuenTools-3D/` ci-dessous.
+
+## Fichiers livrés
 
 ```
 personnages/<ère>/<id>/<id>.glb                 personnage riggé, textures intégrées

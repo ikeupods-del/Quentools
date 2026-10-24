@@ -4,7 +4,7 @@
   python3 design/3d/fabriquer.py                 tout fabriquer (personnages puis accessoires)
   python3 design/3d/fabriquer.py --seul viking   un ou plusieurs éléments (séparés par des virgules)
   python3 design/3d/fabriquer.py --zip           tout fabriquer puis créer le zip de livraison
-  python3 design/3d/fabriquer.py --emballer      créer seulement le zip QuenTools-unites-3D.zip (après outils/apercus.js et outils/planches.py)
+  python3 design/3d/fabriquer.py --emballer      créer seulement la livraison : zips de 30 Mo au plus dans livraison/ (après outils/apercus.js et outils/planches.py)
 
 Sortie : design/3d/sortie/personnages/<ère>/<id>/<id>.glb (+ textures/), design/3d/sortie/accessoires/...
 """
@@ -190,32 +190,90 @@ def ecrire_catalogue(liste):
         f.write('\n'.join(L))
 
 
+LIMITE_ZIP = 29_500_000  # « 30 Mo au plus » par zip, avec une marge
+
+
+def _contenu(ch, rel):
+    """(nom dans le zip, octets, compresser) ; aperçus et couleur de base convertis en JPEG haute qualité."""
+    f = os.path.basename(ch)
+    if f.endswith('.png') and (f.startswith(('apercu', 'portrait')) or f.endswith('_basecolor.png')):
+        import io
+        from PIL import Image
+        im = Image.open(ch)
+        if im.mode == 'RGBA':
+            fond = Image.new('RGBA', im.size, (52, 60, 72, 255))
+            fond.alpha_composite(im)
+            im = fond
+        b = io.BytesIO()
+        im.convert('RGB').save(b, 'JPEG', quality=95 if f.endswith('_basecolor.png') else 90, subsampling=0)
+        return rel[:-4] + '.jpg', b.getvalue(), False
+    with open(ch, 'rb') as fh:
+        return rel, fh.read(), not f.endswith(('.png', '.jpg', '.glb'))
+
+
 def emballer():
-    nom = os.path.join(ICI, 'QuenTools-unites-3D.zip')
-    if os.path.exists(nom):
-        os.remove(nom)
-    racine_zip = 'QuenTools-unites-3D'
-    with zipfile.ZipFile(nom, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as z:
-        z.write(os.path.join(ICI, 'README.md'), racine_zip + '/LISEZMOI.md')
-        for racine, _, fichiers in os.walk(SORTIE):
-            for f in sorted(fichiers):
-                ch = os.path.join(racine, f)
-                rel = os.path.join(racine_zip, os.path.relpath(ch, SORTIE))
-                if f.endswith('.png') and (f.startswith(('apercu', 'portrait')) or f.endswith('_basecolor.png')):
-                    # aperçus et couleur de base en JPEG haute qualité pour alléger le zip
-                    from PIL import Image
-                    import io
-                    im = Image.open(ch)
-                    if im.mode == 'RGBA':
-                        fond = Image.new('RGBA', im.size, (52, 60, 72, 255))
-                        fond.alpha_composite(im)
-                        im = fond
-                    b = io.BytesIO()
-                    im.convert('RGB').save(b, 'JPEG', quality=95 if f.endswith('_basecolor.png') else 90, subsampling=0)
-                    z.writestr(rel[:-4] + '.jpg', b.getvalue(), compress_type=zipfile.ZIP_STORED)
-                else:
-                    z.write(ch, rel)
-    print('Zip : %s (%.1f Mo)' % (os.path.relpath(nom, ICI), os.path.getsize(nom) / 1e6))
+    """Livraison en plusieurs zips de 30 Mo au plus, par famille et par ère (coupés en parties si besoin).
+    Tous les zips se décompressent dans le même dossier QuenTools-3D/ et reforment l'arborescence complète."""
+    import shutil
+    import zlib
+    dossier = os.path.join(ICI, 'livraison')
+    shutil.rmtree(dossier, ignore_errors=True)
+    os.makedirs(dossier)
+    racine = 'QuenTools-3D'
+    docs = [_contenu(os.path.join(ICI, 'README.md'), racine + '/LISEZMOI.md'),
+            _contenu(os.path.join(SORTIE, 'CATALOGUE.md'), racine + '/CATALOGUE.md')]
+    cat = json.load(open(os.path.join(SORTIE, 'catalogue.json'), encoding='utf8'))
+    groupes = [('00-apercus-et-catalogue', [])]
+    for t, ere_par_ere in (('personnage', True), ('monture', False), ('machine', False), ('navire', False),
+                           ('accessoire', False)):
+        items = [x for x in cat if x['type'] == t]
+        if ere_par_ere:
+            for ere in ERES:
+                g = [x for x in items if x['ere'] == ere]
+                if g:
+                    groupes.append(('personnages-' + ere, g))
+        elif items:
+            groupes.append((t + 's', items))
+    produits = []
+
+    def ecrire(nom, contenus):
+        ch = os.path.join(dossier, 'QuenTools-3D-%s.zip' % nom)
+        with zipfile.ZipFile(ch, 'w', zipfile.ZIP_DEFLATED, compresslevel=6) as z:
+            for arc, data, comp in docs + contenus:
+                z.writestr(arc, data, compress_type=zipfile.ZIP_DEFLATED if comp else zipfile.ZIP_STORED)
+        produits.append((os.path.basename(ch), os.path.getsize(ch)))
+
+    for nom, items in groupes:
+        if not items:  # planches, catalogue
+            extra = [_contenu(os.path.join(SORTIE, 'apercus', f), '%s/apercus/%s' % (racine, f))
+                     for f in sorted(os.listdir(os.path.join(SORTIE, 'apercus')))]
+            extra.append(_contenu(os.path.join(SORTIE, 'catalogue.json'), racine + '/catalogue.json'))
+            ecrire(nom, extra)
+            continue
+        base = sum(len(zlib.compress(d, 6)) if c else len(d) for _, d, c in docs) + 4000
+        parties, cour, taille = [], [], base
+        for x in items:
+            rep = os.path.join(SORTIE, x['chemin'])
+            cont = []
+            for r, _, fs in os.walk(rep):
+                for f in sorted(fs):
+                    ch = os.path.join(r, f)
+                    cont.append(_contenu(ch, '%s/%s' % (racine, os.path.relpath(ch, SORTIE))))
+            t = sum((len(zlib.compress(d, 6)) if c else len(d)) + 200 for _, d, c in cont)
+            if cour and taille + t > LIMITE_ZIP:
+                parties.append(cour)
+                cour, taille = [], base
+            cour += cont
+            taille += t
+        if cour:
+            parties.append(cour)
+        for k, p in enumerate(parties):
+            ecrire(nom + ('-partie%d' % (k + 1) if len(parties) > 1 else ''), p)
+    for n, t in produits:
+        print('%-60s %6.1f Mo' % (n, t / 1e6))
+    trop = [n for n, t in produits if t > 30_000_000]
+    print('%d zips, %.1f Mo au total%s' % (len(produits), sum(t for _, t in produits) / 1e6,
+                                          (' — TROP GROS : ' + ', '.join(trop)) if trop else ', tous sous 30 Mo'))
 
 
 if __name__ == '__main__':
