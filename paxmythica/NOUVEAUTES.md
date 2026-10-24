@@ -4,7 +4,9 @@
 - Nouvelle vue 3D : sol aux textures détaillées (herbes, sous-bois, sable, roche, neige), herbe et arbres qui bougent au vent, ombres des nuages, ciel avec soleil et étoiles, fonds marins éclairés, frontières nettes à toute distance.
 - 8 packs graphiques (bouton 🎨) : Olympe doré, Réaliste, Fresque peinte, Crépuscule, Automne, Hiver nordique, Nuit étoilée (villes illuminées), Ragnarök.
 - Effets de l’image : halo lumineux, effet maquette, étalonnage des couleurs, et occlusion ambiante en qualité Ultra. Quatre qualités au choix selon le Mac.
-- Maisons plus détaillées (portes, fenêtres, cheminées, colombages).
+- Bâtiments texturés : toits en tuiles de terre cuite, murs en pierre taillée ou en briques, bois, ardoise, chaume, colonnes cannelées ; verre, néons et panneaux lumineux au futur, fenêtres allumées la nuit.
+- Villes plus vivantes : plus de maisons, plusieurs modèles par peuple, place dallée, terre battue autour des villes, tours de verre à l’époque moderne et ville futuriste sous bouclier d’énergie.
+- Sols plus riches : terre craquelée, sous-bois de feuilles, cailloux, plaques de terre nue ; rivages arrondis et eau plus profonde.
 - L’éditeur de carte reste fluide en 3D.
 
 ## 1.0.0

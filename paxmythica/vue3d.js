@@ -131,7 +131,7 @@
       sapinTronc: fusion([[Cy(0.3, 0.42, 1.8, 6), 0x5a3d24]]),
       sapinFeuilles: fusion([[jit(Co(2.4, 3.2, 9, 0, 1.3), 1), 0xffffff], [jit(Co(1.95, 2.9, 9, 0, 2.8), 2), 0xf4f4f4], [jit(Co(1.4, 2.5, 8, 0, 4.2), 3), 0xffffff], [jit(Co(0.85, 1.9, 7, 0, 5.6), 4), 0xf0f0f0]]),
       feuilluTronc: fusion([[Cy(0.32, 0.46, 2.7, 6), 0x5e4128], [Cy(0.14, 0.2, 1.5, 5).rotateZ(0.7).translate(0.55, 2.1, 0), 0x5e4128]]),
-      feuilluFeuilles: fusion([[jit(Sp(2.0, 0, 4.1, 0, 1), 5), 0xffffff], [jit(Sp(1.55, 1.25, 3.5, 0.6, 1), 6), 0xeeeeee], [jit(Sp(1.5, -1.15, 3.7, -0.5, 1), 7), 0xf6f6f6], [jit(Sp(1.3, 0.2, 5.1, -0.4, 1), 8), 0xffffff], [jit(Sp(1.15, -0.4, 3.3, 1.05, 1), 9), 0xe8e8e8]]),
+      feuilluFeuilles: fusion([[jit(Sp(2.0, 0, 4.1, 0, 1), 5), 0xffffff], [jit(Sp(1.55, 1.25, 3.5, 0.6, 0), 6), 0xeeeeee], [jit(Sp(1.5, -1.15, 3.7, -0.5, 0), 7), 0xf6f6f6], [jit(Sp(1.3, 0.2, 5.1, -0.4, 0), 8), 0xffffff], [jit(Sp(1.15, -0.4, 3.3, 1.05, 0), 9), 0xe8e8e8]]),
       palmierTronc: fusion([[jit(Cy(0.2, 0.32, 5.2, 6).translate(0.3, 0, 0), 12, 0.05), 0x7a5a34]]),
       palmierFeuilles: fusion([0, 1, 2, 3, 4, 5].map(i => [new THREE.ConeGeometry(0.55, 3.2, 4).rotateZ(Math.PI / 2 - 0.35).translate(1.6, 0, 0).rotateY(i * 1.047).translate(0.35, 5.2, 0), 0xffffff])),
       buisson: fusion([[jit(Sp(1, 0, 0.6, 0, 1), 13), 0xffffff], [jit(Sp(0.75, 0.7, 0.45, 0.3, 0), 14), 0xeeeeee], [jit(Sp(0.6, -0.6, 0.4, -0.3, 0), 15), 0xf4f4f4]]),
@@ -514,7 +514,7 @@ void main() {
     }
     appliquerQualite(id, sansReconstruire) {
       this.idQualite = PM.QUALITES[id] ? id : 'haute'; const Q = this.Q = PM.QUALITES[this.idQualite];
-      this.renderer.setPixelRatio(Math.min(Q.finesse, window.devicePixelRatio || 1));
+      this.renderer.setPixelRatio(Math.min(Q.finesse, window.devicePixelRatio || 1) * (G.PM_ECHELLE || 1)); // PM_ECHELLE : image réduite pour les essais sans carte graphique
       this.soleil.castShadow = Q.ombres > 0;
       if (Q.ombres && this.soleil.shadow.mapSize.x !== Q.ombres) { this.soleil.shadow.mapSize.set(Q.ombres, Q.ombres); if (this.soleil.shadow.map) { this.soleil.shadow.map.dispose(); this.soleil.shadow.map = null; } }
       this.renderer.shadowMap.enabled = Q.ombres > 0;
@@ -557,7 +557,7 @@ void main() {
       const C = this.j.carte, E = this.j.etat, pas = this.pas = Math.max(2.5, Math.round(C.w / 520 * 2) / 2), gx = this.gx = Math.ceil(C.w / pas) + 1, gz = this.gz = Math.ceil(C.h / pas) + 1;
       const types = ['plaine', 'foret', 'collines', 'montagne', 'desert'], W = types.map(() => new Float32Array(gx * gz)), base = new Float32Array(gx * gz), mer = new Float32Array(gx * gz);
       for (let k = 0; k < gz; k++) for (let i = 0; i < gx; i++) {
-        const x = Math.min(C.w - 1, i * pas), y = Math.min(C.h - 1, k * pas), o = k * gx + i, p = C.pix[y * C.w + x];
+        const x = Math.min(C.w - 1, Math.round(i * pas)), y = Math.min(C.h - 1, Math.round(k * pas)), o = k * gx + i, p = C.pix[y * C.w + x];
         base[o] = PM.hauteurPixel(C, x, y); if (p < 0) { mer[o] = 1; continue; }
         W[types.indexOf(E.provinces[p].terrain)][o] = 1;
       }
@@ -585,8 +585,8 @@ void main() {
     // textures du sol : détails du pack, poids des terrains (texture lissée), propriétaires et provinces (texture nette), routes
     texturesSol() {
       const C = this.j.carte, gx = this.gx, gz = this.gz, W = this.poids.W;
-      if (this.details) for (const k in this.details) this.details[k].dispose();
-      this.details = texturesDetail(this.pack);
+      // textures de détail peintes une fois par pack (gardées d'une partie à l'autre)
+      if (!this.details || this.detailsPack !== this.idPack) { if (this.details) for (const k in this.details) this.details[k].dispose(); this.details = texturesDetail(this.pack); this.detailsPack = this.idPack; }
       const p = new Uint8Array(gx * gz * 4);
       for (let o = 0; o < gx * gz; o++) { const tot = W.reduce((s, w) => s + w[o], 0) || 1; p[o * 4] = W[0][o] / tot * 255; p[o * 4 + 1] = W[1][o] / tot * 255; p[o * 4 + 2] = (W[2][o] + W[3][o] * 0.6) / tot * 255; p[o * 4 + 3] = W[4][o] / tot * 255; }
       if (this.texPoids) this.texPoids.dispose();
