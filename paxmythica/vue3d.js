@@ -193,7 +193,7 @@
     const dome = (r, k = 0.55) => new THREE.SphereGeometry(r, 12, 7, 0, Math.PI * 2, 0, Math.PI * k);
     const arti = (liste, membre, py, pz = 0) => liste.map(p => [p[0], p[1], p[2] == null ? 0 : p[2], [membre, py, pz]]);
     // arc tendu tenu à la main gauche, bombé vers l'avant
-    const arc = (R, x, y) => new THREE.TorusGeometry(R, 0.035, 4, 16, Math.PI * 0.8).rotateZ(-Math.PI * 0.4).rotateY(-Math.PI / 2).translate(x, y, -R + 0.18);
+    const arc = (R, x, y) => new THREE.TorusGeometry(R, 0.05, 4, 16, Math.PI * 0.8).rotateZ(-Math.PI * 0.4).rotateY(-Math.PI / 2).translate(x, y, -R + 0.18);
     // corps humain : P = hauteur du bassin (1,05 debout, 2,0 à cheval)
     function humain(o) {
       const P = o.P || 1.05, monte = P > 1.5, l = [], H = P + 1.22, ep_ = P + 0.86;
@@ -224,14 +224,15 @@
     }
     // cheval : robe, crinière ; encolure articulée, jambes par paires diagonales
     function cheval(robe, crin, harnais) {
-      const l = [[cap(0.42, 1.25, 10).rotateX(Math.PI / 2).scale(0.82, 1, 1).translate(0, 1.55, 0), robe, 0]];
+      const l = [[cap(0.47, 1.3, 10).rotateX(Math.PI / 2).scale(0.82, 1, 1).translate(0, 1.5, 0), robe, 0], [sp(0.36).scale(0.9, 0.85, 1).translate(0, 1.62, 0.75), robe, 0], [sp(0.38).scale(0.95, 0.9, 1).translate(0, 1.58, -0.72), robe, 0]];
       l.push(...arti([[cap(0.21, 0.55).rotateX(0.5).translate(0, 2.05, 1.0), robe, 0], [cap(0.15, 0.42).rotateX(2.1).translate(0, 2.3, 1.44), robe, 0],
         [bx(0.07, 0.62, 0.22).rotateX(0.5).translate(0, 2.17, 0.88), crin, 0], [new THREE.ConeGeometry(0.05, 0.17, 4).translate(-0.08, 2.6, 1.26), robe, 0], [new THREE.ConeGeometry(0.05, 0.17, 4).translate(0.08, 2.6, 1.26), robe, 0]], 6, 1.75, 0.75));
       for (const [x, z, m] of [[-0.25, 0.72, 1], [0.25, -0.72, 1], [0.25, 0.72, 2], [-0.25, -0.72, 2]])
-        l.push(...arti([[cy(0.085, 0.11, 1.2, 6).translate(x, 0.72, z), robe, 0], [cy(0.1, 0.11, 0.14, 6).translate(x, 0.07, z), sombre, 0]], m, 1.32, z));
+        l.push(...arti([[cy(0.1, 0.16, 0.6, 6).translate(x, 0.95, z), robe, 0], [cy(0.075, 0.09, 0.62, 6).translate(x, 0.4, z), robe, 0], [cy(0.11, 0.12, 0.14, 6).translate(x, 0.07, z), sombre, 0]], m, 1.25, z));
       l.push([cy(0.04, 0.14, 0.95, 6).rotateX(-0.45).translate(0, 1.3, -1.2), crin, 0]);
       if (harnais) l.push(...harnais);
-      return l;
+      // à l'échelle des soldats (un cheval est plus haut qu'un homme au garrot près)
+      return l.map(([g, c, m, a]) => [g.scale(1.3, 1.3, 1.3), c, m, a ? [a[0], a[1] * 1.3, a[2] * 1.3] : a]);
     }
     const tapis = [[bx(0.98, 0.07, 1.05).translate(0, 1.99, -0.05), 0xffffff, T], [bx(1.02, 0.5, 0.95).translate(0, 1.72, -0.05), 0xffffff, T]];
     const caparacon = [[cy(0.56, 0.7, 1.0, 12).scale(1, 1, 1.75).translate(0, 1.35, 0), 0xffffff, T], [bx(0.98, 0.07, 1.05).translate(0, 1.99, -0.05), 0x8a1e1a, 0]];
@@ -245,8 +246,8 @@
       const bouclier = h_ => [[cy(0.62, 0.62, 0.09, 18).rotateX(Math.PI / 2).translate(-0.53, h_.main + 0.25, 0.33), 0xffffff, T], [new THREE.TorusGeometry(0.61, 0.05, 4, 18).translate(-0.53, h_.main + 0.25, 0.39), 0xb8893a, MET], [sp(0.12).scale(1, 1, 0.5).translate(-0.53, h_.main + 0.25, 0.4), 0xb8893a, MET]];
       F.inf = fusionner(h.l, casque(h.H, true), arti(lance(h), 3, h.ep), arti(bouclier(h), 4, h.ep));
       const a = humain({ torse: [0x8a6038, 0], tunique: [0xffffff, T], carquois: true });
-      F.archer = fusionner(a.l, [[dome(0.24, 0.5).translate(0, a.H + 0.02, 0), 0x7a5230, 0]], arti([[arc(0.75, -0.47, a.main), 0x5a3a20, 0]], 4, a.ep));
-      const c = humain({ P: 2.0, torse: [0xc39a4a, MET], tunique: [0xe6dcc4, 0], cape: [0xffffff, T] });
+      F.archer = fusionner(a.l, [[dome(0.24, 0.5).translate(0, a.H + 0.02, 0), 0x7a5230, 0]], arti([[arc(0.88, -0.47, a.main + 0.1), 0x4a2e18, 0]], 4, a.ep));
+      const c = humain({ P: 2.55, torse: [0xc39a4a, MET], tunique: [0xe6dcc4, 0], cape: [0xffffff, T] });
       F.cav = fusionner(cheval(0x7a4a28, 0x2a1a10, tapis), c.l, casque(c.H, true), arti([[cy(0.035, 0.045, 3.6, 5).rotateX(0.35).translate(0.47, c.main + 0.75, 0.35), 0x5a3a20, 0], [new THREE.ConeGeometry(0.08, 0.4, 4).rotateX(0.35).translate(0.47, c.main + 2.5, 0.98), 0xb8bcc0, MET]], 3, c.ep));
     } else if (ep === 'medieval') {
       // chevalier : cotte de mailles, tabard, heaume, écu et épée
@@ -257,7 +258,7 @@
       F.inf = fusionner(h.l, heaume(h.H), arti(epee(h), 3, h.ep), arti(ecu(h), 4, h.ep));
       const a = humain({ torse: [0x7a6a4a, 0], tunique: [0xffffff, T], carquois: true, jambes: 0x5a4a38 });
       F.archer = fusionner(a.l, [[new THREE.ConeGeometry(0.27, 0.55, 8).translate(0, a.H + 0.1, -0.02), 0x4a5a30, 0], [cy(0.3, 0.38, 0.22, 8).translate(0, a.P + 0.9, 0), 0x4a5a30, 0]], arti([[arc(0.95, -0.47, a.main + 0.2), 0x5a3a20, 0]], 4, a.ep));
-      const c = humain({ P: 2.0, torse: [0x8f969c, MET], tunique: [0x8f969c, MET], jambes: 0x7a8088, manches: 0x8f969c, tabard: [0xffffff, T] });
+      const c = humain({ P: 2.55, torse: [0x8f969c, MET], tunique: [0x8f969c, MET], jambes: 0x7a8088, manches: 0x8f969c, tabard: [0xffffff, T] });
       F.cav = fusionner(cheval(0xd8d0c4, 0x6a6058, caparacon), c.l, heaume(c.H), arti([[cy(0.05, 0.08, 4.4, 6).rotateX(1.3).translate(0.47, c.main + 0.35, 1.3), 0xe8dcc0, 0], [new THREE.ConeGeometry(0.09, 0.4, 6).rotateX(1.3).translate(0.47, c.main + 0.92, 3.5), 0xc8ccd2, MET]], 3, c.ep), arti(ecu(c), 4, c.ep));
     } else if (ep === 'industriel') {
       // fantassin de ligne : habit long, baudriers croisés, shako à plumet, fusil à baïonnette
@@ -266,7 +267,7 @@
       const h = humain({ long: true, torse: [0xffffff, T], tunique: [0xffffff, T], manches: null, jambes: 0xd8d4c8, pieds: 0x1a1a1a, baudriers: 0xe8e4da, sac: 0x5a4a38 });
       F.inf = fusionner(h.l, shako(h.H), arti(fusil(h), 3, h.ep));
       F.archer = F.inf;
-      const c = humain({ P: 2.0, torse: [0xffffff, T], tunique: [0xffffff, T], jambes: 0xd8d4c8, pieds: 0x1a1a1a, baudriers: 0xe8e4da });
+      const c = humain({ P: 2.55, torse: [0xffffff, T], tunique: [0xffffff, T], jambes: 0xd8d4c8, pieds: 0x1a1a1a, baudriers: 0xe8e4da });
       F.cav = fusionner(cheval(0x2a1e18, 0x141010, tapis), c.l, [[cy(0.24, 0.22, 0.45, 10).translate(0, c.H + 0.2, 0), 0x2a2018, 0]], arti([[bx(0.06, 1.1, 0.03).rotateX(0.25).translate(0.47, c.main + 0.6, 0.25), 0xc8ccd2, MET]], 3, c.ep));
       // canon de campagne : affût, roues, fût de bronze
       F.siege = fusion([[bx(0.5, 0.28, 2.4).rotateX(-0.12).translate(0, 0.55, -0.6), 0x5a4028, 0], [cy(0.17, 0.24, 2.1, 12).rotateX(Math.PI / 2 - 0.12).translate(0, 1.05, 0.5), 0x9a7a3a, MET],
@@ -286,7 +287,7 @@
         arti([[bx(0.09, 1.0, 0.16).translate(0.47, h.main + 0.35, 0.16), 0x3a3e48, 0], [bx(0.03, 0.8, 0.03).translate(0.47, h.main + 0.4, 0.26), 0x6ff3ff, NEON]], 3, h.ep));
       F.archer = F.inf;
       // glisseur : coque en coin portée par des réacteurs lumineux
-      F.cav = fusion([[bx(2.2, 0.55, 3.6).translate(0, 1.1, 0), 0xffffff, T], [new THREE.ConeGeometry(1.1, 1.5, 4).rotateY(Math.PI / 4).scale(1.35, 0.35, 1).rotateX(Math.PI / 2).translate(0, 1.1, 2.4), 0xffffff, T], [bx(1.2, 0.55, 1.4).translate(0, 1.6, -0.3), 0xd8dce2, 0],
+      F.cav = fusion([[bx(2.2, 0.55, 3.6).translate(0, 1.1, 0), 0xffffff, T], [new THREE.ConeGeometry(1.1, 1.5, 4).rotateY(Math.PI / 4).rotateX(Math.PI / 2).scale(1.4, 0.36, 1).translate(0, 1.1, 2.55), 0xffffff, T], [bx(1.2, 0.55, 1.4).translate(0, 1.6, -0.3), 0xd8dce2, 0],
         [cy(0.12, 0.12, 2.4, 6).rotateX(Math.PI / 2).translate(0, 1.75, 1.2), 0x3a3e48, 0], ...[[-0.8, 1.2], [0.8, 1.2], [-0.8, -1.2], [0.8, -1.2]].map(([x, z]) => [cy(0.38, 0.38, 0.12, 12).translate(x, 0.72, z), 0x6ff3ff, NEON])]);
     }
     // habitants (teinte de l'habit par instance), moutons, oiseaux (ailes : membres 7 et 8, battement autour de l'axe du corps)
@@ -1548,5 +1549,5 @@ vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, colo
       this.j.anims = A.filter(a => a.t < 1600);
     }
   }
-  PM.Vue3D = Vue3D;
+  PM.Vue3D = Vue3D; PM.figurines3D = figurines; // figurines exposées pour les essais
 })(typeof window !== 'undefined' ? window : globalThis);
