@@ -5,7 +5,7 @@ name: Pax Mythica — personnages
 on:
   workflow_dispatch:
   push:
-    paths: ['paxmythica/scripts/personnages-sources.txt', 'paxmythica/scripts/personnages.js', '.github/workflows/pax-personnages.yml']
+    paths: ['paxmythica/scripts/personnages-sources.txt', 'paxmythica/scripts/personnages.js', 'paxmythica/scripts/gdrive.py', '.github/workflows/pax-personnages.yml']
 
 permissions:
   contents: write
