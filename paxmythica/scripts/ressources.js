@@ -80,6 +80,11 @@ async function catalogue() {
     try { const d = await json('https://api.polyhaven.com/assets?t=' + t); resume['liste:' + t] = Object.entries(d).map(([id, a]) => [id, (a.categories || []).join(','), a.polycount || 0]); note(`liste Poly Haven ${t} : ${Object.keys(d).length}`); }
     catch (e) { note('ERREUR liste ' + t + ' : ' + e.message); }
   }
+  // fichiers proposés pour un élément (cartes et formats disponibles)
+  for (const id of choix.catalogue.fichiers || []) {
+    try { const d = await json('https://api.polyhaven.com/files/' + id); const court = o => typeof o !== 'object' || !o ? o : Object.fromEntries(Object.entries(o).map(([k, v]) => [k, k === 'include' ? Object.keys(v) : k === 'url' ? v : court(v)])); resume['fichiers:' + id] = court(d); }
+    catch (e) { note('ERREUR fichiers ' + id + ' : ' + e.message); }
+  }
   fs.writeFileSync(path.join(CATALOGUE, 'catalogue.json'), JSON.stringify(resume, null, 1));
 }
 

@@ -1,58 +1,253 @@
 {
-  "catalogue": { "listes": ["models", "textures"] },
-  "materiaux": [
-    { "nom": "sol-herbe", "id": "Grass004" },
-    { "nom": "sol-prairie", "source": "polyhaven", "id": "aerial_grass_rock" },
-    { "nom": "sol-sousbois", "source": "polyhaven", "id": "forest_leaves_02" },
-    { "nom": "sol-terre", "source": "polyhaven", "id": "brown_mud_dry" },
-    { "nom": "sol-sec", "source": "polyhaven", "id": "dry_ground_rocks" },
-    { "nom": "sol-sable", "source": "polyhaven", "id": "coast_sand_01" },
-    { "nom": "sol-roche", "source": "polyhaven", "id": "aerial_rocks_02" },
-    { "nom": "sol-falaise", "source": "polyhaven", "id": "rock_face_03" },
-    { "nom": "sol-neige", "source": "polyhaven", "id": "snow_field_aerial" },
-    { "nom": "sol-chemin", "source": "polyhaven", "id": "rocky_trail" },
-    { "nom": "sol-paves", "id": "PavingStones150" },
-    { "nom": "bat-tuiles", "id": "RoofingTiles014A", "taille": 512 },
-    { "nom": "bat-ardoise", "id": "RoofingTiles013A", "taille": 512 },
-    { "nom": "bat-platre", "id": "Plaster001", "taille": 512 },
-    { "nom": "bat-pierre", "id": "Bricks066", "taille": 512 },
-    { "nom": "bat-moellons", "id": "Bricks100", "taille": 512 },
-    { "nom": "bat-briques", "id": "Bricks085", "taille": 512 },
-    { "nom": "bat-bois", "id": "Planks023A", "taille": 512 },
-    { "nom": "bat-bardage", "id": "WoodSiding008", "taille": 512 },
-    { "nom": "bat-marbre", "id": "Tiles143", "taille": 512 },
-    { "nom": "bat-gres", "id": "Bricks099", "taille": 512 },
-    { "nom": "bat-beton", "id": "Concrete034", "taille": 512 },
-    { "nom": "bat-metal", "id": "MetalPlates006", "taille": 512 },
-    { "nom": "bat-verre", "id": "Facade001", "taille": 512 },
-    { "nom": "bat-futur", "id": "Facade006", "taille": 512 },
-    { "nom": "bat-immeuble", "id": "Facade018A", "taille": 512 },
-    { "nom": "bat-immeuble-nuit", "id": "Facade018B", "taille": 512 },
-    { "nom": "bat-colonne", "id": "Marble012", "taille": 512 },
-    { "nom": "bat-paves", "id": "PavingStones070", "taille": 512 }
-  ],
-  "ciels": [
-    { "nom": "olympe", "id": "kloofendal_48d_partly_cloudy_puresky", "res": "2k" },
-    { "nom": "realiste", "id": "kloofendal_43d_clear_puresky", "res": "2k" },
-    { "nom": "crepuscule", "id": "belfast_sunset_puresky", "res": "2k" },
-    { "nom": "automne", "id": "autumn_field_puresky", "res": "2k" },
-    { "nom": "hiver", "id": "kloppenheim_07_puresky", "res": "2k" },
-    { "nom": "nuit", "id": "qwantani_moon_noon_puresky", "res": "2k" },
-    { "nom": "ragnarok", "id": "industrial_sunset_02_puresky", "res": "2k" },
-    { "nom": "fresque", "id": "citrus_orchard_road_puresky", "res": "2k" }
-  ],
-  "modeles": [
-    { "nom": "rocher1", "id": "boulder_01" },
-    { "nom": "rocher2", "id": "namaqualand_boulder_02" },
-    { "nom": "rochers-mousse", "id": "rock_moss_set_01" },
-    { "nom": "souche", "id": "tree_stump_01" },
-    { "nom": "tronc-mort", "id": "dead_tree_trunk_02" },
-    { "nom": "sapin", "id": "fir_tree_01", "texturesSeules": true },
-    { "nom": "pin", "id": "pine_tree_01", "texturesSeules": true },
-    { "nom": "arbre-ile", "id": "island_tree_01", "texturesSeules": true },
-    { "nom": "jacaranda", "id": "jacaranda_tree", "texturesSeules": true },
-    { "nom": "herbe-touffe", "id": "grass_medium_01", "texturesSeules": true },
-    { "nom": "arbuste", "id": "searsia_lucida", "texturesSeules": true },
-    { "nom": "tonneau", "id": "Barrel_01" }
+ "catalogue": {
+  "fichiers": [
+   "fir_tree_01",
+   "island_tree_01",
+   "grass_medium_01",
+   "pine_tree_01"
   ]
+ },
+ "materiaux": [
+  {
+   "nom": "sol-herbe",
+   "id": "Grass004"
+  },
+  {
+   "nom": "sol-prairie",
+   "source": "polyhaven",
+   "id": "aerial_grass_rock"
+  },
+  {
+   "nom": "sol-sousbois",
+   "source": "polyhaven",
+   "id": "forest_leaves_02"
+  },
+  {
+   "nom": "sol-terre",
+   "source": "polyhaven",
+   "id": "brown_mud_dry"
+  },
+  {
+   "nom": "sol-sec",
+   "source": "polyhaven",
+   "id": "dry_ground_rocks"
+  },
+  {
+   "nom": "sol-sable",
+   "source": "polyhaven",
+   "id": "coast_sand_01"
+  },
+  {
+   "nom": "sol-roche",
+   "source": "polyhaven",
+   "id": "aerial_rocks_02"
+  },
+  {
+   "nom": "sol-falaise",
+   "source": "polyhaven",
+   "id": "rock_face_03"
+  },
+  {
+   "nom": "sol-neige",
+   "source": "polyhaven",
+   "id": "snow_field_aerial"
+  },
+  {
+   "nom": "sol-chemin",
+   "source": "polyhaven",
+   "id": "rocky_trail"
+  },
+  {
+   "nom": "sol-paves",
+   "id": "PavingStones150"
+  },
+  {
+   "nom": "bat-tuiles",
+   "id": "RoofingTiles014A",
+   "taille": 512
+  },
+  {
+   "nom": "bat-ardoise",
+   "id": "RoofingTiles013A",
+   "taille": 512
+  },
+  {
+   "nom": "bat-platre",
+   "id": "Plaster001",
+   "taille": 512
+  },
+  {
+   "nom": "bat-pierre",
+   "id": "Bricks066",
+   "taille": 512
+  },
+  {
+   "nom": "bat-moellons",
+   "id": "Bricks100",
+   "taille": 512
+  },
+  {
+   "nom": "bat-briques",
+   "id": "Bricks085",
+   "taille": 512
+  },
+  {
+   "nom": "bat-bois",
+   "id": "Planks023A",
+   "taille": 512
+  },
+  {
+   "nom": "bat-bardage",
+   "id": "WoodSiding008",
+   "taille": 512
+  },
+  {
+   "nom": "bat-marbre",
+   "id": "Tiles143",
+   "taille": 512
+  },
+  {
+   "nom": "bat-gres",
+   "id": "Bricks099",
+   "taille": 512
+  },
+  {
+   "nom": "bat-beton",
+   "id": "Concrete034",
+   "taille": 512
+  },
+  {
+   "nom": "bat-metal",
+   "id": "MetalPlates006",
+   "taille": 512
+  },
+  {
+   "nom": "bat-verre",
+   "id": "Facade001",
+   "taille": 512
+  },
+  {
+   "nom": "bat-futur",
+   "id": "Facade006",
+   "taille": 512
+  },
+  {
+   "nom": "bat-immeuble",
+   "id": "Facade018A",
+   "taille": 512
+  },
+  {
+   "nom": "bat-immeuble-nuit",
+   "id": "Facade018B",
+   "taille": 512
+  },
+  {
+   "nom": "bat-colonne",
+   "id": "Marble012",
+   "taille": 512
+  },
+  {
+   "nom": "bat-paves",
+   "id": "PavingStones070",
+   "taille": 512
+  }
+ ],
+ "ciels": [
+  {
+   "nom": "olympe",
+   "id": "kloofendal_48d_partly_cloudy_puresky",
+   "res": "2k"
+  },
+  {
+   "nom": "realiste",
+   "id": "kloofendal_43d_clear_puresky",
+   "res": "2k"
+  },
+  {
+   "nom": "crepuscule",
+   "id": "belfast_sunset_puresky",
+   "res": "2k"
+  },
+  {
+   "nom": "automne",
+   "id": "autumn_field_puresky",
+   "res": "2k"
+  },
+  {
+   "nom": "hiver",
+   "id": "kloppenheim_07_puresky",
+   "res": "2k"
+  },
+  {
+   "nom": "nuit",
+   "id": "qwantani_moon_noon_puresky",
+   "res": "2k"
+  },
+  {
+   "nom": "ragnarok",
+   "id": "industrial_sunset_02_puresky",
+   "res": "2k"
+  },
+  {
+   "nom": "fresque",
+   "id": "citrus_orchard_road_puresky",
+   "res": "2k"
+  }
+ ],
+ "modeles": [
+  {
+   "nom": "rocher1",
+   "id": "boulder_01"
+  },
+  {
+   "nom": "rocher2",
+   "id": "namaqualand_boulder_02"
+  },
+  {
+   "nom": "rochers-mousse",
+   "id": "rock_moss_set_01"
+  },
+  {
+   "nom": "souche",
+   "id": "tree_stump_01"
+  },
+  {
+   "nom": "tronc-mort",
+   "id": "dead_tree_trunk_02"
+  },
+  {
+   "nom": "sapin",
+   "id": "fir_tree_01",
+   "texturesSeules": true
+  },
+  {
+   "nom": "pin",
+   "id": "pine_tree_01",
+   "texturesSeules": true
+  },
+  {
+   "nom": "arbre-ile",
+   "id": "island_tree_01",
+   "texturesSeules": true
+  },
+  {
+   "nom": "jacaranda",
+   "id": "jacaranda_tree",
+   "texturesSeules": true
+  },
+  {
+   "nom": "herbe-touffe",
+   "id": "grass_medium_01",
+   "texturesSeules": true
+  },
+  {
+   "nom": "arbuste",
+   "id": "searsia_lucida",
+   "texturesSeules": true
+  },
+  {
+   "nom": "tonneau",
+   "id": "Barrel_01"
+  }
+ ]
 }
