@@ -15,3 +15,4 @@ contextBridge.exposeInMainWorld('paxMaj', {
   installer: () => ipcRenderer.invoke('maj:installer'),
   surChangement: cb => { surMaj = cb; }
 });
+contextBridge.exposeInMainWorld('paxFichiers', { lire: rel => ipcRenderer.invoke('fichier:lire', rel) });

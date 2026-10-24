@@ -23,6 +23,13 @@ const verifierMaj = () => {
   const suivi = setInterval(() => { if (win && !win.isDestroyed()) win.webContents.send('maj:etat', maj.etat); }, 1500);
   return maj.verifier().then(() => { clearInterval(suivi); if (win && !win.isDestroyed()) win.webContents.send('maj:etat', maj.etat); });
 };
+// ressources graphiques du jeu (textures, ciels, modèles) : lecture seule, uniquement dans le dossier ressources/ de l'application
+ipcMain.handle('fichier:lire', (e, rel) => {
+  if (!depuisNotrePage(e)) throw new Error('refusé');
+  const base = path.join(__dirname, 'ressources'), p = path.resolve(base, String(rel || '').replace(/^ressources[\\/]/, ''));
+  if (!p.startsWith(base + path.sep)) throw new Error('refusé');
+  return require('fs').promises.readFile(p);
+});
 ipcMain.handle('maj:etat', e => { if (!depuisNotrePage(e)) throw new Error('refusé'); return maj.etat; });
 ipcMain.handle('maj:verifier', e => { if (!depuisNotrePage(e)) throw new Error('refusé'); verifierMaj(); return maj.etat; });
 ipcMain.handle('maj:installer', e => { if (!depuisNotrePage(e)) throw new Error('refusé'); if (maj.installer(true)) setTimeout(() => app.quit(), 200); return maj.etat; });
