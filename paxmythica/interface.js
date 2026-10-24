@@ -31,7 +31,7 @@
     if (UI.vue3d) return true;
     if (!PM.vue3dPossible || !PM.vue3dPossible()) return false;
     try { UI.vue3d = new PM.Vue3D($('#carte3d'), $('#etiquettes3d'), UI.rendu); evenementsCarte($('#carte3d')); if (UI.j) UI.vue3d.lier(UI.j); return true; }
-    catch (e) { UI.vue3d = null; UI.mode3d = false; return false; }
+    catch (e) { console.warn('Vue 3D indisponible :', e && e.message); UI.vue3d = null; UI.mode3d = false; return false; }
   }
 
   // ---------- stockage ----------

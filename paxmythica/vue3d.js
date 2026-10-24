@@ -10,9 +10,13 @@
 (function (G) {
   const PM = G.PM = G.PM || {};
   const THREE = G.THREE;
+  // essai unique (chaque essai ouvrirait un contexte graphique de plus) ; le contexte d'essai est aussitôt rendu
+  let possible = null;
   PM.vue3dPossible = function () {
-    if (!THREE) return false;
-    try { const c = document.createElement('canvas'); return !!c.getContext('webgl2'); } catch (e) { return false; }
+    if (possible !== null) return possible;
+    if (!THREE) return (possible = false);
+    try { const g = document.createElement('canvas').getContext('webgl2'); possible = !!g; const x = g && g.getExtension('WEBGL_lose_context'); if (x) x.loseContext(); } catch (e) { possible = false; }
+    return possible;
   };
   // bruit de valeur (relief et couleurs)
   function bruit(graine) {
