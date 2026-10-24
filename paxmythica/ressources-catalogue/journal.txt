@@ -1,29 +1,51 @@
-catalogue ambientCG « grass » : 15
-catalogue ambientCG « forest floor » : 2
-catalogue ambientCG « ground » : 24
-catalogue ambientCG « dry ground » : 14
-catalogue ambientCG « sand » : 24
-catalogue ambientCG « rock » : 24
-catalogue ambientCG « cliff » : 24
-catalogue ambientCG « snow » : 24
-catalogue ambientCG « gravel » : 24
-catalogue ambientCG « paving stones » : 24
-catalogue ambientCG « roofing tiles » : 24
-ERREUR catalogue ambientCG thatch : Expected valid width, height and channels to create a new input image
-catalogue ambientCG « planks » : 24
-catalogue ambientCG « wood siding » : 13
-catalogue ambientCG « plaster » : 24
-catalogue ambientCG « bricks » : 24
-catalogue ambientCG « stone wall » : 24
-catalogue ambientCG « marble » : 24
-catalogue ambientCG « concrete » : 24
-catalogue ambientCG « metal plates » : 20
-catalogue ambientCG « facade » : 24
-catalogue ambientCG « lava » : 5
-catalogue ambientCG « tiles » : 24
-catalogue Poly Haven « hdris:skies » : 48
-catalogue Poly Haven « hdris:sunrise-sunset » : 48
-catalogue Poly Haven « hdris:night » : 48
-catalogue Poly Haven « models:nature » : 48
-catalogue Poly Haven « models » : 48
-catalogue Poly Haven « textures:terrain » : 48
+liste Poly Haven models : 521
+liste Poly Haven textures : 869
+matériau sol-herbe ← Grass004
+matériau sol-prairie ← aerial_grass_rock
+matériau sol-sousbois ← forest_leaves_02
+matériau sol-terre ← brown_mud_dry
+matériau sol-sec ← dry_ground_rocks
+matériau sol-sable ← coast_sand_01
+matériau sol-roche ← aerial_rocks_02
+matériau sol-falaise ← rock_face_03
+matériau sol-neige ← snow_field_aerial
+matériau sol-chemin ← rocky_trail
+matériau sol-paves ← PavingStones150
+matériau bat-tuiles ← RoofingTiles014A
+matériau bat-ardoise ← RoofingTiles013A
+matériau bat-platre ← Plaster001
+matériau bat-pierre ← Bricks066
+matériau bat-moellons ← Bricks100
+matériau bat-briques ← Bricks085
+matériau bat-bois ← Planks023A
+matériau bat-bardage ← WoodSiding008
+matériau bat-marbre ← Tiles143
+matériau bat-gres ← Bricks099
+matériau bat-beton ← Concrete034
+matériau bat-metal ← MetalPlates006
+matériau bat-verre ← Facade001
+matériau bat-futur ← Facade006
+matériau bat-immeuble ← Facade018A
+matériau bat-immeuble-nuit ← Facade018B
+matériau bat-colonne ← Marble012
+matériau bat-paves ← PavingStones070
+ciel olympe ← kloofendal_48d_partly_cloudy_puresky
+ciel realiste ← kloofendal_43d_clear_puresky
+ciel crepuscule ← belfast_sunset_puresky
+ciel automne ← autumn_field_puresky
+ciel hiver ← kloppenheim_07_puresky
+ciel nuit ← qwantani_moon_noon_puresky
+ciel ragnarok ← industrial_sunset_02_puresky
+ciel fresque ← citrus_orchard_road_puresky
+modèle rocher1 ← boulder_01
+modèle rocher2 ← namaqualand_boulder_02
+modèle rochers-mousse ← rock_moss_set_01
+modèle souche ← tree_stump_01
+modèle tronc-mort ← dead_tree_trunk_02
+modèle sapin ← fir_tree_01
+modèle pin ← pine_tree_01
+modèle arbre-ile ← island_tree_01
+modèle jacaranda ← jacaranda_tree
+modèle herbe-touffe ← grass_medium_01
+modèle arbuste ← searsia_lucida
+modèle tonneau ← Barrel_01

@@ -1,1 +1,296 @@
-{}
+{
+ "materiaux/sol-herbe": {
+  "id": "Grass004",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=Grass004",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/sol-prairie": {
+  "id": "aerial_grass_rock",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/aerial_grass_rock",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/sol-sousbois": {
+  "id": "forest_leaves_02",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/forest_leaves_02",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/sol-terre": {
+  "id": "brown_mud_dry",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/brown_mud_dry",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/sol-sec": {
+  "id": "dry_ground_rocks",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/dry_ground_rocks",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/sol-sable": {
+  "id": "coast_sand_01",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/coast_sand_01",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/sol-roche": {
+  "id": "aerial_rocks_02",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/aerial_rocks_02",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/sol-falaise": {
+  "id": "rock_face_03",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/rock_face_03",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/sol-neige": {
+  "id": "snow_field_aerial",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/snow_field_aerial",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/sol-chemin": {
+  "id": "rocky_trail",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/rocky_trail",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/sol-paves": {
+  "id": "PavingStones150",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=PavingStones150",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-tuiles": {
+  "id": "RoofingTiles014A",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=RoofingTiles014A",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-ardoise": {
+  "id": "RoofingTiles013A",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=RoofingTiles013A",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-platre": {
+  "id": "Plaster001",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=Plaster001",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-pierre": {
+  "id": "Bricks066",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=Bricks066",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-moellons": {
+  "id": "Bricks100",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=Bricks100",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-briques": {
+  "id": "Bricks085",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=Bricks085",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-bois": {
+  "id": "Planks023A",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=Planks023A",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-bardage": {
+  "id": "WoodSiding008",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=WoodSiding008",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-marbre": {
+  "id": "Tiles143",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=Tiles143",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-gres": {
+  "id": "Bricks099",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=Bricks099",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-beton": {
+  "id": "Concrete034",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=Concrete034",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-metal": {
+  "id": "MetalPlates006",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=MetalPlates006",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-verre": {
+  "id": "Facade001",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=Facade001",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-futur": {
+  "id": "Facade006",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=Facade006",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-immeuble": {
+  "id": "Facade018A",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=Facade018A",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-immeuble-nuit": {
+  "id": "Facade018B",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=Facade018B",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-colonne": {
+  "id": "Marble012",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=Marble012",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-paves": {
+  "id": "PavingStones070",
+  "source": "ambientCG",
+  "page": "https://ambientcg.com/view?id=PavingStones070",
+  "licence": "CC0 1.0"
+ },
+ "ciels/olympe": {
+  "id": "kloofendal_48d_partly_cloudy_puresky",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky",
+  "licence": "CC0 1.0"
+ },
+ "ciels/realiste": {
+  "id": "kloofendal_43d_clear_puresky",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/kloofendal_43d_clear_puresky",
+  "licence": "CC0 1.0"
+ },
+ "ciels/crepuscule": {
+  "id": "belfast_sunset_puresky",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/belfast_sunset_puresky",
+  "licence": "CC0 1.0"
+ },
+ "ciels/automne": {
+  "id": "autumn_field_puresky",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/autumn_field_puresky",
+  "licence": "CC0 1.0"
+ },
+ "ciels/hiver": {
+  "id": "kloppenheim_07_puresky",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/kloppenheim_07_puresky",
+  "licence": "CC0 1.0"
+ },
+ "ciels/nuit": {
+  "id": "qwantani_moon_noon_puresky",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/qwantani_moon_noon_puresky",
+  "licence": "CC0 1.0"
+ },
+ "ciels/ragnarok": {
+  "id": "industrial_sunset_02_puresky",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/industrial_sunset_02_puresky",
+  "licence": "CC0 1.0"
+ },
+ "ciels/fresque": {
+  "id": "citrus_orchard_road_puresky",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/citrus_orchard_road_puresky",
+  "licence": "CC0 1.0"
+ },
+ "modeles/rocher1": {
+  "id": "boulder_01",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/boulder_01",
+  "licence": "CC0 1.0"
+ },
+ "modeles/rocher2": {
+  "id": "namaqualand_boulder_02",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/namaqualand_boulder_02",
+  "licence": "CC0 1.0"
+ },
+ "modeles/rochers-mousse": {
+  "id": "rock_moss_set_01",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/rock_moss_set_01",
+  "licence": "CC0 1.0"
+ },
+ "modeles/souche": {
+  "id": "tree_stump_01",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/tree_stump_01",
+  "licence": "CC0 1.0"
+ },
+ "modeles/tronc-mort": {
+  "id": "dead_tree_trunk_02",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/dead_tree_trunk_02",
+  "licence": "CC0 1.0"
+ },
+ "modeles/sapin": {
+  "id": "fir_tree_01",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/fir_tree_01",
+  "licence": "CC0 1.0"
+ },
+ "modeles/pin": {
+  "id": "pine_tree_01",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/pine_tree_01",
+  "licence": "CC0 1.0"
+ },
+ "modeles/arbre-ile": {
+  "id": "island_tree_01",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/island_tree_01",
+  "licence": "CC0 1.0"
+ },
+ "modeles/jacaranda": {
+  "id": "jacaranda_tree",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/jacaranda_tree",
+  "licence": "CC0 1.0"
+ },
+ "modeles/herbe-touffe": {
+  "id": "grass_medium_01",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/grass_medium_01",
+  "licence": "CC0 1.0"
+ },
+ "modeles/arbuste": {
+  "id": "searsia_lucida",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/searsia_lucida",
+  "licence": "CC0 1.0"
+ },
+ "modeles/tonneau": {
+  "id": "Barrel_01",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/Barrel_01",
+  "licence": "CC0 1.0"
+ }
+}
