@@ -1,4 +1,6 @@
-# animaux animés Quaternius (CC0) : chevaux des cavaliers et troupeaux
-gdrive https://drive.google.com/drive/folders/1uJ3N5HfB7jKTseJUNQr3N4YaN0UuEtHk animaux
-garder animaux (glTF|gltf|GLTF)/.*\.(gltf|glb|bin|png|jpg)$
-garder animaux (License|README|Readme)[^/]*\.txt$
+# animaux animés Quaternius (CC0) sur itch.io : chevaux des cavaliers et troupeaux
+itch https://quaternius.itch.io/ultimate-animated-animals animaux2 .
+itch https://quaternius.itch.io/lowpoly-animated-animals animaux .
+garder animaux2 (glTF|gltf|GLTF)/.*\.(gltf|glb|bin|png|jpg)$
+garder animaux2 (License|README|Readme)[^/]*\.txt$
+garder animaux \.(fbx|FBX|png|jpg|txt)$
