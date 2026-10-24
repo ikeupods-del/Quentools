@@ -1,5 +1,14 @@
 # Nouveautés de Pax Mythica
 
+## 1.4.0
+- Chaque peuple a ses propres unités à chaque époque : hoplites, archères scythes et héros grecs ; guerriers au khopesh, archers nubiens et pharaon ; guerriers celtes et vikings ; légionnaires, Immortels et soldats Qin ; cataphractes, chevaliers, Sarrasins, archers anglais, rois ; fusiliers de l’Empire, janissaires, mousquetaires, pionniers, généraux ; soldats de 1940 et d’aujourd’hui, tireurs d’élite, officiers ; soldats, androïdes et cyborgs du futur.
+- Armes et boucliers propres à chaque unité : bouclier hoplon, scutum, écu, bouclier viking, lance dory, khopesh, glaive, hache, cimeterre, arcs, mousquets, fusils.
+- Vraies créatures : minotaure, cyclope, anubite, géant de glace, titan, valkyrie, golem, guerrier squelette ; robot lourd au futur.
+- Cavaliers de chaque peuple sur leurs montures : chevaux, chevaux de guerre caparaçonnés, chameaux et éléphants de guerre, qui marchent et galopent.
+- Machines de siège et véhicules : catapulte, bélier, trébuchet, canon, char, jeep, char antigravité ; roues qui tournent, bras qui lancent.
+- Navires de chaque époque : trirème, drakkar, galion, cuirassé, croiseur futuriste, et barques de pêche près des côtes.
+- Villageois et villageoises habillés selon l’époque.
+
 ## 1.3.0
 - Vrais personnages animés : corps, visages et tenues détaillés, qui marchent, montent la garde, frappent à l’épée, tirent à l’arc ou au fusil, chacun à son rythme.
 - Un équipement par époque : hoplites à casque corinthien et bouclier rond, chevaliers en heaume, archers à capuche, fantassins en shako, soldats modernes casqués, soldats du futur à visière lumineuse ; tuniques, capes et boucliers aux couleurs du peuple.
