@@ -137,7 +137,7 @@
   }
 
   // ---------- création d'une partie ----------
-  PM.REGLAGES = { epoque: 'antique', graine: 1, taille: 'moyenne', forme: 'continent', terre: 0.48, depart: 3, ressources: 'normales', ageDepart: 0, mythes: true, evenements: 1, difficulte: 1, neutres: 1, paixInitiale: 24,
+  PM.REGLAGES = { carteV: 2, epoque: 'antique', graine: 1, taille: 'moyenne', forme: 'continent', terre: 0.48, depart: 3, ressources: 'normales', ageDepart: 0, mythes: true, evenements: 1, difficulte: 1, neutres: 1, paixInitiale: 24,
     victoire: { conquete: true, merveille: true, annees: 0 } };
   PM.RES_DEPART = { faibles: { nourriture: 150, bois: 100, or: 80, faveur: 10 }, normales: { nourriture: 300, bois: 220, or: 200, faveur: 25 }, riches: { nourriture: 800, bois: 600, or: 600, faveur: 80 } };
   // nations proposées : n peuples, panthéons alternés, noms et couleurs distincts

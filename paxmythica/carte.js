@@ -77,11 +77,14 @@
     const A = rayon * 0.42, Dp = 2.2 / rayon;
     const warpS = 4, ww = Math.ceil(W / warpS) + 1, wh = Math.ceil(Hh / warpS) + 1, wx = new Float32Array(ww * wh), wy = new Float32Array(ww * wh);
     for (let j = 0; j < wh; j++) for (let i = 0; i < ww; i++) { wx[j * ww + i] = (deform(i * warpS * Dp, j * warpS * Dp, 2) - 0.5) * 2 * A; wy[j * ww + i] = (deform2(i * warpS * Dp, j * warpS * Dp, 2) - 0.5) * 2 * A; }
+    // déformation lue en continu (version 2 des cartes) : frontières sans marches ; les cartes plus anciennes gardent la lecture par blocs
+    const lisse = (r0.carteV || 1) >= 2;
+    const dw = (T, x, y) => { const fx = Math.min(ww - 1.001, x / warpS), fy = Math.min(wh - 1.001, y / warpS), i = fx | 0, j = fy | 0, u = fx - i, v = fy - j, o = j * ww + i; return T[o] * (1 - u) * (1 - v) + T[o + 1] * u * (1 - v) + T[o + ww] * (1 - u) * v + T[o + ww + 1] * u * v; };
     for (let y = 0; y < Hh; y++) {
       const gj = Math.min(wh - 1, Math.round(y / warpS));
       for (let x = 0; x < W; x++) {
         const k = y * W + x; if (!terre[k]) continue;
-        const gi = Math.min(ww - 1, Math.round(x / warpS)), px = x + wx[gj * ww + gi], py = y + wy[gj * ww + gi];
+        const gi = Math.min(ww - 1, Math.round(x / warpS)), px = x + (lisse ? dw(wx, x, y) : wx[gj * ww + gi]), py = y + (lisse ? dw(wy, x, y) : wy[gj * ww + gi]);
         const cx = Math.floor(px / C), cy = Math.floor(py / C);
         let best = -1, bd = Infinity;
         for (let rr = 1; rr <= 3 && best < 0; rr++) {

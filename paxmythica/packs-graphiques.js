@@ -21,7 +21,7 @@
       soleil: { dir: [-0.35, 0.86, 0.3], couleur: 0xfff3e2, force: 2.6 }, hemi: { ciel: 0xd6e6f5, sol: 0x4c4434, force: 0.55 }, exposition: 0.95,
       ciel: { haut: 0x6c9ccc, horizon: 0xcad9e3, bas: 0xd8d8d0, halo: 0xfff4e0 }, brume: 1.3,
       eau: { creux: [0.03, 0.12, 0.2], bas: [0.16, 0.42, 0.46], reflet: [1, 0.97, 0.9] },
-      sol: { herbe: [86, 112, 58], foret: [52, 70, 40], sec: [132, 126, 84], sable: [196, 182, 146], roche: [116, 112, 106], neige: [238, 240, 244], fleurs: false },
+      sol: { herbe: [86, 112, 58], foret: [52, 70, 40], sec: [132, 126, 84], sable: [180, 160, 120], roche: [116, 112, 106], neige: [238, 240, 244], fleurs: false },
       neige: { niveau: 66, partout: 0 }, arbres: { sapin: [0x2c4a2c, 0x34532f, 0x283f26], feuillu: [0x46683a, 0x51733f, 0x5a7a40], palmier: 0x58743a },
       herbe: [0x5e7a3e, 0x6b8544, 0x55703a], nuages: { opacite: 0.65, ombres: 0.6 },
       post: { saturation: 0.92, contraste: 1.1, chaud: [1.0, 1.0, 0.98], froid: [0.98, 1.0, 1.02], vignette: 0.22, bloom: 0.15, seuil: 0.9, maquette: 0.35, grain: 0.025 }
@@ -39,7 +39,7 @@
     crepuscule: {
       nom: 'Crépuscule', emoji: '🌅', desc: 'Soleil couchant, ciel orange et violet, longues ombres, reflets d’or sur la mer.',
       soleil: { dir: [-0.8, 0.26, 0.3], couleur: 0xff9c5a, force: 2.8 }, hemi: { ciel: 0x8a74b8, sol: 0x4a2a24, force: 0.6 }, exposition: 1.05,
-      ciel: { haut: 0x3a3c7c, horizon: 0xf09a6a, bas: 0xd88a6a, halo: 0xffb070 }, brume: 1.1,
+      ciel: { haut: 0x3a3c7c, horizon: 0xe8a07a, bas: 0xc88a70, halo: 0xffb070 }, brume: 0.8,
       eau: { creux: [0.06, 0.08, 0.2], bas: [0.3, 0.32, 0.46], reflet: [1.0, 0.62, 0.32] },
       sol: { herbe: [100, 128, 60], foret: [56, 72, 40], sec: [160, 136, 76], sable: [222, 180, 130], roche: [130, 108, 100], neige: [246, 224, 220], fleurs: false },
       neige: { niveau: 70, partout: 0 }, arbres: { sapin: [0x35502c, 0x3e5a30, 0x2e4628], feuillu: [0x5a7a34, 0x6a8238, 0x748a3a], palmier: 0x667c38 },
@@ -78,13 +78,13 @@
     },
     ragnarok: {
       nom: 'Ragnarök', emoji: '🔥', desc: 'Ciel de braise, cendres et terres brûlées : la fin du monde des dieux.',
-      soleil: { dir: [-0.4, 0.4, 0.5], couleur: 0xff6a3a, force: 2.2 }, hemi: { ciel: 0x7a3a2a, sol: 0x2a1a14, force: 0.6 }, exposition: 1.05,
+      soleil: { dir: [-0.4, 0.4, 0.5], couleur: 0xff8a5a, force: 2.0 }, hemi: { ciel: 0x6a4a44, sol: 0x2a1a14, force: 0.6 }, exposition: 1.05,
       ciel: { haut: 0x2a0e0e, horizon: 0xa8442a, bas: 0x6a3a2e, halo: 0xff7a3a }, brume: 1.6,
       eau: { creux: [0.08, 0.03, 0.03], bas: [0.3, 0.12, 0.08], reflet: [1, 0.5, 0.25] },
       sol: { herbe: [92, 84, 60], foret: [56, 46, 36], sec: [120, 100, 76], sable: [150, 120, 96], roche: [80, 70, 66], neige: [120, 110, 108], fleurs: false },
       neige: { niveau: 74, partout: 0 }, arbres: { sapin: [0x2a2420, 0x3a2e26, 0x241e1a], feuillu: [0x4a3a2a, 0x5a3424, 0x3a2e24], palmier: 0x4a3a2a },
       herbe: [0x6a5a3e, 0x7a6040, 0x5a4a36], nuages: { opacite: 0.9, ombres: 0.7 },
-      post: { saturation: 0.95, contraste: 1.15, chaud: [1.15, 0.95, 0.85], froid: [0.95, 0.9, 1.0], vignette: 0.6, bloom: 0.6, seuil: 0.7, maquette: 0.9, grain: 0.05 }
+      post: { saturation: 0.82, contraste: 1.15, chaud: [1.1, 0.96, 0.88], froid: [0.92, 0.92, 1.02], vignette: 0.6, bloom: 0.6, seuil: 0.7, maquette: 0.9, grain: 0.05 }
     }
   };
   // qualité : effets, ombres, herbe, finesse de l'image
