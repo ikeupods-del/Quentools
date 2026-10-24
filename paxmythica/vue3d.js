@@ -561,7 +561,7 @@ void main() {
   vec2 p = vMonde.xz;
   vec2 pr = texture2D(uProf, clamp(p / uTaille, 0.0, 1.0)).rg; float d = pr.r; if (p.x < 0.0 || p.y < 0.0 || p.x > uTaille.x || p.y > uTaille.y) { d = 1.0; pr.g = 1.0; }
   // rivières et étangs : eau plus sombre et plus opaque, sans écume de vagues, reflets adoucis
-  float riv = 1.0 - smoothstep(0.08, 0.3, pr.g);
+  float riv = 1.0 - smoothstep(0.32, 0.55, pr.g);
   float t = uT, loin = smoothstep(300.0, 1600.0, length(cameraPosition - vMonde));
   vec3 n1 = texture2D(tVagues, p * 0.021 + t * vec2(0.010, 0.006)).xyz * 2.0 - 1.0;
   vec3 n2 = texture2D(tVagues, p * 0.057 - t * vec2(0.017, 0.012)).xyz * 2.0 - 1.0;
@@ -952,11 +952,11 @@ void main() {
     construireEau() {
       const C = this.j.carte, gx = this.gx, gz = this.gz, data = new Uint8Array(gx * gz * 4);
       for (let o = 0; o < gx * gz; o++) { const v = Math.max(0, Math.min(255, (-this.H[o] / 28) * 255)); data[o * 4] = v; data[o * 4 + 3] = 255; }
-      // canal vert : profondeur moyenne des environs (flou large) ; faible = rivière ou lac étroit, fort = mer ouverte
-      { const r = 7, a = new Float32Array(gx * gz), b = new Float32Array(gx * gz);
-        for (let z = 0; z < gz; z++) { let acc = 0; for (let x = -r; x < gx + r; x++) { if (x + r < gx) acc += data[(z * gx + x + r) * 4]; if (x - r - 1 >= 0) acc -= data[(z * gx + x - r - 1) * 4]; if (x >= 0 && x < gx) a[z * gx + x] = acc / (2 * r + 1); } }
+      // canal vert : part d'eau dans les environs (flou large) ; faible = rivière ou lac étroit, forte = mer ouverte
+      { const r = 7, a = new Float32Array(gx * gz), b = new Float32Array(gx * gz), w = new Uint8Array(gx * gz); for (let o = 0; o < gx * gz; o++) w[o] = this.H[o] < 0 ? 255 : 0;
+        for (let z = 0; z < gz; z++) { let acc = 0; for (let x = -r; x < gx + r; x++) { if (x + r < gx) acc += w[z * gx + x + r]; if (x - r - 1 >= 0) acc -= w[z * gx + x - r - 1]; if (x >= 0 && x < gx) a[z * gx + x] = acc / (2 * r + 1); } }
         for (let x = 0; x < gx; x++) { let acc = 0; for (let z = -r; z < gz + r; z++) { if (z + r < gz) acc += a[(z + r) * gx + x]; if (z - r - 1 >= 0) acc -= a[(z - r - 1) * gx + x]; if (z >= 0 && z < gz) b[z * gx + x] = acc / (2 * r + 1); } }
-        for (let o = 0; o < gx * gz; o++) data[o * 4 + 1] = Math.min(255, b[o] * 3); }
+        for (let o = 0; o < gx * gz; o++) data[o * 4 + 1] = b[o]; }
       const prof = new THREE.DataTexture(data, gx, gz, THREE.RGBAFormat); prof.magFilter = THREE.LinearFilter; prof.minFilter = THREE.LinearFilter; prof.needsUpdate = true;
       if (this.eau) { this.monde.remove(this.eau); this.eau.geometry.dispose(); }
       const U = {
