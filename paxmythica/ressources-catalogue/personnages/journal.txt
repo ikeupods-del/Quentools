@@ -1,6 +1,6 @@
 itch https://quaternius.itch.io/universal-base-characters : Universal Base Characters[Standard].zip (122 MB)
-ERREUR itch https://quaternius.itch.io/universal-base-characters : Failed to parse URL from undefined
+  réponse sans adresse pour Universal Base Characters[Standard].zip (200, clé eyJleHBpcmVzIjoxNzkyODUyNDQxLCJpZCI6MzgyMjI1OX0%3D.jxnOIceudrfzH2ATLxTGlgo10Lk%3D, page https://quaternius.itch.io/universal-base-characters/download/eyJleHBpcmVzIjoxNzkyODUyNDQxLCJpZCI6MzgyMjI1OX0%3D.jxnOIceudrfzH2ATLxTGlgo10Lk%3D) : {"errors":["invalid key"]}
 itch https://quaternius.itch.io/modular-character-outfits-fantasy : Modular Character Outfits - Fantasy[Standard].zip (280 MB)
-ERREUR itch https://quaternius.itch.io/modular-character-outfits-fantasy : Failed to parse URL from undefined
+  réponse sans adresse pour Modular Character Outfits - Fantasy[Standard].zip (200, clé eyJpZCI6NDA0MDM3OCwiZXhwaXJlcyI6MTc5Mjg1MjQ0MX0%3D.DUUnYZKno3GjzJTL3DXT4chgsT8%3D, page https://quaternius.itch.io/modular-character-outfits-fantasy/download/eyJpZCI6NDA0MDM3OCwiZXhwaXJlcyI6MTc5Mjg1MjQ0MX0%3D.DUUnYZKno3GjzJTL3DXT4chgsT8%3D) : {"errors":["invalid key"]}
 itch https://quaternius.itch.io/universal-animation-library : Universal Animation Library[Standard].zip (15 MB)
-ERREUR itch https://quaternius.itch.io/universal-animation-library : Failed to parse URL from undefined
+  réponse sans adresse pour Universal Animation Library[Standard].zip (200, clé eyJpZCI6MzQwODAzNCwiZXhwaXJlcyI6MTc5Mjg1MjQ0Mn0%3D.IIpKI2xk%2Fh%2FJhieBEUL3a2sxTdk%3D, page https://quaternius.itch.io/universal-animation-library/download/eyJpZCI6MzQwODAzNCwiZXhwaXJlcyI6MTc5Mjg1MjQ0Mn0%3D.IIpKI2xk%2Fh%2FJhieBEUL3a2sxTdk%3D) : {"errors":["invalid key"]}
