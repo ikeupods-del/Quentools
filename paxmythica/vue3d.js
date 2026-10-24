@@ -197,19 +197,19 @@
   // la carte graphique lit la pose de chaque soldat selon son animation (aClip : première image, nombre d'images, vitesse, décalage)
   // navire de chaque époque : [modèle, longueur dans le jeu]
   const NAVIRES = { antique: ['navire-trireme', 14], medieval: ['navire-drakkar', 12], industriel: ['navire-galion', 16], moderne: ['navire-cuirasse', 24], futur: ['navire-croiseur', 20] };
-  const FOULES = ['cavalier_antique', 'cavalier_medieval', 'cavalier_industriel', 'mouton', 'vache'];
+  const FOULES = ['mouton', 'vache'];
   // unités de chaque peuple à chaque époque (personnages créés pour le jeu) ; seules celles de l'époque jouée sont chargées
   const DISTRIB = {
-    antique: { grecs: { inf: 'c_hoplite', archer: 'c_archere_scythe', heros: 'c_heros_grec', mythe: 'c_minotaure' }, egyptiens: { inf: 'c_egyptien', archer: 'c_nubien', heros: 'c_pharaon', mythe: 'c_anubite' },
-      nordiques: { inf: 'c_celte', archer: 'c_archere_scythe', heros: 'c_viking', mythe: 'c_geant' }, atlantes: { inf: 'c_legionnaire', archer: 'c_immortel', heros: 'c_qin', mythe: 'c_cyclope' }, villageois: 'c_villageois_antique', villageoise: 'c_villageoise_antique' },
-    medieval: { grecs: { inf: 'c_cataphracte', archer: 'c_archer_anglais', heros: 'c_roi', mythe: 'c_titan' }, egyptiens: { inf: 'c_sarrasin', archer: 'c_mongol', heros: 'c_sarrasin', mythe: 'c_squelette' },
-      nordiques: { inf: 'c_viking', archer: 'c_archer_anglais', heros: 'c_valkyrie', mythe: 'c_geant' }, atlantes: { inf: 'c_chevalier', archer: 'c_archer_anglais', heros: 'c_roi', mythe: 'c_golem' }, villageois: 'c_villageois_medieval', villageoise: 'c_paysanne' },
-    industriel: { grecs: { inf: 'c_napoleonien', archer: 'c_mousquetaire', heros: 'c_general' }, egyptiens: { inf: 'c_janissaire', archer: 'c_janissaire', heros: 'c_general' },
-      nordiques: { inf: 'c_napoleonien', archer: 'c_cowboy', heros: 'c_general' }, atlantes: { inf: 'c_mousquetaire', archer: 'c_cowboy', heros: 'c_general' }, villageois: 'c_villageois_medieval', villageoise: 'c_ouvriere' },
+    antique: { grecs: { inf: 'c_hoplite', archer: 'c_archere_scythe', heros: 'c_heros_grec', mythe: 'c_minotaure', cav: 'k_grec' }, egyptiens: { inf: 'c_egyptien', archer: 'c_nubien', heros: 'c_pharaon', mythe: 'c_anubite', cav: 'k_egyptien' },
+      nordiques: { inf: 'c_celte', archer: 'c_archere_scythe', heros: 'c_viking', mythe: 'c_geant', siege: 'm_belier', cav: 'k_celte' }, atlantes: { inf: 'c_legionnaire', archer: 'c_immortel', heros: 'c_qin', mythe: 'c_cyclope', cav: 'k_elephant' }, villageois: 'c_villageois_antique', villageoise: 'c_villageoise_antique', siege: 'm_catapulte' },
+    medieval: { grecs: { inf: 'c_cataphracte', archer: 'c_archer_anglais', heros: 'c_roi', mythe: 'c_titan', cav: 'k_cataphracte' }, egyptiens: { inf: 'c_sarrasin', archer: 'c_mongol', heros: 'c_sarrasin', mythe: 'c_squelette', cav: 'k_sarrasin' },
+      nordiques: { inf: 'c_viking', archer: 'c_archer_anglais', heros: 'c_valkyrie', mythe: 'c_geant', siege: 'm_belier', cav: 'k_viking' }, atlantes: { inf: 'c_chevalier', archer: 'c_archer_anglais', heros: 'c_roi', mythe: 'c_golem', cav: 'k_chevalier' }, villageois: 'c_villageois_medieval', villageoise: 'c_paysanne', siege: 'm_trebuchet' },
+    industriel: { grecs: { inf: 'c_napoleonien', archer: 'c_mousquetaire', heros: 'c_general', cav: 'k_hussard' }, egyptiens: { inf: 'c_janissaire', archer: 'c_janissaire', heros: 'c_general', cav: 'k_janissaire' },
+      nordiques: { inf: 'c_napoleonien', archer: 'c_cowboy', heros: 'c_general', cav: 'k_cowboy' }, atlantes: { inf: 'c_mousquetaire', archer: 'c_cowboy', heros: 'c_general', cav: 'k_dragon' }, villageois: 'c_villageois_medieval', villageoise: 'c_ouvriere', siege: 'm_canon' },
     moderne: { grecs: { inf: 'c_soldat_moderne', archer: 'c_tireur', heros: 'c_officier' }, egyptiens: { inf: 'c_soldat_1940', archer: 'c_tireur', heros: 'c_officier' },
-      nordiques: { inf: 'c_soldat_1940', archer: 'c_tireur', heros: 'c_officier' }, atlantes: { inf: 'c_soldat_moderne', archer: 'c_tireur', heros: 'c_officier' }, villageois: 'c_ouvrier', villageoise: 'c_infirmiere' },
+      nordiques: { inf: 'c_soldat_1940', archer: 'c_tireur', heros: 'c_officier' }, atlantes: { inf: 'c_soldat_moderne', archer: 'c_tireur', heros: 'c_officier' }, villageois: 'c_ouvrier', villageoise: 'c_infirmiere', siege: 'm_char_1940', cav: 'm_jeep' },
     futur: { grecs: { inf: 'c_soldat_futur', archer: 'c_androide', heros: 'c_cyborg', mythe: 'c_robot' }, egyptiens: { inf: 'c_soldat_futur', archer: 'c_androide', heros: 'c_cyborg', mythe: 'c_robot' },
-      nordiques: { inf: 'c_soldat_futur', archer: 'c_androide', heros: 'c_cyborg', mythe: 'c_robot' }, atlantes: { inf: 'c_soldat_futur', archer: 'c_androide', heros: 'c_cyborg', mythe: 'c_robot' }, villageois: 'c_technicien', villageoise: 'c_pilote' }
+      nordiques: { inf: 'c_soldat_futur', archer: 'c_androide', heros: 'c_cyborg', mythe: 'c_robot' }, atlantes: { inf: 'c_soldat_futur', archer: 'c_androide', heros: 'c_cyborg', mythe: 'c_robot' }, villageois: 'c_technicien', villageoise: 'c_pilote', siege: 'm_char_antigrav', cav: 'm_char_antigrav' }
   };
   const nomsEpoque = ep => { const D = DISTRIB[ep] || {}, l = new Set(); for (const k in D) if (typeof D[k] === 'string') l.add(D[k]); else for (const r in D[k]) l.add(D[k][r]); return [...l]; };
   function foule(meta, buf, img, uT) {
@@ -1496,7 +1496,7 @@ vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, colo
       this.positions = [];
       const ajouter = (k, x, y, z, rot, s, couleur, mode, ph) => { const i = n[k]++; if (i >= 3500) return; o.position.set(x, y, z); o.rotation.set(0, rot, 0); o.scale.setScalar(s); o.updateMatrix(); P[k].setMatrixAt(i, o.matrix); P[k].setColorAt(i, col.set(couleur)); this.animer(P[k], i, mode, ph); };
       // formation en blocs : créatures et héros devant, puis fantassins, archers, cavaliers et machines ; [modèle, écart, profondeur, largeur maximale]
-      const BLOCS = { mythe: ['mythe', 4.4, 4.8, 3], heros: ['inf', 2.2, 2.2, 2], inf: ['inf', 1.5, 1.75, 8], milice: ['inf', 1.5, 1.75, 8], archer: ['archer', 1.55, 1.85, 8], cav: ['cav', 2.2, 4.6, 5], siege: ['siege', 4.2, 4.8, 3] };
+      const BLOCS = { mythe: ['mythe', 4.4, 4.8, 3], heros: ['inf', 2.2, 2.2, 2], inf: ['inf', 1.5, 1.75, 8], milice: ['inf', 1.5, 1.75, 8], archer: ['archer', 1.55, 1.85, 8], cav: ['cav', 2.2, 4.6, 5], siege: ['siege', 5.5, 9, 3] };
       for (const a of E.armees) {
         const rang = rangs[a.prov] = (rangs[a.prov] || 0) + 1, pos = this.positionArmee(a, rang - 1), N = E.nations[a.owner];
         const marche = a.chemin.length > 0, combat = combats.has(a.prov) || (E.provinces[a.prov].siege && E.provinces[a.prov].siege.par === a.owner);
@@ -1512,7 +1512,7 @@ vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, colo
         for (const c of ORDRE) {
           const k = nb[c]; if (!k) continue;
           const [nom0, ecart, prof, W] = BLOCS[c], larg = Math.min(k, W), D = DISTRIB[this.epoque] && DISTRIB[this.epoque][N.pantheon], role = c === 'milice' ? 'inf' : c;
-          const nom = D && D[role] && P[D[role]] ? D[role] : nom0, mytheC = c === 'mythe' && D && D.mythe && P[D.mythe] ? D.mythe : null;
+          const DE = DISTRIB[this.epoque], nom = D && D[role] && P[D[role]] ? D[role] : DE && typeof DE[role] === 'string' && P[DE[role]] ? DE[role] : nom0, mytheC = c === 'mythe' && D && D.mythe && P[D.mythe] ? D.mythe : null;
           for (let q = 0; q < k; q++, i++) {
             const lig = Math.floor(q / larg), dans = Math.min(larg, k - lig * larg), gx = ((q % larg) - (dans - 1) / 2) * ecart + (lig % 2) * 0.25, gz = z0 - lig * prof;
             let x = pos.x + gx * cos + gz * sin, z = pos.z - gx * sin + gz * cos;

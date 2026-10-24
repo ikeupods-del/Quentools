@@ -25,14 +25,16 @@ anim.scene.updateMatrixWorld(true); anim.scene.traverse(o => { if (o.isBone) { S
 SRC.reposP = SRC.os.pelvis.getWorldPosition(new THREE.Vector3());
 // pose de la source recopiée sur un squelette Mixamo : même rotation (dans le monde) par rapport à la pose en T de chacun
 const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), va = new THREE.Vector3();
+const qsc = new THREE.Quaternion();
 function recibler(sc) {
-  const C = sc.userData.mixamo; SRC.scene.updateMatrixWorld(true);
+  // repos mesurés scène à l'origine : la rotation et la position de la scène (cavalier sur sa monture) s'y ajoutent
+  const C = sc.userData.mixamo; SRC.scene.updateMatrixWorld(true); sc.updateMatrixWorld(true); sc.getWorldQuaternion(qsc);
   for (const [s, c] of C.ordre) {
     const bs = SRC.os[s], bc = C.os[c]; bs.getWorldQuaternion(qa); qa.multiply(qb.copy(SRC.repos[s]).invert());
-    qa.multiply(C.repos[c]); bc.parent.getWorldQuaternion(qb); bc.quaternion.copy(qb.invert().multiply(qa)); bc.updateMatrixWorld(true);
+    qa.multiply(C.repos[c]); qa.premultiply(qsc); bc.parent.getWorldQuaternion(qb); bc.quaternion.copy(qb.invert().multiply(qa)); bc.updateMatrixWorld(true);
   }
   // bassin : déplacement de la source ramené à la taille du personnage
-  const h = C.os[nomMx('Hips')]; SRC.os.pelvis.getWorldPosition(va).sub(SRC.reposP).multiplyScalar(C.ratio).add(C.reposP); h.position.copy(h.parent.worldToLocal(va)); h.updateMatrixWorld(true);
+  const h = C.os[nomMx('Hips')]; SRC.os.pelvis.getWorldPosition(va).sub(SRC.reposP).multiplyScalar(C.ratio).add(C.reposP); sc.localToWorld(va); h.position.copy(h.parent.worldToLocal(va)); h.updateMatrixWorld(true);
 }
 await MeshoptSimplifier.ready;
 
@@ -87,6 +89,44 @@ const CREES = [
   ['c_anubite', 'anubite', [['1-antiquite/khopesh', 1.2]], 'melee', 2.3], ['c_valkyrie', 'valkyrie', ['1-antiquite/lance-dory', '2-moyen-age/bouclier-viking'], 'melee', 2.02], ['c_geant', 'geant-de-glace', [['2-moyen-age/hache-viking', 1.8]], 'melee', 3.37],
   ['c_golem', 'golem', [], 'melee', 2.71], ['c_squelette', 'guerrier-squelette', ['2-moyen-age/epee-longue', '2-moyen-age/bouclier-rond-orient'], 'melee', 1.91]
 ];
+// machines et véhicules créés (os des pièces mobiles : Wheel_*, Arm, Ram, Turret, Barrel, Rotor…) : animées ici par programme ; taille réelle (mètres) × 1,42
+const MACHINES = [['m_catapulte', 'catapulte'], ['m_trebuchet', 'trebuchet'], ['m_canon', 'canon'], ['m_char_1940', 'char-1940'], ['m_char_moderne', 'char-moderne'], ['m_jeep', 'jeep'], ['m_char_antigrav', 'char-antigrav'], ['m_belier', 'belier']];
+const CLIPS_MACHINE = [{ nom: 'repos', machine: 1 }, { nom: 'Walk_Loop', machine: 1, roues: 1 }, { nom: 'tir', machine: 1, tir: 1 }, { nom: 'repos2', machine: 1 }];
+const AXE_X = new THREE.Vector3(1, 0, 0), AXE_Y = new THREE.Vector3(0, 1, 0);
+function poserMachine(sc, cs, t, duree) {
+  const k = Math.max(0, Math.sin(t / duree * Math.PI * 2)), q = new THREE.Quaternion();
+  sc.traverse(o => {
+    if (!o.isBone) return; if (!o.userData.repos) { o.userData.repos = o.quaternion.clone(); o.userData.reposP = o.position.clone(); }
+    o.quaternion.copy(o.userData.repos); o.position.copy(o.userData.reposP); const n = o.name;
+    if (/^Wheel|^Track/.test(n) && cs.roues) o.quaternion.multiply(q.setFromAxisAngle(AXE_X, t * 5));
+    if (/^Arm$/.test(n) && cs.tir) o.quaternion.multiply(q.setFromAxisAngle(AXE_X, -1.4 * k));
+    if (/^Weight$/.test(n) && cs.tir) o.quaternion.multiply(q.setFromAxisAngle(AXE_X, 0.6 * k));
+    if (/^Ram$/.test(n) && cs.tir) o.position.z += 0.5 * k;
+    if (/^Barrel$/.test(n) && cs.tir) o.position.z -= 0.18 * Math.pow(k, 4);
+    if (/^Turret/.test(n)) o.quaternion.multiply(q.setFromAxisAngle(AXE_Y, 0.25 * Math.sin(t * 0.9)));
+    if (/^Rotor|^TailRotor/.test(n)) o.quaternion.multiply(q.setFromAxisAngle(AXE_Y, t * 25));
+  });
+  sc.updateMatrixWorld(true);
+}
+// montures créées (os au repos sans rotation : on tourne autour des axes du monde) : pas, galop, repos, faits par programme
+const PATTES = { Thigh_L: ['ar', 0], Thigh_R: ['ar', 0.5], FrontUpper_L: ['av', 0.25], FrontUpper_R: ['av', 0.75] };
+const PATTES_GALOP = { Thigh_L: 0, Thigh_R: 0.1, FrontUpper_L: 0.5, FrontUpper_R: 0.6 };
+function poserMonture(sc, allure, t, duree) {
+  const q = new THREE.Quaternion(), ph = t / duree * Math.PI * 2, galop = allure === 'galop', pas = allure === 'pas', A = galop ? 0.62 : pas ? 0.32 : 0, B = galop ? 0.9 : 0.55;
+  sc.traverse(o => {
+    if (!o.isBone) return; if (!o.userData.repos) { o.userData.repos = o.quaternion.clone(); o.userData.reposP = o.position.clone(); }
+    o.quaternion.copy(o.userData.repos); o.position.copy(o.userData.reposP); const n = o.name, rx = a => o.quaternion.multiply(q.setFromAxisAngle(AXE_X, a)), ry = a => o.quaternion.multiply(q.setFromAxisAngle(AXE_Y, a));
+    if (PATTES[n] && A) { const d = (galop ? PATTES_GALOP[n] : PATTES[n][1]) * Math.PI * 2; rx(-A * Math.sin(ph + d)); }
+    const bas = n.match(/^(Shin|FrontLower)_(L|R)$/);
+    if (bas && A) { const haut = (bas[1] === 'Shin' ? 'Thigh_' : 'FrontUpper_') + bas[2], d = (galop ? PATTES_GALOP[haut] : PATTES[haut][1]) * Math.PI * 2, plie = B * Math.max(0, Math.sin(ph + d + Math.PI / 2)); rx(bas[1] === 'Shin' ? -plie : plie); }
+    if (n === 'Pelvis') o.position.y += A ? (galop ? 0.07 : 0.025) * Math.abs(Math.sin(ph * (galop ? 1 : 2))) : 0.01 * Math.sin(ph);
+    if (n === 'Spine1' && galop) rx(0.08 * Math.sin(ph));
+    if (n === 'Neck1') rx(A ? (galop ? 0.14 : 0.07) * Math.sin(ph * (galop ? 1 : 2)) : 0.05 * Math.sin(ph) + 0.04);
+    if (n === 'Tail1') ry(0.18 * Math.sin(ph * 0.5 + 1));
+    if (n === 'Trunk1') rx(0.15 * Math.sin(ph));
+  });
+  sc.updateMatrixWorld(true);
+}
 const typeArme = n => /bouclier|scutum|chimalli/.test(n) ? 'bouclier' : /arc-/.test(n) ? 'arc' : /fusil|mousquet|arquebuse|carabine|canon|pistolet|revolver|arbalete/.test(n) ? 'fusil' : 'lame';
 const TYPES = {
   villageois: { parties: [{ fichier: 'tenues/Male_Peasant.gltf', teinte: /Body/ }, TETE, { fichier: 'base/Hair_SimpleParted.gltf' }, { fichier: 'base/Eyebrows_Regular.gltf' }], acc: [], clips: ['Idle_Loop', 'Walk_Loop', 'Interact', 'Fixing_Kneeling'], cible: 2200 },
@@ -126,7 +166,7 @@ async function cuire(nom) {
   const parties = T.monture ? [Object.assign({ monture: true }, T.monture)].concat(T.parties) : T.parties;
   for (const p of parties) {
     const g = await charger(p.fichier);
-    if (p.monture) { const b0 = new THREE.Box3().setFromObject(g.scene); g.scene.scale.setScalar(p.hauteur / (b0.max.y - b0.min.y)); g.scene.userData.monture = true; monture = { scene: g.scene, anims: g.animations }; }
+    if (p.monture) { const b0 = new THREE.Box3().setFromObject(g.scene); if (p.hauteur) g.scene.scale.setScalar(p.hauteur / (b0.max.y - b0.min.y)); g.scene.userData.monture = true; monture = { scene: g.scene, anims: g.animations }; }
     else if (monture) g.scene.userData.cavalier = true;
     scenes.push(g.scene); g.scene.updateMatrixWorld(true);
     if (g.scene.getObjectByName(nomMx('Hips'))) {
@@ -160,7 +200,7 @@ async function cuire(nom) {
         let t = teinte; if (masque && UV) { const mx = Math.min(255, Math.max(0, Math.floor(fr(u) * 256))), my = Math.min(255, Math.max(0, Math.floor(fr(w) * 256))); t = masque[(my * 256 + mx) * 4] > 127 ? 1 : 0; }
         vu.teinte.push(t); vu.lum.push(0); vu.ref.push([o, i]);
       }
-      const d0 = vu.idx.length; for (const i of tri) vu.idx.push(base + i); vu.parts.push([d0, vu.idx.length, !!p.monture]);
+      const d0 = vu.idx.length; for (const i of tri) vu.idx.push(base + i); vu.parts.push([d0, vu.idx.length, !!p.monture && !!p.hauteur]);
     });
   }
   // accessoires : couleur peinte dans la case palette (en bas à droite), rattachés à un os
@@ -225,7 +265,9 @@ async function cuire(nom) {
   if (monture && T.parties.length) {
     const dos = monture.scene.getObjectByName(T.monture.os || 'Torso'), pDos = new THREE.Vector3().setFromMatrixPosition(dos.matrixWorld), qDos = new THREE.Quaternion(); dos.matrixWorld.decompose(new THREE.Vector3(), qDos, new THREE.Vector3());
     const assis = clipDe(T.monture.assis || 'Sitting_Idle_Loop'), m0 = mixers[scenes.findIndex(sc => sc.userData.cavalier)], sc0 = scenes.find(sc => sc.userData.cavalier);
-    m0.clipAction(assis).play(); m0.setTime(0); sc0.updateMatrixWorld(true); const bassin = new THREE.Vector3().setFromMatrixPosition(sc0.getObjectByName('pelvis').matrixWorld); m0.stopAllAction();
+    let bassin;
+    if (sc0.userData.mixamo) { SRC.mixer.stopAllAction(); SRC.mixer.clipAction(assis).play(); SRC.mixer.setTime(0); recibler(sc0); sc0.updateMatrixWorld(true); bassin = new THREE.Vector3().setFromMatrixPosition(sc0.getObjectByName(nomMx('Hips')).matrixWorld); SRC.mixer.stopAllAction(); }
+    else { m0.clipAction(assis).play(); m0.setTime(0); sc0.updateMatrixWorld(true); bassin = new THREE.Vector3().setFromMatrixPosition(sc0.getObjectByName('pelvis').matrixWorld); m0.stopAllAction(); }
     const haut = T.monture.selle || 0.2, pos = new THREE.Vector3(pDos.x - bassin.x, pDos.y + haut - bassin.y, pDos.z - bassin.z + (T.monture.avance || 0));
     selle = { dos, decal: pos.clone().sub(pDos), qRepos: qDos.clone().invert() };
   }
@@ -236,13 +278,15 @@ async function cuire(nom) {
   };
   for (const spec of T.clips) {
     const cs = typeof spec === 'string' ? { nom: spec, humain: spec } : spec, cH = cs.humain ? clipDe(cs.humain) : null, cM = cs.monture ? clipDe(cs.monture, monture.anims) : null, cHaut = cs.haut ? partie(clipDe(cs.haut), true) : null;
-    const duree = cM ? cM.duration : cH.duration, nb = Math.max(2, Math.round(duree * IPS)), debut = images.length; clips.push({ nom: cs.nom, debut, nb, ips: IPS });
+    const duree = cs.machine ? 1.6 : cs.allure ? (cs.allure === 'galop' ? 1.2 : cs.allure === 'pas' ? 1.2 : 2.0) : cM ? cM.duration : cH.duration, nb = Math.max(2, Math.round(duree * IPS)), debut = images.length; clips.push({ nom: cs.nom, debut, nb, ips: IPS });
     SRC.mixer.stopAllAction(); if (cH) { SRC.mixer.clipAction(cHaut ? partie(cH, false) : cH).play(); if (cHaut) SRC.mixer.clipAction(cHaut).play(); }
     mixers.forEach((m, k) => { m.stopAllAction(); if (scenes[k].userData.monture) { if (cM) m.clipAction(cM).play(); return; } if (!cH || scenes[k].userData.mixamo) return; m.clipAction(cHaut ? partie(cH, false) : cH).play(); if (cHaut) m.clipAction(cHaut).play(); });
     for (let f = 0; f < nb; f++) {
       for (const m of mixers) m.setTime(f / IPS);
+      if (cs.machine) for (const sc of scenes) poserMachine(sc, cs, f / IPS, duree);
+      if (cs.allure && monture) poserMonture(monture.scene, cs.allure, f / IPS, duree);
+      placer(); for (const sc of scenes) sc.updateMatrixWorld(true);
       SRC.mixer.setTime(f / IPS); for (const sc of scenes) if (sc.userData.mixamo) recibler(sc);
-      placer();
       for (const s of scenes) s.updateMatrixWorld(true);
       const pos = new Float32Array(n * 3), v = new THREE.Vector3(), M = new THREE.Matrix4();
       for (let k = 0; k < n; k++) {
@@ -256,7 +300,7 @@ async function cuire(nom) {
     for (const m of mixers) m.stopAllAction();
   }
   // taille : hauteur du personnage au repos (première image) ramenée à HAUTEUR
-  { let lo = 1e9, hi = -1e9; const p = images[0]; for (let k = 1; k < p.length; k += 3) { lo = Math.min(lo, p[k]); hi = Math.max(hi, p[k]); } echelle = (T.hauteur || HAUTEUR) / (hi - lo); }
+  { let lo = 1e9, hi = -1e9; const p = images[0]; for (let k = 1; k < p.length; k += 3) { lo = Math.min(lo, p[k]); hi = Math.max(hi, p[k]); } echelle = T.metres || (T.hauteur || HAUTEUR) / (hi - lo); }
   // normales recalculées à chaque image
   const F = images.length, posH = new Uint16Array(n * F * 4), norB = new Uint8Array(n * F * 4), g = new THREE.BufferGeometry(); g.setIndex(new THREE.BufferAttribute(index, 1));
   for (let f = 0; f < F; f++) {
@@ -274,6 +318,14 @@ async function cuire(nom) {
   const b64 = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
   return { meta, bin: b64(bin), atlas: (() => { const c = document.createElement('canvas'); c.width = c.height = 1024; c.getContext('2d').drawImage(atlas, 0, 0, 1024, 1024); return c.toDataURL('image/jpeg', 0.9).split(',')[1]; })() };
 }
+const CAVALIERS = [['k_grec', 'cheval', 'hoplite-grec', ['2-moyen-age/lance-cavalerie']], ['k_egyptien', 'cheval', 'archer-egyptien', ['1-antiquite/khopesh']], ['k_celte', 'cheval', 'guerrier-celte', ['1-antiquite/epee-celte', '1-antiquite/bouclier-celte']],
+  ['k_elephant', 'elephant-de-guerre', 'immortel-perse', ['1-antiquite/lance-dory']], ['k_cataphracte', 'cheval-de-guerre', 'cataphracte', ['2-moyen-age/lance-cavalerie']], ['k_sarrasin', 'chameau', 'guerrier-sarrasin', ['2-moyen-age/cimeterre']],
+  ['k_viking', 'cheval', 'viking', ['2-moyen-age/hache-viking', '2-moyen-age/bouclier-viking']], ['k_chevalier', 'cheval-de-guerre', 'chevalier', ['2-moyen-age/lance-cavalerie', '2-moyen-age/bouclier-ecu']],
+  ['k_hussard', 'cheval', 'general-empire', ['2-moyen-age/sabre']], ['k_janissaire', 'chameau', 'janissaire', ['2-moyen-age/cimeterre']], ['k_cowboy', 'cheval', 'cowboy', ['4-industrielle/carabine']], ['k_dragon', 'cheval-blanc', 'mousquetaire', ['3-epoque-moderne/rapiere']]];
+for (const [nom, mont, id, armes] of CAVALIERS) TYPES[nom] = { monture: { fichier: `crees/${mont}/${mont}.glb`, hauteur: 0, os: 'Saddle', selle: 0.02, masque: `crees/${mont}/textures/${mont}_couleur_joueur.png` },
+  parties: [{ fichier: `crees/${id}/${id}.glb`, masque: `crees/${id}/textures/${id}_couleur_joueur.png` }], acc: [], armes: armes.map(a => [a, typeArme(a)]), cible: 3600, metres: 1.42,
+  clips: [{ nom: 'repos', humain: 'Sitting_Idle_Loop', allure: 'repos' }, { nom: 'Walk_Loop', humain: 'Sitting_Idle_Loop', allure: 'pas' }, { nom: 'charge', humain: 'Sitting_Idle_Loop', haut: 'Sword_Attack', allure: 'galop' }, { nom: 'pas', humain: 'Sitting_Idle_Loop', allure: 'pas' }] };
+for (const [nom, id] of MACHINES) TYPES[nom] = { parties: [{ fichier: `crees/${id}/${id}.glb`, masque: `crees/${id}/textures/${id}_couleur_joueur.png` }], acc: [], clips: CLIPS_MACHINE, cible: 3000, metres: 1.42 };
 for (const [nom, id, armes, anims, taille] of CREES) TYPES[nom] = { parties: [{ fichier: `crees/${id}/${id}.glb`, masque: `crees/${id}/textures/${id}_couleur_joueur.png` }], acc: [], armes: armes.map(a => Array.isArray(a) ? [a[0], typeArme(a[0]), a[1]] : [a, typeArme(a)]), clips: ANIMS[anims], cible: 2400, hauteur: taille ? HAUTEUR * taille / 1.9 : undefined };
 window.cuire = cuire; window.TYPES = Object.keys(TYPES); document.title = 'pret';
 </script></body></html>
