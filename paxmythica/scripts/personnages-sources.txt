@@ -2,3 +2,16 @@
 itch https://quaternius.itch.io/universal-base-characters base gltf|standard
 itch https://quaternius.itch.io/modular-character-outfits-fantasy tenues gltf|standard
 itch https://quaternius.itch.io/universal-animation-library animations gltf|standard
+# fichiers retenus (glTF ; textures de couleur et de rugosité, réduites)
+garder animations Unreal-Godot/UAL1_Standard\.glb$
+garder tenues glTF.*/Outfits/(Male|Female)_(Peasant|Ranger)\.(gltf|bin)$
+garder tenues glTF.*/Outfits/T_(Peasant|Ranger|Regular_Male_Dark|Regular_Female_Dark)_(BaseColor|ORM)\.png$
+garder tenues Textures/(Peasant|Ranger)/T_(Peasant_2|Ranger_3)_BaseColor\.png$
+garder base Godot - UE/Superhero_Male_FullBody\.(gltf|bin)$
+garder base Godot - UE/T_Superhero_Male_(Dark|Roughness)\.png$
+garder base Textures/T_Superhero_Male_Ligh\.png$
+garder base Rigged to Head Bone/glTF.*/(Hair_Beard|Hair_SimpleParted|Hair_Buzzed|Hair_Long|Eyebrows_Regular)\.(gltf|bin)$
+garder base Rigged to Head Bone/glTF.*/T_Hair_(1|2)_BaseColor\.png$
+garder base (License|README|Readme)[^/]*\.txt$
+garder tenues (License|README|Readme)[^/]*\.txt$
+garder animations (License|README|Readme)[^/]*\.txt$

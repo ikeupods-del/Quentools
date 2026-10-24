@@ -37,8 +37,20 @@ async function itch(url, nom, filtre) {
     fs.writeFileSync(path.join(DOSSIER, nom + '-' + f.id + '.contenu.txt'), liste); journal.push(`  ${f.nom} : ${z.length} octets, ${liste.split('\n').length - 1} fichiers → /tmp/paquets/${nom}`);
   }
 }
+// « garder nom motif » : copie les fichiers retenus d'un paquet dans ressources-catalogue/personnages/sources/<nom>/ (images réduites à 1024 px)
+function garder(nom, motif) {
+  const src = path.join('/tmp/paquets', nom), dest = path.join(DOSSIER, 'sources', nom); if (!fs.existsSync(src)) { journal.push(`garder ${nom} : paquet absent`); return; }
+  fs.mkdirSync(dest, { recursive: true }); const re = new RegExp(motif, 'i'); let n = 0;
+  for (const f of execSync(`find "${src}" -type f`).toString().split('\n').filter(Boolean)) {
+    if (!re.test(f.slice(src.length))) continue;
+    const cible = path.join(dest, path.basename(f)); fs.copyFileSync(f, cible); n++;
+    if (/\.png$/i.test(f)) try { execSync(`convert "${cible}" -resize "1024x1024>" "${cible}"`); } catch (e) { journal.push(`  réduction impossible : ${path.basename(f)}`); }
+  }
+  journal.push(`garder ${nom} /${motif}/ : ${n} fichiers`);
+}
 (async () => {
   for (const l of lignes) {
+    if (l.startsWith('garder ')) { const [, nom, motif] = l.split(/\s+/); garder(nom, motif); continue; }
     if (l.startsWith('itch ')) { const [, url, nom, filtre] = l.split(/\s+/); try { await itch(url, nom, filtre); } catch (e) { journal.push(`ERREUR itch ${url} : ${e.message}`); } continue; }
     const [url, nom0] = l.split(/\s+/), nom = nom0 || url.replace(/^https?:\/\//, '').replace(/[^a-z0-9]+/gi, '-').slice(0, 80);
     try {
