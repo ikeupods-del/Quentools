@@ -7,3 +7,5 @@ Commande : npx esbuild vendor/three-pax/entree.js --bundle --format=iife --minif
 Ressources graphiques (ressources/) — textures, ciels HDR et modèles sous licence CC0 1.0 (domaine public, usage commercial
 permis, sans attribution obligatoire) d'ambientCG (https://ambientcg.com) et Poly Haven (https://polyhaven.com) ;
 liste détaillée avec l'adresse de chaque élément dans ressources/LICENCES.json.
+Personnages animés (ressources/personnages/) — corps, tenues, cheveux et animations de Quaternius (https://quaternius.com),
+licence CC0 1.0 ; assemblés, simplifiés et « cuits » (une image par pose) par scripts/personnages-cuisson.js.

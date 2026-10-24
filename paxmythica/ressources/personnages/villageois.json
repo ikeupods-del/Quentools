@@ -1,0 +1,1 @@
+{"nom":"villageois","sommets":1874,"triangles":2196,"images":132,"clips":[{"nom":"Idle_Loop","debut":0,"nb":30,"ips":12},{"nom":"Walk_Loop","debut":30,"nb":16,"ips":12},{"nom":"Interact","debut":46,"nb":24,"ips":12},{"nom":"Fixing_Kneeling","debut":70,"nb":62,"ips":12}],"decalages":[0,13176,28168,31916,2010860],"avant":{"sommets":18741,"triangles":19783},"erreur":0}

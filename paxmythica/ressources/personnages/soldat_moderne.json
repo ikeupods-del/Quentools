@@ -1,0 +1,1 @@
+{"nom":"soldat_moderne","sommets":2347,"triangles":2390,"images":74,"clips":[{"nom":"Idle_Loop","debut":0,"nb":30,"ips":12},{"nom":"Walk_Loop","debut":30,"nb":16,"ips":12},{"nom":"Pistol_Shoot","debut":46,"nb":8,"ips":12},{"nom":"Pistol_Idle_Loop","debut":54,"nb":20,"ips":12}],"decalages":[0,14340,33116,37812,1427236],"avant":{"sommets":32323,"triangles":29696},"erreur":0}

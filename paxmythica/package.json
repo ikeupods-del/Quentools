@@ -43,6 +43,7 @@
       "ressources/ciels/*.hdr",
       "ressources/feuillages/*.png",
       "ressources/jeu/*.glb",
+      "ressources/personnages/*",
       "ressources/modeles/sapin/textures/fir_tree_01_bark_diff_1k.jpg",
       "ressources/modeles/sapin/textures/fir_tree_01_bark_nor_gl_1k.jpg"
     ],

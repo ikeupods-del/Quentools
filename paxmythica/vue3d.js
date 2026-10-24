@@ -183,6 +183,37 @@
     for (const k in M) M[k].partage = true;
     return M;
   }
+  // ---------- personnages animés (Quaternius, CC0, préparés par scripts/personnages-cuisson.js) ----------
+  // chaque image de chaque animation est rangée dans une texture (une ligne par image, une colonne par sommet) :
+  // la carte graphique lit la pose de chaque soldat selon son animation (aClip : première image, nombre d'images, vitesse, décalage)
+  const FOULES = ['villageois', 'villageoise', 'soldat_antique', 'soldat_medieval', 'soldat_industriel', 'soldat_moderne', 'soldat_futur', 'archer'];
+  function foule(meta, buf, img, uT) {
+    const n = meta.sommets, F = meta.images, D = meta.decalages;
+    const index = new Uint16Array(buf, D[0], meta.triangles * 3), uv = new Float32Array(buf, D[1], n * 2), at = new Uint8Array(buf, D[2], n * 2), pos = new Uint16Array(buf, D[3], n * F * 4), nor = new Uint8Array(buf, D[4], n * F * 4);
+    const tPos = new THREE.DataTexture(pos, n, F, THREE.RGBAFormat, THREE.HalfFloatType), tNor = new THREE.DataTexture(nor, n, F, THREE.RGBAFormat, THREE.UnsignedByteType); tPos.needsUpdate = tNor.needsUpdate = true;
+    const p0 = new Float32Array(n * 3); for (let k = 0; k < n; k++) for (let j = 0; j < 3; j++) p0[k * 3 + j] = THREE.DataUtils.fromHalfFloat(pos[k * 4 + j]);
+    const g = new THREE.BufferGeometry(); g.setIndex(new THREE.BufferAttribute(index, 1)); g.setAttribute('position', new THREE.BufferAttribute(p0, 3)); g.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); g.setAttribute('at', new THREE.BufferAttribute(at, 2, true)); g.computeBoundingSphere();
+    const tex = new THREE.Texture(img); tex.flipY = false; tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = 4; tex.needsUpdate = true;
+    const sommets = sh => {
+      sh.uniforms.tPos = { value: tPos }; sh.uniforms.tNor = { value: tNor }; sh.uniforms.uT = uT;
+      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform highp sampler2D tPos; uniform sampler2D tNor; uniform float uT; attribute vec4 aClip; attribute vec2 at; varying vec2 vAt; int i0f, i1f; float af;')
+        .replace('#include <beginnormal_vertex>', `{ float fr = aClip.w + uT * aClip.z, f0 = floor(fr); af = fr - f0; i0f = int(aClip.x + mod(f0, aClip.y)); i1f = int(aClip.x + mod(f0 + 1.0, aClip.y)); }
+vec3 objectNormal = normalize(mix(texelFetch(tNor, ivec2(gl_VertexID, i0f), 0).xyz, texelFetch(tNor, ivec2(gl_VertexID, i1f), 0).xyz, af) * 2.0 - 1.0);
+#ifdef USE_TANGENT
+vec3 objectTangent = vec3(tangent.xyz);
+#endif`)
+        .replace('#include <begin_vertex>', 'vec3 transformed = mix(texelFetch(tPos, ivec2(gl_VertexID, i0f), 0).xyz, texelFetch(tPos, ivec2(gl_VertexID, i1f), 0).xyz, af); vAt = at;');
+    };
+    const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.78, metalness: 0.0 }); mat.customProgramCacheKey = () => 'foule';
+    // parties aux couleurs du peuple : la teinte remplace la couleur en gardant le modelé ; parties lumineuses (visières du futur)
+    mat.onBeforeCompile = sh => { sommets(sh); sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying vec2 vAt;')
+      .replace('#include <color_fragment>', '#ifdef USE_COLOR\nfloat lumC = dot(diffuseColor.rgb, vec3(0.3, 0.55, 0.15)); diffuseColor.rgb = mix(diffuseColor.rgb, vColor * min(1.0, lumC * 1.7 + 0.08), vAt.x);\n#endif')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * vAt.y * 2.5;'); };
+    const ombre = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking }); ombre.customProgramCacheKey = () => 'foule-ombre';
+    ombre.onBeforeCompile = sh => { sommets(sh); sh.vertexShader = sh.vertexShader.replace('vec3 objectNormal = normalize(', 'vec3 nFoule = normalize('); };
+    const clips = {}; for (const c of meta.clips) clips[c.nom] = c;
+    return { meta, geo: g, mat, ombre, clips };
+  }
   // ---------- figurines des armées : un équipement par époque, membres articulés animés par la carte graphique ----------
   // membres : 1 et 2 jambes (paires diagonales pour le cheval), 3 bras armé, 4 bras du bouclier ou de l'arc, 6 encolure du cheval
   // matières : 99 = aux couleurs du peuple, 30 = métal (brillant), 6 = lumineux ; les autres parties gardent leur couleur
@@ -724,6 +755,10 @@ void main() {
         // modèles de jeu (rochers, souches, accessoires)
         this.glb = {};
         await Promise.all(['rocher1', 'rocher2', 'rocher3', 'rocher4', 'rochers-mousse', 'souche', 'tronc-mort', 'tonneau', 'tonneaux', 'caisse', 'jarre', 'panier', 'canon', 'navire', 'statue-cheval', 'statue-gothique'].map(n => PM.chargerModele(`ressources/jeu/${n}.glb`).then(g => { this.glb[n] = g.scene; }).catch(() => null)));
+        // personnages animés (facultatifs : sans eux, les figurines dessinées par le programme restent)
+        this.foules = {};
+        await Promise.all(FOULES.map(async nom => { try { const [m, b, img] = await Promise.all([PM.lireFichier(`ressources/personnages/${nom}.json`), PM.lireFichier(`ressources/personnages/${nom}.bin`), PM.chargerImage(`ressources/personnages/${nom}.jpg`)]); this.foules[nom] = foule(JSON.parse(new TextDecoder().decode(m)), b, img, this.U.uT); } catch (e) { /* personnage absent */ } }));
+        if (this.P) this.P.ep = '';
         this.U.uPret.value = 1; this.pret = true;
         if (this.j) this.habiller();
       } catch (e) { console.warn('Pax Mythica : ressources graphiques indisponibles —', e.message); this.pret = false; }
@@ -1229,13 +1264,13 @@ void main() {
     construireVie() {
       const E = this.j.etat, C = this.j.carte, ep = this.epoque, rnd = PM.aleatoire(4021);
       const H = this.habitants = [], T = this.troupeaux = [], O = this.vols = [];
-      const habits = [0xd8c8a8, 0xb89a70, 0x8a6a48, 0xc8b898, 0x9a8a6a, 0xe0d4bc, 0x7a6a5a, 0xa8885a];
+      const habits = [0xd8c8a8, 0xb89a70, 0x8a6a48, 0xc8b898, 0x9a8a6a, 0xe0d4bc, 0x7a6a5a, 0xa8885a, 0x6a7a9a, 0x9a5a4a, 0x5a7a5a, 0x8a4a5a];
       for (const P of E.provinces) {
         if (P.owner < 0) continue;
         const c = C.provinces[P.id], N = E.nations[P.owner], cap = N.capitale === P.id, Rp = 3 + P.dev * 0.7 + (cap ? 2.2 : 0), R0 = Rp + (cap ? 4.8 : 1.4), r2 = PM.aleatoire(P.id * 131 + 7);
         // habitants : vont et viennent autour de la place
         for (let i = 0, n = 3 + P.dev * 2 + (cap ? 6 : 0); i < n; i++)
-          H.push({ x: c.lx, z: c.ly, r: R0 + (r2() - 0.5) * 1.2, a0: r2() * 6.283, amp: 0.4 + r2() * 0.9, w: 0.08 + r2() * 0.1, ph: r2() * 6.283, coul: habits[Math.floor(r2() * habits.length)] });
+          H.push({ x: c.lx, z: c.ly, r: R0 + (r2() - 0.5) * 1.2, a0: r2() * 6.283, amp: 0.4 + r2() * 0.9, w: 0.08 + r2() * 0.1, ph: r2() * 6.283, coul: habits[Math.floor(r2() * habits.length)], femme: r2() < 0.45 });
         // moutons (avant l'ère moderne) dans les prés des fermes
         if (P.bat.ferme && ep !== 'moderne' && ep !== 'futur') for (let i = 0; i < 7; i++) {
           const a = 2.3 + (r2() - 0.5) * 1.4, r = 27 + r2() * 7, x = c.lx + Math.cos(a) * r, z = c.ly + Math.sin(a) * r;
@@ -1278,17 +1313,19 @@ void main() {
     animerVie() {
       if (!this.V || !this.habitants) return;
       const V = this.V, t = this.temps / 1000, d = this.cam.d, o = new THREE.Object3D(), col = new THREE.Color();
-      const poser = (m, i, x, y, z, rot, s, couleur, mode, ph, roulis) => { o.position.set(x, y, z); o.rotation.set(0, rot, roulis || 0); o.scale.setScalar(s); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, col.set(couleur)); const an = m.geometry.attributes.aAnim.array; an[i * 2] = ph; an[i * 2 + 1] = mode; };
-      const fin = (m, n) => { m.count = n; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; m.geometry.attributes.aAnim.needsUpdate = true; };
+      const poser = (m, i, x, y, z, rot, s, couleur, mode, ph, roulis) => { o.position.set(x, y, z); o.rotation.set(0, rot, roulis || 0); o.scale.setScalar(s); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, col.set(couleur)); this.animer(m, i, mode, ph); };
+      const fin = (m, n) => { m.count = n; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; (m.geometry.attributes.aAnim || m.geometry.attributes.aClip).needsUpdate = true; };
       // habitants et troupeaux : seulement de près (invisibles de loin, inutile de les calculer)
-      let n = 0;
+      let n = 0, nf = 0;
       if (d < 420) for (const h of this.habitants) {
-        if (n >= 3500) break;
+        if (n + nf >= 3500) break;
         const u = Math.sin(t * h.w + h.ph), a = h.a0 + h.amp * u, v = h.amp * h.w * Math.cos(t * h.w + h.ph), x = h.x + Math.cos(a) * h.r, z = h.z + Math.sin(a) * h.r;
         const rot = Math.atan2(-Math.sin(a) * Math.sign(v || 1), Math.cos(a) * Math.sign(v || 1));
-        poser(V.villageois, n++, x, this.sol(x, z), z, rot, 0.92, h.coul, Math.abs(v) * h.r > 0.12 ? 1 : 0, h.ph * 3);
+        const marche = Math.abs(v) * h.r > 0.12;
+        if (h.femme) poser(V.villageoise, nf++, x, this.sol(x, z), z, rot, 0.92, h.coul, marche ? 1 : 0, h.ph * 3);
+        else poser(V.villageois, n++, x, this.sol(x, z), z, rot, 0.95, h.coul, marche ? 1 : 0, h.ph * 3);
       }
-      fin(V.villageois, n); n = 0;
+      fin(V.villageois, n); fin(V.villageoise, nf); n = 0;
       if (d < 420) for (const m of this.troupeaux) {
         const x = m.x + Math.sin(t * 0.03 + m.ph) * 1.6, z = m.z + Math.cos(t * 0.025 + m.ph * 1.3) * 1.6;
         poser(V.mouton, n++, x, this.sol(x, z), z, m.rot + Math.sin(t * 0.05 + m.ph) * 0.8, 1, 0xffffff, 0, m.ph);
@@ -1349,9 +1386,14 @@ vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, colo
       const mk = g => { g = g.clone(); g.setAttribute('aAnim', new THREE.InstancedBufferAttribute(new Float32Array(MAX * 2), 2).setUsage(THREE.DynamicDrawUsage));
         const m = new THREE.InstancedMesh(g, mat, MAX); m.setColorAt(0, new THREE.Color(1, 1, 1)); m.count = 0; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.castShadow = true; this.scene.add(m); return m; };
       const futur = ep === 'moderne' || ep === 'futur';
+      // personnage animé (s'il est chargé) : géométrie partagée, animation choisie par instance
+      const fo = this.foules || {}, mkF = nom => { const f = fo[nom]; if (!f) return null; const g = new THREE.BufferGeometry(); g.setIndex(f.geo.index); for (const k of ['position', 'uv', 'at']) g.setAttribute(k, f.geo.attributes[k]); g.boundingSphere = f.geo.boundingSphere;
+        g.setAttribute('aClip', new THREE.InstancedBufferAttribute(new Float32Array(MAX * 4), 4).setUsage(THREE.DynamicDrawUsage));
+        const m = new THREE.InstancedMesh(g, f.mat, MAX); m.customDepthMaterial = f.ombre; m.setColorAt(0, new THREE.Color(1, 1, 1)); m.count = 0; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.castShadow = true; m.userData.foule = f; this.scene.add(m); return m; };
       if (this.V) for (const k in this.V) { this.scene.remove(this.V[k]); this.V[k].geometry.dispose(); }
-      this.V = { villageois: mk(F.villageois), mouton: mk(F.mouton), oiseau: mk(F.oiseau) }; this.V.oiseau.castShadow = false;
-      this.P = { ep, inf: mk(F.inf), archer: mk(F.archer || F.inf), cav: mk(F.cav || M.char), siege: mk(F.siege || (futur ? M.char : M.engin)), mythe: mk(F.mythe), etendard: mk(M.etendard) };
+      this.V = { villageois: mkF('villageois') || mk(F.villageois), villageoise: mkF('villageoise') || mk(F.villageois), mouton: mk(F.mouton), oiseau: mk(F.oiseau) }; this.V.oiseau.castShadow = false;
+      const SOLDAT = 'soldat_' + ep, arcs = ep === 'antique' || ep === 'medieval';
+      this.P = { ep, inf: mkF(SOLDAT) || mk(F.inf), archer: (arcs ? mkF('archer') : mkF(SOLDAT)) || mk(F.archer || F.inf), cav: mk(F.cav || M.char), siege: mk(F.siege || (futur ? M.char : M.engin)), mythe: mk(F.mythe), etendard: mk(M.etendard) };
       // taille des créatures : un géant ou une machine domine la troupe
       this.P.echelleMythe = ep === 'antique' || ep === 'medieval' ? 2.2 : 1.6;
       return this.P;
@@ -1365,12 +1407,19 @@ vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, colo
       }
       return { x, z, dir };
     }
+    // pose d'une instance : 0 repos, 1 marche, 2 combat ; ph = décalage (radians) pour que les soldats ne bougent pas tous ensemble
+    animer(m, i, mode, ph) {
+      const f = m.userData.foule;
+      if (!f) { const an = m.geometry.attributes.aAnim.array; an[i * 2] = ph; an[i * 2 + 1] = mode; return; }
+      const C = f.meta.clips, c = mode === 1 ? (f.clips.Walk_Loop || C[1]) : mode === 2 ? C[2] : (Math.sin(ph * 7.1) > 0.6 && C[3] ? C[3] : C[0]);
+      const a = m.geometry.attributes.aClip.array; a[i * 4] = c.debut; a[i * 4 + 1] = c.nb; a[i * 4 + 2] = c.ips * (mode === 2 ? 1 : 0.92 + (ph % 1) * 0.16); a[i * 4 + 3] = (ph / 6.283) * c.nb;
+    }
     majArmees() {
       const E = this.j.etat, P = this.pieces(), o = new THREE.Object3D(), col = new THREE.Color(), t = this.temps / 1000;
       const n = {}; for (const k in P) if (P[k].isMesh) n[k] = 0;
       const rangs = {}, combats = new Set((this.j.anims || []).filter(a => a.type === 'bataille').map(a => a.prov));
       this.positions = [];
-      const ajouter = (k, x, y, z, rot, s, couleur, mode, ph) => { const i = n[k]++; if (i >= 3500) return; o.position.set(x, y, z); o.rotation.set(0, rot, 0); o.scale.setScalar(s); o.updateMatrix(); P[k].setMatrixAt(i, o.matrix); P[k].setColorAt(i, col.set(couleur)); const an = P[k].geometry.attributes.aAnim.array; an[i * 2] = ph; an[i * 2 + 1] = mode; };
+      const ajouter = (k, x, y, z, rot, s, couleur, mode, ph) => { const i = n[k]++; if (i >= 3500) return; o.position.set(x, y, z); o.rotation.set(0, rot, 0); o.scale.setScalar(s); o.updateMatrix(); P[k].setMatrixAt(i, o.matrix); P[k].setColorAt(i, col.set(couleur)); this.animer(P[k], i, mode, ph); };
       // formation en blocs : créatures et héros devant, puis fantassins, archers, cavaliers et machines ; [modèle, écart, profondeur, largeur maximale]
       const BLOCS = { mythe: ['mythe', 4.4, 4.8, 3], heros: ['inf', 2.2, 2.2, 2], inf: ['inf', 1.5, 1.75, 8], milice: ['inf', 1.5, 1.75, 8], archer: ['archer', 1.55, 1.85, 8], cav: ['cav', 2.3, 3.6, 5], siege: ['siege', 4.2, 4.8, 3] };
       for (const a of E.armees) {
@@ -1401,7 +1450,7 @@ vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, colo
         { const ex = pos.x + 2.6 * cos + 1.2 * sin, ez = pos.z - 2.6 * sin + 1.2 * cos; ajouter('etendard', ex, this.sol(ex, ez) + (marche ? Math.abs(Math.sin(t * 7)) * 0.2 : 0), ez, pos.dir + Math.sin(t * 2 + a.id) * 0.25, 1, coul, 0, 0); }
         this.positions.push({ id: a.id, x: pos.x, z: pos.z });
       }
-      for (const k in n) { const m = P[k]; m.count = Math.min(3500, n[k]); m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; m.geometry.attributes.aAnim.needsUpdate = true; }
+      for (const k in n) { const m = P[k]; m.count = Math.min(3500, n[k]); m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; (m.geometry.attributes.aAnim || m.geometry.attributes.aClip).needsUpdate = true; }
     }
     // ---------- caméra (avec inertie) ----------
     // inclinaison : rasante de près (on voit l'horizon et le ciel), plongeante de loin (vue de stratégie)

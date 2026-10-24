@@ -1,0 +1,1 @@
+{"nom":"villageoise","sommets":2107,"triangles":2184,"images":80,"clips":[{"nom":"Idle_Loop","debut":0,"nb":30,"ips":12},{"nom":"Walk_Loop","debut":30,"nb":16,"ips":12},{"nom":"Interact","debut":46,"nb":24,"ips":12},{"nom":"PickUp_Table","debut":70,"nb":10,"ips":12}],"decalages":[0,13104,29960,34176,1382656],"avant":{"sommets":23441,"triangles":23650},"erreur":0}

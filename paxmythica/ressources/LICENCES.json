@@ -412,5 +412,12 @@
   "source": "Poly Haven",
   "page": "https://polyhaven.com/a/wooden_ladder",
   "licence": "CC0 1.0"
+ },
+ "personnages/*": {
+  "id": "Universal Base Characters, Modular Character Outfits - Fantasy, Universal Animation Library",
+  "source": "Quaternius",
+  "page": "https://quaternius.com/packs/universalbasecharacters.html",
+  "licence": "CC0 1.0",
+  "note": "corps, tenues, cheveux et animations assemblés et simplifiés par scripts/personnages-cuisson.js ; casques, boucliers et armes dessinés pour le jeu"
  }
 }
