@@ -90,8 +90,8 @@
   // qualité : effets, ombres, herbe, finesse de l'image
   PM.QUALITES = {
     ultra: { nom: 'Ultra', ao: true, bloom: true, maquette: true, ombres: 4096, herbe: 1, finesse: 2, desc: 'Tous les effets, occlusion ambiante des volumes, image la plus fine.' },
-    haute: { nom: 'Haute', ao: false, bloom: true, maquette: true, ombres: 2048, herbe: 1, finesse: 2, desc: 'Halo lumineux, ombres fines, herbe, textures photographiques en pleine définition.' },
-    moyenne: { nom: 'Moyenne', ao: false, bloom: false, maquette: false, ombres: 1024, herbe: 0.5, finesse: 1.5, desc: 'Textures allégées, moins d’herbe et d’effets : pour un MacBook Air.' },
+    haute: { nom: 'Haute', ao: false, bloom: true, maquette: true, ombres: 2048, herbe: 1, finesse: 1.5, desc: 'Halo lumineux, ombres fines, herbe, textures photographiques en pleine définition.' },
+    moyenne: { nom: 'Moyenne', ao: false, bloom: false, maquette: false, ombres: 1024, herbe: 0.5, finesse: 1, desc: 'Textures allégées, moins d’herbe et d’effets : pour un MacBook Air.' },
     basse: { nom: 'Basse', ao: false, bloom: false, maquette: false, ombres: 0, herbe: 0, finesse: 1, desc: 'Pour un Mac ancien : sans ombres ni effets.' }
   };
   const lire = (k, d) => { try { return localStorage.getItem(k) || d; } catch (e) { return d; } };
