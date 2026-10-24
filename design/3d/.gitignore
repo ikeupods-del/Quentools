@@ -1,0 +1,7 @@
+# Régénérables : textures séparées, aperçus individuels et zip de livraison (tout est dans le zip)
+__pycache__/
+QuenTools-personnages-3D.zip
+sortie/personnages/*/*/textures/
+sortie/accessoires/*/*/textures/
+sortie/personnages/*/*/*.png
+sortie/accessoires/*/*/*.png

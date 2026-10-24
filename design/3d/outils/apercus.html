@@ -1,0 +1,34 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#8a96a3}</style>
+<script type="importmap">{"imports":{"three":"/three/build/three.module.js","three/addons/":"/three/examples/jsm/"}}</script></head><body>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+const r=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true,alpha:true});document.body.appendChild(r.domElement);
+r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.ACESFilmicToneMapping;
+const sc=new THREE.Scene();
+const pm=new THREE.PMREMGenerator(r);sc.environment=pm.fromScene(new RoomEnvironment(),0.04).texture;sc.environmentIntensity=0.6;
+const dl=new THREE.DirectionalLight(0xfff2dd,2.2);dl.position.set(2,4,3);sc.add(dl);sc.add(new THREE.HemisphereLight(0xdde8ff,0x554433,0.6));
+const cam=new THREE.PerspectiveCamera(30,1,0.01,50);
+let cur=null;
+window.rendre=async(url,mode,teinte,fond)=>{
+ if(cur){sc.remove(cur);}
+ const g=await new GLTFLoader().loadAsync(url);cur=g.scene;sc.add(cur);
+ sc.background=fond?new THREE.Color(fond):null;
+ let sk;cur.traverse(o=>{if(o.isMesh)sk=o;});
+ if(teinte){const mk=await new Promise(res=>{const i=new Image();i.onload=()=>res(i);i.src=url.replace(/[^/]+\.glb$/,'textures/'+url.split('/').pop().replace('.glb','_couleur_joueur.png'));});
+  const im=sk.material.map.image;const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d',{willReadFrequently:true});
+  x.drawImage(mk,0,0,c.width,c.height);const M=x.getImageData(0,0,c.width,c.height);x.drawImage(im,0,0);const D=x.getImageData(0,0,c.width,c.height);const t=new THREE.Color(teinte);
+  for(let i=0;i<D.data.length;i+=4){const k=M.data[i]/255;D.data[i]*=1-k+k*t.r;D.data[i+1]*=1-k+k*t.g;D.data[i+2]*=1-k+k*t.b;}
+  x.putImageData(D,0,0);const tx=new THREE.CanvasTexture(c);tx.flipY=false;tx.colorSpace=THREE.SRGBColorSpace;sk.material.map=tx;sk.material.needsUpdate=true;}
+ const box=new THREE.Box3().setFromObject(cur);const ctr=box.getCenter(new THREE.Vector3());const sz=box.getSize(new THREE.Vector3());
+ let vues;const W=mode==='portrait'?512:400,H=mode==='portrait'?512:(mode==='acc'?400:560);
+ if(mode==='portrait')vues=[[[0.55,1.75,1.05],[0,1.70,0],22]];
+ else if(mode==='acc'){const d=Math.max(sz.x,sz.y,sz.z)*2.2+0.3;vues=[[[0,0,1],null],[[1,0.5,1],null],[[1,0,0],null]].map(v=>{const n=new THREE.Vector3(...v[0]).normalize().multiplyScalar(d);return[[ctr.x+n.x,ctr.y+n.y,ctr.z+n.z],[ctr.x,ctr.y,ctr.z],30]});}
+ else{const d=5.0;vues=[[[0,1.05,d],[0,1.0,0],30],[[d*0.62,1.6,d*0.75],[0,1.0,0],30],[[d,1.05,0],[0,1.0,0],30],[[0,1.05,-d],[0,1.0,0],30]];}
+ r.setSize(W*vues.length,H);cam.aspect=W/H;cam.updateProjectionMatrix();r.setScissorTest(true);r.setClearColor(0,0);r.clear();
+ vues.forEach((v,i)=>{cam.fov=v[2];cam.updateProjectionMatrix();cam.position.set(...v[0]);cam.lookAt(...v[1]);r.setViewport(i*W,0,W,H);r.setScissor(i*W,0,W,H);r.render(sc,cam);});
+ return r.domElement.toDataURL('image/png');
+};
+window.PRET=true;
+</script></body></html>
