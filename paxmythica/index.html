@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; object-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' blob:; object-src 'none'">
 <title>Pax Mythica</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -55,20 +55,8 @@
 <script src="alliances.js"></script>
 <script src="ia-nations.js"></script>
 <script src="oracle.js"></script>
-<script src="vendor/three.min.js"></script>
-<script src="vendor/effets/CopyShader.js"></script>
-<script src="vendor/effets/SimplexNoise.js"></script>
-<script src="vendor/effets/SSAOShader.js"></script>
-<script src="vendor/effets/LuminosityHighPassShader.js"></script>
-<script src="vendor/effets/FXAAShader.js"></script>
-<script src="vendor/effets/HorizontalTiltShiftShader.js"></script>
-<script src="vendor/effets/VerticalTiltShiftShader.js"></script>
-<script src="vendor/effets/EffectComposer.js"></script>
-<script src="vendor/effets/MaskPass.js"></script>
-<script src="vendor/effets/RenderPass.js"></script>
-<script src="vendor/effets/ShaderPass.js"></script>
-<script src="vendor/effets/SSAOPass.js"></script>
-<script src="vendor/effets/UnrealBloomPass.js"></script>
+<script src="vendor/three-pax.min.js"></script>
+<script src="ressources3d.js"></script>
 <script src="packs-graphiques.js"></script>
 <script src="rendu.js"></script>
 <script src="vue3d.js"></script>

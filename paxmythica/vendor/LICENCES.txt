@@ -1,3 +1,9 @@
-three.js r128 (three-r128.min.js) — licence MIT, © 2010-2021 three.js authors, https://github.com/mrdoob/three.js
-Copie du fichier build/three.min.js du paquet npm « three@0.128.0 », hébergée ici pour ne dépendre d'aucun service externe.
-Effets visuels (vendor/effets/) — licence MIT, © 2010-2021 three.js authors : fichiers examples/js/postprocessing, examples/js/shaders et examples/js/math/SimplexNoise.js du même paquet npm « three@0.128.0 », copiés sans modification.
+three.js r180 (three-pax.min.js) — licence MIT, © 2010-2025 three.js authors, https://github.com/mrdoob/three.js
+Assemblage par esbuild (vendor/three-pax/entree.js) du paquet npm « three@0.180.0 » : moteur 3D et modules d'exemples
+(GLTFLoader, HDRLoader, EffectComposer, RenderPass, ShaderPass, OutputPass, UnrealBloomPass, GTAOPass, SMAAPass, FXAAPass,
+CSM, BufferGeometryUtils, SimplexNoise), hébergé ici pour ne dépendre d'aucun service externe.
+Commande : npx esbuild vendor/three-pax/entree.js --bundle --format=iife --minify --legal-comments=none --outfile=vendor/three-pax.min.js
+
+Ressources graphiques (ressources/) — textures, ciels HDR et modèles sous licence CC0 1.0 (domaine public, usage commercial
+permis, sans attribution obligatoire) d'ambientCG (https://ambientcg.com) et Poly Haven (https://polyhaven.com) ;
+liste détaillée avec l'adresse de chaque élément dans ressources/LICENCES.json.

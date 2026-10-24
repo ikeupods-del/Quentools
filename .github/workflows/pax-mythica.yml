@@ -40,7 +40,7 @@ jobs:
         run: npm run dist
       - name: Lancer l'application construite et l'essayer (dix ans de partie, carte, décret, sauvegarde)
         run: |
-          PAX_AUTOTEST="$PWD/autotest.json" "dist/mac-arm64/Pax Mythica.app/Contents/MacOS/Pax Mythica" || true
+          PAX_AUTOTEST="$PWD/autotest.json" PAX_CAPTURES="$PWD/captures-mac" "dist/mac-arm64/Pax Mythica.app/Contents/MacOS/Pax Mythica" || true
           cat autotest.json
           node -e '
             const r = require("./autotest.json"), ko = [];
@@ -58,12 +58,27 @@ jobs:
       - name: Contrôler que tous les fichiers du jeu sont dans l'application
         run: |
           npx --yes @electron/asar list "dist/mac-arm64/Pax Mythica.app/Contents/Resources/app.asar" > contenu.txt
-          for f in $(node -p "require('./package.json').build.files.join(' ')"); do grep -q "/$f$" contenu.txt || { echo "Fichier absent de l'application : $f"; exit 1; }; done
+          node -e '
+            const liste = require("fs").readFileSync("contenu.txt", "utf8").split("\n"), ko = [];
+            for (const f of require("./package.json").build.files) {
+              const re = new RegExp("/" + f.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*\*\//g, "(.*/)?").replace(/\*/g, "[^/]*") + "$");
+              if (!liste.some(l => re.test(l))) ko.push(f);
+            }
+            if (ko.length) { console.log("Fichiers absents de l application : " + ko.join(", ")); process.exit(1); }'
+
           for f in $(grep -o 'src="[^"]*\.js"' index.html | sed 's/src="//;s/"//'); do node -e "process.exit(require('./package.json').build.files.includes('$f') ? 0 : 1)" || { echo "Script de index.html absent de build.files : $f"; exit 1; }; done
       - name: Contrôler que l'application tourne sur puce Apple
         run: |
           a=$(lipo -archs "dist/mac-arm64/Pax Mythica.app/Contents/MacOS/Pax Mythica")
           echo "Architectures : $a"; case " $a " in *" arm64 "*) ;; *) exit 1;; esac
+      - name: Enregistrer les captures de la vue 3D faites sur le Mac
+        working-directory: .
+        run: |
+          [ -d paxmythica/captures-mac ] || exit 0
+          git config user.name "pax-bot"; git config user.email "pax-bot@users.noreply.github.com"
+          git add paxmythica/captures-mac
+          git commit -m "Pax Mythica : captures de la vue 3D sur Mac [skip ci]" || exit 0
+          git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}" || true
       - uses: actions/upload-artifact@v4
         with:
           name: Pax-Mythica-mac

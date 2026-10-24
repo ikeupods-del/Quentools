@@ -1,0 +1,77 @@
+{
+ "rocher1": {
+  "avant": 66122,
+  "apres": 50122,
+  "octets": 2279968
+ },
+ "rocher2": {
+  "avant": 97964,
+  "apres": 1593,
+  "octets": 284484
+ },
+ "rocher3": {
+  "avant": 14844,
+  "apres": 1198,
+  "octets": 188512
+ },
+ "rocher4": {
+  "avant": 12416,
+  "apres": 1200,
+  "octets": 176152
+ },
+ "rochers-mousse": {
+  "avant": 63127,
+  "apres": 2400,
+  "octets": 196404
+ },
+ "souche": {
+  "avant": 41046,
+  "apres": 1200,
+  "octets": 304480
+ },
+ "tronc-mort": {
+  "avant": 83128,
+  "apres": 1798,
+  "octets": 295256
+ },
+ "tonneau": {
+  "avant": 2682,
+  "apres": 500,
+  "octets": 74840
+ },
+ "tonneaux": {
+  "avant": 33142,
+  "apres": 4588,
+  "octets": 750456
+ },
+ "caisse": {
+  "avant": 6576,
+  "apres": 454,
+  "octets": 70584
+ },
+ "jarre": {
+  "avant": 3592,
+  "apres": 500,
+  "octets": 56456
+ },
+ "panier": {
+  "avant": 22276,
+  "apres": 354,
+  "octets": 65220
+ },
+ "bouclier": {
+  "avant": 10306,
+  "apres": 399,
+  "octets": 103724
+ },
+ "canon": {
+  "avant": 41444,
+  "apres": 1405,
+  "octets": 270020
+ },
+ "navire": {
+  "avant": 69162,
+  "apres": 13049,
+  "octets": 2958152
+ }
+}

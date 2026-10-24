@@ -11,7 +11,7 @@ let ko = 0, n = 0;
 const ok = (c, m) => { n++; if (!c) { ko++; console.log('✗ ' + m); } };
 
 (async () => {
-  const b = await pw.chromium.launch();
+  const b = await pw.chromium.launch({ args: ['--allow-file-access-from-files'] }); // ressources graphiques lues depuis le disque
   const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
   const erreurs = []; p.on('console', m => { if (m.type() === 'error' || (m.type() === 'warning' && /THREE/.test(m.text()))) erreurs.push(m.text()); }); p.on('pageerror', e => erreurs.push(e.message));
   const ev = (f, x) => p.evaluate(f, x);
