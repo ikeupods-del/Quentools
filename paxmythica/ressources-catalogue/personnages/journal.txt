@@ -1,3 +1,4 @@
-ERREUR gdrive https://drive.google.com/drive/folders/1uJ3N5HfB7jKTseJUNQr3N4YaN0UuEtHk : Command failed: gdown --folder "https://drive.google.com/drive/folders/1uJ3N5HfB7jKTseJUNQr3N4YaN0UuEtHk" -O "/tmp/paquets/animaux" --quiet
+gdrive https://drive.google.com/drive/folders/1uJ3N5HfB7jKTseJUNQr3N4YaN0UuEtHk : téléchargement incomplet (1)
+gdrive https://drive.google.com/drive/folders/1uJ3N5HfB7jKTseJUNQr3N4YaN0UuEtHk → animaux : 0 fichiers
 garder animaux /(glTF|gltf|GLTF)/.*\.(gltf|glb|bin|png|jpg)$/ : 0 fichiers
 garder animaux /(License|README|Readme)[^/]*\.txt$/ : 0 fichiers
