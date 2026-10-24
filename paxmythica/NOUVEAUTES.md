@@ -1,5 +1,14 @@
 # Nouveautés de Pax Mythica
 
+## 1.3.0
+- Vrais personnages animés : corps, visages et tenues détaillés, qui marchent, montent la garde, frappent à l’épée, tirent à l’arc ou au fusil, chacun à son rythme.
+- Un équipement par époque : hoplites à casque corinthien et bouclier rond, chevaliers en heaume, archers à capuche, fantassins en shako, soldats modernes casqués, soldats du futur à visière lumineuse ; tuniques, capes et boucliers aux couleurs du peuple.
+- Cavaliers sur de vrais chevaux qui trottent et galopent, le cavalier frappant pendant la charge (Antiquité, Moyen Âge, ère industrielle).
+- Villages animés par des villageois et des villageoises qui vont, viennent, discutent et travaillent ; moutons et vaches dans les prés.
+- Poussière soulevée par les armées en marche, nuages et étincelles au cœur des batailles.
+- Nouvelles maisons grecques : toit-terrasse avec escalier et pergola couverte de vigne, maison à étage avec balcon.
+- Frontières en ruban fin aux couleurs du peuple, forêts plus denses, rivières plus naturelles.
+
 ## 1.2.0
 - Soldats propres à chaque époque : hoplites à cimier et bouclier rond, chevaliers en cotte de mailles et heaume, fantassins de ligne en shako, soldats modernes casqués, soldats du futur à visière lumineuse ; archers, cavaliers et canons de campagne.
 - Les soldats bougent : ils marchent au pas, frappent et lèvent le bouclier pendant les batailles ; les chevaux trottent et hochent la tête.

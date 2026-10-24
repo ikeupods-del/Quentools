@@ -100,10 +100,10 @@
       maison_grecs4: fusion([socle(3.4, 3.4), [B(3.4, 2.4, 3.4), pierre], ...[[0, 1.68, 3.5, 0.16], [0, -1.68, 3.5, 0.16]].map(([x, z, w, d]) => [B(w, 0.42, d, x, 2.4, z), pierre]), ...[[1.68, 0], [-1.68, 0]].map(([x, z]) => [B(0.16, 0.42, 3.5, x, 2.4, z), pierre]),
         ...[0, 1, 2, 3, 4, 5].map(k => [B(0.75, 0.4 * (k + 1), 0.42, 2.12, 0, -1.25 + k * 0.42), 0xa8a294, MAT.pierre]), ...facade(3.4, 3.4, 1.3, [-1.05, 1.05]),
         ...[[-1.25, 2.85], [1.25, 2.85]].map(([x, z]) => [Cy(0.07, 0.08, 2.1, 6, x, 0, z), bois, MAT.bois]), ...[1.75, 2.85].map(z => [B(2.9, 0.09, 0.09, 0, 2.05, z), bois, MAT.bois]), ...[-1, -0.33, 0.33, 1].map(x => [B(0.07, 0.07, 1.4, x * 1.3, 2.14, 2.3), bois, MAT.bois]),
-        ...[[-0.9, 2.3], [0.1, 2.5], [0.95, 2.2], [-0.3, 2.0]].map(([x, z], k) => [new THREE.IcosahedronGeometry(0.42 + (k % 2) * 0.1, 1).scale(1, 0.55, 1).translate(x, 2.3, z), 0x5c8a3c, 0]), [Cy(0.16, 0.24, 0.62, 8, 0.75, 0, 2.05), 0xb0603a, 0], [Cy(0.1, 0.16, 0.12, 8, 0.75, 0.62, 2.05), 0xb0603a, 0]]),
+        ...[[-0.9, 2.3], [0.1, 2.5], [0.95, 2.2], [-0.3, 2.0]].map(([x, z], k) => [new THREE.IcosahedronGeometry(0.42 + (k % 2) * 0.1, 1).scale(1, 0.45, 1).translate(x, 2.24, z), 0x86b050, 0]), [Cy(0.16, 0.24, 0.62, 8, 0.75, 0, 2.05), 0xb0603a, 0], [Cy(0.1, 0.16, 0.12, 8, 0.75, 0.62, 2.05), 0xb0603a, 0]]),
       // maison à étage : balcon de bois sur poteaux, porte-fenêtre à l'étage, toit de tuiles
       maison_grecs5: fusion([socle(3.2, 3.6), [B(3.2, 4.3, 3.6), pierre], [B(3.4, 0.18, 3.8, 0, 4.25), 0xd8cfbe], [toit(3.2, 3.6, 1.35, 0, 4.4, 0), tuile], ...facade(3.2, 3.6, 1.3, [-1.0, 1.0]),
-        [B(2.7, 0.12, 0.95, 0, 2.15, 2.27), bois, MAT.bois], [B(2.7, 0.5, 0.06, 0, 2.27, 2.72), bois, MAT.bois], ...[-1.3, 1.3].map(x => [B(0.06, 0.5, 0.95, x, 2.27, 2.27), bois, MAT.bois]), ...[-1.25, 1.25].map(x => [Cy(0.06, 0.07, 2.15, 6, x, 0, 2.68), bois, MAT.bois]),
+        [B(2.7, 0.12, 0.95, 0, 2.15, 2.27), 0x7a5030, 0], [B(2.7, 0.5, 0.06, 0, 2.27, 2.72), 0x6a4428, 0], ...[-1.3, 1.3].map(x => [B(0.06, 0.5, 0.95, x, 2.27, 2.27), 0x6a4428, 0]), ...[-1.25, 1.25].map(x => [Cy(0.06, 0.07, 2.15, 6, x, 0, 2.68), 0x6a4428, 0]),
         [B(0.62, 1.15, 0.1, 0, 2.27, 1.83), porte, MAT.bois], ...fenetre(-1.0, 3.0, 1.83, 1), ...fenetre(1.0, 3.0, 1.83, 1), [Cy(0.25, 0.3, 1.2, 6, 1.0, 4.4, -0.9), 0x8a7a6a, MAT.pierre]]),
       maison_egyptiens2: fusion([[B(4, 2, 3), sable], [B(2, 1.6, 3, -1, 2), sable], [B(4.2, 0.22, 3.2, 0, 2), 0xc9a86a], [B(2.2, 0.22, 3.2, -1, 3.6), 0xc9a86a], ...facade(4, 3, 1.2, [-1.3, 1.3]), [B(1.6, 0.06, 1.4, 1, 2.6, 0), 0xe8d8b0], ...[0.3, 1.7].map(x => [Cy(0.06, 0.06, 0.6, 4, x, 2.0, 0.6), bois])]),
       maison_nordiques2: fusion([socle(5.4, 2.4), [B(5.4, 1.7, 2.4), bois], [pignon(5.6, 2.6, 2.1, 0, 1.7, 0), sombre], [B(0.8, 1.3, 0.12, 0, 0, 1.22), porte], [Cy(0.2, 0.25, 1.2, 6, -1.8, 2.6, 0), 0x5a5048], [B(1.6, 1.2, 1.6, 3.1, 0, 0.6), bois], [toit(1.6, 1.6, 0.9, 3.1, 1.2, 0.6), sombre]]),
@@ -695,8 +695,8 @@ void main() {
   float t = fract(uT * ${etincelle ? '1.6' : '0.22'} + phase), a = phase * 43.0;
   vec3 p = position + ${etincelle ? 'vec3(cos(a) * t * 1.2, 1.2 + t * 1.6 - t * t * 2.0, sin(a) * t * 1.2)' : 'vec3(cos(a) * t * 3.5, 0.4 + t * 2.6 * (0.5 + force), sin(a) * t * 3.5)'};
   vec4 mvPosition = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mvPosition;
-  gl_PointSize = ${etincelle ? '0.35 * (1.0 - t)' : '(1.5 + t * 5.0) * (0.5 + force)'} * uEchelle / max(1.0, -mvPosition.z);
-  vA = ${etincelle ? 'step(0.5, fract(phase * 7.0 + floor(uT * 1.6 + phase) * 0.37)) * (1.0 - t)' : 'smoothstep(0.0, 0.15, t) * (1.0 - smoothstep(0.4, 1.0, t)) * (0.18 + force * 0.3)'};
+  gl_PointSize = ${etincelle ? '0.35 * (1.0 - t)' : '(2.2 + t * 6.5) * (0.6 + force)'} * uEchelle / max(1.0, -mvPosition.z);
+  vA = ${etincelle ? 'step(0.5, fract(phase * 7.0 + floor(uT * 1.6 + phase) * 0.37)) * (1.0 - t)' : 'smoothstep(0.0, 0.15, t) * (1.0 - smoothstep(0.4, 1.0, t)) * (0.3 + force * 0.35)'};
 #include <fog_vertex>
 }`,
       fragmentShader: `uniform sampler2D tFumee; uniform vec3 uTeinte; varying float vA;
