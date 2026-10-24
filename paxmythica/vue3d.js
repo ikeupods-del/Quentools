@@ -559,7 +559,9 @@ void main() { vec4 m = modelMatrix * vec4(position, 1.0); vMonde = m.xyz; vec4 m
 ${GLSL_BRUIT}
 void main() {
   vec2 p = vMonde.xz;
-  float d = texture2D(uProf, clamp(p / uTaille, 0.0, 1.0)).r; if (p.x < 0.0 || p.y < 0.0 || p.x > uTaille.x || p.y > uTaille.y) d = 1.0;
+  vec2 pr = texture2D(uProf, clamp(p / uTaille, 0.0, 1.0)).rg; float d = pr.r; if (p.x < 0.0 || p.y < 0.0 || p.x > uTaille.x || p.y > uTaille.y) { d = 1.0; pr.g = 1.0; }
+  // rivières et étangs : eau plus sombre et plus opaque, sans écume de vagues, reflets adoucis
+  float riv = 1.0 - smoothstep(0.08, 0.3, pr.g);
   float t = uT, loin = smoothstep(300.0, 1600.0, length(cameraPosition - vMonde));
   vec3 n1 = texture2D(tVagues, p * 0.021 + t * vec2(0.010, 0.006)).xyz * 2.0 - 1.0;
   vec3 n2 = texture2D(tVagues, p * 0.057 - t * vec2(0.017, 0.012)).xyz * 2.0 - 1.0;
@@ -571,15 +573,16 @@ void main() {
   vec3 R = reflect(-V, nrm); R.y = abs(R.y);
   vec3 ciel = (uPret > 0.5 ? texture2D(tCiel, equirectUv(normalize(R))).rgb : uCielMoy) * uCielI;
   vec3 eau = mix(uBas, uCreux, smoothstep(0.0, 0.55, d)) * (uCielMoy * 0.8 + uSoleilC * 0.08);
-  vec3 c = mix(eau, ciel * 0.62, fres * mix(0.55, 1.0, smoothstep(0.05, 0.4, d)));
+  eau = mix(eau, vec3(0.05, 0.11, 0.1) * (uCielMoy * 0.9 + uSoleilC * 0.15), riv * 0.85);
+  vec3 c = mix(eau, ciel * 0.62, fres * mix(0.55, 1.0, smoothstep(0.05, 0.4, d)) * (1.0 - riv * 0.45));
   float sp = max(dot(R, normalize(uSoleil)), 0.0);
   c += uSoleilC * (pow(sp, 700.0) * 6.0 + pow(sp, 60.0) * 0.18) * (1.0 - loin * 0.6);
   // écume au bord des côtes, en traînées qui avancent
   float bord = 1.0 - smoothstep(0.0, 0.045, d);
   float vag = 0.5 + 0.5 * sin(d * 140.0 - t * 2.2 + nS(p * 0.15) * 5.0);
-  float ecume = bord * smoothstep(0.5, 0.9, nS(p * 0.6 + vec2(t * 0.5, -t * 0.3)) * 0.55 + vag * 0.6);
+  float ecume = bord * smoothstep(0.5, 0.9, nS(p * 0.6 + vec2(t * 0.5, -t * 0.3)) * 0.55 + vag * 0.6) * (1.0 - riv * 0.9);
   c = mix(c, vec3(0.9, 0.93, 0.92) * (uCielMoy * 0.9 + uSoleilC * 0.25), clamp(ecume, 0.0, 1.0) * 0.75);
-  float a = mix(0.42, 0.97, smoothstep(0.0, 0.2, d)); a = max(a, max(fres, ecume * 0.9));
+  float a = mix(mix(0.42, 0.8, riv), 0.97, smoothstep(0.0, 0.2, d)); a = max(a, max(fres * (1.0 - riv * 0.5), ecume * 0.9));
   gl_FragColor = vec4(c, a);
 #include <tonemapping_fragment>
 #include <colorspace_fragment>
@@ -949,6 +952,11 @@ void main() {
     construireEau() {
       const C = this.j.carte, gx = this.gx, gz = this.gz, data = new Uint8Array(gx * gz * 4);
       for (let o = 0; o < gx * gz; o++) { const v = Math.max(0, Math.min(255, (-this.H[o] / 28) * 255)); data[o * 4] = v; data[o * 4 + 3] = 255; }
+      // canal vert : profondeur moyenne des environs (flou large) ; faible = rivière ou lac étroit, fort = mer ouverte
+      { const r = 7, a = new Float32Array(gx * gz), b = new Float32Array(gx * gz);
+        for (let z = 0; z < gz; z++) { let acc = 0; for (let x = -r; x < gx + r; x++) { if (x + r < gx) acc += data[(z * gx + x + r) * 4]; if (x - r - 1 >= 0) acc -= data[(z * gx + x - r - 1) * 4]; if (x >= 0 && x < gx) a[z * gx + x] = acc / (2 * r + 1); } }
+        for (let x = 0; x < gx; x++) { let acc = 0; for (let z = -r; z < gz + r; z++) { if (z + r < gz) acc += a[(z + r) * gx + x]; if (z - r - 1 >= 0) acc -= a[(z - r - 1) * gx + x]; if (z >= 0 && z < gz) b[z * gx + x] = acc / (2 * r + 1); } }
+        for (let o = 0; o < gx * gz; o++) data[o * 4 + 1] = Math.min(255, b[o] * 3); }
       const prof = new THREE.DataTexture(data, gx, gz, THREE.RGBAFormat); prof.magFilter = THREE.LinearFilter; prof.minFilter = THREE.LinearFilter; prof.needsUpdate = true;
       if (this.eau) { this.monde.remove(this.eau); this.eau.geometry.dispose(); }
       const U = {
