@@ -50,18 +50,20 @@
   }
   // assemble plusieurs morceaux en une géométrie instanciable : couleur par sommet (blanche pour les parties texturées, qui prennent
   // la teinte de leur photo ; un gris garde le caractère clair ou sombre voulu), matière par sommet
-  const SANS_TEXTURE = new Set([0, MAT.neon, MAT.or]);
+  const SANS_TEXTURE = new Set([0, MAT.neon, MAT.or, 30]);
   function fusion(morceaux) {
-    const parts = morceaux.map(([g, c, m]) => { const mat = m == null ? matiereDe(c) : m, col = new THREE.Color(c); if (!SANS_TEXTURE.has(mat)) { const l = Math.max(0.45, Math.min(1.12, (col.r * 0.3 + col.g * 0.55 + col.b * 0.15) / 0.38)); col.setRGB(l, l, l); if (mat === MAT.bois || mat === MAT.ardoise || mat === MAT.chaume) col.setScalar(Math.min(1, l)); else col.setScalar(1); } return [g.index ? g.toNonIndexed() : g, col, mat]; });
+    const parts = morceaux.map(([g, c, m, ar]) => { const mat = m == null ? matiereDe(c) : m, col = new THREE.Color(c); if (!SANS_TEXTURE.has(mat)) { const l = Math.max(0.45, Math.min(1.12, (col.r * 0.3 + col.g * 0.55 + col.b * 0.15) / 0.38)); col.setRGB(l, l, l); if (mat === MAT.bois || mat === MAT.ardoise || mat === MAT.chaume) col.setScalar(Math.min(1, l)); else col.setScalar(1); } return [g.index ? g.toNonIndexed() : g, col, mat, ar]; });
     let n = 0; for (const [g] of parts) n += g.attributes.position.count;
-    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 3), mat = new Float32Array(n); let o = 0;
-    for (const [g, c, m] of parts) {
+    const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), col = new Float32Array(n * 3), mat = new Float32Array(n), articule = parts.some(q => q[3]), art = articule ? new Float32Array(n * 3) : null; let o = 0;
+    for (const [g, c, m, ar] of parts) {
       const k = g.attributes.position.count; if (!g.attributes.normal) g.computeVertexNormals();
       pos.set(g.attributes.position.array, o * 3); nor.set(g.attributes.normal.array, o * 3);
-      for (let i = 0; i < k; i++) { col[(o + i) * 3] = c.r; col[(o + i) * 3 + 1] = c.g; col[(o + i) * 3 + 2] = c.b; mat[o + i] = m; }
+      for (let i = 0; i < k; i++) { col[(o + i) * 3] = c.r; col[(o + i) * 3 + 1] = c.g; col[(o + i) * 3 + 2] = c.b; mat[o + i] = m; if (art && ar) art.set(ar, (o + i) * 3); }
       o += k;
     }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3)); g.setAttribute('matiere', new THREE.BufferAttribute(mat, 1));
+    // membres articulés (figurines animées) : [numéro du membre, hauteur et avancée du pivot]
+    if (art) g.setAttribute('art', new THREE.BufferAttribute(art, 3));
     g.computeBoundingSphere(); return g;
   }
   const B = (w, h, d, x = 0, y = 0, z = 0) => new THREE.BoxGeometry(w, h, d).translate(x, y + h / 2, z);
@@ -142,6 +144,10 @@
       merveille_moderne: fusion([[B(9, 52, 9), 0x7ea9c4], [B(7, 10, 7, 0, 52), 0x9ec2d8], [Co(2, 12, 4, 0, 62, 0, Math.PI / 4), acier], [B(16, 4, 16), beton]]),
       merveille_futur: fusion([[Cy(1.2, 1.6, 120, 8), 0xe8eef4], [Cy(6, 8, 4, 16), 0xdfe8f2], ...[20, 45, 70, 95].map(y => [new THREE.TorusGeometry(2.4, 0.3, 6, 18).rotateX(Math.PI / 2).translate(0, y, 0), neon]), [Sp(3, 0, 120, 0), neon]]),
       socle_statue: fusion([[B(1.9, 0.3, 1.9), 0xd8d0bf, MAT.marbre], [B(1.5, 1.0, 1.5, 0, 0.3), 0xe6dfcf, MAT.marbre]]),
+      // navires de l'ère moderne et du futur (ceux d'avant viennent des modèles photographiques)
+      cargo: fusion([[B(3.2, 1.3, 15, 0, -0.6), 0x7a2a22, 0], [B(3.3, 0.9, 15.2, 0, 0.6), 0x3a3e46, 0], [new THREE.ConeGeometry(1.62, 2.4, 4).rotateY(Math.PI / 4).rotateX(Math.PI / 2).scale(1, 0.75, 1).translate(0, 0.1, 8.7), 0x3a3e46, 0],
+        ...[[-0.8, 3.6], [0.8, 3.6], [-0.8, 0.8], [0.8, 0.8], [-0.8, -2], [0.8, -2]].map(([x, z], i) => [B(1.5, 1.2, 2.6, x, 1.5, z), [0xb0502a, 0x2a6a9a, 0xc8a040, 0x4a7a44, 0x9a3a3a, 0xd8d0c0][i], 0]), [B(2.8, 2.6, 2, 0, 1.5, -5.6), 0xe8e8e8, MAT.panneau], [B(3.0, 0.4, 2.2, 0, 4.1, -5.6), 0x2a3038, 0], [Cy(0.35, 0.4, 1.6, 8, 0, 4.4, -6.2), 0x9a3a2a, 0]]),
+      navire_futur: fusion([[B(3.2, 1.0, 12, 0, -0.3), 0xf2f6fa, MAT.panneau], [new THREE.ConeGeometry(1.62, 3.2, 4).rotateY(Math.PI / 4).rotateX(Math.PI / 2).scale(1, 0.55, 1).translate(0, 0.0, 7.6), 0xf2f6fa, MAT.panneau], [B(3.3, 0.14, 12.1, 0, 0.35), neon], [B(2.2, 1.6, 4, 0, 0.7, -2.5), verre], [new THREE.SphereGeometry(1.1, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 2.3, -2.5), verre]]),
       place: fusion([[Cy(1, 1.04, 0.7, 40), 0xc4b8a2, MAT.dallage]]),
       drapeau: fusion([[Cy(0.12, 0.12, 9, 4), 0x3a2a18], [B(3.4, 2.1, 0.08, 1.7, 6.6), 0xffffff]]),
       // nature : troncs et feuillages séparés (les feuillages prennent la couleur du pack)
@@ -177,6 +183,145 @@
     for (const k in M) M[k].partage = true;
     return M;
   }
+  // ---------- figurines des armées : un équipement par époque, membres articulés animés par la carte graphique ----------
+  // membres : 1 et 2 jambes (paires diagonales pour le cheval), 3 bras armé, 4 bras du bouclier ou de l'arc, 6 encolure du cheval
+  // matières : 99 = aux couleurs du peuple, 30 = métal (brillant), 6 = lumineux ; les autres parties gardent leur couleur
+  function figurines(ep) {
+    const T = 99, MET = 30, NEON = 6, peau = 0xd9a47c, cuir = 0x6a4a2c, sombre = 0x2a2420;
+    const bx = (w, h, d) => new THREE.BoxGeometry(w, h, d), cy = (rt, rb, h, s = 8) => new THREE.CylinderGeometry(rt, rb, h, s);
+    const sp = (r, d = 1) => new THREE.IcosahedronGeometry(r, d), cap = (r, h, s = 8) => new THREE.CapsuleGeometry(r, h, 3, s);
+    const dome = (r, k = 0.55) => new THREE.SphereGeometry(r, 12, 7, 0, Math.PI * 2, 0, Math.PI * k);
+    const arti = (liste, membre, py, pz = 0) => liste.map(p => [p[0], p[1], p[2] == null ? 0 : p[2], [membre, py, pz]]);
+    // arc tendu tenu à la main gauche, bombé vers l'avant
+    const arc = (R, x, y) => new THREE.TorusGeometry(R, 0.035, 4, 16, Math.PI * 0.8).rotateZ(-Math.PI * 0.4).rotateY(-Math.PI / 2).translate(x, y, -R + 0.18);
+    // corps humain : P = hauteur du bassin (1,05 debout, 2,0 à cheval)
+    function humain(o) {
+      const P = o.P || 1.05, monte = P > 1.5, l = [], H = P + 1.22, ep_ = P + 0.86;
+      const tun = o.tunique || [0xffffff, T], tor = o.torse || tun;
+      if (!monte) {
+        for (const [s, m] of [[-1, 1], [1, 2]]) {
+          const jambe = [[cy(0.135, 0.15, 0.98, 6).translate(s * 0.19, 0.55, 0), o.jambes || peau, 0], [bx(0.2, 0.13, 0.38).translate(s * 0.19, 0.07, 0.07), o.pieds || cuir, 0]];
+          if (o.jambieres) jambe.push([cy(0.145, 0.13, 0.46, 8).translate(s * 0.19, 0.38, 0.01), o.jambieres[0], o.jambieres[1]]);
+          l.push(...arti(jambe, m, 1.05));
+        }
+      } else for (const s of [-1, 1]) l.push([cy(0.12, 0.13, 0.9, 6).rotateX(0.3).translate(s * 0.47, P - 0.4, 0.12), o.jambes || peau, 0], [bx(0.18, 0.14, 0.34).translate(s * 0.49, P - 0.86, 0.3), o.pieds || cuir, 0]);
+      // jupe ou basques, torse, ceinture
+      l.push([cy(0.33, o.long ? 0.5 : 0.43, o.long ? 0.95 : 0.55, 10).translate(0, P - (o.long ? 0.5 : 0.25), 0), tun[0], tun[1]]);
+      l.push([cy(0.35, 0.28, 0.82, 10).scale(1, 1, 0.74).translate(0, P + 0.43, 0), tor[0], tor[1]]);
+      l.push([cy(0.36, 0.34, 0.1, 10).scale(1, 1, 0.78).translate(0, P + 0.05, 0), o.ceinture || cuir, 0]);
+      if (o.baudriers) for (const s of [-1, 1]) l.push([bx(0.09, 1.0, 0.03).rotateZ(s * 0.62).translate(0, P + 0.45, 0.27), o.baudriers, 0]);
+      if (o.gilet) l.push([cy(0.39, 0.33, 0.62, 10).scale(1, 1, 0.8).translate(0, P + 0.48, 0), o.gilet[0], o.gilet[1]]);
+      if (o.tabard) l.push([bx(0.56, 1.05, 0.04).translate(0, P + 0.05, 0.27), o.tabard[0], o.tabard[1]], [bx(0.56, 1.05, 0.04).translate(0, P + 0.05, -0.27), o.tabard[0], o.tabard[1]]);
+      if (o.cape) l.push([bx(0.62, 1.15, 0.05).rotateX(0.1).translate(0, P + 0.2, -0.33), o.cape[0], o.cape[1]]);
+      if (o.sac) l.push([bx(0.48, 0.55, 0.26).translate(0, P + 0.5, -0.36), o.sac, 0]);
+      if (o.carquois) l.push([cy(0.1, 0.09, 0.85, 6).rotateX(-0.35).rotateZ(0.4).translate(0.18, P + 0.62, -0.33), cuir, 0], [cy(0.12, 0.12, 0.08, 6).rotateX(-0.35).rotateZ(0.4).translate(0.34, P + 1.03, -0.48), 0xe8dcc0, 0]);
+      // cou et tête
+      l.push([cy(0.09, 0.1, 0.22, 6).translate(0, P + 0.95, 0), o.tete || peau, 0]); if (!o.sansTete) l.push([sp(0.21).scale(0.92, 1.05, 1).translate(0, H, 0.02), o.tete || peau, 0]);
+      if (o.epaulieres) for (const s of [-1, 1]) l.push([sp(0.16).scale(1, 0.8, 1).translate(s * 0.41, P + 0.82, 0), o.epaulieres[0], o.epaulieres[1]]);
+      // bras : épaule en pivot, main à 0,76 plus bas
+      for (const [s, m] of [[1, 3], [-1, 4]]) l.push(...arti([[cy(0.1, 0.11, 0.78, 6).translate(s * 0.45, P + 0.48, 0), o.manches || tor[0], o.manches ? 0 : tor[1]], [sp(0.09).translate(s * 0.45, P + 0.1, 0.02), o.gants || peau, 0]], m, ep_));
+      return { l, P, H, main: P + 0.1, ep: ep_ };
+    }
+    // cheval : robe, crinière ; encolure articulée, jambes par paires diagonales
+    function cheval(robe, crin, harnais) {
+      const l = [[cap(0.42, 1.25, 10).rotateX(Math.PI / 2).scale(0.82, 1, 1).translate(0, 1.55, 0), robe, 0]];
+      l.push(...arti([[cap(0.21, 0.55).rotateX(0.5).translate(0, 2.05, 1.0), robe, 0], [cap(0.15, 0.42).rotateX(2.1).translate(0, 2.3, 1.44), robe, 0],
+        [bx(0.07, 0.62, 0.22).rotateX(0.5).translate(0, 2.17, 0.88), crin, 0], [new THREE.ConeGeometry(0.05, 0.17, 4).translate(-0.08, 2.6, 1.26), robe, 0], [new THREE.ConeGeometry(0.05, 0.17, 4).translate(0.08, 2.6, 1.26), robe, 0]], 6, 1.75, 0.75));
+      for (const [x, z, m] of [[-0.25, 0.72, 1], [0.25, -0.72, 1], [0.25, 0.72, 2], [-0.25, -0.72, 2]])
+        l.push(...arti([[cy(0.085, 0.11, 1.2, 6).translate(x, 0.72, z), robe, 0], [cy(0.1, 0.11, 0.14, 6).translate(x, 0.07, z), sombre, 0]], m, 1.32, z));
+      l.push([cy(0.04, 0.14, 0.95, 6).rotateX(-0.45).translate(0, 1.3, -1.2), crin, 0]);
+      if (harnais) l.push(...harnais);
+      return l;
+    }
+    const tapis = [[bx(0.98, 0.07, 1.05).translate(0, 1.99, -0.05), 0xffffff, T], [bx(1.02, 0.5, 0.95).translate(0, 1.72, -0.05), 0xffffff, T]];
+    const caparacon = [[cy(0.56, 0.7, 1.0, 12).scale(1, 1, 1.75).translate(0, 1.35, 0), 0xffffff, T], [bx(0.98, 0.07, 1.05).translate(0, 1.99, -0.05), 0x8a1e1a, 0]];
+    const fusionner = (...listes) => fusion([].concat(...listes));
+    const F = {};
+    if (ep === 'antique') {
+      // hoplite : cuirasse et jambières de bronze, casque corinthien à cimier, grand bouclier rond et lance
+      const casque = (H, cimier) => [[dome(0.255, 0.62).translate(0, H - 0.02, 0.01), 0xb8893a, MET], [bx(0.36, 0.24, 0.07).translate(0, H - 0.17, 0.2), 0xb8893a, MET], ...(cimier ? [[new THREE.TorusGeometry(0.27, 0.06, 4, 12, Math.PI).rotateY(Math.PI / 2).translate(0, H + 0.1, 0), 0xa82418, 0]] : [])];
+      const h = humain({ torse: [0xc39a4a, MET], tunique: [0xe6dcc4, 0], jambieres: [0xb8893a, MET], cape: [0xffffff, T] });
+      const lance = h_ => [[cy(0.035, 0.045, 4.0, 5).translate(0.47, h_.main + 0.9, 0.05), 0x5a3a20, 0], [new THREE.ConeGeometry(0.08, 0.42, 4).translate(0.47, h_.main + 3.1, 0.05), 0xb8bcc0, MET]];
+      const bouclier = h_ => [[cy(0.62, 0.62, 0.09, 18).rotateX(Math.PI / 2).translate(-0.53, h_.main + 0.25, 0.33), 0xffffff, T], [new THREE.TorusGeometry(0.61, 0.05, 4, 18).translate(-0.53, h_.main + 0.25, 0.39), 0xb8893a, MET], [sp(0.12).scale(1, 1, 0.5).translate(-0.53, h_.main + 0.25, 0.4), 0xb8893a, MET]];
+      F.inf = fusionner(h.l, casque(h.H, true), arti(lance(h), 3, h.ep), arti(bouclier(h), 4, h.ep));
+      const a = humain({ torse: [0x8a6038, 0], tunique: [0xffffff, T], carquois: true });
+      F.archer = fusionner(a.l, [[dome(0.24, 0.5).translate(0, a.H + 0.02, 0), 0x7a5230, 0]], arti([[arc(0.75, -0.47, a.main), 0x5a3a20, 0]], 4, a.ep));
+      const c = humain({ P: 2.0, torse: [0xc39a4a, MET], tunique: [0xe6dcc4, 0], cape: [0xffffff, T] });
+      F.cav = fusionner(cheval(0x7a4a28, 0x2a1a10, tapis), c.l, casque(c.H, true), arti([[cy(0.035, 0.045, 3.6, 5).rotateX(0.35).translate(0.47, c.main + 0.75, 0.35), 0x5a3a20, 0], [new THREE.ConeGeometry(0.08, 0.4, 4).rotateX(0.35).translate(0.47, c.main + 2.5, 0.98), 0xb8bcc0, MET]], 3, c.ep));
+    } else if (ep === 'medieval') {
+      // chevalier : cotte de mailles, tabard, heaume, écu et épée
+      const heaume = H => [[cy(0.25, 0.25, 0.46, 12).translate(0, H + 0.02, 0.01), 0xa8b0b8, MET], [dome(0.25, 0.5).scale(1, 0.4, 1).translate(0, H + 0.25, 0.01), 0xa8b0b8, MET], [bx(0.34, 0.045, 0.04).translate(0, H + 0.04, 0.26), sombre, 0], [bx(0.04, 0.3, 0.03).translate(0, H - 0.05, 0.265), 0xc8a050, 13]];
+      const ecu = h_ => [[bx(0.6, 0.62, 0.08).translate(-0.53, h_.main + 0.38, 0.32), 0xffffff, T], [new THREE.ConeGeometry(0.42, 0.55, 4).rotateY(Math.PI / 4).scale(1, 1, 0.19).rotateX(Math.PI).translate(-0.53, h_.main - 0.2, 0.32), 0xffffff, T], [bx(0.62, 0.06, 0.09).translate(-0.53, h_.main + 0.7, 0.33), 0xc8a050, 13]];
+      const epee = h_ => [[bx(0.08, 1.05, 0.03).translate(0.47, h_.main + 0.6, 0.1), 0xc8ccd2, MET], [bx(0.34, 0.06, 0.08).translate(0.47, h_.main + 0.08, 0.1), 0x8a6a30, 13], [sp(0.05).translate(0.47, h_.main - 0.1, 0.1), 0x8a6a30, 13]];
+      const h = humain({ torse: [0x8f969c, MET], tunique: [0x8f969c, MET], jambes: 0x7a8088, manches: 0x8f969c, tabard: [0xffffff, T], gants: 0x4a3a2a });
+      F.inf = fusionner(h.l, heaume(h.H), arti(epee(h), 3, h.ep), arti(ecu(h), 4, h.ep));
+      const a = humain({ torse: [0x7a6a4a, 0], tunique: [0xffffff, T], carquois: true, jambes: 0x5a4a38 });
+      F.archer = fusionner(a.l, [[new THREE.ConeGeometry(0.27, 0.55, 8).translate(0, a.H + 0.1, -0.02), 0x4a5a30, 0], [cy(0.3, 0.38, 0.22, 8).translate(0, a.P + 0.9, 0), 0x4a5a30, 0]], arti([[arc(0.95, -0.47, a.main + 0.2), 0x5a3a20, 0]], 4, a.ep));
+      const c = humain({ P: 2.0, torse: [0x8f969c, MET], tunique: [0x8f969c, MET], jambes: 0x7a8088, manches: 0x8f969c, tabard: [0xffffff, T] });
+      F.cav = fusionner(cheval(0xd8d0c4, 0x6a6058, caparacon), c.l, heaume(c.H), arti([[cy(0.05, 0.08, 4.4, 6).rotateX(1.3).translate(0.47, c.main + 0.35, 1.3), 0xe8dcc0, 0], [new THREE.ConeGeometry(0.09, 0.4, 6).rotateX(1.3).translate(0.47, c.main + 0.92, 3.5), 0xc8ccd2, MET]], 3, c.ep), arti(ecu(c), 4, c.ep));
+    } else if (ep === 'industriel') {
+      // fantassin de ligne : habit long, baudriers croisés, shako à plumet, fusil à baïonnette
+      const shako = H => [[cy(0.21, 0.2, 0.42, 12).translate(0, H + 0.2, 0), 0x1e1e24, 0], [bx(0.3, 0.04, 0.16).translate(0, H + 0.0, 0.2), 0x1e1e24, 0], [sp(0.07).translate(0, H + 0.45, 0.16), 0xb02a20, 0], [bx(0.1, 0.1, 0.02).translate(0, H + 0.2, 0.21), 0xc8a050, 13]];
+      const fusil = h_ => [[bx(0.07, 1.45, 0.09).translate(0.47, h_.main + 0.45, 0.12), 0x5a3a22, 0], [cy(0.025, 0.025, 0.6, 5).translate(0.47, h_.main + 1.45, 0.12), 0x6a7078, MET], [new THREE.ConeGeometry(0.03, 0.4, 4).translate(0.47, h_.main + 1.95, 0.12), 0xc8ccd2, MET]];
+      const h = humain({ long: true, torse: [0xffffff, T], tunique: [0xffffff, T], manches: null, jambes: 0xd8d4c8, pieds: 0x1a1a1a, baudriers: 0xe8e4da, sac: 0x5a4a38 });
+      F.inf = fusionner(h.l, shako(h.H), arti(fusil(h), 3, h.ep));
+      F.archer = F.inf;
+      const c = humain({ P: 2.0, torse: [0xffffff, T], tunique: [0xffffff, T], jambes: 0xd8d4c8, pieds: 0x1a1a1a, baudriers: 0xe8e4da });
+      F.cav = fusionner(cheval(0x2a1e18, 0x141010, tapis), c.l, [[cy(0.24, 0.22, 0.45, 10).translate(0, c.H + 0.2, 0), 0x2a2018, 0]], arti([[bx(0.06, 1.1, 0.03).rotateX(0.25).translate(0.47, c.main + 0.6, 0.25), 0xc8ccd2, MET]], 3, c.ep));
+      // canon de campagne : affût, roues, fût de bronze
+      F.siege = fusion([[bx(0.5, 0.28, 2.4).rotateX(-0.12).translate(0, 0.55, -0.6), 0x5a4028, 0], [cy(0.17, 0.24, 2.1, 12).rotateX(Math.PI / 2 - 0.12).translate(0, 1.05, 0.5), 0x9a7a3a, MET],
+        ...[-0.62, 0.62].map(x => [new THREE.TorusGeometry(0.62, 0.07, 5, 16).rotateY(Math.PI / 2).translate(x, 0.65, 0), 0x4a3420, 0]), ...[-0.62, 0.62].map(x => [cy(0.12, 0.12, 0.16, 8).rotateZ(Math.PI / 2).translate(x, 0.65, 0), 0x3a2a1a, 0]),
+        [bx(0.7, 0.4, 0.5).translate(0, 0.25, -1.7), 0xffffff, T]]);
+    } else if (ep === 'moderne') {
+      // soldat : casque, treillis, gilet aux couleurs du peuple, sac, fusil d'assaut
+      const h = humain({ torse: [0x5a6040, 0], tunique: [0x5a6040, 0], jambes: 0x545a3c, pieds: 0x2a2620, manches: 0x5a6040, gilet: [0xffffff, T], sac: 0x4a5034, gants: 0x2a2620 });
+      F.inf = fusionner(h.l, [[dome(0.27, 0.5).translate(0, h.H + 0.02, 0), 0x4a5236, 0]], arti([[bx(0.07, 0.95, 0.12).translate(0.47, h.main + 0.35, 0.16), 0x22262a, 0], [bx(0.05, 0.25, 0.1).translate(0.47, h.main + 0.05, 0.25), 0x22262a, 0]], 3, h.ep));
+      F.archer = F.inf;
+      F.siege = fusion([[bx(1.8, 0.9, 4.2).translate(0, 1.0, 0), 0x5a6048, 0], [bx(1.7, 0.9, 1.3).translate(0, 1.9, 1.35), 0x5a6048, 0], [bx(1.5, 0.9, 2.4).rotateX(-0.45).translate(0, 2.2, -0.8), 0xffffff, T],
+        ...[[-0.9, 1.4], [0.9, 1.4], [-0.9, -0.4], [0.9, -0.4], [-0.9, -1.5], [0.9, -1.5]].map(([x, z]) => [cy(0.42, 0.42, 0.3, 10).rotateZ(Math.PI / 2).translate(x, 0.42, z), 0x1e1e1e, 0])]);
+    } else {
+      // soldat du futur : armure claire à bandes du peuple, visière lumineuse, fusil à plasma
+      const h = humain({ torse: [0xffffff, T], tunique: [0xd8dce2, 0], jambes: 0xc8ccd4, pieds: 0x3a3e48, manches: 0xc8ccd4, epaulieres: [0xe4e8ee, 0], gants: 0x3a3e48 });
+      F.inf = fusionner(h.l, [[sp(0.27, 2).scale(1, 1.05, 1.05).translate(0, h.H + 0.02, 0), 0xe4e8ee, 0], [bx(0.36, 0.1, 0.06).translate(0, h.H + 0.02, 0.25), 0x6ff3ff, NEON]],
+        arti([[bx(0.09, 1.0, 0.16).translate(0.47, h.main + 0.35, 0.16), 0x3a3e48, 0], [bx(0.03, 0.8, 0.03).translate(0.47, h.main + 0.4, 0.26), 0x6ff3ff, NEON]], 3, h.ep));
+      F.archer = F.inf;
+      // glisseur : coque en coin portée par des réacteurs lumineux
+      F.cav = fusion([[bx(2.2, 0.55, 3.6).translate(0, 1.1, 0), 0xffffff, T], [new THREE.ConeGeometry(1.1, 1.5, 4).rotateY(Math.PI / 4).scale(1.35, 0.35, 1).rotateX(Math.PI / 2).translate(0, 1.1, 2.4), 0xffffff, T], [bx(1.2, 0.55, 1.4).translate(0, 1.6, -0.3), 0xd8dce2, 0],
+        [cy(0.12, 0.12, 2.4, 6).rotateX(Math.PI / 2).translate(0, 1.75, 1.2), 0x3a3e48, 0], ...[[-0.8, 1.2], [0.8, 1.2], [-0.8, -1.2], [0.8, -1.2]].map(([x, z]) => [cy(0.38, 0.38, 0.12, 12).translate(x, 0.72, z), 0x6ff3ff, NEON])]);
+    }
+    // habitants (teinte de l'habit par instance), moutons, oiseaux (ailes : membres 7 et 8, battement autour de l'axe du corps)
+    {
+      const coiffe = { antique: null, medieval: [new THREE.ConeGeometry(0.25, 0.42, 8).translate(0, 0, -0.02), 0x5a4a38], industriel: [cy(0.2, 0.24, 0.24, 10), 0x2a2420], moderne: null, futur: null }[ep];
+      const v = humain({ torse: [0xffffff, T], tunique: [0xffffff, T], long: ep !== 'moderne' && ep !== 'futur', jambes: ep === 'moderne' ? 0x3a4458 : ep === 'futur' ? 0xd8dce2 : peau, manches: ep === 'antique' ? peau : null, pieds: 0x3a2a1c });
+      const extra = coiffe ? [[coiffe[0].translate(0, v.H + 0.2, 0), coiffe[1], 0]] : [[dome(0.23, 0.45).translate(0, v.H + 0.03, 0), ep === 'futur' ? 0xe4e8ee : 0x3a2a1c, 0]];
+      F.villageois = fusionner(v.l, extra, arti([[cy(0.2, 0.15, 0.3, 8).translate(0.47, v.main - 0.12, 0.05), 0x9a7a48, 0]], 3, v.ep));
+    }
+    F.mouton = fusion([[sp(0.5, 1).scale(0.95, 0.78, 1.35).translate(0, 0.9, 0), 0xe2dccc, 0], ...arti([[cap(0.13, 0.2).rotateX(1.9).translate(0, 0.95, 0.78), 0x2a2420, 0], ...[-1, 1].map(s => [sp(0.06).scale(1.4, 0.6, 1).translate(s * 0.14, 1.06, 0.7), 0x2a2420, 0])], 6, 0.95, 0.55),
+      ...[[-0.25, 0.42, 1], [0.25, -0.42, 1], [0.25, 0.42, 2], [-0.25, -0.42, 2]].flatMap(([x, z, m]) => arti([[cy(0.05, 0.045, 0.6, 5).translate(x, 0.3, z), 0x2a2420, 0]], m, 0.6, z))]);
+    F.oiseau = fusion([[cap(0.11, 0.5, 6).rotateX(Math.PI / 2), 0xffffff, T], [new THREE.ConeGeometry(0.05, 0.16, 4).rotateX(Math.PI / 2).translate(0, 0, 0.42), 0xd8a030, 0], [bx(0.3, 0.03, 0.36).translate(0, 0, -0.45), 0xffffff, T],
+      ...arti([[bx(1.1, 0.03, 0.36).translate(-0.6, 0, -0.02), 0xffffff, T], [bx(0.35, 0.03, 0.24).translate(-1.3, 0, -0.08), 0x3a3a3e, 0]], 7, 0),
+      ...arti([[bx(1.1, 0.03, 0.36).translate(0.6, 0, -0.02), 0xffffff, T], [bx(0.35, 0.03, 0.24).translate(1.3, 0, -0.08), 0x3a3a3e, 0]], 8, 0)]);
+    // créatures (Antiquité, Moyen Âge) : géant à la massue ; ensuite, machine de guerre à deux jambes
+    if (ep === 'antique') {
+      // minotaure : tête de taureau à cornes, yeux rougeoyants, pelage sombre, grande hache double
+      const fourrure = 0x4a3020, g = humain({ torse: [0x6a4a34, 0], tunique: [0xffffff, T], jambes: fourrure, manches: 0x6a4a34, gants: 0x5a3a26, pieds: 0x1e1612, tete: fourrure, sansTete: true, epaulieres: [fourrure, 0] });
+      const H = g.H, cornes = [-1, 1].map(s => [new THREE.ConeGeometry(0.075, 0.55, 6).translate(0, 0.27, 0).rotateZ(-s * 1.05).translate(s * 0.17, H + 0.12, 0.02), 0xe2d6b8, 0]);
+      F.mythe = fusionner(g.l, cornes, [[cap(0.2, 0.22).rotateX(1.25).translate(0, H, 0.08), fourrure, 0], [bx(0.3, 0.22, 0.26).translate(0, H - 0.12, 0.33), 0x2e1e14, 0], [cy(0.17, 0.2, 0.3, 8).translate(0, H - 0.42, -0.02), fourrure, 0],
+        ...[-1, 1].map(s => [sp(0.04).translate(s * 0.11, H + 0.05, 0.27), 0xff3018, NEON]), [new THREE.TorusGeometry(0.06, 0.015, 4, 8).translate(0, H - 0.2, 0.47), 0xc8a050, 13]],
+        arti([[cy(0.05, 0.06, 2.1, 6).translate(0.47, g.main + 0.6, 0.15), 0x4a3220, 0], ...[-1, 1].map(s => [new THREE.CylinderGeometry(0.34, 0.34, 0.05, 12, 1, false, 0, Math.PI).rotateZ(Math.PI / 2).rotateY(s > 0 ? 0 : Math.PI).translate(0.47, g.main + 1.45, 0.15 + s * 0.04), 0xb8bcc0, MET])], 3, g.ep));
+    } else if (ep === 'medieval') {
+      // troll : peau grise et verdâtre, gros nez, défenses, massue cloutée
+      const peauT = 0x6e7a5e, g = humain({ torse: [peauT, 0], tunique: [0xffffff, T], jambes: peauT, manches: peauT, gants: peauT, pieds: 0x3a3020, tete: peauT, epaulieres: [0x4a3a28, 0] });
+      F.mythe = fusionner(g.l, [[sp(0.08).scale(1, 0.8, 1.4).translate(0, g.H - 0.02, 0.22), 0x5e6a50, 0], ...[-1, 1].map(s => [new THREE.ConeGeometry(0.03, 0.14, 5).translate(s * 0.08, g.H - 0.12, 0.18), 0xe8e0c8, 0]),
+        ...[-1, 1].map(s => [sp(0.03).translate(s * 0.08, g.H + 0.07, 0.19), 0xffc040, NEON])],
+        arti([[cy(0.1, 0.24, 1.8, 7).translate(0.47, g.main + 0.6, 0.15), 0x5a3a20, 0], ...[0, 1, 2, 3].map(k => [new THREE.ConeGeometry(0.05, 0.16, 4).rotateZ(Math.PI / 2).rotateY(k * Math.PI / 2).translate(0.47 + Math.cos(k * Math.PI / 2) * 0.24, g.main + 1.25, 0.15 - Math.sin(k * Math.PI / 2) * 0.24), 0xa8b0b8, MET])], 3, g.ep));
+    } else {
+      const jambe = s => [[bx(0.42, 1.1, 0.5).translate(s * 0.5, 1.25, 0), 0x8a96a2, MET], [bx(0.36, 0.9, 0.4).translate(s * 0.5, 0.5, 0.08), 0x8a96a2, MET], [bx(0.5, 0.16, 0.8).translate(s * 0.5, 0.08, 0.12), 0x4a4e56, 0]];
+      F.mythe = fusion([...arti(jambe(-1), 1, 1.8), ...arti(jambe(1), 2, 1.8), [bx(1.6, 1.4, 1.2).translate(0, 2.5, 0), 0xffffff, T], [bx(0.9, 0.6, 0.9).translate(0, 3.5, 0.05), 0xc0ccd8, 0], [bx(0.6, 0.14, 0.1).translate(0, 3.55, 0.5), 0x6ff3ff, NEON],
+        ...arti([[bx(0.4, 1.3, 0.4).translate(1.05, 2.3, 0), 0x8a96a2, MET], [cy(0.12, 0.12, 1.2, 6).rotateX(Math.PI / 2).translate(1.05, 1.7, 0.5), 0x3a3e48, 0]], 3, 3.0), ...arti([[bx(0.4, 1.3, 0.4).translate(-1.05, 2.3, 0), 0x8a96a2, MET]], 4, 3.0)]);
+    }
+    return F;
+  }
   // ---------- ressources photographiques ----------
   // couches des tableaux de textures (l'ordre est celui des nuanciers)
   const SOLS = ['herbe', 'prairie', 'sousbois', 'terre', 'sec', 'sable', 'roche', 'falaise', 'neige', 'chemin', 'paves'];
@@ -185,9 +330,9 @@
   const BATS = ['tuiles', 'ardoise', 'platre', 'pierre', 'moellons', 'briques', 'bois', 'bardage', 'marbre', 'gres', 'beton', 'metal', 'verre', 'futur', 'immeuble', 'colonne', 'paves', 'chaume', 'chateau', 'bois-medieval', 'tuiles-argile', 'immeuble-nuit', 'champ', 'stuc', 'gres-blocs', 'mosaique'];
   // familles de matières des modèles → [couche des murs, couche des pentes de toit, couche des dessus, taille du motif]
   const FAMILLES = {
-    [MAT.terre]: [5, 0, 0, 2.4], [MAT.pierre]: [3, 1, 16, 3.6], [MAT.gres]: [24, 9, 9, 4.2], [MAT.bois]: [19, 7, 6, 2.6], [MAT.verre]: [12, 11, 11, 7],
+    [MAT.terre]: [5, 20, 0, 2.4], [MAT.pierre]: [3, 1, 16, 3.6], [MAT.gres]: [24, 9, 9, 4.2], [MAT.bois]: [19, 7, 6, 2.6], [MAT.verre]: [12, 11, 11, 7],
     [MAT.panneau]: [13, 11, 11, 7], [MAT.chaume]: [2, 17, 17, 3.2], [MAT.ardoise]: [4, 1, 1, 2.4], [MAT.colonne]: [15, 15, 15, 2.2], [MAT.acier]: [11, 11, 11, 3],
-    [MAT.dallage]: [16, 16, 16, 3.2], [MAT.platre]: [23, 20, 23, 3.4], [MAT.marbre]: [8, 0, 8, 4], [MAT.beton]: [10, 10, 10, 5], [MAT.immeuble]: [14, 10, 10, 9],
+    [MAT.dallage]: [16, 16, 16, 3.2], [MAT.platre]: [2, 20, 23, 3.4], [MAT.marbre]: [8, 0, 8, 4], [MAT.beton]: [10, 10, 10, 5], [MAT.immeuble]: [14, 10, 10, 9],
     [MAT.moellons]: [4, 4, 4, 3], [MAT.chateau]: [18, 1, 18, 4.5], [MAT.champ]: [22, 22, 22, 6]
   };
   const TABLE_FAMILLES = () => { const t = []; for (let i = 0; i < 24; i++) { const f = FAMILLES[i] || [2, 2, 2, 3]; t.push(new THREE.Vector4(f[0], f[1], f[2], f[3])); } return t; };
@@ -336,7 +481,9 @@ mat3 cotangente(vec3 N, vec3 p, vec2 uv) { vec3 dp1 = dFdx(p), dp2 = dFdy(p); ve
   else if (m == 13.0) { mM = 0.85; mR = 0.28; diffuseColor.rgb *= vec3(1.0, 0.82, 0.42) * 1.2; }
   else if (m > 0.0 && uPret > 0.5) {
     vec4 f = uFam[int(m)]; float couche = mur ? f.x : (pente ? f.y : f.z);
-    vec2 uv = (m == 15.0) ? vPW.xz / f.w : vec2(dot(vPO, tO), -dot(vPO, bO)) / f.w;
+    // tuiles et ardoises : motif deux fois plus grand sur les pentes, pour que les rangées se lisent de loin
+    float ech = pente ? f.w * 2.0 : f.w;
+    vec2 uv = (m == 15.0) ? vPW.xz / f.w : vec2(dot(vPO, tO), -dot(vPO, bO)) / ech;
     if (m == 10.0) uv = vec2(atan(nO.z, nO.x) * 0.6, -vPO.y / f.w);
     vec3 tc = texture(tBatC, vec3(uv, couche)).rgb; vec4 tr = texture(tBatR, vec3(uv, couche));
     vec3 tn = texture(tBatN, vec3(uv, couche)).xyz * 2.0 - 1.0;
@@ -349,6 +496,14 @@ mat3 cotangente(vec3 N, vec3 p, vec2 uv) { vec3 dp1 = dFdx(p), dp2 = dFdy(p); ve
     if (mur && m == 7.0 && uFutur > 0.5) { float g = fract(vPO.y / 2.6); mE += vec3(0.25, 0.85, 1.2) * 2.4 * (1.0 - smoothstep(0.0, 0.03, abs(g - 0.04))); }
     // pied des murs sali par la terre et la pluie
     if (mur) diffuseColor.rgb *= mix(0.62, 1.0, smoothstep(0.0, 1.1, vPO.y));
+    // coulures de pluie verticales et taches d'enduit vieilli (murs clairs surtout)
+    if (mur && m != 5.0 && m != 7.0 && m != 19.0) {
+      float lum = dot(diffuseColor.rgb, vec3(0.33));
+      float coule = nS(vec2(dot(vPO.xz, tO.xz) * 2.3 + vPW.x * 0.37, vPO.y * 0.16 + vPW.z * 0.21));
+      float tache = nS(vPW.xz * 0.21 + vPO.y * 0.35 + 7.0);
+      diffuseColor.rgb *= mix(1.0, mix(0.8, 1.0, smoothstep(0.35, 0.72, coule)), smoothstep(0.25, 0.6, lum));
+      diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.0, 0.9, 0.74), smoothstep(0.55, 0.8, tache) * 0.5);
+    }
   }
 }`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nif (mR >= 0.0) roughnessFactor = mR;')
@@ -1055,20 +1210,138 @@ void main() {
         this.fumee = new THREE.Points(g, this.matFumee); this.fumee.frustumCulled = false; this.fumee.renderOrder = 3; this.monde.add(this.fumee); }
       const TAILLES = { tonneau: 0.8, caisse: 0.9, jarre: 0.6, panier: 0.7, tonneaux: 2.2, navire: 11, 'statue-cheval': 1.9, 'statue-gothique': 1.3 };
       for (const nom in A) if (this.glb && this.glb[nom]) for (const m of this.instGLB(nom, A[nom], TAILLES[nom], nom.startsWith('statue') ? -1.0 : 0, nom === 'navire' ? -0.6 : null)) { this.accessoires.push(m); this.monde.add(m); }
+      this.pieces(); this.construireVie();
     }
     // ---------- armées : figurines en formation ----------
+    // ---------- vie : habitants sur les places, moutons près des fermes, oiseaux en vol, navires au large ----------
+    construireVie() {
+      const E = this.j.etat, C = this.j.carte, ep = this.epoque, rnd = PM.aleatoire(4021);
+      const H = this.habitants = [], T = this.troupeaux = [], O = this.vols = [];
+      const habits = [0xd8c8a8, 0xb89a70, 0x8a6a48, 0xc8b898, 0x9a8a6a, 0xe0d4bc, 0x7a6a5a, 0xa8885a];
+      for (const P of E.provinces) {
+        if (P.owner < 0) continue;
+        const c = C.provinces[P.id], N = E.nations[P.owner], cap = N.capitale === P.id, Rp = 3 + P.dev * 0.7 + (cap ? 2.2 : 0), R0 = Rp + (cap ? 4.8 : 1.4), r2 = PM.aleatoire(P.id * 131 + 7);
+        // habitants : vont et viennent autour de la place
+        for (let i = 0, n = 3 + P.dev * 2 + (cap ? 6 : 0); i < n; i++)
+          H.push({ x: c.lx, z: c.ly, r: R0 + (r2() - 0.5) * 1.2, a0: r2() * 6.283, amp: 0.4 + r2() * 0.9, w: 0.08 + r2() * 0.1, ph: r2() * 6.283, coul: habits[Math.floor(r2() * habits.length)] });
+        // moutons (avant l'ère moderne) dans les prés des fermes
+        if (P.bat.ferme && ep !== 'moderne' && ep !== 'futur') for (let i = 0; i < 7; i++) {
+          const a = 2.3 + (r2() - 0.5) * 1.4, r = 27 + r2() * 7, x = c.lx + Math.cos(a) * r, z = c.ly + Math.sin(a) * r;
+          if (x > 0 && z > 0 && x < C.w && z < C.h && C.pix[Math.round(z) * C.w + Math.round(x)] >= 0 && this.sol(x, z) > 0.5) T.push({ x, z, ph: r2() * 6.283, rot: r2() * 6.283 });
+        }
+      }
+      // vols d'oiseaux : mouettes près des côtes, corneilles et rapaces dans les terres
+      for (const P of E.provinces) {
+        if (P.id % 3) continue;
+        const c = C.provinces[P.id], cote = c.mer && c.mer.length, n = 4 + Math.floor(rnd() * 6), R = 14 + rnd() * 22, h = 28 + rnd() * 26, w = (0.18 + rnd() * 0.16) * (rnd() < 0.5 ? 1 : -1);
+        const cx = c.lx + (rnd() - 0.5) * 30, cz = c.ly + (rnd() - 0.5) * 30, coul = cote ? 0xe8e8e4 : (rnd() < 0.5 ? 0x2a2a2e : 0x6a5038);
+        for (let i = 0; i < n; i++) O.push({ cx, cz, R: R * (0.75 + rnd() * 0.5), h: h + (rnd() - 0.5) * 6, w, off: i / n * 6.283 + rnd() * 0.4, coul, ph: rnd() * 6.283, s: cote ? 1 : 0.8 });
+      }
+      // navires au large : boucles en eau profonde devant les côtes des peuples
+      if (this.flotte) for (const m of this.flotte.meshes) { this.monde.remove(m); if (!m.geometry.partage) m.geometry.dispose(); }
+      const routes = [];
+      for (const P of E.provinces) {
+        if (P.owner < 0 || routes.length >= 12) continue;
+        const c = C.provinces[P.id]; if (!c.mer || !c.mer.length) continue;
+        for (let essai = 0; essai < 30; essai++) {
+          const a = rnd() * 6.283, d = 38 + rnd() * 50, cx = c.lx + Math.cos(a) * d, cz = c.ly + Math.sin(a) * d, R = 14 + rnd() * 22;
+          let ok = true; for (let k = 0; k < 20 && ok; k++) { const x = cx + Math.cos(k / 20 * 6.283) * R, z = cz + Math.sin(k / 20 * 6.283) * R; ok = x > 10 && z > 10 && x < C.w - 10 && z < C.h - 10 && this.sol(x, z) < -6; }
+          if (ok) { routes.push({ cx, cz, R, w: (0.02 + rnd() * 0.015) * (rnd() < 0.5 ? 1 : -1) * 22 / R, a0: rnd() * 6.283 }); break; }
+        }
+      }
+      this.flotte = null;
+      if (routes.length) {
+        const ancien = ep === 'antique' || ep === 'medieval' || ep === 'industriel';
+        let meshes = [], k = 1;
+        if (ancien && this.glb && this.glb.navire) {
+          meshes = this.instGLB('navire', routes.map(r => [r.cx, r.cz, 1, 0]), 11, 0, -0.6);
+          const b = new THREE.Box3().setFromObject(this.glb.navire), d = b.getSize(new THREE.Vector3()); k = 11 / Math.max(d.x, d.z, 0.01);
+        } else if (!ancien) {
+          const m = this.inst(ep === 'futur' ? 'navire_futur' : 'cargo', routes.map(r => [r.cx, r.cz]), (o, a, c) => { o.position.set(a[0], 0, a[1]); c.set(0xffffff); }, null, this.matBat()); meshes = [m];
+        }
+        for (const m of meshes) { m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; this.monde.add(m); }
+        this.flotte = { meshes, routes, k: ancien ? k : 1, ancien };
+      }
+    }
+    animerVie() {
+      if (!this.V || !this.habitants) return;
+      const V = this.V, t = this.temps / 1000, d = this.cam.d, o = new THREE.Object3D(), col = new THREE.Color();
+      const poser = (m, i, x, y, z, rot, s, couleur, mode, ph, roulis) => { o.position.set(x, y, z); o.rotation.set(0, rot, roulis || 0); o.scale.setScalar(s); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, col.set(couleur)); const an = m.geometry.attributes.aAnim.array; an[i * 2] = ph; an[i * 2 + 1] = mode; };
+      const fin = (m, n) => { m.count = n; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; m.geometry.attributes.aAnim.needsUpdate = true; };
+      // habitants et troupeaux : seulement de près (invisibles de loin, inutile de les calculer)
+      let n = 0;
+      if (d < 420) for (const h of this.habitants) {
+        if (n >= 3500) break;
+        const u = Math.sin(t * h.w + h.ph), a = h.a0 + h.amp * u, v = h.amp * h.w * Math.cos(t * h.w + h.ph), x = h.x + Math.cos(a) * h.r, z = h.z + Math.sin(a) * h.r;
+        const rot = Math.atan2(-Math.sin(a) * Math.sign(v || 1), Math.cos(a) * Math.sign(v || 1));
+        poser(V.villageois, n++, x, this.sol(x, z), z, rot, 0.92, h.coul, Math.abs(v) * h.r > 0.12 ? 1 : 0, h.ph * 3);
+      }
+      fin(V.villageois, n); n = 0;
+      if (d < 420) for (const m of this.troupeaux) {
+        const x = m.x + Math.sin(t * 0.03 + m.ph) * 1.6, z = m.z + Math.cos(t * 0.025 + m.ph * 1.3) * 1.6;
+        poser(V.mouton, n++, x, this.sol(x, z), z, m.rot + Math.sin(t * 0.05 + m.ph) * 0.8, 1, 0xffffff, 0, m.ph);
+      }
+      fin(V.mouton, n); n = 0;
+      if (d < 950) for (const b of this.vols) {
+        const a = t * b.w + b.off, R = b.R * (1 + 0.12 * Math.sin(t * 0.4 + b.ph)), x = b.cx + Math.cos(a) * R, z = b.cz + Math.sin(a) * R, sg = Math.sign(b.w);
+        poser(V.oiseau, n++, x, Math.max(this.sol(x, z), 0) + b.h + Math.sin(t * 0.5 + b.ph) * 2.5, z, Math.atan2(-Math.sin(a) * sg, Math.cos(a) * sg), b.s * 1.25, b.coul, 0, b.ph, -0.35 * sg);
+      }
+      fin(V.oiseau, n);
+      // navires : avancent sur leur boucle, tanguent et roulent
+      const F = this.flotte;
+      if (F) F.routes.forEach((r, i) => {
+        const a = r.a0 + t * r.w, sg = Math.sign(r.w), x = r.cx + Math.cos(a) * r.R, z = r.cz + Math.sin(a) * r.R;
+        o.position.set(x, F.ancien ? -0.6 + Math.sin(t * 1.1 + i) * 0.12 : 0, z); o.rotation.set(Math.sin(t * 0.9 + i) * 0.03, Math.atan2(-Math.sin(a) * sg, Math.cos(a) * sg), Math.sin(t * 0.7 + i * 2) * 0.05 - 0.04 * sg); o.scale.setScalar(F.k); o.updateMatrix();
+        for (const m of F.meshes) m.setMatrixAt(i, o.matrix);
+      });
+      if (F) for (const m of F.meshes) m.instanceMatrix.needsUpdate = true;
+    }
     pieces() {
-      if (this.P) return this.P;
-      const mat = this.mats.figurines || (this.mats.figurines = (() => { const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, metalness: 0.05 }); m.customProgramCacheKey = () => 'figurines';
-        m.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float matiere;').replace('#include <color_vertex>', `vColor = vec3(1.0);
+      const ep = this.epoque;
+      if (this.P && this.P.ep === ep) return this.P;
+      if (this.P) for (const k in this.P) if (this.P[k].isMesh) { this.scene.remove(this.P[k]); this.P[k].geometry.dispose(); }
+      const mat = this.mats.figurines || (this.mats.figurines = (() => { const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, metalness: 0.05 }); m.customProgramCacheKey = () => 'figurines-v2';
+        m.onBeforeCompile = sh => {
+          sh.uniforms.uT = this.U.uT;
+          sh.vertexShader = sh.vertexShader.replace('#include <common>', `#include <common>
+attribute float matiere; attribute vec3 art; attribute vec2 aAnim; uniform float uT; varying float vMatF;
+// angle du membre : 0 au repos (respiration), 1 en marche, 2 au combat (coups portés, bouclier levé)
+float angleArt() {
+  float m = floor(art.x + 0.5), mode = floor(aAnim.y + 0.5), ph = aAnim.x; if (m < 0.5) return 0.0;
+  if (m > 6.5) { float k = 0.08 + 0.62 * smoothstep(-0.2, 0.4, sin(uT * 0.6 + ph)); return (m == 7.0 ? 1.0 : -1.0) * k * sin(uT * 10.0 + ph * 3.0); }
+  if (mode < 0.5) return m == 3.0 ? 0.05 * sin(uT * 1.6 + ph) : (m == 6.0 ? 0.1 * sin(uT * 0.9 + ph) - 0.05 : 0.0);
+  if (mode < 1.5) { float s = sin(uT * 7.0 + ph); return m == 1.0 ? 0.5 * s : m == 2.0 ? -0.5 * s : m == 3.0 ? -0.2 * s : m == 4.0 ? 0.12 * s : m == 6.0 ? 0.14 * s : 0.0; }
+  float f = sin(uT * 6.0 + ph), coup = smoothstep(0.0, 0.85, f);
+  return m == 1.0 ? 0.28 : m == 2.0 ? -0.32 : m == 3.0 ? -0.35 - 1.1 * coup : m == 4.0 ? -0.5 : m == 6.0 ? -0.25 + 0.3 * f : 0.0;
+}
+vec3 tournerX(vec3 v, float a) { float c = cos(a), s = sin(a); return vec3(v.x, v.y * c - v.z * s, v.y * s + v.z * c); }
+vec3 tournerA(vec3 v, float a) { if (art.x < 6.5) return tournerX(v, a); float c = cos(a), s = sin(a); return vec3(v.x * c - v.y * s, v.x * s + v.y * c, v.z); }`)
+            .replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\nfloat aArt = angleArt(); objectNormal = tournerA(objectNormal, aArt);')
+            .replace('#include <begin_vertex>', `#include <begin_vertex>
+vec3 pivA = vec3(0.0, art.y, art.z); transformed = pivA + tournerA(transformed - pivA, aArt); vMatF = matiere;
+if (aAnim.y > 0.5 && aAnim.y < 1.5) transformed.y += abs(cos(uT * 7.0 + aAnim.x)) * 0.09;
+if (aAnim.y > 1.5) transformed.z += 0.12 * smoothstep(0.0, 0.85, sin(uT * 6.0 + aAnim.x));`)
+            .replace('#include <color_vertex>', `vColor = vec3(1.0);
 #ifdef USE_COLOR
 vColor = color;
 #endif
 #ifdef USE_INSTANCING_COLOR
 vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, color.r + color.g + color.b)));
-#endif`); }; return m; })());
-      const MAX = 3500, mk = nom => { const m = new THREE.InstancedMesh(this.M[nom], mat, MAX); m.setColorAt(0, new THREE.Color(1, 1, 1)); m.count = 0; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.castShadow = true; this.scene.add(m); return m; };
-      this.P = { fantassin: mk('fantassin'), cavalier: mk('cavalier'), char: mk('char'), engin: mk('engin'), geant: mk('geant'), meca: mk('meca'), etendard: mk('etendard') };
+#endif`);
+          sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vMatF;')
+            .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nif (abs(vMatF - 30.0) < 0.5 || abs(vMatF - 13.0) < 0.5) roughnessFactor = 0.34;')
+            .replace('#include <metalnessmap_fragment>', '#include <metalnessmap_fragment>\nif (abs(vMatF - 30.0) < 0.5 || abs(vMatF - 13.0) < 0.5) metalnessFactor = 0.8;')
+            .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\nif (abs(vMatF - 6.0) < 0.5) totalEmissiveRadiance += diffuseColor.rgb * 2.6;');
+        }; return m; })());
+      const MAX = 3500, F = figurines(ep), M = this.M;
+      const mk = g => { g = g.clone(); g.setAttribute('aAnim', new THREE.InstancedBufferAttribute(new Float32Array(MAX * 2), 2).setUsage(THREE.DynamicDrawUsage));
+        const m = new THREE.InstancedMesh(g, mat, MAX); m.setColorAt(0, new THREE.Color(1, 1, 1)); m.count = 0; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.frustumCulled = false; m.castShadow = true; this.scene.add(m); return m; };
+      const futur = ep === 'moderne' || ep === 'futur';
+      if (this.V) for (const k in this.V) { this.scene.remove(this.V[k]); this.V[k].geometry.dispose(); }
+      this.V = { villageois: mk(F.villageois), mouton: mk(F.mouton), oiseau: mk(F.oiseau) }; this.V.oiseau.castShadow = false;
+      this.P = { ep, inf: mk(F.inf), archer: mk(F.archer || F.inf), cav: mk(F.cav || M.char), siege: mk(F.siege || (futur ? M.char : M.engin)), mythe: mk(F.mythe), etendard: mk(M.etendard) };
+      // taille des créatures : un géant ou une machine domine la troupe
+      this.P.echelleMythe = ep === 'antique' || ep === 'medieval' ? 2.2 : 1.6;
       return this.P;
     }
     positionArmee(a, rang) {
@@ -1081,35 +1354,42 @@ vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, colo
       return { x, z, dir };
     }
     majArmees() {
-      const E = this.j.etat, P = this.pieces(), o = new THREE.Object3D(), col = new THREE.Color(), t = this.temps / 1000, ep = this.epoque;
-      const n = {}; for (const k in P) n[k] = 0;
+      const E = this.j.etat, P = this.pieces(), o = new THREE.Object3D(), col = new THREE.Color(), t = this.temps / 1000;
+      const n = {}; for (const k in P) if (P[k].isMesh) n[k] = 0;
       const rangs = {}, combats = new Set((this.j.anims || []).filter(a => a.type === 'bataille').map(a => a.prov));
       this.positions = [];
-      const ajouter = (k, x, y, z, rot, s, couleur) => { const i = n[k]++; if (i >= 3500) return; o.position.set(x, y, z); o.rotation.set(0, rot, 0); o.scale.setScalar(s); o.updateMatrix(); P[k].setMatrixAt(i, o.matrix); P[k].setColorAt(i, col.set(couleur)); };
-      const monture = ep === 'moderne' ? 'char' : ep === 'futur' ? 'char' : 'cavalier', grand = ep === 'futur' || ep === 'moderne' || ep === 'industriel' ? 'meca' : 'geant';
+      const ajouter = (k, x, y, z, rot, s, couleur, mode, ph) => { const i = n[k]++; if (i >= 3500) return; o.position.set(x, y, z); o.rotation.set(0, rot, 0); o.scale.setScalar(s); o.updateMatrix(); P[k].setMatrixAt(i, o.matrix); P[k].setColorAt(i, col.set(couleur)); const an = P[k].geometry.attributes.aAnim.array; an[i * 2] = ph; an[i * 2 + 1] = mode; };
+      // formation en blocs : créatures et héros devant, puis fantassins, archers, cavaliers et machines ; [modèle, écart, profondeur, largeur maximale]
+      const BLOCS = { mythe: ['mythe', 4.4, 4.8, 3], heros: ['inf', 2.2, 2.2, 2], inf: ['inf', 1.5, 1.75, 8], milice: ['inf', 1.5, 1.75, 8], archer: ['archer', 1.55, 1.85, 8], cav: ['cav', 2.3, 3.6, 5], siege: ['siege', 4.2, 4.8, 3] };
       for (const a of E.armees) {
         const rang = rangs[a.prov] = (rangs[a.prov] || 0) + 1, pos = this.positionArmee(a, rang - 1), N = E.nations[a.owner];
         const marche = a.chemin.length > 0, combat = combats.has(a.prov) || (E.provinces[a.prov].siege && E.provinces[a.prov].siege.par === a.owner);
-        const tot = PM.effectif(a), F = Math.max(3, Math.min(36, Math.round(Math.sqrt(tot) * 2.4))), parts = [], cats = {};
+        const mode = combat ? 2 : marche ? 1 : 0;
+        const tot = PM.effectif(a), Fx = Math.max(3, Math.min(64, Math.round(Math.sqrt(tot) * 2.8))), cats = {};
         for (const u in a.unites) { const c = PM.UNITES[u].cat; cats[c] = (cats[c] || 0) + a.unites[u] * (c === 'mythe' ? 3 : 1); }
         const somme = Object.values(cats).reduce((s, x) => s + x, 0) || 1;
-        for (const c of ['mythe', 'heros', 'cav', 'siege', 'archer', 'inf', 'milice']) { const k = Math.round(F * (cats[c] || 0) / somme); for (let i = 0; i < k; i++) parts.push(c); }
-        if (!parts.length) parts.push('inf');
-        const cos = Math.cos(pos.dir), sin = Math.sin(pos.dir), largeur = 6, coul = new THREE.Color(N.couleur).getHex();
-        parts.forEach((c, i) => {
-          const lig = Math.floor(i / largeur), colI = i % largeur, gx = (colI - (largeur - 1) / 2) * 2.2 + (lig % 2) * 0.6, gz = -lig * 2.5;
-          let x = pos.x + gx * cos + gz * sin, z = pos.z - gx * sin + gz * cos, y = this.sol(x, z);
-          if (marche) y += Math.abs(Math.sin(t * 9 + i)) * 0.4;
-          if (combat) { x += Math.sin(t * 13 + i * 1.7) * 0.7; z += Math.cos(t * 11 + i) * 0.7; }
-          if (c === 'mythe') ajouter(grand, x, y, z, pos.dir, 2.3, new THREE.Color(coul).multiplyScalar(0.7).getHex());
-          else if (c === 'cav') ajouter(monture, x, y, z, pos.dir, 1, coul);
-          else if (c === 'siege') ajouter('engin', x, y, z, pos.dir, 1, coul);
-          else ajouter('fantassin', x, y, z, pos.dir, c === 'heros' ? 1.3 : 1, c === 'heros' ? 0xf0c85a : coul);
-        });
-        { const ex = pos.x + 2.6 * cos + 1.2 * sin, ez = pos.z - 2.6 * sin + 1.2 * cos; ajouter('etendard', ex, this.sol(ex, ez) + (marche ? Math.abs(Math.sin(t * 9)) * 0.3 : 0), ez, pos.dir + Math.sin(t * 2 + a.id) * 0.25, 1, coul); }
+        const cos = Math.cos(pos.dir), sin = Math.sin(pos.dir), coul = new THREE.Color(N.couleur).getHex();
+        const ORDRE = ['mythe', 'heros', 'inf', 'milice', 'archer', 'cav', 'siege'], nb = {};
+        for (const c of ORDRE) { nb[c] = Math.round(Fx * (cats[c] || 0) / somme); if (c === 'heros' && cats[c]) nb[c] = Math.max(1, Math.min(2, nb[c])); }
+        if (!ORDRE.some(c => nb[c])) nb.inf = 3;
+        let z0 = 0, i = 0;
+        for (const c of ORDRE) {
+          const k = nb[c]; if (!k) continue;
+          const [nom, ecart, prof, W] = BLOCS[c], larg = Math.min(k, W);
+          for (let q = 0; q < k; q++, i++) {
+            const lig = Math.floor(q / larg), dans = Math.min(larg, k - lig * larg), gx = ((q % larg) - (dans - 1) / 2) * ecart + (lig % 2) * 0.25, gz = z0 - lig * prof;
+            let x = pos.x + gx * cos + gz * sin, z = pos.z - gx * sin + gz * cos;
+            if (combat) { x += Math.sin(t * 1.3 + i * 1.7) * 0.35; z += Math.cos(t * 1.1 + i) * 0.35; }
+            const y = this.sol(x, z), ph = (a.id * 1.7 + i * 0.61) % 6.283;
+            if (c === 'mythe') ajouter('mythe', x, y, z, pos.dir, P.echelleMythe, new THREE.Color(coul).multiplyScalar(0.8).getHex(), mode, ph);
+            else ajouter(nom, x, y, z, pos.dir, c === 'heros' ? 1.25 : 1, c === 'heros' ? 0xf0c85a : coul, mode, marche ? (lig * 0.2 + (q % 2) * 3.14) : ph);
+          }
+          z0 -= Math.ceil(k / larg) * prof + 0.8;
+        }
+        { const ex = pos.x + 2.6 * cos + 1.2 * sin, ez = pos.z - 2.6 * sin + 1.2 * cos; ajouter('etendard', ex, this.sol(ex, ez) + (marche ? Math.abs(Math.sin(t * 7)) * 0.2 : 0), ez, pos.dir + Math.sin(t * 2 + a.id) * 0.25, 1, coul, 0, 0); }
         this.positions.push({ id: a.id, x: pos.x, z: pos.z });
       }
-      for (const k in P) { P[k].count = Math.min(3500, n[k]); P[k].instanceMatrix.needsUpdate = true; if (P[k].instanceColor) P[k].instanceColor.needsUpdate = true; }
+      for (const k in n) { const m = P[k]; m.count = Math.min(3500, n[k]); m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; m.geometry.attributes.aAnim.needsUpdate = true; }
     }
     // ---------- caméra (avec inertie) ----------
     // inclinaison : rasante de près (on voit l'horizon et le ciel), plongeante de loin (vue de stratégie)
@@ -1189,7 +1469,7 @@ vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, colo
       const u = this.solMesh.userData.uniformes; u.uSel.value = r.selProv == null ? -1 : r.selProv;
       u.uSurvol.value = r.survol >= 0 && (r.cibleMode || (r.sel && r.sel.type === 'armee')) ? r.survol : -1; u.uCible.value = r.cibleMode ? 1 : 0;
       this.construireVilles();
-      this.placerCamera(dt); this.majArmees();
+      this.placerCamera(dt); this.majArmees(); this.animerVie();
       if (this.herbe) this.herbe.visible = this.Q.herbe > 0 && this.cam.d < 240 && !(this.pack.neige.partout > 0.3);
       if (this.composer) {
         if (this.etal) { this.etal.uniforms.uT.value = this.temps / 1000; this.etal.uniforms.uRes.value.set(w, h); }

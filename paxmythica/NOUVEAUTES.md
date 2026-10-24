@@ -1,5 +1,14 @@
 # Nouveautés de Pax Mythica
 
+## 1.2.0
+- Soldats propres à chaque époque : hoplites à cimier et bouclier rond, chevaliers en cotte de mailles et heaume, fantassins de ligne en shako, soldats modernes casqués, soldats du futur à visière lumineuse ; archers, cavaliers et canons de campagne.
+- Les soldats bougent : ils marchent au pas, frappent et lèvent le bouclier pendant les batailles ; les chevaux trottent et hochent la tête.
+- Armées rangées en vraies formations : créatures et héros devant, puis fantassins, archers, cavaliers et machines.
+- Nouvelles créatures : minotaure à la hache double dans l’Antiquité, troll à la massue au Moyen Âge, machines de guerre à deux jambes ensuite.
+- Villes vivantes : habitants qui vont et viennent sur les places, moutons dans les prés des fermes.
+- Vols d’oiseaux (mouettes sur les côtes, corneilles dans les terres) et navires qui naviguent au large ; cargos à l’époque moderne, vaisseaux lumineux au futur.
+- Toits de tuiles plus lisibles et murs d’enduit vieilli (coulures, taches).
+
 ## 1.1.0
 - Nouvelle vue 3D photographique : le sol est fait de vraies photos (herbe, sous-bois, terre, sable, roche, falaises, neige, chemins, pavés) mêlées selon le terrain, la pente et l’altitude, avec leur relief.
 - Ciels photographiques qui éclairent toute la scène, soleil à sa vraie place, mer et rivières qui reflètent le ciel.
