@@ -50,7 +50,14 @@ function garder(nom, motif) {
 }
 (async () => {
   for (const l of lignes) {
-    if (l.startsWith('garder ')) { const [, nom, motif] = l.split(/\s+/); garder(nom, motif); continue; }
+    // dossier Google Drive (gdown, installé par le workflow) : téléchargé dans /tmp/paquets/<nom>, contenu listé
+    if (l.startsWith('gdrive ')) { const [, url, nom] = l.split(/\s+/), dest = path.join('/tmp/paquets', nom); fs.mkdirSync(dest, { recursive: true });
+      try { execSync(`gdown --folder "${url}" -O "${dest}" --quiet --remaining-ok`, { stdio: 'inherit', timeout: 900000 });
+        for (const z of execSync(`find "${dest}" -name "*.zip"`).toString().split('\n').filter(Boolean)) execSync(`unzip -o -q "${z}" -d "${path.dirname(z)}"`);
+        const liste = execSync(`cd "${dest}" && find . -type f -printf "%s %p\\n" | sort -k2`).toString(); fs.writeFileSync(path.join(DOSSIER, nom + '.contenu.txt'), liste); journal.push(`gdrive ${url} → ${nom} : ${liste.split('\n').length - 1} fichiers`); }
+      catch (e) { journal.push(`ERREUR gdrive ${url} : ${e.message.slice(0, 300)}`); }
+      continue; }
+    if (l.startsWith('garder ')) { const m = l.match(/^garder\s+(\S+)\s+(.+)$/); garder(m[1], m[2]); continue; }
     if (l.startsWith('itch ')) { const [, url, nom, filtre] = l.split(/\s+/); try { await itch(url, nom, filtre); } catch (e) { journal.push(`ERREUR itch ${url} : ${e.message}`); } continue; }
     const [url, nom0] = l.split(/\s+/), nom = nom0 || url.replace(/^https?:\/\//, '').replace(/[^a-z0-9]+/gi, '-').slice(0, 80);
     try {
