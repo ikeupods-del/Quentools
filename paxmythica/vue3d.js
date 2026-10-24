@@ -501,8 +501,8 @@ mat3 cotangente(vec3 N, vec3 p, vec2 uv) { vec3 dp1 = dFdx(p), dp2 = dFdy(p); ve
       float lum = dot(diffuseColor.rgb, vec3(0.33));
       float coule = nS(vec2(dot(vPO.xz, tO.xz) * 2.3 + vPW.x * 0.37, vPO.y * 0.16 + vPW.z * 0.21));
       float tache = nS(vPW.xz * 0.21 + vPO.y * 0.35 + 7.0);
-      diffuseColor.rgb *= mix(1.0, mix(0.8, 1.0, smoothstep(0.35, 0.72, coule)), smoothstep(0.25, 0.6, lum));
-      diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.0, 0.9, 0.74), smoothstep(0.55, 0.8, tache) * 0.5);
+      diffuseColor.rgb *= mix(1.0, mix(0.68, 1.0, smoothstep(0.3, 0.75, coule)) * mix(0.86, 1.0, nS(vPW.xz * 1.9 + vPO.y * 2.3)), smoothstep(0.25, 0.6, lum));
+      diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * vec3(1.0, 0.9, 0.74), smoothstep(0.5, 0.8, tache) * 0.75);
     }
   }
 }`)
