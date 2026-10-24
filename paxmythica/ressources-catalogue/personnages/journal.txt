@@ -1,12 +1,10 @@
-gdrive https://drive.google.com/drive/folders/1uJ3N5HfB7jKTseJUNQr3N4YaN0UuEtHk : échec (1) f.obj b'<!DOCTYPE html><html><head><title>Google Drive - Quota exceeded</title><meta http-equiv="content-type" content="text/html; charset=utf-8"/><style nonce="Fie5SX_hVYFWjtnHwwYqhg">.goog-link-button{position:relative;color:#15c;text-decoration:underline;cursor:pointer}.goog-link-button-disabled{color:#c'
-page html au lieu du fichier : ../../../home/runner/work/Quentools/Quentools/paxmythica/OBJ/Wolf.obj b'<!DOCTYPE html><html><head><title>Google Drive - Quota exceeded</title><meta http-equiv="content-type" content="text/html; charset=utf-8"/><style nonce="U1P96ELwjeZWso6YYGOg5w">.goog-link-button{position:relative;color:#15c;text-decoration:underline;cursor:pointer}.goog-link-button-disabled{color:#c'
-NON TÉLÉCHARGÉ ../../../home/runner/work/Quentools/Quentools/paxmythica/OBJ/Wolf.obj
- Traceback (most recent call last):
-  File "/home/runner/work/Quentools/Quentools/paxmythica/scripts/gdrive.py", line 12, in <module>
-    os.makedirs(os.path.dirname(chemin), exist_ok=True)
-  File "<frozen os>", line 225, in makedirs
-FileNotFoundError: [Errno 2] No such file or directory: ''
-
-gdrive https://drive.google.com/drive/folders/1uJ3N5HfB7jKTseJUNQr3N4YaN0UuEtHk → animaux : 0 fichiers
-garder animaux /(glTF|gltf|GLTF)/.*\.(gltf|glb|bin|png|jpg)$/ : 0 fichiers
-garder animaux /(License|README|Readme)[^/]*\.txt$/ : 0 fichiers
+ERREUR itch https://quaternius.itch.io/ultimate-animated-animals : pas de lien de téléchargement
+itch https://quaternius.itch.io/lowpoly-animated-animals : Farm Animals Animated  by Quaternius.zip (6.6 MB)
+  essai ?source=game_download&key=eyJpZCI6MzI3NjQ1LCJleHBpcmVzIjoxNzkyODU1OTc1fQ%3D%3D.o3PC4T09lLSCsIFiI6RRZtthMx0%3D  → {"errors":["invalid key"]}
+  essai ?source=game_download (clé dans le formulaire) → {"errors":["invalid key"]}
+  essai ?source=game_download&key=eyJpZCI6MzI3NjQ1LCJleHBpcmVzIjoxNzkyODU1OTc1fQ%3D%3D.o3PC4T09lLSCsIFiI6RRZtthMx0%3D (clé dans le formulaire) → {"errors":["invalid key"]}
+  essai (sans clé)  → {"url":"https:\/\/itchio-mirror.cb031a832f44726753d6267436f3b414.r2.cloudflarestorage.com\/upload2\/game\/327645\/112615
+  Farm Animals Animated  by Quaternius.zip : 6963285 octets, 29 fichiers → /tmp/paquets/animaux
+garder animaux2 : paquet absent
+garder animaux2 : paquet absent
+garder animaux /\.(fbx|FBX|png|jpg|txt)$/ : 7 fichiers
