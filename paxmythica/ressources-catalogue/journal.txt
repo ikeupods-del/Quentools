@@ -1,6 +1,5 @@
-matériau bat-champ ← farm_furrows
-matériau bat-stuc ← white_stucco
-matériau bat-gres-blocs ← large_sandstone_blocks_01
-matériau bat-mosaique ← old_mosaic_floor
 carte absente searsia_lucida : alpha (proposées : Diffuse, nor_dx, nor_gl, blend, gltf, usd, Alpha, arm, fbx, AO, Rough)
 carte absente searsia_lucida : leaves_alpha (proposées : Diffuse, nor_dx, nor_gl, blend, gltf, usd, Alpha, arm, fbx, AO, Rough)
+modèle statue-cheval ← horse_statue_01
+modèle statue-gothique ← gothic_statue
+modèle brouette ← wooden_ladder

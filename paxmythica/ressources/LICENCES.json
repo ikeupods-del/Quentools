@@ -394,5 +394,23 @@
   "source": "Poly Haven",
   "page": "https://polyhaven.com/a/old_mosaic_floor",
   "licence": "CC0 1.0"
+ },
+ "modeles/statue-cheval": {
+  "id": "horse_statue_01",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/horse_statue_01",
+  "licence": "CC0 1.0"
+ },
+ "modeles/statue-gothique": {
+  "id": "gothic_statue",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/gothic_statue",
+  "licence": "CC0 1.0"
+ },
+ "modeles/brouette": {
+  "id": "wooden_ladder",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/wooden_ladder",
+  "licence": "CC0 1.0"
  }
 }
