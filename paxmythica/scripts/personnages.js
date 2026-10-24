@@ -51,9 +51,9 @@ function garder(nom, motif) {
 (async () => {
   for (const l of lignes) {
     // dossier Google Drive (gdown, installé par le workflow) : téléchargé dans /tmp/paquets/<nom>, contenu listé
-    if (l.startsWith('gdrive ')) { const [, url, nom] = l.split(/\s+/), dest = path.join('/tmp/paquets', nom); fs.mkdirSync(dest, { recursive: true });
-      // gdown peut finir en erreur pour un seul fichier (aperçu vidéo…) : on garde ce qui est arrivé
-      try { try { execSync(`gdown --folder "${url}" -O "${dest}" --quiet`, { stdio: 'inherit', timeout: 900000 }); } catch (e) { journal.push(`gdrive ${url} : téléchargement incomplet (${e.status})`); }
+    if (l.startsWith('gdrive ')) { const [, url, nom, motif] = l.split(/\s+/), dest = path.join('/tmp/paquets', nom); fs.mkdirSync(dest, { recursive: true });
+      // liste du dossier par gdown, puis chaque fichier retenu par son lien direct (scripts/gdrive.py)
+      try { try { journal.push(execSync(`python3 "${path.join(__dirname, 'gdrive.py')}" "${url}" "${dest}" "${motif || '.'}"`, { timeout: 900000 }).toString().trim().split('\n').slice(-40).join('\n')); } catch (e) { journal.push(`gdrive ${url} : échec (${e.status}) ${String(e.stdout || '').slice(-800)} ${String(e.stderr || '').slice(-800)}`); }
         for (const z of execSync(`find "${dest}" -name "*.zip"`).toString().split('\n').filter(Boolean)) execSync(`unzip -o -q "${z}" -d "${path.dirname(z)}"`);
         const liste = execSync(`cd "${dest}" && find . -type f -printf "%s %p\\n" | sort -k2`).toString(); fs.writeFileSync(path.join(DOSSIER, nom + '.contenu.txt'), liste); journal.push(`gdrive ${url} → ${nom} : ${liste.split('\n').length - 1} fichiers`); }
       catch (e) { journal.push(`ERREUR gdrive ${url} : ${e.message.slice(0, 300)}`); }
