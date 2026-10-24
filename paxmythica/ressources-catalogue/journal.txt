@@ -1,1 +1,22 @@
-
+matériau bat-chaume ← thatch_roof_angled
+matériau bat-chateau ← castle_wall_slates
+matériau bat-bois-medieval ← medieval_wood
+matériau bat-tuiles-argile ← clay_roof_tiles_02
+carte sapin/twig_alpha
+carte pin/twig_alpha
+carte arbre-ile/leaves_alpha
+carte jacaranda/leaves_alpha
+carte herbe-touffe/Alpha
+carte herbe-touffe/dry_diff
+carte absente searsia_lucida : alpha (proposées : Diffuse, nor_dx, nor_gl, blend, gltf, usd, Alpha, arm, fbx, AO, Rough)
+carte arbuste/Alpha
+carte absente searsia_lucida : leaves_alpha (proposées : Diffuse, nor_dx, nor_gl, blend, gltf, usd, Alpha, arm, fbx, AO, Rough)
+modèle caisse ← wooden_crate_01
+modèle tonneaux ← wooden_barrels_01
+modèle jarre ← ceramic_pot
+modèle navire ← dutch_ship_medium
+modèle canon ← cannon_01
+modèle bouclier ← kite_shield
+modèle rocher3 ← rock_07
+modèle rocher4 ← rock_09
+modèle panier ← wicker_basket_01

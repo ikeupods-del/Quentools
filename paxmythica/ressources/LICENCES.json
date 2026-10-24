@@ -292,5 +292,83 @@
   "source": "Poly Haven",
   "page": "https://polyhaven.com/a/Barrel_01",
   "licence": "CC0 1.0"
+ },
+ "materiaux/bat-chaume": {
+  "id": "thatch_roof_angled",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/thatch_roof_angled",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-chateau": {
+  "id": "castle_wall_slates",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/castle_wall_slates",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-bois-medieval": {
+  "id": "medieval_wood",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/medieval_wood",
+  "licence": "CC0 1.0"
+ },
+ "materiaux/bat-tuiles-argile": {
+  "id": "clay_roof_tiles_02",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/clay_roof_tiles_02",
+  "licence": "CC0 1.0"
+ },
+ "modeles/caisse": {
+  "id": "wooden_crate_01",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/wooden_crate_01",
+  "licence": "CC0 1.0"
+ },
+ "modeles/tonneaux": {
+  "id": "wooden_barrels_01",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/wooden_barrels_01",
+  "licence": "CC0 1.0"
+ },
+ "modeles/jarre": {
+  "id": "ceramic_pot",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/ceramic_pot",
+  "licence": "CC0 1.0"
+ },
+ "modeles/navire": {
+  "id": "dutch_ship_medium",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/dutch_ship_medium",
+  "licence": "CC0 1.0"
+ },
+ "modeles/canon": {
+  "id": "cannon_01",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/cannon_01",
+  "licence": "CC0 1.0"
+ },
+ "modeles/bouclier": {
+  "id": "kite_shield",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/kite_shield",
+  "licence": "CC0 1.0"
+ },
+ "modeles/rocher3": {
+  "id": "rock_07",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/rock_07",
+  "licence": "CC0 1.0"
+ },
+ "modeles/rocher4": {
+  "id": "rock_09",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/rock_09",
+  "licence": "CC0 1.0"
+ },
+ "modeles/panier": {
+  "id": "wicker_basket_01",
+  "source": "Poly Haven",
+  "page": "https://polyhaven.com/a/wicker_basket_01",
+  "licence": "CC0 1.0"
  }
 }
