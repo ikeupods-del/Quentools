@@ -1050,7 +1050,9 @@ void main() {
         // lisières : la densité suit le poids de la forêt, avec des clairières
         const clairiere = 0.5 + 0.5 * Math.sin(px * 0.045 + Math.sin(pz * 0.03) * 2) * Math.sin(pz * 0.05);
         const nord = pz < C.h * 0.45 || wM > 0.2 || hh > 30;
-        if (r < wF * (0.62 + clairiere * 0.35) + wC * 0.07 + wP * 0.025) (nord || rnd() < 0.3 ? L.sapin : L.feuillu).push([px, pz, 0.75 + rnd() * 0.7, rnd()]);
+        // cœur des forêts : canopée fermée (arbres plus grands et serrés, un second arbre entre deux), comme les bois d'Age of Empires
+        if (wF > 0.5 && clairiere > 0.25 && rnd() < (wF - 0.5) * 1.5) { const qx = px + pas * 0.5 + (rnd() - 0.5), qz = pz + pas * 0.5 + (rnd() - 0.5); if (C.pix[Math.min(C.h - 1, Math.round(qz)) * C.w + Math.min(C.w - 1, Math.round(qx))] >= 0 && this.sol(qx, qz) > 1.6) (nord || rnd() < 0.3 ? L.sapin : L.feuillu).push([qx, qz, 0.95 + rnd() * 0.75, rnd()]); }
+        if (r < wF * (0.62 + clairiere * 0.35) + wC * 0.07 + wP * 0.025) (nord || rnd() < 0.3 ? L.sapin : L.feuillu).push([px, pz, (wF > 0.5 ? 0.9 : 0.75) + rnd() * 0.7, rnd()]);
         else if (r < wF * 0.75 + 0.04 && wD < 0.3) L.buisson.push([px, pz, 0.6 + rnd() * 0.9, rnd()]);
         else if (r < wF * 0.78 + 0.045 && wF > 0.4) L.souche.push([px, pz, 0.8 + rnd() * 0.6, rnd()]);
         else if (r < 0.05 + wM * 0.22 + wC * 0.05) L.rocher.push([px, pz, 0.6 + rnd() * (0.8 + wM * 1.6), rnd()]);
