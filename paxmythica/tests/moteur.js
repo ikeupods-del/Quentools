@@ -2,7 +2,7 @@
 // ordres et pouvoirs, décrets lus par mots-clés, sauvegarde et rechargement identiques. Lancer : node tests/moteur.js
 'use strict';
 const path = require('path');
-for (const f of ['donnees', 'epoques', 'carte', 'moteur', 'alliances', 'ia-nations', 'oracle']) require(path.join(__dirname, '..', f + '.js'));
+for (const f of ['donnees', 'epoques', 'carte', 'moteur', 'alliances', 'ia-nations', 'oracle', 'packs-graphiques']) require(path.join(__dirname, '..', f + '.js'));
 const PM = globalThis.PM;
 let ko = 0, n = 0;
 const ok = (c, m) => { n++; if (!c) { ko++; console.log('✗ ' + m); } };
@@ -164,6 +164,17 @@ console.log(`  (${finies} partie(s) sur 3 terminée(s) par une victoire en 40 an
   }
   PM.appliquerEpoque('antique');
   ok(JSON.stringify([PM.UNITES.hoplite, PM.POUVOIRS.foudre, PM.AGES, PM.PANTHEONS.grecs.majeurs]) === ref, 'retour à l’Antiquité sans trace');
+}
+
+// 8. packs graphiques : chaque pack définit tout ce que la vue 3D lit
+{
+  const cles = ['nom', 'emoji', 'desc', 'soleil', 'hemi', 'exposition', 'ciel', 'eau', 'sol', 'neige', 'arbres', 'herbe', 'nuages', 'post'];
+  for (const [id, P] of Object.entries(PM.PACKS_GRAPHIQUES)) {
+    ok(cles.every(k => P[k] != null), `pack ${id} complet`);
+    ok(['herbe', 'foret', 'sec', 'sable', 'roche', 'neige'].every(k => Array.isArray(P.sol[k]) && P.sol[k].length === 3), `pack ${id} : couleurs du sol`);
+    ok(P.arbres.sapin.length && P.arbres.feuillu.length && P.herbe.length && ['saturation', 'contraste', 'vignette', 'bloom', 'seuil', 'maquette', 'grain'].every(k => typeof P.post[k] === 'number'), `pack ${id} : arbres, herbe, image`);
+  }
+  ok(Object.keys(PM.PACKS_GRAPHIQUES).length >= 8 && Object.keys(PM.QUALITES).length === 4, 'huit packs et quatre qualités');
 }
 
 // 5. décrets lus par mots-clés

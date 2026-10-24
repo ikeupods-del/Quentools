@@ -16,6 +16,8 @@ const ok = (c, m) => { n++; if (!c) { ko++; console.log('✗ ' + m); } };
   const erreurs = []; p.on('console', m => { if (m.type() === 'error' || (m.type() === 'warning' && /THREE/.test(m.text()))) erreurs.push(m.text()); }); p.on('pageerror', e => erreurs.push(e.message));
   const ev = (f, x) => p.evaluate(f, x);
   const fermerModals = () => ev(() => { for (let k = 0; k < 8 && !document.querySelector('#modal').classList.contains('cache'); k++) { const x = document.querySelector('#modalBoite .carte-choix, #modalBoite .choix .btn:not([disabled]), #modalBoite [data-act$=oui], #modalBoite [data-act=fermer], #modalBoite [data-act=commencer]'); if (!x) break; x.click(); } });
+  // qualité moyenne pendant l'essai (pas de carte graphique ici) ; les autres qualités sont essayées plus bas
+  await p.addInitScript(() => { try { if (!sessionStorage.getItem('essai')) { localStorage.setItem('pm:qualite', 'moyenne'); sessionStorage.setItem('essai', '1'); } } catch (e) { /* sans stockage */ } });
   await p.goto(url);
   ok(await p.isVisible('text=Nouvelle partie'), 'accueil');
   ok(await ev(() => PM.vue3dPossible()), 'WebGL disponible pour la vue 3D');
@@ -144,6 +146,17 @@ const ok = (c, m) => { n++; if (!c) { ko++; console.log('✗ ' + m); } };
   ok(await ev(() => UI.mode3d), 'retour à la vue 3D');
   for (const e of ['industriel', 'moderne', 'futur']) { await ev(e => { UI.lancerPartie(PM.nouvellePartie({ epoque: e, graine: 5, nombre: 4, taille: 'petite' })); UI.fermerModal(); for (let i = 0; i < 6; i++) UI.unMois(); }, e); await fermerModals(); await p.waitForTimeout(300); }
   ok(await ev(() => UI.j.etat.reglages.epoque === 'futur' && PM.PANTHEONS.grecs.nom === 'Concorde solaire'), 'époques industrielle, moderne et future jouées');
+
+  // packs graphiques : chacun se dessine ; chaque qualité (dont l'occlusion ambiante) aussi
+  await ev(() => { if (!UI.mode3d) UI.ACT.vue(); });
+  await p.click('[data-act=packs]');
+  ok(await p.locator('#modalBoite [data-act=pack-choisir]').count() === Object.keys(await ev(() => PM.PACKS_GRAPHIQUES)).length, 'fenêtre des packs graphiques');
+  await p.click('#modalBoite [data-act=pack-choisir][data-v=nuit]');
+  ok(await ev(() => UI.vue3d.idPack === 'nuit' && PM.packGraphique() === 'nuit'), 'pack choisi et gardé');
+  await p.click('#modalBoite [data-act=fermer]');
+  for (const id of Object.keys(await ev(() => PM.PACKS_GRAPHIQUES))) await ev(id => { UI.vue3d.appliquerPack(id); UI.vue3d.stabiliser(); UI.vue3d.dessiner(16); }, id);
+  for (const q of ['ultra', 'haute', 'basse', 'moyenne']) await ev(q => { UI.vue3d.appliquerQualite(q); UI.vue3d.dessiner(16); UI.vue3d.dessiner(16); }, q);
+  ok(await ev(() => !!UI.vue3d.composer), 'effets de l’image actifs');
 
   ok(!erreurs.length, 'aucune erreur dans la page : ' + erreurs.slice(0, 3).join(' | '));
   await b.close();

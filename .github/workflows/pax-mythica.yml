@@ -53,6 +53,7 @@ jobs:
             if (!g.oracle || !r.oracle || !r.oracle.mo) ko.push("pont de l oracle : " + JSON.stringify(r.oracle));
             if (!g.maj) ko.push("pont des mises à jour");
             if (!g.vue3d) ko.push("vue 3D indisponible");
+            if (!(g.packs >= 16)) ko.push("packs graphiques : " + g.packs);
             if (ko.length) { console.log("Échecs :", ko.join(" ; ")); process.exit(1); } else console.log("Application : tout fonctionne");'
       - name: Contrôler que tous les fichiers du jeu sont dans l'application
         run: |

@@ -1,2 +1,3 @@
 three.js r128 (three-r128.min.js) — licence MIT, © 2010-2021 three.js authors, https://github.com/mrdoob/three.js
 Copie du fichier build/three.min.js du paquet npm « three@0.128.0 », hébergée ici pour ne dépendre d'aucun service externe.
+Effets visuels (vendor/effets/) — licence MIT, © 2010-2021 three.js authors : fichiers examples/js/postprocessing, examples/js/shaders et examples/js/math/SimplexNoise.js du même paquet npm « three@0.128.0 », copiés sans modification.

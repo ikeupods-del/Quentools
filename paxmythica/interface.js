@@ -409,7 +409,7 @@
       <div class="res">${res}<div class="r" title="Population"><b>${PM.ICONES.pop} ${fmt(pop)}/${fmt(pmax)}</b><small>armées</small></div></div>
       <div class="espace"></div>
       ${UI.editeur ? '<b class="titre">ÉDITEUR</b>' : `<div class="age-barre"><b>${PM.AGES[N.age].nom}</b><br>${ageTxt}</div>
-      ${UI.vue3d || (PM.vue3dPossible && PM.vue3dPossible()) ? `<button class="btn petit" data-act="vue" title="Changer de vue (V)">${UI.mode3d && UI.vue3d ? '🗺️ Carte' : '🏛️ Vue 3D'}</button>` : ''}
+      ${UI.vue3d || (PM.vue3dPossible && PM.vue3dPossible()) ? `<button class="btn petit" data-act="vue" title="Changer de vue (V)">${UI.mode3d && UI.vue3d ? '🗺️ Carte' : '🏛️ Vue 3D'}</button><button class="btn petit" data-act="packs" title="Packs graphiques">🎨</button>` : ''}
       <div class="date">${esc(PM.date(E.mois))}</div>
       <div class="vitesses">${['⏸', '▶', '⏩', '⏭'].map((t, i) => `<button data-act="vitesse" data-v="${i}" class="${UI.vitesse === i ? 'actif' : ''}" title="${['Pause (Espace)', 'Lent (1)', 'Normal (2)', 'Rapide (3)'][i]}">${t}</button>`).join('')}</div>`}`;
   }
@@ -780,6 +780,7 @@
       <div class="champ"><label>Effets sonores</label><input type="checkbox" id="rSons" ${s.sons ? 'checked' : ''}></div>
       <div class="champ"><label>Musique (lyre)</label><input type="checkbox" id="rMusique" ${s.musique ? 'checked' : ''}></div>
       <div class="champ"><label>Volume</label><input type="range" id="rVolume" min="0" max="100" value="${Math.round(s.volume * 100)}"></div>
+      ${PM.vue3dPossible && PM.vue3dPossible() ? `<h3>Image</h3><p class="sous">Pack : <b>${esc(PM.PACKS_GRAPHIQUES[PM.packGraphique()].nom)}</b> · qualité ${esc(PM.QUALITES[PM.qualite()].nom.toLowerCase())}</p><button class="btn petit" data-act="packs">Packs graphiques et qualité…</button>` : ''}
       <h3>Oracle (IA du Mac)</h3>
       ${!ia ? '<p class="info">L’oracle n’existe que dans l’application Mac. Les décrets sont lus par mots-clés.</p>'
         : etat && etat.installee ? `<p class="info">🔮 L’oracle est installé : il comprend les décrets écrits librement et raconte leurs conséquences. Tout reste sur ton Mac.</p>
@@ -805,6 +806,18 @@
     const t = { inactif: 'Mises à jour automatiques actives dans l’application installée.', rien: 'Recherche au démarrage.', recherche: 'Recherche d’une nouvelle version…', 'a-jour': `Pax Mythica ${e.version} est à jour.`, telechargement: `Téléchargement de la version ${e.nouvelle} : ${e.progres} %`, installation: 'Préparation de la mise à jour…', erreur: 'Mise à jour impossible : ' + e.erreur }[e.etat];
     el.innerHTML = e.etat === 'pret' ? `Version ${esc(e.nouvelle)} prête. <button class="btn petit or" data-act="maj-installer">Redémarrer pour installer</button>` : esc(t || '');
   }
+  // ---------- packs graphiques et qualité de l'image ----------
+  ACT.packs = () => {
+    const pack = PM.packGraphique(), q = PM.qualite();
+    ouvrirModal(`<h2>🎨 Packs graphiques</h2><p class="sous">Lumière, saison, ciel, mer et style de l’image de la vue 3D. Le changement est immédiat.</p>
+      <div class="cartes">${Object.entries(PM.PACKS_GRAPHIQUES).map(([id, P]) => `<button class="carte-choix ${id === pack ? 'choisie' : ''}" data-act="pack-choisir" data-v="${id}"><div class="em">${P.emoji}</div><h3>${esc(P.nom)}</h3><p>${esc(P.desc)}</p></button>`).join('')}</div>
+      <h3 style="margin-top:18px">Qualité de l’image</h3>
+      <div class="outils">${Object.entries(PM.QUALITES).map(([id, Q]) => `<button class="btn petit ${id === q ? 'actif' : ''}" data-act="qualite-choisir" data-v="${id}" title="${esc(Q.desc)}">${esc(Q.nom)}</button>`).join('')}</div>
+      <p class="sous">${esc(PM.QUALITES[q].desc)}</p>
+      <div class="actions-bas"><button class="btn or" data-act="fermer">Fermer</button></div>`, true);
+  };
+  ACT['pack-choisir'] = e => { PM.choisirPack(e.dataset.v); if (UI.vue3d && UI.j) UI.vue3d.appliquerPack(e.dataset.v); ACT.packs(); };
+  ACT['qualite-choisir'] = e => { PM.choisirQualite(e.dataset.v); if (UI.vue3d && UI.j) UI.vue3d.appliquerQualite(e.dataset.v); ACT.packs(); };
   ACT['maj-installer'] = () => G.paxMaj && G.paxMaj.installer();
   ACT['maj-plus-tard'] = () => { $('#bandeauMaj').classList.add('cache'); UI.majCachee = true; };
   // une nouvelle version téléchargée en arrière-plan : on le dit, sans interrompre la partie

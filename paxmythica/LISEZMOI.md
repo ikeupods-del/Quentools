@@ -13,7 +13,7 @@ Jeu de stratégie pour Mac : un mélange d’*Age of Mythology* (panthéons, die
 ## Jouer
 
 - **Nouvelle partie** : époque (Antiquité, Moyen Âge, ère industrielle, époque moderne, futur), peuple (quatre cultures par époque), dieu majeur ou doctrine, nom du peuple. L’époque change les peuples, unités, unités spéciales, bâtiments, âges, pouvoirs, vocabulaire et l’allure des villes ; les règles restent équilibrées de la même façon.
-- **Vue 3D** façon Age of Mythology (par défaut) : relief, mer animée, ombres, forêts, villes qui grandissent, soldats en formation. Glisser ou deux doigts pour se déplacer, molette ou pincement pour zoomer, Q/E pour tourner, **V** pour passer à la carte de stratégie 2D.
+- **Vue 3D** façon Age of Mythology (par défaut) : relief, sol aux textures détaillées, mer animée, ombres, herbe et forêts au vent, ombres des nuages, villes qui grandissent, soldats en formation. **Packs graphiques** (bouton 🎨 ou Réglages) : Olympe doré, Réaliste, Fresque peinte, Crépuscule, Automne, Hiver nordique, Nuit étoilée, Ragnarök ; qualité Ultra (occlusion ambiante), Haute, Moyenne ou Basse. Glisser ou deux doigts pour se déplacer, molette ou pincement pour zoomer, Q/E pour tourner, **V** pour passer à la carte de stratégie 2D.
 - **Partie personnalisée** : graine, taille et forme du monde, part de terres, peuples (nom, couleur, panthéon, dieu, humeur), règles (ressources, âge de départ, difficulté, tribus, paix initiale, événements, mythes, victoires). **Modifier la carte** ouvre l’éditeur : frontières, terrains, niveaux, capitales, noms ; le résultat s’enregistre comme scénario.
 - **Scénarios** : cinq mondes prêts à jouer et les scénarios enregistrés.
 - Le temps passe mois par mois (pause, trois vitesses). Province → construire, développer, recruter. Armée → clic sur une province pour y marcher ; les terres hostiles se prennent par siège.
@@ -29,7 +29,7 @@ Jeu de stratégie pour Mac : un mélange d’*Age of Mythology* (panthéons, die
 
 ## Pour le développement
 
-- Fichiers : `donnees.js` (panthéons, dieux, unités, pouvoirs, événements), `epoques.js` (les cinq époques), `vue3d.js` (vue 3D, three.js hébergé dans `vendor/`), `carte.js` (génération du monde), `moteur.js` (règles), `alliances.js`, `ia-nations.js` (peuples de l’ordinateur), `oracle.js` (décrets), `rendu.js` (carte), `son.js`, `interface.js`, `main.js` / `preload.js` (Electron).
+- Fichiers : `donnees.js` (panthéons, dieux, unités, pouvoirs, événements), `epoques.js` (les cinq époques), `vue3d.js` (vue 3D, three.js hébergé dans `vendor/`, effets dans `vendor/effets/`), `packs-graphiques.js` (packs et qualités, un pack = une entrée), `carte.js` (génération du monde), `moteur.js` (règles), `alliances.js`, `ia-nations.js` (peuples de l’ordinateur), `oracle.js` (décrets), `rendu.js` (carte), `son.js`, `interface.js`, `main.js` / `preload.js` (Electron).
 - Copies générées (ne pas modifier) : `ia-locale.js`, `ia-worker.js`, `maj.js` → `node tools/synchro-ia-locale.js`.
 - Essais : `node tests/moteur.js` et `node tests/interface.js` (Chromium).
 - Publier : changer `version` dans `package.json` et ajouter sa section dans `NOUVEAUTES.md` ; le workflow « Pax Mythica — jeu Mac » construit, essaie et publie le .dmg.

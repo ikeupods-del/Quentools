@@ -90,12 +90,15 @@ function autotest() {
         UI.lancerPartie(j); UI.fermerModal();
         for (let m = 0; m < 120 && UI.j && !UI.j.etat.fin; m++) { UI.unMois(); for (let k = 0; k < 5 && !document.querySelector('#modal').classList.contains('cache'); k++) { const b = document.querySelector('#modalBoite .carte-choix, #modalBoite .choix .btn:not([disabled]), #modalBoite [data-act$=oui], #modalBoite [data-act=fermer]'); if (!b) break; b.click(); } }
         await new Promise(ok => requestAnimationFrame(() => requestAnimationFrame(ok)));
-        const v3 = !!(UI.vue3d && UI.mode3d); if (v3) UI.ACT.vue();
+        const v3 = !!(UI.vue3d && UI.mode3d); let packs = 0;
+        // packs graphiques et qualités sur le vrai Mac (avec sa carte graphique)
+        if (v3) { for (const q of ['ultra', 'haute']) { UI.vue3d.appliquerQualite(q); for (const id of Object.keys(PM.PACKS_GRAPHIQUES)) { UI.vue3d.appliquerPack(id); UI.vue3d.stabiliser(); UI.vue3d.dessiner(16); UI.vue3d.dessiner(16); packs++; } } UI.vue3d.appliquerPack('olympe'); UI.vue3d.appliquerQualite('haute'); }
+        if (v3) UI.ACT.vue();
         await new Promise(ok => requestAnimationFrame(() => requestAnimationFrame(ok)));
         const cv = document.querySelector('#carte'), px = cv.getContext('2d').getImageData(cv.width / 2, cv.height / 2, 1, 1).data;
         const d = await PM.decret(UI.j, UI.j.etat.joueur, 'prier les dieux', null);
         const copie = PM.charger(JSON.parse(JSON.stringify(UI.j.etat)));
-        return { vue3d: v3, mois: UI.j.etat.mois, provinces: UI.j.etat.provinces.length, carteDessinee: px[3] === 255 && (px[0] + px[1] + px[2]) > 0, decret: d.resultats.length > 0, rechargement: copie.carte.provinces.length === UI.j.etat.provinces.length, oracle: !!window.paxIA, maj: !!window.paxMaj };
+        return { vue3d: v3, packs, mois: UI.j.etat.mois, provinces: UI.j.etat.provinces.length, carteDessinee: px[3] === 255 && (px[0] + px[1] + px[2]) > 0, decret: d.resultats.length > 0, rechargement: copie.carte.provinces.length === UI.j.etat.provinces.length, oracle: !!window.paxIA, maj: !!window.paxMaj };
       })()`);
       if (res.jeu.oracle) res.oracle = await win.webContents.executeJavaScript('window.paxIA.etat()');
     } catch (e) { res.erreur = e.message; }
