@@ -10,9 +10,30 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptSimplifier } from './meshoptimizer/meshopt_simplifier.module.js';
 
-const SRC = './sources/', IPS = 12, HAUTEUR = 2.7; // images par seconde, taille d'un personnage dans le jeu
-const L = new GLTFLoader(), charger = f => new Promise((ok, ko) => L.load(SRC + f, ok, null, ko));
+const SRC_DIR = './sources/', IPS = 12, HAUTEUR = 2.7; // images par seconde, taille d'un personnage dans le jeu
+const L = new GLTFLoader(), charger = f => new Promise((ok, ko) => L.load(SRC_DIR + f, ok, null, ko));
 const anim = await charger('animations/UAL1_Standard.glb');
+// squelette des animations (noms Unreal) → squelette Mixamo des personnages créés (mêmes membres, autres noms)
+const MIXAMO = { pelvis: 'Hips', spine_01: 'Spine', spine_02: 'Spine1', spine_03: 'Spine2', neck_01: 'Neck', Head: 'Head' };
+for (const [c, L] of [['l', 'Left'], ['r', 'Right']]) {
+  Object.assign(MIXAMO, { ['clavicle_' + c]: L + 'Shoulder', ['upperarm_' + c]: L + 'Arm', ['lowerarm_' + c]: L + 'ForeArm', ['hand_' + c]: L + 'Hand', ['thigh_' + c]: L + 'UpLeg', ['calf_' + c]: L + 'Leg', ['foot_' + c]: L + 'Foot', ['ball_' + c]: L + 'ToeBase' });
+  for (const [d, D] of [['thumb', 'Thumb'], ['index', 'Index'], ['middle', 'Middle'], ['ring', 'Ring'], ['pinky', 'Pinky']]) for (const k of [1, 2, 3]) MIXAMO[`${d}_0${k}_${c}`] = `${L}Hand${D}${k}`;
+}
+const nomMx = n => 'mixamorig' + n; // le chargeur retire les « : » des noms
+const SRC = { scene: anim.scene, os: {}, repos: {}, reposP: null, mixer: new THREE.AnimationMixer(anim.scene) };
+anim.scene.updateMatrixWorld(true); anim.scene.traverse(o => { if (o.isBone) { SRC.os[o.name] = o; SRC.repos[o.name] = o.getWorldQuaternion(new THREE.Quaternion()); } });
+SRC.reposP = SRC.os.pelvis.getWorldPosition(new THREE.Vector3());
+// pose de la source recopiée sur un squelette Mixamo : même rotation (dans le monde) par rapport à la pose en T de chacun
+const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), va = new THREE.Vector3();
+function recibler(sc) {
+  const C = sc.userData.mixamo; SRC.scene.updateMatrixWorld(true);
+  for (const [s, c] of C.ordre) {
+    const bs = SRC.os[s], bc = C.os[c]; bs.getWorldQuaternion(qa); qa.multiply(qb.copy(SRC.repos[s]).invert());
+    qa.multiply(C.repos[c]); bc.parent.getWorldQuaternion(qb); bc.quaternion.copy(qb.invert().multiply(qa)); bc.updateMatrixWorld(true);
+  }
+  // bassin : déplacement de la source ramené à la taille du personnage
+  const h = C.os[nomMx('Hips')]; SRC.os.pelvis.getWorldPosition(va).sub(SRC.reposP).multiplyScalar(C.ratio).add(C.reposP); h.position.copy(h.parent.worldToLocal(va)); h.updateMatrixWorld(true);
+}
 await MeshoptSimplifier.ready;
 
 // accessoires (en mètres, dans la pose de repos du squelette, autour de l'os qui les porte) : géométrie, couleur, os, teinté aux couleurs du peuple
@@ -64,6 +85,7 @@ const TYPES = {
   // animaux seuls (troupeaux des fermes)
   mouton: { monture: { fichier: 'animaux/Sheep.glb', hauteur: 1 }, parties: [], acc: [], hauteur: 1.35, cible: 700, clips: [{ nom: 'repos', monture: 'Armature|Idle' }, { nom: 'saut', monture: 'Armature|Jump' }] },
   vache: { monture: { fichier: 'animaux/Cow.glb', hauteur: 1 }, parties: [], acc: [], hauteur: 2.3, cible: 900, clips: [{ nom: 'repos', monture: 'Armature|Idle' }, { nom: 'Walk_Loop', monture: 'Armature|WalkSlow' }] },
+  hoplite_grec: { parties: [{ fichier: 'crees/hoplite-grec/hoplite-grec.glb', masque: 'crees/hoplite-grec/textures/hoplite-grec_couleur_joueur.png' }], acc: ['bouclier_rond', 'glaive'], clips: ['Sword_Idle', 'Walk_Loop', 'Sword_Attack', 'Idle_Loop'], cible: 2600 },
   villageoise: { cheveux: '#7a4a26', parties: [{ fichier: 'tenues/Female_Peasant.gltf', teinte: /Body/ }, { fichier: 'base/Superhero_Female_FullBody.gltf', tete: true }, { fichier: 'base/Hair_Buns.gltf' }, { fichier: 'base/Eyebrows_Female.gltf' }], acc: [], clips: ['Idle_Loop', 'Walk_Loop', 'Interact', 'PickUp_Table'], cible: 2200 }
 };
 
@@ -84,6 +106,15 @@ async function cuire(nom) {
     if (p.monture) { const b0 = new THREE.Box3().setFromObject(g.scene); g.scene.scale.setScalar(p.hauteur / (b0.max.y - b0.min.y)); g.scene.userData.monture = true; monture = { scene: g.scene, anims: g.animations }; }
     else if (monture) g.scene.userData.cavalier = true;
     scenes.push(g.scene); g.scene.updateMatrixWorld(true);
+    if (g.scene.getObjectByName(nomMx('Hips'))) {
+      const os = {}, repos = {}; g.scene.traverse(o => { if (o.isBone) { os[o.name] = o; repos[o.name] = o.getWorldQuaternion(new THREE.Quaternion()); } });
+      const ordre = []; g.scene.traverse(o => { if (!o.isBone) return; const s = Object.keys(MIXAMO).find(k => nomMx(MIXAMO[k]) === o.name); if (s && SRC.os[s]) ordre.push([s, o.name]); });
+      const reposP = os[nomMx('Hips')].getWorldPosition(new THREE.Vector3());
+      g.scene.userData.mixamo = { os, repos, ordre, reposP, ratio: reposP.y / SRC.reposP.y };
+    }
+    // masque de la couleur du joueur (blanc = à teinter), lu à la coordonnée de texture de chaque sommet
+    let masque = null;
+    if (p.masque) { const img = await createImageBitmap(await (await fetch(SRC_DIR + p.masque)).blob()), c = new OffscreenCanvas(256, 256), x = c.getContext('2d'); x.drawImage(img, 0, 0, 256, 256); masque = x.getImageData(0, 0, 256, 256).data; }
     g.scene.traverse(o => {
       if (!o.isSkinnedMesh) return;
       if (p.garder && !p.garder.test(o.name)) return;
@@ -103,7 +134,8 @@ async function cuire(nom) {
         const n = N ? new THREE.Vector3().fromBufferAttribute(N, i).transformDirection(o.matrixWorld) : new THREE.Vector3(0, 1, 0); vu.nor.push(n.x, n.y, n.z);
         const u = UV ? UV.getX(i) : 0.5, w = UV ? UV.getY(i) : 0.5, fr = t => t === 1 ? 1 : t - Math.floor(t);
         if (uni) vu.uv.push(uni[0], uni[1]); else vu.uv.push((coin[0] + fr(u) * (coin[2] - 1) + 0.5) / 2048, (coin[1] + fr(w) * (coin[2] - 1) + 0.5) / 2048);
-        vu.teinte.push(teinte); vu.lum.push(0); vu.ref.push([o, i]);
+        let t = teinte; if (masque && UV) { const mx = Math.min(255, Math.max(0, Math.floor(fr(u) * 256))), my = Math.min(255, Math.max(0, Math.floor(fr(w) * 256))); t = masque[(my * 256 + mx) * 4] > 127 ? 1 : 0; }
+        vu.teinte.push(t); vu.lum.push(0); vu.ref.push([o, i]);
       }
       const d0 = vu.idx.length; for (const i of tri) vu.idx.push(base + i); vu.parts.push([d0, vu.idx.length, !!p.monture]);
     });
@@ -112,7 +144,7 @@ async function cuire(nom) {
   const os0 = {}; for (const sc of scenes) sc.traverse(o => { if (o.isBone && (!os0[o.name] || !sc.userData.monture)) os0[o.name] = o; });
   const osMonture = {}; if (monture) monture.scene.traverse(o => { if (o.isBone) osMonture[o.name] = o; });
   for (const a of T.acc.concat(T.accMonture || [])) for (const [geo, couleur, nomOs, teinte, lum] of ACC[a]) {
-    const bone = (T.accMonture || []).includes(a) ? osMonture[nomOs] : os0[nomOs], repos = new THREE.Vector3().setFromMatrixPosition(bone.matrixWorld), g = geo.clone(); if (!g.index) g.setIndex([...Array(g.attributes.position.count).keys()]); g.computeVertexNormals();
+    const bone = (T.accMonture || []).includes(a) ? osMonture[nomOs] : (os0[nomOs] || os0[nomMx(MIXAMO[nomOs])]), repos = new THREE.Vector3().setFromMatrixPosition(bone.matrixWorld), g = geo.clone(); if (!g.index) g.setIndex([...Array(g.attributes.position.count).keys()]); g.computeVertexNormals();
     const [pu, pv] = palette(couleur);
     const base = vu.pos.length / 3, P = g.attributes.position, N = g.attributes.normal;
     for (let i = 0; i < P.count; i++) {
@@ -160,9 +192,11 @@ async function cuire(nom) {
   for (const spec of T.clips) {
     const cs = typeof spec === 'string' ? { nom: spec, humain: spec } : spec, cH = cs.humain ? clipDe(cs.humain) : null, cM = cs.monture ? clipDe(cs.monture, monture.anims) : null, cHaut = cs.haut ? partie(clipDe(cs.haut), true) : null;
     const duree = cM ? cM.duration : cH.duration, nb = Math.max(2, Math.round(duree * IPS)), debut = images.length; clips.push({ nom: cs.nom, debut, nb, ips: IPS });
-    mixers.forEach((m, k) => { m.stopAllAction(); if (scenes[k].userData.monture) { if (cM) m.clipAction(cM).play(); return; } if (!cH) return; m.clipAction(cHaut ? partie(cH, false) : cH).play(); if (cHaut) m.clipAction(cHaut).play(); });
+    SRC.mixer.stopAllAction(); if (cH) { SRC.mixer.clipAction(cHaut ? partie(cH, false) : cH).play(); if (cHaut) SRC.mixer.clipAction(cHaut).play(); }
+    mixers.forEach((m, k) => { m.stopAllAction(); if (scenes[k].userData.monture) { if (cM) m.clipAction(cM).play(); return; } if (!cH || scenes[k].userData.mixamo) return; m.clipAction(cHaut ? partie(cH, false) : cH).play(); if (cHaut) m.clipAction(cHaut).play(); });
     for (let f = 0; f < nb; f++) {
       for (const m of mixers) m.setTime(f / IPS);
+      SRC.mixer.setTime(f / IPS); for (const sc of scenes) if (sc.userData.mixamo) recibler(sc);
       placer();
       for (const s of scenes) s.updateMatrixWorld(true);
       const pos = new Float32Array(n * 3), v = new THREE.Vector3(), M = new THREE.Matrix4();
