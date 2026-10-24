@@ -1,12 +1,5 @@
 {
- "catalogue": {
-  "fichiers": [
-   "fir_tree_01",
-   "island_tree_01",
-   "grass_medium_01",
-   "pine_tree_01"
-  ]
- },
+ "catalogue": {},
  "materiaux": [
   {
    "nom": "sol-herbe",
@@ -150,6 +143,30 @@
    "nom": "bat-paves",
    "id": "PavingStones070",
    "taille": 512
+  },
+  {
+   "nom": "bat-chaume",
+   "source": "polyhaven",
+   "id": "thatch_roof_angled",
+   "taille": 512
+  },
+  {
+   "nom": "bat-chateau",
+   "source": "polyhaven",
+   "id": "castle_wall_slates",
+   "taille": 512
+  },
+  {
+   "nom": "bat-bois-medieval",
+   "source": "polyhaven",
+   "id": "medieval_wood",
+   "taille": 512
+  },
+  {
+   "nom": "bat-tuiles-argile",
+   "source": "polyhaven",
+   "id": "clay_roof_tiles_02",
+   "taille": 512
   }
  ],
  "ciels": [
@@ -218,36 +235,93 @@
   {
    "nom": "sapin",
    "id": "fir_tree_01",
-   "texturesSeules": true
+   "texturesSeules": true,
+   "cartes": [
+    "twig_alpha"
+   ]
   },
   {
    "nom": "pin",
    "id": "pine_tree_01",
-   "texturesSeules": true
+   "texturesSeules": true,
+   "cartes": [
+    "twig_alpha"
+   ]
   },
   {
    "nom": "arbre-ile",
    "id": "island_tree_01",
-   "texturesSeules": true
+   "texturesSeules": true,
+   "cartes": [
+    "leaves_alpha"
+   ]
   },
   {
    "nom": "jacaranda",
    "id": "jacaranda_tree",
-   "texturesSeules": true
+   "texturesSeules": true,
+   "cartes": [
+    "leaves_alpha"
+   ]
   },
   {
    "nom": "herbe-touffe",
    "id": "grass_medium_01",
-   "texturesSeules": true
+   "texturesSeules": true,
+   "cartes": [
+    "Alpha",
+    "dry_diff"
+   ]
   },
   {
    "nom": "arbuste",
    "id": "searsia_lucida",
-   "texturesSeules": true
+   "texturesSeules": true,
+   "cartes": [
+    "alpha",
+    "Alpha",
+    "leaves_alpha"
+   ]
   },
   {
    "nom": "tonneau",
    "id": "Barrel_01"
+  },
+  {
+   "nom": "caisse",
+   "id": "wooden_crate_01"
+  },
+  {
+   "nom": "tonneaux",
+   "id": "wooden_barrels_01"
+  },
+  {
+   "nom": "jarre",
+   "id": "ceramic_pot"
+  },
+  {
+   "nom": "navire",
+   "id": "dutch_ship_medium"
+  },
+  {
+   "nom": "canon",
+   "id": "cannon_01"
+  },
+  {
+   "nom": "bouclier",
+   "id": "kite_shield"
+  },
+  {
+   "nom": "rocher3",
+   "id": "rock_07"
+  },
+  {
+   "nom": "rocher4",
+   "id": "rock_09"
+  },
+  {
+   "nom": "panier",
+   "id": "wicker_basket_01"
   }
  ]
 }

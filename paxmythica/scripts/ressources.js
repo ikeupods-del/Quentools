@@ -130,8 +130,14 @@ async function ciel(c) {
 
 async function modele(m) {
   const dest = path.join(DOSSIER, 'modeles', m.nom);
-  if (licences['modeles/' + m.nom] && licences['modeles/' + m.nom].id === m.id && fs.existsSync(dest)) return;
   const f = await json('https://api.polyhaven.com/files/' + m.id), g = f.gltf[m.res || '1k'].gltf;
+  // cartes supplémentaires (masques de transparence des feuillages…) : enregistrées sous textures/<carte>.jpg
+  for (const c of m.cartes || []) {
+    const p = path.join(dest, 'textures', c + '.jpg'); if (fs.existsSync(p)) continue;
+    const e = f[c] && (f[c][m.res || '1k'] || f[c]['1k']); if (!e || !e.jpg) { note('carte absente ' + m.id + ' : ' + c + ' (proposées : ' + Object.keys(f).join(', ') + ')'); continue; }
+    fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, await octets(e.jpg.url)); note(`carte ${m.nom}/${c}`);
+  }
+  if (licences['modeles/' + m.nom] && licences['modeles/' + m.nom].id === m.id && fs.existsSync(dest)) return;
   fs.mkdirSync(dest, { recursive: true });
   // « texturesSeules » : feuillages, écorces… (le maillage d'origine, de plusieurs millions de polygones, n'est pas gardé)
   if (!m.texturesSeules) fs.writeFileSync(path.join(dest, m.nom + '.gltf'), await octets(g.url));
