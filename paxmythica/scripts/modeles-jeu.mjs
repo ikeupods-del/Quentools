@@ -16,13 +16,16 @@ const RACINE = path.join(path.dirname(new URL(import.meta.url).pathname), '..', 
 const CIBLES = {
   rocher1: [1600, 512], rocher2: [1600, 512], rocher3: [1200, 512], rocher4: [1200, 512], 'rochers-mousse': [2400, 512],
   souche: [1200, 512], 'tronc-mort': [1800, 512], tonneau: [500, 256], tonneaux: [1400, 512], caisse: [400, 256],
-  jarre: [500, 256], panier: [700, 256], bouclier: [400, 256], canon: [1400, 512], navire: [7000, 1024]
+  jarre: [500, 256], panier: [700, 256], bouclier: [400, 256], canon: [1400, 512], navire: [7000, 1024],
+  'statue-cheval': [2500, 512], 'statue-gothique': [2500, 512]
 };
+const seuls = process.argv.slice(2); // noms donnés en arguments : seulement ceux-là
 const io = new NodeIO();
 await MeshoptSimplifier.ready;
 fs.mkdirSync(path.join(RACINE, 'jeu'), { recursive: true });
 const bilan = {};
 for (const [nom, [cible, tex]] of Object.entries(CIBLES)) {
+  if (seuls.length && !seuls.includes(nom)) continue;
   const src = path.join(RACINE, 'modeles', nom, nom + '.gltf');
   if (!fs.existsSync(src)) { console.log('absent', nom); continue; }
   const doc = await io.read(src);
@@ -37,4 +40,5 @@ for (const [nom, [cible, tex]] of Object.entries(CIBLES)) {
   bilan[nom] = { avant: Math.round(avant), apres: Math.round(tris()), octets: fs.statSync(path.join(RACINE, 'jeu', nom + '.glb')).size };
   console.log(nom, bilan[nom]);
 }
-fs.writeFileSync(path.join(RACINE, 'jeu', 'bilan.json'), JSON.stringify(bilan, null, 1));
+const ancien = fs.existsSync(path.join(RACINE, 'jeu', 'bilan.json')) ? JSON.parse(fs.readFileSync(path.join(RACINE, 'jeu', 'bilan.json'), 'utf8')) : {};
+fs.writeFileSync(path.join(RACINE, 'jeu', 'bilan.json'), JSON.stringify(Object.assign(ancien, bilan), null, 1));

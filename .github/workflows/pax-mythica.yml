@@ -7,7 +7,7 @@ name: Pax Mythica — jeu Mac
 on:
   workflow_dispatch:
   push:
-    paths: ['paxmythica/**', 'marketing/ia-locale/**', 'quentmovie/maj.js', 'tools/synchro-ia-locale.js', '.github/workflows/pax-mythica.yml']
+    paths: ['paxmythica/**', '!paxmythica/ressources/choix.json', '!paxmythica/ressources-catalogue/**', '!paxmythica/captures-mac/**', '!paxmythica/scripts/**', 'marketing/ia-locale/**', 'quentmovie/maj.js', 'tools/synchro-ia-locale.js', '.github/workflows/pax-mythica.yml']
 
 concurrency:
   group: pax-mythica-mac

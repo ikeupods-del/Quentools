@@ -68,7 +68,7 @@
     },
     nuit: {
       nom: 'Nuit étoilée', emoji: '🌙', desc: 'Clair de lune, villes illuminées, torches et étoiles. Superbe en gros plan.',
-      soleil: { dir: [0.4, 0.55, -0.5], couleur: 0x9fb4ff, force: 0.85 }, hemi: { ciel: 0x2a3a6a, sol: 0x100c14, force: 0.45 }, exposition: 1.1, nuit: true, kCiel: 0.55, fond: 0.6, ambiance: 0.5, brumeTeinte: 0.5,
+      soleil: { dir: [0.4, 0.55, -0.5], couleur: 0x8ea6ff, force: 0.55 }, hemi: { ciel: 0x2a3a6a, sol: 0x100c14, force: 0.45 }, exposition: 1.1, nuit: true, kCiel: 0.55, fond: 0.6, ambiance: 0.5, brumeTeinte: 0.5,
       ciel: { haut: 0x060b1e, horizon: 0x1c2a4c, bas: 0x1a2236, halo: 0xb0c4ff }, etoiles: true, brume: 1.1,
       eau: { creux: [0.01, 0.03, 0.08], bas: [0.04, 0.12, 0.2], reflet: [0.7, 0.8, 1.0] },
       sol: { herbe: [70, 100, 60], foret: [40, 60, 40], sec: [110, 110, 80], sable: [170, 160, 140], roche: [100, 100, 110], neige: [220, 228, 255], fleurs: false },
@@ -89,9 +89,9 @@
   };
   // qualité : effets, ombres, herbe, finesse de l'image
   PM.QUALITES = {
-    ultra: { nom: 'Ultra', ao: true, bloom: true, maquette: true, ombres: 4096, herbe: 1, finesse: 2, desc: 'Tous les effets, occlusion ambiante, image la plus fine.' },
-    haute: { nom: 'Haute', ao: false, bloom: true, maquette: true, ombres: 2048, herbe: 1, finesse: 2, desc: 'Halo lumineux, effet maquette, herbe, ombres fines.' },
-    moyenne: { nom: 'Moyenne', ao: false, bloom: false, maquette: false, ombres: 1024, herbe: 0.5, finesse: 1.5, desc: 'Moins d’herbe et d’effets.' },
+    ultra: { nom: 'Ultra', ao: true, bloom: true, maquette: true, ombres: 4096, herbe: 1, finesse: 2, desc: 'Tous les effets, occlusion ambiante des volumes, image la plus fine.' },
+    haute: { nom: 'Haute', ao: false, bloom: true, maquette: true, ombres: 2048, herbe: 1, finesse: 2, desc: 'Halo lumineux, ombres fines, herbe, textures photographiques en pleine définition.' },
+    moyenne: { nom: 'Moyenne', ao: false, bloom: false, maquette: false, ombres: 1024, herbe: 0.5, finesse: 1.5, desc: 'Textures allégées, moins d’herbe et d’effets : pour un MacBook Air.' },
     basse: { nom: 'Basse', ao: false, bloom: false, maquette: false, ombres: 0, herbe: 0, finesse: 1, desc: 'Pour un Mac ancien : sans ombres ni effets.' }
   };
   const lire = (k, d) => { try { return localStorage.getItem(k) || d; } catch (e) { return d; } };

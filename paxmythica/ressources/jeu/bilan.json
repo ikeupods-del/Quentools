@@ -73,5 +73,15 @@
   "avant": 69162,
   "apres": 13049,
   "octets": 2958152
+ },
+ "statue-cheval": {
+  "avant": 22388,
+  "apres": 2498,
+  "octets": 252668
+ },
+ "statue-gothique": {
+  "avant": 27739,
+  "apres": 3659,
+  "octets": 527948
  }
 }

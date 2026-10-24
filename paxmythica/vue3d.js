@@ -107,7 +107,10 @@
       maison_moderne: fusion([[B(3.2, 6.5, 3.2), beton], [B(3.3, 0.4, 3.3, 0, 2.2), verre], [B(3.3, 0.4, 3.3, 0, 4.4), verre]]),
       maison_futur: fusion([[Cy(1.4, 1.9, 3, 12), 0xf2f6fa], [new THREE.SphereGeometry(1.45, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 3, 0), neon]]),
       // temples
-      temple_grecs: fusion([[B(10, 0.9, 7), 0xe6dfcf], [B(10.4, 0.25, 7.4, 0, 0.9), 0xd8d0bf], ...colonnes(6, 9, 3, 3.4, 1.15), ...colonnes(6, 9, -3, 3.4, 1.15), [B(10.2, 0.7, 7.2, 0, 4.55), 0xf1ece0], [new THREE.CylinderGeometry(0.01, 4.1, 1.7, 4).rotateY(Math.PI / 4).scale(1.32, 1, 0.95).translate(0, 6.1, 0), tuile]]),
+      // temple grec : trois marches, colonnade tout autour, cella, entablement et frise, fronton et toit de tuiles
+      temple_grecs: fusion([[B(11.4, 0.34, 8.4), 0xe6dfcf], [B(10.8, 0.34, 7.8, 0, 0.34), 0xe6dfcf], [B(10.2, 0.34, 7.2, 0, 0.68), 0xd8d0bf], [B(6.4, 3.3, 4.0, 0, 1.02), 0xece4d2],
+        ...colonnes(6, 9.2, 3.2, 3.3, 1.02), ...colonnes(6, 9.2, -3.2, 3.3, 1.02), ...[-1.6, 0, 1.6].flatMap(z => [[Cy(0.3, 0.34, 3.3, 12, -4.6, 1.02, z), 0xf6f1e4, MAT.colonne], [Cy(0.3, 0.34, 3.3, 12, 4.6, 1.02, z), 0xf6f1e4, MAT.colonne]]),
+        [B(10.3, 0.45, 7.3, 0, 4.32), 0xf1ece0], [B(10.4, 0.32, 7.4, 0, 4.77), 0xd8d0bf], [B(0.5, 1.6, 0.12, 0, 1.02, 2.02), porte, MAT.bois], [pignon(10.4, 7.5, 1.45, 0, 5.09, 0), tuile]]),
       temple_egyptiens: fusion([[Co(5.2, 5.4, 4, 0, 0, 0, Math.PI / 4), 0xe2c690], [Co(1.1, 0.9, 4, 0, 4.5, 0, Math.PI / 4), 0xf2d27a], [new THREE.CylinderGeometry(0.22, 0.75, 8, 4).rotateY(Math.PI / 4).translate(6.5, 4, 3), 0xcdb27a], [Co(0.3, 0.6, 4, 6.5, 8, 3, Math.PI / 4), 0xf2d27a]]),
       temple_nordiques: fusion([[B(9, 2.8, 4.6), bois], [pignon(9, 4.6, 3.4, 0, 2.8, 0), sombre], [Co(0.4, 1.6, 4, 4.6, 5.2, 0), 0xc9a24a], [Co(0.4, 1.6, 4, -4.6, 5.2, 0), 0xc9a24a]]),
       temple_atlantes: fusion([[Cy(3.6, 3.9, 3.4, 16), 0xeef6f5], ...[0, 1, 2, 3, 4, 5, 6, 7].map(i => [Cy(0.3, 0.3, 3.4, 10, Math.cos(i * 0.785) * 4.3, 0, Math.sin(i * 0.785) * 4.3), 0xffffff, MAT.colonne]), [new THREE.SphereGeometry(3.6, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 3.4, 0), 0x2fa59a], [Co(0.4, 1.4, 6, 0, 6.8), 0xf2d27a]]),
@@ -134,6 +137,7 @@
       merveille_industriel: fusion([[Co(7, 34, 4, 0, 0, 0, Math.PI / 4), 0x8a6a48], [B(9, 0.8, 9, 0, 10), 0x7a5a3a], [B(6, 0.8, 6, 0, 20), 0x7a5a3a], [Cy(0.3, 0.3, 5, 4, 0, 34), acier]]),
       merveille_moderne: fusion([[B(9, 52, 9), 0x7ea9c4], [B(7, 10, 7, 0, 52), 0x9ec2d8], [Co(2, 12, 4, 0, 62, 0, Math.PI / 4), acier], [B(16, 4, 16), beton]]),
       merveille_futur: fusion([[Cy(1.2, 1.6, 120, 8), 0xe8eef4], [Cy(6, 8, 4, 16), 0xdfe8f2], ...[20, 45, 70, 95].map(y => [new THREE.TorusGeometry(2.4, 0.3, 6, 18).rotateX(Math.PI / 2).translate(0, y, 0), neon]), [Sp(3, 0, 120, 0), neon]]),
+      socle_statue: fusion([[B(1.9, 0.3, 1.9), 0xd8d0bf, MAT.marbre], [B(1.5, 1.0, 1.5, 0, 0.3), 0xe6dfcf, MAT.marbre]]),
       place: fusion([[Cy(1, 1.04, 0.7, 40), 0xc4b8a2, MAT.dallage]]),
       drapeau: fusion([[Cy(0.12, 0.12, 9, 4), 0x3a2a18], [B(3.4, 2.1, 0.08, 1.7, 6.6), 0xffffff]]),
       // nature : troncs et feuillages séparés (les feuillages prennent la couleur du pack)
@@ -552,7 +556,7 @@ void main() {
         this.texF = { feuillu, acacia, sapinE, sapinP, herbe, buisson, ecorce, ecorceN };
         // modèles de jeu (rochers, souches, accessoires)
         this.glb = {};
-        await Promise.all(['rocher1', 'rocher2', 'rocher3', 'rocher4', 'rochers-mousse', 'souche', 'tronc-mort', 'tonneau', 'tonneaux', 'caisse', 'jarre', 'panier', 'canon', 'navire'].map(n => PM.chargerModele(`ressources/jeu/${n}.glb`).then(g => { this.glb[n] = g.scene; }).catch(() => null)));
+        await Promise.all(['rocher1', 'rocher2', 'rocher3', 'rocher4', 'rochers-mousse', 'souche', 'tronc-mort', 'tonneau', 'tonneaux', 'caisse', 'jarre', 'panier', 'canon', 'navire', 'statue-cheval', 'statue-gothique'].map(n => PM.chargerModele(`ressources/jeu/${n}.glb`).then(g => { this.glb[n] = g.scene; }).catch(() => null)));
         this.U.uPret.value = 1; this.pret = true;
         if (this.j) this.habiller();
       } catch (e) { console.warn('Pax Mythica : ressources graphiques indisponibles —', e.message); this.pret = false; }
@@ -601,7 +605,7 @@ void main() {
         this.scene.backgroundRotation.set(0, P.rotation || 0, 0); this.scene.environmentRotation.set(0, P.rotation || 0, 0);
         const r = P.rotation || 0, d = c.soleil.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), r);
         if (!P.soleilFixe) { this.dirSoleil.copy(d); if (this.dirSoleil.y < 0.25) { this.dirSoleil.y = 0.25; this.dirSoleil.normalize(); } }
-        this.soleil.color.copy(c.soleilC).lerp(col(P.soleil.couleur), 0.35);
+        this.soleil.color.copy(c.soleilC).lerp(col(P.soleil.couleur), P.nuit ? 1 : 0.35);
         this.scene.fog.color.copy(c.horizon).multiplyScalar((P.fond || 1) * k * (P.brumeTeinte || 1));
         if (this.eau) { const w = this.eau.material.uniforms; w.tCiel.value = c.tex; w.uCielI.value = (P.fond || 1) * k; w.uCielMoy.value.copy(c.moyenne).multiplyScalar(k); w.uPret.value = 1; }
         this.U.uSoleil.value.copy(this.dirSoleil); this.U.uSoleilC.value.copy(this.soleil.color).multiplyScalar(this.soleil.intensity * 0.3);
@@ -909,7 +913,7 @@ void main() {
       const boite = new THREE.Box3().setFromObject(sc), dim = boite.getSize(new THREE.Vector3()), k = taille / Math.max(dim.x, dim.z, 0.01);
       sc.traverse(o => {
         if (!o.isMesh) return;
-        const g = o.geometry.clone().applyMatrix4(o.matrixWorld).translate(-(boite.min.x + boite.max.x) / 2, -boite.min.y, -(boite.min.z + boite.max.z) / 2); g.partage = true;
+        const g = o.geometry.clone().applyMatrix4(o.matrixWorld).translate(-(boite.min.x + boite.max.x) / 2, -boite.min.y, -(boite.min.z + boite.max.z) / 2); g.partage = true; g.morphAttributes = {}; // pas d'animation de forme sur les instances
         const m = new THREE.InstancedMesh(g, o.material, liste.length), ob = new THREE.Object3D();
         liste.forEach((a, i) => { ob.position.set(a[0], yFixe != null ? yFixe : this.sol(a[0], a[1]) - enfonce * a[2], a[1]); ob.rotation.set(0, a[3] * 6.28, 0); ob.scale.setScalar(a[2] * k); ob.updateMatrix(); m.setMatrixAt(i, ob.matrix); });
         m.castShadow = true; m.receiveShadow = true; m.userData.nom = nom; out.push(m);
@@ -983,15 +987,19 @@ void main() {
           do { a = rnd() * Math.PI * 2; r = Rp + 2.5 + rnd() * (Rh - Rp - 2.5); hx = x0 + Math.cos(a) * r; hz = z0 + Math.sin(a) * r; } while (!libre(hx, hz, 2.1 * sc) && ++essai < 8);
           if (essai >= 8) continue; pris.push([hx, hz, 2.1 * sc]);
           // les rues regardent la place ; tours au centre, petites maisons autour
-          const v = 0.8 + rnd() * 0.17, rot = Math.round((Math.atan2(x0 - hx, z0 - hz)) / (Math.PI / 2)) * (Math.PI / 2) + (rnd() - 0.5) * 0.3;
+          // enduits aux teintes variées (blanc, crème, ocre clair), comme dans les villages méditerranéens
+          const TEINTES = [[1, 0.98, 0.94], [1, 0.95, 0.84], [0.98, 0.92, 0.8], [0.95, 0.9, 0.84], [1, 0.97, 0.9], [0.93, 0.86, 0.74]], te = TEINTES[Math.floor(rnd() * TEINTES.length)];
+          const v = 0.86 + rnd() * 0.14, rot = Math.round((Math.atan2(x0 - hx, z0 - hz)) / (Math.PI / 2)) * (Math.PI / 2) + (rnd() - 0.5) * 0.3;
           const maison = choix.length > 1 && r < Rp + 6 && (ep === 'moderne' || ep === 'futur') ? choix[1 + Math.floor(rnd() * (choix.length - 1))] : choix[Math.floor(rnd() * choix.length)];
-          mettre(maison, hx, hz, rot, sc, new THREE.Color(v, Math.min(1, v * (0.97 + rnd() * 0.05)), Math.min(1, v * (0.94 + rnd() * 0.08))).getHex());
+          mettre(maison, hx, hz, rot, sc, new THREE.Color(v * te[0], v * te[1], v * te[2]).getHex());
           // foyers : une maison sur trois fume (cheminées du Moyen Âge, de l'ère industrielle et du Nord)
           if (N && rnd() < (ep === 'medieval' || ep === 'industriel' || N.pantheon === 'nordiques' ? 0.38 : 0.16) && maison.startsWith('maison')) fumer(hx, hz, 3.2 * sc, 0.35 + rnd() * 0.3);
           // vie des rues : tonneaux, caisses, jarres et paniers devant les maisons
           if (N && this.pret && rnd() < 0.55) { const o = ['tonneau', 'caisse', 'jarre', 'panier', 'tonneaux'][Math.floor(rnd() * 5)], dz = (FACADE[maison] || 1.6) * sc + 0.9, lat = (rnd() - 0.5) * 2.4; poser(o, hx + Math.sin(rot) * dz + Math.cos(rot) * lat, hz + Math.cos(rot) * dz - Math.sin(rot) * lat, 0.8 + rnd() * 0.4); }
           if (nuit && N && rnd() < 0.8 && maison.startsWith('maison')) { const dz = FACADE[maison] || 1.58; mettre('lumiere', hx + Math.sin(rot) * dz * sc, hz + Math.cos(rot) * dz * sc, rot, sc, 0xffffff); }
         }
+        // statue sur la place de la capitale (Antiquité et Moyen Âge)
+        if (cap && this.pret && (ep === 'antique' || ep === 'medieval')) { mettre('socle_statue', x0 - 4.6, z0 - 4.6, 0.8, 1); poser(ep === 'antique' ? 'statue-cheval' : 'statue-gothique', x0 - 4.6, z0 - 4.6, 1); }
         if (cap) { mettre(ep === 'antique' ? 'centre_antique' : 'centre_' + ep, x0, z0, 0.3, 1); mettre('drapeau', x0 + 4, z0 + 3, 0, 1, new THREE.Color(N.couleur).getHex()); }
         else if (N) mettre('drapeau', x0 + 2, z0 + 2, 0, 0.75, new THREE.Color(N.couleur).getHex());
         if (P.bat.temple) mettre(TEMPLE_EPOQUE[ep] || 'temple_' + (N ? N.pantheon : 'grecs'), x0 + 10, z0 - 8, 0.25, 1);
@@ -1028,8 +1036,8 @@ void main() {
       if (F.length) { const n = F.length / 5, pos = new Float32Array(n * 3), ph = new Float32Array(n), fo = new Float32Array(n); for (let i = 0; i < n; i++) { pos[i * 3] = F[i * 5]; pos[i * 3 + 1] = F[i * 5 + 1]; pos[i * 3 + 2] = F[i * 5 + 2]; ph[i] = F[i * 5 + 3]; fo[i] = F[i * 5 + 4]; }
         const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('phase', new THREE.BufferAttribute(ph, 1)); g.setAttribute('force', new THREE.BufferAttribute(fo, 1));
         this.fumee = new THREE.Points(g, this.matFumee || (this.matFumee = materiauFumee(this.U.uT))); this.fumee.frustumCulled = false; this.fumee.renderOrder = 3; this.monde.add(this.fumee); }
-      const TAILLES = { tonneau: 0.8, caisse: 0.9, jarre: 0.6, panier: 0.7, tonneaux: 2.2, navire: 11 };
-      for (const nom in A) if (this.glb && this.glb[nom]) for (const m of this.instGLB(nom, A[nom], TAILLES[nom], 0, nom === 'navire' ? -0.6 : null)) { this.accessoires.push(m); this.monde.add(m); }
+      const TAILLES = { tonneau: 0.8, caisse: 0.9, jarre: 0.6, panier: 0.7, tonneaux: 2.2, navire: 11, 'statue-cheval': 1.9, 'statue-gothique': 1.3 };
+      for (const nom in A) if (this.glb && this.glb[nom]) for (const m of this.instGLB(nom, A[nom], TAILLES[nom], nom.startsWith('statue') ? -1.0 : 0, nom === 'navire' ? -0.6 : null)) { this.accessoires.push(m); this.monde.add(m); }
     }
     // ---------- armées : figurines en formation ----------
     pieces() {
