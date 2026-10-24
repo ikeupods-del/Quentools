@@ -1,0 +1,12 @@
+# pages à lire (repérage des paquets CC0 de personnages, chevaux, animaux et créatures)
+https://quaternius.com/ quaternius-accueil
+https://quaternius.com/packs/universalbasecharacters.html q-base
+https://quaternius.com/packs/universalanimationlibrary.html q-animations
+https://quaternius.com/packs/ultimateanimatedcharacter.html q-ultimate
+https://quaternius.com/packs/animatedanimals.html q-animaux
+https://quaternius.com/packs/ultimatemonsters.html q-monstres
+https://quaternius.com/packs/medievalvillage.html q-village
+https://opengameart.org/content/lowpoly-animated-farm-animal-pack oga-ferme
+https://opengameart.org/content/animated-human-low-poly oga-humain
+https://opengameart.org/content/ultimate-animated-character-pack oga-ultimate
+https://opengameart.org/content/universal-animation-library oga-animations

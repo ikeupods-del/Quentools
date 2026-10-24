@@ -1,0 +1,33 @@
+# Récupère les personnages 3D libres de droits (CC0) de Pax Mythica listés dans paxmythica/scripts/personnages-sources.txt
+# et les enregistre dans paxmythica/ressources-catalogue/personnages/ (sources, non livrées dans le jeu).
+name: Pax Mythica — personnages
+
+on:
+  workflow_dispatch:
+  push:
+    paths: ['paxmythica/scripts/personnages-sources.txt', 'paxmythica/scripts/personnages.js', '.github/workflows/pax-personnages.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pax-personnages
+  cancel-in-progress: false
+
+jobs:
+  personnages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Télécharger
+        working-directory: paxmythica
+        run: node scripts/personnages.js
+      - name: Enregistrer
+        run: |
+          git config user.name "pax-bot"; git config user.email "pax-bot@users.noreply.github.com"
+          git add paxmythica/ressources-catalogue/personnages
+          git commit -m "Pax Mythica : personnages 3D libres de droits [skip ci]" || exit 0
+          git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}"
