@@ -1,0 +1,27 @@
+/assets/css/normalize.css
+/assets/css/thumbnails.css
+/assets/css/style_new.css
+/assets/images/site/favicon.ico
+/assets/css/lightbox.min.css
+/assets/css/lity.min.css
+/index.html
+https://www.patreon.com/quaternius
+/assets/images/fullres/ultimatemonsters.jpg
+/assets/images/fullres/ultimatemonsters2.jpg
+https://creativecommons.org/publicdomain/zero/1.0/
+#inline
+https://www.twitter.com/quaternius
+
+# adresses citées dans la page
+https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js
+https://kit.fontawesome.com/f9d695b775.js
+https://www.google-analytics.com/analytics.js
+https://www.artstation.com/quaternius
+https://discord.gg/hXB2qTTEnJ
+https://twitter.com/quaternius
+https://www.patreon.com/quaternius
+https://quaternius.com/packs/ultimatemonsters.html
+https://creativecommons.org/publicdomain/zero/1.0/
+https://drive.google.com/drive/folders/18m4KpzpEzhC9wl7jzr6dUc0N8Jozr79C?usp=sharing
+https://static.itch.io/api.js
+https://www.twitter.com/quaternius
