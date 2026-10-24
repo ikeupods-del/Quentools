@@ -437,7 +437,7 @@ vec4 ici = peuple(p); float o = floor(ici.r * 255.0 + 0.5), pr = floor(ici.g * 2
 vec4 bd = texture2D(tBords, uvc);
 if (alt > -0.5) {
   // frontière : ruban étroit à la couleur du peuple (et non une large bande claire qui passerait pour une rivière), liseré sombre au milieu
-  float ligne = smoothstep(0.55, 0.85, bd.r), coeur = smoothstep(0.82, 0.97, bd.r), halo = smoothstep(0.04, 0.6, bd.g) * (1.0 - ligne), fine = smoothstep(0.25, 0.7, bd.b) * (1.0 - ligne);
+  float raide = 1.0 - smoothstep(0.3, 0.6, pente), ligne = smoothstep(0.55, 0.85, bd.r) * raide, coeur = smoothstep(0.82, 0.97, bd.r) * raide, halo = smoothstep(0.04, 0.6, bd.g) * (1.0 - ligne), fine = smoothstep(0.25, 0.7, bd.b) * (1.0 - ligne);
   if (od > 0.0) { vec3 cd = texture2D(tPalette, vec2((od + 0.5) / 64.0, 0.5)).rgb; c = mix(c, c * 0.6 + cd * 0.45, halo * (o > 0.0 ? 0.2 : 0.08)); c = mix(c, c * 0.35 + cd * 0.75, ligne * 0.7); c *= 1.0 - coeur * 0.25; }
   c *= 1.0 - fine * 0.18;
 }
