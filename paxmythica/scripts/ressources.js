@@ -75,6 +75,11 @@ async function catalogue() {
       note(`catalogue Poly Haven « ${r} » : ${items.length}`);
     } catch (e) { note('ERREUR catalogue Poly Haven ' + r + ' : ' + e.message); }
   }
+  // listes complètes sans aperçus (identifiants, catégories, nombre de polygones)
+  for (const t of choix.catalogue.listes || []) {
+    try { const d = await json('https://api.polyhaven.com/assets?t=' + t); resume['liste:' + t] = Object.entries(d).map(([id, a]) => [id, (a.categories || []).join(','), a.polycount || 0]); note(`liste Poly Haven ${t} : ${Object.keys(d).length}`); }
+    catch (e) { note('ERREUR liste ' + t + ' : ' + e.message); }
+  }
   fs.writeFileSync(path.join(CATALOGUE, 'catalogue.json'), JSON.stringify(resume, null, 1));
 }
 
@@ -82,20 +87,30 @@ async function catalogue() {
 async function materiau(m) {
   const dest = path.join(DOSSIER, 'materiaux', m.nom), taille = m.taille || 1024;
   if (fs.existsSync(path.join(dest, 'couleur.jpg')) && licences['materiaux/' + m.nom] && licences['materiaux/' + m.nom].id === m.id) return;
-  const res = m.res || '2K-JPG', url = `https://ambientcg.com/get?file=${m.id}_${res}.zip`;
-  const fichiers = dezipper(await octets(url)), trouve = k => { const n = Object.keys(fichiers).find(f => new RegExp('_' + k + '\\.(jpg|png)$', 'i').test(f)); return n ? fichiers[n] : null; };
-  const couleur = trouve('Color'), normal = trouve('NormalGL'), rug = trouve('Roughness'), haut = trouve('Displacement'), ao = trouve('AmbientOcclusion'), opac = trouve('Opacity');
-  if (!couleur) throw new Error('pas de couleur dans ' + m.id + ' : ' + Object.keys(fichiers).join(', '));
+  let couleur, normal, rug, haut, ao, opac, emis, fichiers = {};
+  if (m.source === 'polyhaven') {
+    // textures Poly Haven : Diffuse, nor_gl, Rough, Displacement, AO (jpg 2k)
+    const f = await json('https://api.polyhaven.com/files/' + m.id), cle = k => Object.keys(f).find(x => x.toLowerCase() === k.toLowerCase());
+    const prendre = async k => { const c = cle(k); if (!c) return null; const r = f[c][m.res || '2k'] || f[c]['1k']; const e = r && (r.jpg || r.png); return e ? octets(e.url) : null; };
+    [couleur, normal, rug, haut, ao] = await Promise.all(['Diffuse', 'nor_gl', 'Rough', 'Displacement', 'AO'].map(prendre));
+    fichiers = Object.keys(f);
+  } else {
+    const res = m.res || '2K-JPG', url = `https://ambientcg.com/get?file=${m.id}_${res}.zip`;
+    fichiers = dezipper(await octets(url)); const trouve = k => { const n = Object.keys(fichiers).find(f => new RegExp('_' + k + '\\.(jpg|png)$', 'i').test(f)); return n ? fichiers[n] : null; };
+    couleur = trouve('Color'); normal = trouve('NormalGL'); rug = trouve('Roughness'); haut = trouve('Displacement'); ao = trouve('AmbientOcclusion'); opac = trouve('Opacity'); emis = trouve('Emission');
+  }
+  if (!couleur) throw new Error('pas de couleur dans ' + m.id + ' : ' + (Array.isArray(fichiers) ? fichiers : Object.keys(fichiers)).join(', '));
   fs.mkdirSync(dest, { recursive: true });
   const r = img => sharp(img).resize(taille, taille, { fit: 'fill' });
   if (opac) await r(couleur).joinChannel(await sharp(opac).resize(taille, taille, { fit: 'fill' }).greyscale().raw().toBuffer(), { raw: { width: taille, height: taille, channels: 1 } }).png().toFile(path.join(dest, 'couleur.png'));
   await r(couleur).jpeg({ quality: 88 }).toFile(path.join(dest, 'couleur.jpg'));
   if (normal) await r(normal).jpeg({ quality: 92 }).toFile(path.join(dest, 'relief.jpg'));
+  if (emis) await r(emis).jpeg({ quality: 85 }).toFile(path.join(dest, 'lumiere.jpg'));
   const gris = async (img, def) => img ? r(img).greyscale().raw().toBuffer() : Buffer.alloc(taille * taille, def);
   const R = await gris(rug, 200), Hh = await gris(haut, 128), A = await gris(ao, 255), rha = Buffer.alloc(taille * taille * 3);
   for (let i = 0; i < taille * taille; i++) { rha[i * 3] = R[i * (R.length / (taille * taille)) | 0]; rha[i * 3 + 1] = Hh[i * (Hh.length / (taille * taille)) | 0]; rha[i * 3 + 2] = A[i * (A.length / (taille * taille)) | 0]; }
   await sharp(rha, { raw: { width: taille, height: taille, channels: 3 } }).jpeg({ quality: 90 }).toFile(path.join(dest, 'rha.jpg'));
-  licences['materiaux/' + m.nom] = { id: m.id, source: 'ambientCG', page: 'https://ambientcg.com/view?id=' + m.id, licence: 'CC0 1.0' };
+  licences['materiaux/' + m.nom] = m.source === 'polyhaven' ? { id: m.id, source: 'Poly Haven', page: 'https://polyhaven.com/a/' + m.id, licence: 'CC0 1.0' } : { id: m.id, source: 'ambientCG', page: 'https://ambientcg.com/view?id=' + m.id, licence: 'CC0 1.0' };
   note(`matériau ${m.nom} ← ${m.id}`);
 }
 
@@ -110,11 +125,12 @@ async function ciel(c) {
 
 async function modele(m) {
   const dest = path.join(DOSSIER, 'modeles', m.nom);
-  if (fs.existsSync(path.join(dest, m.nom + '.gltf')) && licences['modeles/' + m.nom] && licences['modeles/' + m.nom].id === m.id) return;
+  if (licences['modeles/' + m.nom] && licences['modeles/' + m.nom].id === m.id && fs.existsSync(dest)) return;
   const f = await json('https://api.polyhaven.com/files/' + m.id), g = f.gltf[m.res || '1k'].gltf;
   fs.mkdirSync(dest, { recursive: true });
-  fs.writeFileSync(path.join(dest, m.nom + '.gltf'), await octets(g.url));
-  for (const [rel, inc] of Object.entries(g.include || {})) { const p = path.join(dest, rel); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, await octets(inc.url)); }
+  // « texturesSeules » : feuillages, écorces… (le maillage d'origine, de plusieurs millions de polygones, n'est pas gardé)
+  if (!m.texturesSeules) fs.writeFileSync(path.join(dest, m.nom + '.gltf'), await octets(g.url));
+  for (const [rel, inc] of Object.entries(g.include || {})) { if (m.texturesSeules && !/\.(jpg|png)$/i.test(rel)) continue; const p = path.join(dest, rel); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, await octets(inc.url)); }
   licences['modeles/' + m.nom] = { id: m.id, source: 'Poly Haven', page: 'https://polyhaven.com/a/' + m.id, licence: 'CC0 1.0' };
   note(`modèle ${m.nom} ← ${m.id}`);
 }
