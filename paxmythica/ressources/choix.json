@@ -1,0 +1,6 @@
+{
+  "catalogue": {
+    "ambientcg": ["grass", "forest floor", "ground", "dry ground", "sand", "rock", "cliff", "snow", "gravel", "paving stones", "roofing tiles", "thatch", "planks", "wood siding", "plaster", "bricks", "stone wall", "marble", "concrete", "metal plates", "facade", "lava", "tiles"],
+    "polyhaven": ["hdris:skies", "hdris:sunrise-sunset", "hdris:night", "models:nature", "models", "textures:terrain"]
+  }
+}

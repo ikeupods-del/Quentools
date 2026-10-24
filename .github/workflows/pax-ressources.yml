@@ -1,0 +1,36 @@
+# Télécharge les ressources graphiques libres de droits (CC0) du jeu Pax Mythica (ambientCG, Poly Haven)
+# selon paxmythica/ressources/choix.json, puis les enregistre dans la branche (paxmythica/ressources/).
+# Se lance quand choix.json ou le script changent, ou à la main (Actions → « Pax Mythica — ressources »).
+name: Pax Mythica — ressources
+
+on:
+  workflow_dispatch:
+  push:
+    paths: ['paxmythica/ressources/choix.json', 'paxmythica/scripts/ressources.js', '.github/workflows/pax-ressources.yml']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pax-ressources
+  cancel-in-progress: false
+
+jobs:
+  ressources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install --prefix /tmp/sharp sharp@0.33
+      - name: Télécharger
+        env: { SHARP: /tmp/sharp/node_modules/sharp }
+        working-directory: paxmythica
+        run: node scripts/ressources.js
+      - name: Enregistrer
+        run: |
+          git config user.name "pax-bot"; git config user.email "pax-bot@users.noreply.github.com"
+          git add paxmythica/ressources paxmythica/ressources-catalogue
+          git commit -m "Pax Mythica : ressources graphiques libres de droits [skip ci]" || exit 0
+          git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "HEAD:${GITHUB_REF_NAME}"
