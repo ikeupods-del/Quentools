@@ -1,0 +1,13 @@
+/assets/css/normalize.css
+/assets/css/thumbnails.css
+/assets/css/style_new.css
+/assets/images/site/favicon.ico
+/assets/css/lightbox.min.css
+/assets/css/lity.min.css
+/index.html
+https://www.patreon.com/quaternius
+/assets/images/fullres/medievalvillage.jpg
+/assets/images/fullres/medievalvillage2.jpg
+https://creativecommons.org/publicdomain/zero/1.0/
+#inline
+https://www.twitter.com/quaternius

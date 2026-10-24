@@ -1,0 +1,16 @@
+/assets/css/normalize.css
+/assets/css/thumbnails.css
+/assets/css/style_new.css
+/assets/images/site/favicon.ico
+/assets/css/lightbox.min.css
+/assets/css/lity.min.css
+/index.html
+https://www.patreon.com/quaternius
+/assets/images/fullres/universalanimationlibrary.jpg
+https://creativecommons.org/publicdomain/zero/1.0/
+/assets/images/fullres/universalanimationlibrary/standard.jpg
+/assets/images/fullres/universalanimationlibrary/pro.jpg
+/assets/images/fullres/universalanimationlibrary/source.jpg
+#inline
+#patron-discount
+https://www.twitter.com/quaternius
