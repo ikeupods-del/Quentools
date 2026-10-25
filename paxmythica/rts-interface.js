@@ -542,12 +542,14 @@
   function majOffres(force) {
     const B = S.B, box = $('#batOffres'); if (!box) return; const ji = B.joueur;
     const l = (B.offres || []).filter(o => o.a === ji), decs = (B.declarations || []).filter(d => d.a === ji || d.de === ji);
-    const sig = l.map(o => o.id + ':' + Math.ceil(60 - (B.temps - o.t0))).join() + '|' + decs.map(d => d.de + '>' + d.a + ':' + Math.ceil(d.fin - B.temps)).join();
-    if (!force && sig === S.sigOffres) return; S.sigOffres = sig;
-    const past = j => `<span class="pastille" style="background:${esc(B.joueurs[j].couleur)}"></span> <b>${esc(nomJ(j))}</b>`, reste = o => `<small>${Math.max(0, Math.ceil(60 - (B.temps - o.t0)))} s</small>`;
+    // la structure ne change qu'avec les offres ; les comptes à rebours sont mis à jour sur place (un clic n'est jamais perdu)
+    const sig = l.map(o => o.id).join() + '|' + decs.map(d => d.de + '>' + d.a).join();
+    if (!force && sig === S.sigOffres) { for (const t of box.querySelectorAll('[data-fin]')) { const r = +t.dataset.fin - B.temps, v = t.dataset.s ? Math.max(0, Math.ceil(r)) + ' s' : mnS(r); if (t.textContent !== v) t.textContent = v; } return; }
+    S.sigOffres = sig;
+    const past = j => `<span class="pastille" style="background:${esc(B.joueurs[j].couleur)}"></span> <b>${esc(nomJ(j))}</b>`, reste = o => `<small data-fin="${o.t0 + 60}" data-s="1">${Math.max(0, Math.ceil(60 - (B.temps - o.t0)))} s</small>`;
     const cartes = decs.map(d => d.a === ji
-      ? `<div class="rts-offre danger">⚠️ ${past(d.de)} te déclare la guerre${d.motif ? ` (${esc(nomMotif(d.motif))})` : ' sans motif'} : elle commence dans <b>${mnS(d.fin - B.temps)}</b> <button class="btn petit" data-act="b-diplo">Négocier</button></div>`
-      : `<div class="rts-offre">📯 Ta déclaration de guerre à ${past(d.a)} : <b>${mnS(d.fin - B.temps)}</b> <button class="btn petit" data-act="b-d-annuler" data-v="${d.a}">Annuler</button></div>`);
+      ? `<div class="rts-offre danger">⚠️ ${past(d.de)} te déclare la guerre${d.motif ? ` (${esc(nomMotif(d.motif))})` : ' sans motif'} : elle commence dans <b data-fin="${d.fin}">${mnS(d.fin - B.temps)}</b> <button class="btn petit" data-act="b-diplo">Négocier</button></div>`
+      : `<div class="rts-offre">📯 Ta déclaration de guerre à ${past(d.a)} : <b data-fin="${d.fin}">${mnS(d.fin - B.temps)}</b> <button class="btn petit" data-act="b-d-annuler" data-v="${d.a}">Annuler</button></div>`);
     for (const o of l) {
       if (o.type === 'exigence') cartes.push(`<div class="rts-offre danger">📜 ${past(o.de)} ${texteExigence(B, o)} — sinon il tiendra un motif de guerre ${reste(o)} <button class="btn petit or" data-act="b-offre" data-v="${o.id}:1">Céder</button><button class="btn petit" data-act="b-offre" data-v="${o.id}:0">Refuser</button></div>`);
       else if (o.type === 'appel') cartes.push(`<div class="rts-offre danger">⚔️ Ton allié ${past(o.de)} est attaqué par <b>${esc(nomJ(o.contre))}</b> : entrer en guerre à ses côtés ? ${reste(o)} <button class="btn petit or" data-act="b-offre" data-v="${o.id}:1">Entrer en guerre</button><button class="btn petit" data-act="b-offre" data-v="${o.id}:0" title="Ton allié rompra l’alliance et ta parole baissera">Refuser</button></div>`);

@@ -29,7 +29,7 @@ const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? '✓ ' : '�
   ok(await p.isVisible('[data-act=commencer]'), 'fenêtre d’ouverture');
   await p.click('[data-act=commencer]');
   ok(await ev(() => UI.vitesse === 1 && UI.j.etat.nations[UI.j.etat.joueur].nom === 'Royaume du Test'), 'partie lancée avec le nom choisi');
-  await p.waitForFunction(() => !!UI.vue3d && UI.mode3d && !document.querySelector('#carte3d').classList.contains('cache'), null, { timeout: 30000 }).catch(() => null);
+  await p.waitForFunction(() => { const c = document.querySelector('#carte3d'); return !!(window.UI && UI.vue3d && UI.mode3d && c && !c.classList.contains('cache')); }, null, { timeout: 30000 }).catch(() => null);
   ok(await ev(() => !!UI.vue3d && UI.mode3d && !document.querySelector('#carte3d').classList.contains('cache')), 'vue 3D affichée');
   await ev(() => { UI.ACT.vitesse({ dataset: { v: 0 } }); UI.j.etat.nations[UI.j.etat.joueur].res = { nourriture: 4000, bois: 4000, or: 4000, faveur: 200 }; UI.rafraichir(); });
 
