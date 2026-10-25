@@ -1,6 +1,6 @@
 # Pax Mythica
 
-Jeu de stratégie pour Mac : un mélange d’*Age of Mythology* (panthéons, dieux, âges, créatures mythiques, pouvoirs divins) et de *Pax Historia* (grande carte de provinces, diplomatie, décrets écrits librement, parties personnalisées). Jeu personnel, jamais publié sur le site.
+Jeu de stratégie pour Mac façon *Age of Mythology* : batailles en temps réel (villageois, bâtiments, armées dirigées une à une, panthéons, dieux, âges, créatures mythiques, pouvoirs divins), et un mode de conquête façon *Pax Historia* (grande carte de provinces, diplomatie, décrets écrits librement, parties personnalisées). Jeu personnel, jamais publié sur le site.
 
 ## Installer
 
@@ -12,6 +12,15 @@ Jeu de stratégie pour Mac : un mélange d’*Age of Mythology* (panthéons, die
 
 ## Jouer
 
+### Bataille (temps réel, comme Age of Mythology)
+- **Menu → ⚔️ Bataille** : époque, peuple, dieu majeur, carte (plaines, rivière et gués, oasis, lac, toundra, forêt d’automne), taille, 1 à 3 adversaires de l’ordinateur (facile, normal, difficile), chacun pour soi ou 2 contre 2.
+- **Commandes** : clic gauche ou cadre pour choisir, **clic droit** (ou ctrl-clic sur le pavé tactile) pour agir — marcher, récolter, construire, réparer, prier (Grecs), attaquer, point de ralliement d’un bâtiment. Double-clic : toutes les unités du même genre à l’écran ; Maj : ajouter. Deux doigts ou flèches ou bord de l’écran pour se déplacer, pincer ou molette pour zoomer, mini-carte pour aller loin.
+- **Économie** : les villageois récoltent la nourriture (baies, chasse, fermes), le bois et l’or, et les rapportent au centre-ville, au grenier ou à l’entrepôt. Les maisons donnent la population (150 au plus). La faveur : prière au temple (Grecs), temples (Égyptiens), combats (Nordiques), centres-villes (Atlantes).
+- **Âges** : au centre-ville, choisis un dieu mineur ; il débloque une créature (formée au temple) et un pouvoir divin à usage unique (colonne des pouvoirs en haut à gauche). Chaque âge ouvre de nouveaux bâtiments et unités.
+- **Victoire** : un peuple est vaincu quand il n’a plus ni centre-ville ni villageois (ou plus rien du tout). Une merveille achevée et gardée 3 minutes donne aussi la victoire.
+- **Raccourcis** : <kbd>H</kbd> centre-ville, <kbd>.</kbd> villageois inactif, <kbd>Espace</kbd> dernière alerte, <kbd>⌘</kbd>+<kbd>1</kbd>…<kbd>9</kbd> créer un groupe et <kbd>1</kbd>…<kbd>9</kbd> le rappeler, lettres de la grille d’ordres (<kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd> / <kbd>A</kbd>… / <kbd>Z</kbd>…), <kbd>Suppr</kbd> supprimer, <kbd>Échap</kbd> annuler puis pause.
+
+### Conquête du monde (grande carte)
 - **Nouvelle partie** : époque (Antiquité, Moyen Âge, ère industrielle, époque moderne, futur), peuple (quatre cultures par époque), dieu majeur ou doctrine, nom du peuple. L’époque change les peuples, unités, unités spéciales, bâtiments, âges, pouvoirs, vocabulaire et l’allure des villes ; les règles restent équilibrées de la même façon.
 - **Vue 3D** façon Age of Mythology (par défaut) : relief, sol en textures photographiques (herbe, sous-bois, terre, sable, roche, falaises, neige, chemins, pavés), ciel photographique qui éclaire la scène, mer qui reflète le ciel, ombres, arbres et herbe en feuillages photographiques qui bougent au vent, rochers et accessoires photographiés, fumées des foyers, villes qui grandissent (toits de tuiles, pierre, bois, chaume, verre et néons selon l’époque), soldats en formation. **Packs graphiques** (bouton 🎨 ou Réglages) : Olympe doré, Réaliste, Fresque peinte, Crépuscule, Automne, Hiver nordique, Nuit étoilée, Ragnarök ; qualité Ultra (occlusion ambiante), Haute, Moyenne ou Basse. Glisser ou deux doigts pour se déplacer, molette ou pincement pour zoomer, Q/E pour tourner, **V** pour passer à la carte de stratégie 2D.
 - **Partie personnalisée** : graine, taille et forme du monde, part de terres, peuples (nom, couleur, panthéon, dieu, humeur), règles (ressources, âge de départ, difficulté, tribus, paix initiale, événements, mythes, victoires). **Modifier la carte** ouvre l’éditeur : frontières, terrains, niveaux, capitales, noms ; le résultat s’enregistre comme scénario.
@@ -23,12 +32,16 @@ Jeu de stratégie pour Mac : un mélange d’*Age of Mythology* (panthéons, die
 
 ## Limites
 
+- Une bataille ne s’enregistre pas encore : elle se joue d’une traite (pause possible).
+- Pas encore de murs, de bateaux ni de garnison dans les bâtiments en mode Bataille.
+
 - L’oracle demande le modèle d’IA partagé avec QuentMovie (~2,5 Go, téléchargé une fois dans `~/Movies/QuentMovie/modeles`).
 - Les sauvegardes restent dans l’application (stockage local) : exporter en fichier pour les garder ailleurs.
 - Mac à puce Apple uniquement.
 
 ## Pour le développement
 
+- Mode Bataille : `rts-donnees.js` (unités, bâtiments, âges, pouvoirs en temps réel, cartes), `rts-moteur.js` (simulation au 1/20 s : carte, chemins A*, récolte, construction, combats, brouillard, ordinateur, victoire), `rts-vue.js` (vue 3D, sous-classe de la vue 3D), `rts-interface.js` (création, barre, mini-carte, sélection, grille d’ordres) ; essai `node tests/bataille.js` (`BATAILLE_LONG=1` : toutes les cartes et époques).
 - Fichiers : `donnees.js` (panthéons, dieux, unités, pouvoirs, événements), `epoques.js` (les cinq époques), `vue3d.js` (vue 3D, three.js r180 assemblé dans `vendor/three-pax.min.js`), `ressources3d.js` (chargement des textures, ciels et modèles), `packs-graphiques.js` (packs et qualités, un pack = une entrée), `carte.js` (génération du monde), `moteur.js` (règles), `alliances.js`, `ia-nations.js` (peuples de l’ordinateur), `oracle.js` (décrets), `rendu.js` (carte), `son.js`, `interface.js`, `main.js` / `preload.js` (Electron).
 - Copies générées (ne pas modifier) : `ia-locale.js`, `ia-worker.js`, `maj.js` → `node tools/synchro-ia-locale.js`.
 - Essais : `node tests/moteur.js` et `node tests/interface.js` (Chromium).

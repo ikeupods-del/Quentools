@@ -132,8 +132,21 @@
     }
     // alerte : on est attaqué
     const a = J.dernAttaque; if (a && a.t > S.alerte + 20 && B.temps - a.t < 1) { S.alerte = a.t; S.lieuAlerte = a; message('⚔️ Tu es attaqué ! (Espace pour y aller)', 'ko', a.x, a.z); son('guerre'); }
-    // choc des armes près de la caméra
-    if (ev.some(e => e.type === 'mort' && Math.hypot(e.x - S.vue.cam.x, e.z - S.vue.cam.z) < 60) && !(S.tBat > performance.now())) { S.tBat = performance.now() + 2500; son('bataille'); }
+    // bruitages près de la caméra (chacun au plus quelques fois par seconde)
+    const pres = e => e.x != null && Math.hypot(e.x - S.vue.cam.x, e.z - S.vue.cam.z) < S.vue.cam.d * 0.9, maintenant = performance.now(), D = S.derSon || (S.derSon = {});
+    const jouer = (n, ecart) => { if ((D[n] || 0) + ecart > maintenant) return; D[n] = maintenant; son(n); };
+    for (const e of ev) {
+      if (!pres(e)) continue;
+      if (e.type === 'tir') jouer(e.sorte === 'fleche' ? 'fleche' : e.sorte === 'balle' || e.sorte === 'laser' ? 'tir' : 'coup', 90);
+      else if (e.type === 'impact') jouer(e.sorte === 'eclair' ? 'eclair' : e.sorte === 'meteore' || e.sorte === 'obus' || e.sorte === 'plasma' || e.sorte === 'boulet' ? 'explosion' : 'coup', 120);
+      else if (e.type === 'ruine') jouer('explosion', 300);
+      else if (e.type === 'mort') jouer('epee', 160);
+      else if (e.type === 'forme' && e.j === ji) jouer('forme', 400);
+    }
+    // travail des villageois et combats au corps à corps près de la caméra
+    S.tTravail = (S.tTravail || 0) + 1;
+    if (S.tTravail % 9 === 0) for (const u of B.unites) { if (u.mort || !pres(u)) continue; if (u.anim === 'attaque' && !u.s.proj && u.cle !== 'villageois') { jouer('epee', 220); break; } }
+    if (S.tTravail % 14 === 0) for (const u of B.unites) { if (u.mort || u.j !== ji || u.anim !== 'travail' || !pres(u)) continue; const c = u.ordre && B.parId.get(u.ordre.cible); if (c && c.sous === 'arbre') { jouer('hache', 500); break; } if (u.ordre && u.ordre.type === 'construire') { jouer('marteau', 450); break; } }
   }
 
   // ---------- souris ----------
@@ -192,7 +205,7 @@
     if (!us.length && b && b.j === B.joueur && b.d.forme) { if (pt) { BT.ralliement(B, B.joueur, b.id, en ? en.x : pt.x, en ? en.z : pt.z, en && en.sorte === 'r' ? en.id : 0); S.vue.marqueOrdre(pt.x, pt.z, false); son('clic'); } return; }
     if (!us.length || (!pt && !en)) return;
     const x = en ? en.x : pt.x, z = en ? en.z : pt.z, t = BT.ordreContexte(B, B.joueur, us.map(u => u.id), x, z, en ? en.id : 0, false);
-    S.vue.marqueOrdre(x, z, t === 'attaquer'); void shift;
+    S.vue.marqueOrdre(x, z, t === 'attaquer'); son(t === 'attaquer' ? 'coup' : 'ordre'); void shift;
   }
   function clicMode(p, shift) {
     const B = S.B, M = S.mode, pt = S.vue.pointSol(p.x, p.y); if (!pt) return;

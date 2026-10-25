@@ -20,7 +20,7 @@ const ok = (c, m) => { n++; if (!c) { ko++; console.log('✗ ' + m); } };
   p.setDefaultTimeout(90000);
   await p.addInitScript(() => { window.PM_ECHELLE = 0.3; window.PM_LEGER = true; try { if (!sessionStorage.getItem('essai')) { localStorage.setItem('pm:qualite', 'moyenne'); sessionStorage.setItem('essai', '1'); } } catch (e) { /* sans stockage */ } });
   await p.goto(url);
-  ok(await p.isVisible('text=Nouvelle partie'), 'accueil');
+  ok(await p.isVisible('text=Conquête du monde') && await p.isVisible('[data-act=bataille]'), 'accueil');
   ok(await ev(() => PM.vue3dPossible()), 'WebGL disponible pour la vue 3D');
 
   // création rapide
@@ -158,6 +158,47 @@ const ok = (c, m) => { n++; if (!c) { ko++; console.log('✗ ' + m); } };
   for (const id of Object.keys(await ev(() => PM.PACKS_GRAPHIQUES))) await ev(id => { UI.vue3d.appliquerPack(id); UI.vue3d.stabiliser(); UI.vue3d.dessiner(16); }, id);
   for (const q of ['ultra', 'haute', 'basse', 'moyenne']) await ev(q => { UI.vue3d.appliquerQualite(q); UI.vue3d.dessiner(16); UI.vue3d.dessiner(16); }, q);
   ok(await ev(() => !!UI.vue3d.composer), 'effets de l’image actifs');
+
+  // mode Bataille (temps réel) : création, interface, ordres à la souris, formation, pouvoir, pause, fin
+  await ev(() => UI.ACT.accueil()); await p.click('[data-act=bataille]'); await p.click('[data-act=b-epoque][data-v=antique]'); await p.click('[data-act=b-pantheon][data-v=grecs]'); await p.click('[data-act=b-dieu][data-v=zeus]');
+  await p.click('[data-act=b-carte][data-v=riviere]'); await p.click('[data-act=b-lancer]'); await p.click('[data-act=b-commencer]');
+  ok(await ev(() => UI.ecran === 'bataille' && !!UI.bat.B && !UI.bat.pause), 'bataille lancée');
+  await p.waitForFunction(() => UI.bat.vue.pret && UI.bat.vue.unitesPretes);
+  ok(await p.isVisible('#batRes') && await p.isVisible('#batCarte') && await p.isVisible('#batOrdres'), 'barre des ressources, mini-carte et grille d’ordres');
+  await ev(() => { UI.bat.B.joueurs[1].ia = false; });
+  const cadre = await ev(() => { const B = UI.bat.B, v = UI.bat.vue, l = B.unites.filter(u => u.j === 0 && u.cle === 'villageois').map(u => v.versEcran(u.x, u.z, 1)); return [Math.min(...l.map(e => e.x)) - 25, Math.min(...l.map(e => e.y)) - 25, Math.max(...l.map(e => e.x)) + 25, Math.max(...l.map(e => e.y)) + 25]; });
+  await p.mouse.move(cadre[0], cadre[1]); await p.mouse.down(); await p.mouse.move(cadre[2], cadre[3], { steps: 6 }); await p.mouse.up();
+  ok(await ev(() => UI.bat.sel.length >= 5), 'cadre de sélection');
+  await p.keyboard.press('q');
+  const libre = await ev(() => { const B = UI.bat.B, v = UI.bat.vue, c = B.bats.find(b => b.j === 0 && b.cle === 'centre'); for (let a = 0; a < 80; a++) { const x = c.x + Math.cos(a) * (14 + a * 0.1), z = c.z + Math.sin(a) * (14 + a * 0.1); if (PM.Bataille.peutPoser(B, 0, 'maison', (Math.floor(x / 2) + 0.5) * 2, (Math.floor(z / 2) + 0.5) * 2).ok) { const e = v.versEcran(x, z, 0); if (e.y > 60 && e.y < 680 && e.x > 230 && e.x < 1400) return e; } } return null; });
+  await p.mouse.move(libre.x, libre.y, { steps: 3 }); await p.mouse.click(libre.x, libre.y);
+  ok(await ev(() => UI.bat.B.bats.some(b => b.j === 0 && b.cle === 'maison') && UI.bat.B.unites.some(u => u.ordre && u.ordre.type === 'construire')), 'maison posée, villageois au chantier');
+  await ev(() => { UI.bat.sel = UI.bat.B.unites.filter(u => u.j === 0 && u.cle === 'villageois').slice(0, 2).map(u => u.id); });
+  const baie = await ev(() => { const B = UI.bat.B, v = UI.bat.vue, r = B.res.find(r => r.sous === 'baies' && v.brouillardEn(r.x, r.z) === 2); return v.versEcran(r.x, r.z, 0.4); });
+  await p.mouse.click(baie.x, baie.y, { button: 'right' });
+  ok(await ev(() => UI.bat.sel.every(i => UI.bat.B.parId.get(i).ordre.type === 'recolter')), 'clic droit sur les baies : récolte');
+  await p.keyboard.press('h'); await p.waitForTimeout(150); await p.keyboard.press('q');
+  ok(await ev(() => UI.bat.B.bats.find(b => b.j === 0 && b.cle === 'centre').file.length === 1), 'villageois en formation (touche de la grille)');
+  await ev(() => { const B = UI.bat.B; for (let k = 0; k < 20 * 40; k++) PM.Bataille.pas(B); });
+  ok(await ev(() => UI.bat.B.joueurs[0].stats.recolte > 30 && UI.bat.B.bats.some(b => b.j === 0 && b.cle === 'maison' && b.fini)), 'récolte et construction en jeu');
+  await ev(() => { const J = UI.bat.B.joueurs[0]; J.res.nourriture += 3000; J.res.or += 3000; });
+  await p.keyboard.press('h'); await p.waitForTimeout(150); await p.click('#batOrdres [data-act=b-age]'); await p.click('#modalBoite [data-act=b-mineur]');
+  ok(await ev(() => !!UI.bat.B.joueurs[0].ageEnCours && !UI.bat.pause), 'passage d’âge avec choix du dieu mineur');
+  await ev(() => { UI.bat.B.toutVoir = true; for (let k = 0; k < 12; k++) PM.Bataille.pas(UI.bat.B); const c = UI.bat.B.unites.find(u => u.j === 1); UI.bat.vue.centrerXZ(c.x, c.z + 6); UI.bat.vue.stabiliser(); });
+  await p.waitForTimeout(300); await p.click('#batPouvoirs [data-act=b-pouvoir]');
+  const ennemi = await ev(() => { const u = UI.bat.B.unites.find(u => u.j === 1 && !u.mort); return UI.bat.vue.versEcran(u.x, u.z, 0); });
+  await p.mouse.click(ennemi.x, ennemi.y);
+  ok(await ev(() => UI.bat.B.joueurs[0].pouvoirs[0].utilise), 'pouvoir divin lancé à la souris');
+  for (let k = 0; k < 10; k++) await ev(() => UI.bat.vue.dessiner(16));
+  await p.keyboard.press('Escape'); await p.keyboard.press('Escape');
+  ok(await ev(() => UI.bat.pause && UI.modalOuvert()), 'menu de pause');
+  await p.click('#modalBoite [data-act=b-reprendre]');
+  await ev(() => { const B = UI.bat.B; B.joueurs[0].ia = true; B.joueurs[1].ia = true; B.joueurs[0].difficulte = 2; B.joueurs[1].difficulte = 0; for (let k = 0; k < 20 * 60 * 40 && !B.fin; k++) PM.Bataille.pas(B); });
+  ok(await ev(() => !!UI.bat.B.fin), 'la bataille se termine');
+  await p.waitForSelector('#modalBoite .rts-bilan', { timeout: 15000 }).catch(() => null);
+  ok(await p.isVisible('#modalBoite .rts-bilan'), 'bilan de fin de bataille');
+  await p.click('#modalBoite [data-act=b-quitter]');
+  ok(await ev(() => UI.ecran === 'accueil'), 'retour au menu');
 
   ok(!erreurs.length, 'aucune erreur dans la page : ' + erreurs.slice(0, 3).join(' | '));
   await b.close();

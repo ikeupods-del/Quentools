@@ -1,5 +1,18 @@
 # Nouveautés de Pax Mythica
 
+## 1.5.0
+- Nouveau mode **Bataille** en temps réel, comme dans Age of Mythology : tu diriges toi-même chaque villageois et chaque soldat sur une carte de bataille.
+- Les villageois coupent les arbres (qui tombent un à un), cueillent les baies, chassent les moutons et les vaches, cultivent les fermes, extraient l’or et prient au temple pour la faveur.
+- Tu poses tes bâtiments où tu veux : maisons, grenier, entrepôt, fermes, temple, caserne, champ de tir, écurie, tours, forteresse, autre centre-ville et merveille ; ils sortent de terre pendant la construction et s’effondrent quand on les détruit.
+- Chaque peuple a sa ville : centre-ville grec à colonnes, égyptien à pylônes et obélisques, longue maison nordique, rotonde atlante ; châteaux, hôtels de ville, quartiers généraux et nexus aux autres époques.
+- Passage des âges au centre-ville avec le choix d’un dieu mineur : il donne une créature à former au temple et un pouvoir divin à usage unique (foudre, météores, tempête, séisme, invocations, soins, boucliers…).
+- Combats avec contres, flèches, pierres, balles et rayons qui volent, éclairs et météores, poussière et étincelles ; les engins de siège abattent les murs.
+- Adversaires de l’ordinateur (facile, normal, difficile) qui récoltent, bâtissent, passent les âges, attaquent par vagues, se défendent et lancent leurs pouvoirs ; jusqu’à quatre peuples, chacun pour soi ou deux contre deux.
+- Six cartes : plaines de Grèce, rivière et gués, oasis du désert, lac sacré, toundra nordique, forêt d’automne ; brouillard de guerre et mini-carte.
+- Commandes à la souris et au pavé tactile : cadre de sélection, clic droit (ou ctrl-clic) pour agir, double-clic pour toutes les unités du même genre, groupes ⌘1 à ⌘9, grille d’ordres aux touches Q W E R T…, villageois inactif, point de ralliement, marche à l’attaque.
+- Bruitages des batailles : épées, flèches, haches, marteaux, tirs et explosions.
+- La grande carte de conquête reste disponible depuis le menu (« Conquête du monde »).
+
 ## 1.4.0
 - Chaque peuple a ses propres unités à chaque époque : hoplites, archères scythes et héros grecs ; guerriers au khopesh, archers nubiens et pharaon ; guerriers celtes et vikings ; légionnaires, Immortels et soldats Qin ; cataphractes, chevaliers, Sarrasins, archers anglais, rois ; fusiliers de l’Empire, janissaires, mousquetaires, pionniers, généraux ; soldats de 1940 et d’aujourd’hui, tireurs d’élite, officiers ; soldats, androïdes et cyborgs du futur.
 - Armes et boucliers propres à chaque unité : bouclier hoplon, scutum, écu, bouclier viking, lance dory, khopesh, glaive, hache, cimeterre, arcs, mousquets, fusils.

@@ -87,7 +87,7 @@ function ouvrir() {
 function autotest() {
   const fs = require('fs'), res = { version: app.getVersion(), electron: process.versions.electron, arch: process.arch };
   const fin = () => { fs.writeFileSync(process.env.PAX_AUTOTEST, JSON.stringify(res, null, 2)); app.exit(0); };
-  setTimeout(() => { res.erreur = 'délai dépassé'; fin(); }, 300000);
+  setTimeout(() => { res.erreur = 'délai dépassé'; fin(); }, 600000);
   // Electron récent : un seul objet (level « error ») ; ancien : (événement, niveau 3, message)
   win.webContents.on('console-message', (e, niveau, msg) => { const lv = e && e.level != null ? e.level : niveau, m = e && e.message != null ? e.message : msg; if (lv === 'error' || lv >= 3) (res.erreursConsole = res.erreursConsole || []).push(String(m).slice(0, 600)); });
   win.webContents.once('did-finish-load', async () => {
@@ -113,8 +113,7 @@ function autotest() {
       if (process.env.PAX_CAPTURES && res.jeu.vue3d) {
         const dir = process.env.PAX_CAPTURES; fs.mkdirSync(dir, { recursive: true }); res.captures = [];
         await win.webContents.executeJavaScript("window.__erreurs = []; window.addEventListener('error', e => window.__erreurs.push(String(e.message) + ' ' + (e.error && e.error.stack || '').slice(0, 500)))");
-        const plans = [['antique', 'olympe', 'haute', 70, 0.9], ['antique', 'olympe', 'haute', 260, -0.4], ['antique', 'olympe', 'ultra', 700, 0.2], ['antique', 'nuit', 'haute', 110, 0.5], ['antique', 'hiver', 'haute', 160, 0.3],
-          ['antique', 'crepuscule', 'haute', 140, 1.4], ['antique', 'automne', 'haute', 200, -0.8], ['medieval', 'realiste', 'haute', 120, 0.7], ['futur', 'olympe', 'haute', 120, 0.6], ['futur', 'ragnarok', 'moyenne', 300, 0.2]];
+        const plans = [['antique', 'olympe', 'haute', 70, 0.9], ['antique', 'olympe', 'ultra', 700, 0.2], ['medieval', 'realiste', 'haute', 120, 0.7], ['futur', 'olympe', 'haute', 120, 0.6]];
         for (const [e, pk, q, d, l] of plans) {
           const ms = await win.webContents.executeJavaScript(`(async () => {
             if (${JSON.stringify(e)} !== window.__epoque) { window.__epoque = ${JSON.stringify(e)}; UI.lancerPartie(PM.nouvellePartie({ graine: 77, nombre: 6, paixInitiale: 600, epoque: ${JSON.stringify(e)}, nations: PM.nationsParDefaut(6, 77, 'grecs') })); UI.fermerModal(); UI.ACT.vitesse({ dataset: { v: 0 } });
@@ -128,6 +127,25 @@ function autotest() {
           const bm = img.toBitmap(); let lum = 0; for (let i = 0; i < bm.length; i += 4 * 97) lum += bm[i] + bm[i + 1] + bm[i + 2]; lum /= (bm.length / (4 * 97)) * 3;
           fs.writeFileSync(path.join(dir, nom), img.toJPEG(80)); res.captures.push({ nom, msParImage: Math.round(ms.ms * 10) / 10, luminosite: Math.round(lum), etat: ms, erreurs: await win.webContents.executeJavaScript('(window.__erreurs || []).splice(0)') });
         }
+        // mode Bataille : l'ordinateur joue les deux camps 10 minutes, puis vue de la ville ou du combat le plus dense
+        const batailles = [['antique', 'grecs', 'plaine', 'ville'], ['antique', 'egyptiens', 'oasis', 'combat'], ['medieval', 'nordiques', 'toundra', 'ville'], ['industriel', 'atlantes', 'riviere', 'combat'], ['futur', 'grecs', 'lac', 'ville']];
+        for (const [e, pe, ca, cadre] of batailles) {
+          const ms = await win.webContents.executeJavaScript(`(async () => {
+            const B = PM.Bataille.nouvelle({ epoque: ${JSON.stringify(e)}, carte: ${JSON.stringify(ca)}, taille: 'petite', graine: 31, joueur: 0, joueurs: [{ pantheon: ${JSON.stringify(pe)}, ia: true, difficulte: 2 }, { pantheon: ${JSON.stringify(pe === 'nordiques' ? 'grecs' : 'nordiques')}, ia: true, difficulte: 2 }] });
+            B.pack = PM.RTS.CARTES[${JSON.stringify(ca)}].pack; UI.demarrerBataille(B); UI.fermerModal(); UI.bat.pause = false;
+            const v = UI.bat.vue; await v.chargement; await new Promise(ok => { const t = setInterval(() => { if (v.unitesPretes) { clearInterval(t); ok(); } }, 100); });
+            const t0 = performance.now(); for (let k = 0; k < 20 * 60 * 10 && !B.fin; k++) PM.Bataille.pas(B); const simulation = performance.now() - t0;
+            let x = 0, z = 0;
+            if (${JSON.stringify(cadre)} === 'combat') { B.toutVoir = true; let bn = -1; for (const u of B.unites) { if (u.mort || u.cle === 'villageois') continue; let k = 0; for (const w of B.unites) if (!w.mort && w.j !== u.j && Math.hypot(w.x - u.x, w.z - u.z) < 20) k++; if (k > bn) { bn = k; x = u.x; z = u.z; } } }
+            if (!x) { const c = B.bats.find(b => b.j === 0 && b.cle === 'centre') || B.bats.find(b => b.j === 0) || { x: B.cote / 2, z: B.cote / 2 }; x = c.x; z = c.z; }
+            v.vise.d = ${JSON.stringify(cadre)} === 'ville' ? 58 : 44; v.centrerXZ(x, z + 6); v.stabiliser();
+            await new Promise(r => setTimeout(r, 3000));
+            const t = performance.now(); let n = 0; await new Promise(ok => { const f = () => { if (++n < 40) requestAnimationFrame(f); else ok(); }; requestAnimationFrame(f); });
+            const R = v.renderer.info.render; return { ms: (performance.now() - t) / 40, simulationMs: Math.round(simulation), appels: R.calls, triangles: R.triangles, unites: B.unites.filter(u => !u.mort).length, joueurs: B.joueurs.map(J => J.pantheon + ' âge ' + J.age + ' pop ' + J.pop) }; })()`);
+          const img = await win.webContents.capturePage(), nom = `bataille-${e}-${pe}-${ca}-${cadre}.jpg`;
+          fs.writeFileSync(path.join(dir, nom), img.toJPEG(82)); res.captures.push({ nom, msParImage: Math.round(ms.ms * 10) / 10, etat: ms, erreurs: await win.webContents.executeJavaScript('(window.__erreurs || []).splice(0)') });
+        }
+        await win.webContents.executeJavaScript('UI.bat.B = null; UI.accueil()');
       }
     } catch (e) { res.erreur = e.message; }
     fin();

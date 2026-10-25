@@ -36,6 +36,8 @@ jobs:
         run: node tools/synchro-ia-locale.js --verifier
       - name: Essayer le moteur du jeu (parties entières, alliances, décrets, sauvegardes)
         run: node tests/moteur.js
+      - name: Essayer le mode Bataille (ordres du joueur, parties entières de l'ordinateur)
+        run: node tests/bataille.js
       - name: Construire l'application
         run: npm run dist
       - name: Lancer l'application construite et l'essayer (dix ans de partie, carte, décret, sauvegarde)
@@ -54,6 +56,7 @@ jobs:
             if (!g.maj) ko.push("pont des mises à jour");
             if (!g.vue3d) ko.push("vue 3D indisponible");
             if (!(g.packs >= 16)) ko.push("packs graphiques : " + g.packs);
+            for (const c of r.captures || []) if (c.nom.startsWith("bataille-") && c.erreurs && c.erreurs.length) ko.push("bataille " + c.nom + " : " + c.erreurs.join(" | "));
             if (ko.length) { console.log("Échecs :", ko.join(" ; ")); process.exit(1); } else console.log("Application : tout fonctionne");'
       - name: Contrôler que tous les fichiers du jeu sont dans l'application
         run: |

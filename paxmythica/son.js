@@ -1,5 +1,6 @@
 /* Pax Mythica — sons et musique fabriqués par le navigateur (Web Audio), aucun fichier son :
-   clic, tambour de guerre, choc de bataille, tonnerre des dieux, fanfare d'âge, cor de conquête, et une lyre d'ambiance (gamme dorienne). */
+   clic, tambour de guerre, choc de bataille, tonnerre des dieux, fanfare d'âge, cor de conquête, bruitages des batailles en temps réel
+   (épées, flèches, haches, marteaux, tirs, explosions), et une lyre d'ambiance (gamme dorienne). */
 'use strict';
 (function (G) {
   const PM = G.PM = G.PM || {};
@@ -36,7 +37,18 @@
     age: t => [0, 4, 7, 12, 16].forEach((s, i) => note(262 * Math.pow(2, s / 12), t + i * 0.12, 0.8, 'triangle', 0.09)),
     conquete: t => { note(196, t, 0.5, 'sawtooth', 0.05); note(294, t + 0.25, 0.7, 'sawtooth', 0.05); note(392, t + 0.5, 0.9, 'triangle', 0.08); },
     evenement: t => { note(1046, t, 0.9, 'sine', 0.07); note(1568, t + 0.02, 1.1, 'sine', 0.04); },
-    victoire: t => [0, 4, 7, 12, 7, 12, 16, 19].forEach((s, i) => note(196 * Math.pow(2, s / 12), t + i * 0.16, 0.9, 'triangle', 0.1))
+    victoire: t => [0, 4, 7, 12, 7, 12, 16, 19].forEach((s, i) => note(196 * Math.pow(2, s / 12), t + i * 0.16, 0.9, 'triangle', 0.1)),
+    // bruitages du mode Bataille (courts, joués près de la caméra)
+    epee: t => { const f = 1800 + Math.random() * 900; note(f, t, 0.09, 'square', 0.018); note(f * 1.51, t, 0.14, 'triangle', 0.02); bruit(t, 0.06, 0.12, 5000, 3); },
+    fleche: t => bruit(t, 0.16, 0.05, 2600 + Math.random() * 800, 7),
+    hache: t => { bruit(t, 0.09, 0.22, 600, 1); note(140, t, 0.08, 'sine', 0.08); },
+    marteau: t => { bruit(t, 0.05, 0.16, 1500, 2); note(420 + Math.random() * 60, t, 0.07, 'triangle', 0.035); },
+    coup: t => { bruit(t, 0.12, 0.25, 900, 1); note(90, t, 0.12, 'sine', 0.1); },
+    explosion: t => { bruit(t, 0.9, 0.7, 220, 0.7); note(48, t, 0.8, 'sine', 0.35); },
+    tir: t => { bruit(t, 0.12, 0.45, 3200, 0.8); bruit(t + 0.02, 0.4, 0.2, 400, 0.6); },
+    eclair: t => { bruit(t, 0.12, 0.7, 6000, 0.5); bruit(t + 0.05, 1.4, 0.6, 300, 0.6); note(60, t + 0.05, 1.2, 'sine', 0.25); },
+    ordre: t => { note(520, t, 0.07, 'sine', 0.05); note(780, t + 0.05, 0.09, 'sine', 0.04); },
+    forme: t => { note(392, t, 0.18, 'triangle', 0.05); note(523, t + 0.08, 0.25, 'triangle', 0.045); }
   };
   PM.son = function (nom) {
     if (!reglages.sons || !SONS[nom]) return;
