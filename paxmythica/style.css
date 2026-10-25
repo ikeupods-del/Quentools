@@ -209,6 +209,14 @@ table.peuples input[type=text] { width: 100%; }
 .rts-emplacements { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
 .rts-emplacements .btn { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; }
 .rts-emplacements .btn span { color: var(--doux); font-size: 12px; }
+.rts-inactifs.rts-armee { bottom: 244px; }
+.rts-fiche { position: fixed; z-index: 61; pointer-events: none; width: 300px; padding: 9px 12px; border-radius: 10px; background: rgba(18,13,8,.94); border: 1px solid var(--bord2); box-shadow: 0 8px 24px rgba(0,0,0,.5); display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: #efe4c8; }
+.rts-fiche.cache { display: none; }
+.rts-fiche b { color: var(--or2); font-size: 15px; }
+.rts-fiche span { color: #e6dcc2; }
+.rts-fiche i { color: var(--doux); }
+.rts-fiche em { color: #ff9b85; font-style: normal; }
+.rts-fiche small { color: #9a8f78; font-size: 11px; }
 .rts-aide { position: fixed; z-index: 60; pointer-events: none; padding: 3px 8px; border-radius: 6px; background: rgba(15,11,7,.82); border: 1px solid rgba(217,181,106,.5); color: #f3e7c8; font-size: 12px; white-space: nowrap; }
 .rts-aide.cache { display: none; }
 .carte-choix[disabled] { opacity: .45; cursor: not-allowed; transform: none; }

@@ -163,6 +163,21 @@ const jouer = (B, s) => { for (let t = 0; t < s / BT.PAS; t++) BT.pas(B); };
   const cAv = BT.cours(B, 0).bois; jouer(B, 30); ok(BT.cours(B, 0).bois > cAv, 'marché : le cours remonte avec le temps');
   ok(BT.echanger(B, 0, 'or>nourriture').ok, 'marché : achat de nourriture');
   mk.mort = B.temps;
+  // améliorations : recherche dans la file, effet immédiat sur les unités déjà formées
+  for (const [id, T] of Object.entries(R.TECHS)) ok(R.BATIMENTS[T.bat] && T.nom && T.desc && T.emoji && T.temps > 0, `amélioration ${id}`);
+  const cas2 = BT.ajouterBat(B, 0, 'caserne', c.x + 30, c.z - 30, true), gr = BT.ajouterBat(B, 0, 'grenier', c.x - 30, c.z + 28, true);
+  const soldat = BT.ajouterUnite(B, 0, 'inf', c.x, c.z + c.taille + 2), attAv = soldat.s.att, vieAv = soldat.pvMax;
+  ok(BT.rechercher(B, 0, cas2.id, 'lames').ok && BT.rechercher(B, 0, cas2.id, 'armures').ok, 'recherches lancées à la caserne');
+  ok(!BT.rechercher(B, 0, cas2.id, 'lames').ok, 'pas deux fois la même recherche');
+  ok(!BT.rechercher(B, 0, cas2.id, 'acier').ok, 'Forge de guerre : il faut l’âge héroïque et les lames');
+  ok(BT.rechercher(B, 0, gr.id, 'houes').ok, 'recherche lancée au grenier');
+  jouer(B, 75);
+  ok((J.techs || []).includes('lames') && (J.techs || []).includes('armures') && J.techs.includes('houes'), 'recherches terminées');
+  ok(soldat.s.att > attAv * 1.1 && soldat.pvMax > vieAv * 1.15, `unité déjà formée renforcée (attaque ${attAv}→${Math.round(soldat.s.att)}, vie ${vieAv}→${soldat.pvMax})`);
+  ok(BT.stats(B, 0, 'inf').att > R.ROLES.inf.att * 1.1 && J.bonus.recolte_nourriture >= 1.2, 'nouvelles unités et récolte améliorées');
+  const avTech = JSON.parse(JSON.stringify(BT.sauver(B))), B2 = BT.charger(avTech);
+  ok(B2.joueurs[0].techs.includes('lames') && BT.stats(B2, 0, 'inf').att > R.ROLES.inf.att * 1.1, 'rechargement : améliorations gardées');
+  cas2.mort = gr.mort = soldat.mort = B.temps;
   // trêve d'une partie longue
   const L = nouvelle({ graine: 23, duree: 'longue', taille: 'moyenne' });
   ok(L.treve === R.DUREES.longue.treve && L.popMax === 250, 'partie longue : trêve et population');
@@ -247,6 +262,16 @@ const jouer = (B, s) => { for (let t = 0; t < s / BT.PAS; t++) BT.pas(B); };
   ok(V.mission.vagues[0].fait && V.unites.some(u => u.j === 1 && u.ordre && (u.ordre.type === 'deplacer' || u.ordre.type === 'attaquer')), 'mission 2 : la première vague attaque');
 }
 
+// 3 quater. créatures : coup spécial qui touche et repousse les ennemis groupés
+{
+  const X = nouvelle({ graine: 31 }); X.joueurs[1].ia = false; const c = X.bats.find(b => b.j === 0 && b.cle === 'centre');
+  const m = BT.ajouterUnite(X, 0, 'minotaure', c.x, c.z + c.taille + 4), cible = BT.ajouterUnite(X, 1, 'inf', m.x + 2.2, m.z), voisins = [[0.8, 1], [0.8, -1], [1.6, 0]].map(([dx, dz]) => BT.ajouterUnite(X, 1, 'inf', cible.x + dx, cible.z + dz));
+  BT.majPop(X); const pv = voisins.map(v => v.pv); BT.ordreContexte(X, 0, [m.id], cible.x, cible.z, cible.id);
+  let special = 0; for (let t = 0; t < 6 / BT.PAS; t++) { BT.pas(X); for (const e of X.evts.splice(0)) if (e.type === 'special') special++; }
+  ok(special >= 1, 'créature : coup spécial');
+  ok(voisins.some((v, i) => v.mort || v.pv < pv[i]), 'coup spécial : les ennemis voisins sont touchés');
+}
+
 // 3 ter. archipel : l'ordinateur embarque son armée et débarque sur l'île ennemie
 {
   const A = nouvelle({ carte: 'iles', graine: 3, joueurs: [{ pantheon: 'grecs', ia: true, difficulte: 2 }, { pantheon: 'nordiques', ia: true, difficulte: 1 }] });
@@ -282,6 +307,7 @@ for (const c of cas) {
   ok(J.every(x => x.age >= 2 || x.vaincu), `${c.titre} : passages d’âge`);
   ok(J.every(x => x.stats.formees >= 25 || x.vaincu), `${c.titre} : unités formées`);
   ok(J.some(x => x.stats.tues > 10), `${c.titre} : combats`);
+  ok(J.some(x => (x.techs || []).length >= 3), `${c.titre} : l’ordinateur recherche des améliorations (${J.map(x => (x.techs || []).length).join('/')})`);
   if (c.duree) { ok(B.fin ? J.some(x => x.stats.recolte > 12000) : J.some(x => x.stats.recolte > 30000) && J.every(x => x.stats.recolte > 10000), `${c.titre} : grandes économies`); ok(B.bats.some(b => b.cle === 'port') || B.unites.some(u => u.s.naval), `${c.titre} : l’ordinateur prend la mer`); }
   else ok(B.fin, `${c.titre} : la partie se termine`);
   ok(maxPas < 25, `${c.titre} : pas de simulation rapide (${maxPas.toFixed(1)} ms)`);

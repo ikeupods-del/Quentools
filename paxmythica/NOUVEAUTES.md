@@ -1,6 +1,10 @@
 # Nouveautés de Pax Mythica
 
 ## 1.9.0
+- **Améliorations**, comme dans Age of Mythology : houes et irrigation au grenier, haches, pioches et charrettes à l’entrepôt, lames, armures et forge de guerre à la caserne, flèches empennées, harnais, ingénieurs, meurtrières des tours, ferveur au temple, coques au port, villageois robustes au centre-ville. Elles renforcent aussi les unités déjà formées ; l’ordinateur les recherche aussi.
+- **Fiches détaillées** au survol de la grille d’ordres : coût, temps, chiffres de l’unité, ses points forts et ses points faibles.
+- **Toute l’armée** d’un coup : touche « , » ou bouton « ⚔️ Armée » (Maj + , : seulement les soldats inactifs).
+- **Coup spécial des créatures** : de temps en temps, un coup qui frappe fort et repousse les ennemis autour, avec un grognement.
 - **Les unités parlent** : quand tu les choisis ou leur donnes un ordre, elles répondent en français avec la voix du Mac (« Oui ? », « Au travail ! », « À l’attaque ! », « Cap paré ! »). Case « Voix des unités » dans les réglages pour les faire taire.
 - **Bruit de la mer** : le souffle des vagues monte quand la caméra survole l’eau, avec quelques mouettes.
 - **Passagers visibles** : les soldats embarqués se tiennent debout sur le pont du navire de transport.

@@ -35,6 +35,8 @@
     if (s.proj && R.PROJ_EPOQUE[B.epoque]) s.proj = R.PROJ_EPOQUE[B.epoque][s.proj] || s.proj;
     if (b.vitesse) s.vitesse *= b.vitesse;
     if (cle === 'heros' && b.attHeros) s.att *= b.attHeros;
+    const bc = J.bonusCat && J.bonusCat[s.cat]; if (bc) { if (bc.att) s.att *= bc.att; if (bc.pv) s.pv = Math.round(s.pv * bc.pv); if (bc.portee && s.portee) s.portee += bc.portee; }
+    if (cle === 'villageois' && b.porte) s.porte = (s.porte || R.PORTE) + b.porte;
     const c = Object.assign({}, s.cout);
     if (cle === 'cav' && b.coutCav) for (const r in c) c[r] = Math.round(c[r] * b.coutCav);
     if (s.cat === 'mythe' && b.coutMythe) for (const r in c) c[r] = Math.round(c[r] * b.coutMythe);
@@ -582,6 +584,37 @@
     const r = BT.peutFormer(B, b, cle); if (!r.ok) return r;
     const s = BT.stats(B, j, cle); payer(B.joueurs[j], s.cout); b.file.push({ cle, t: 0, cout: s.cout }); return { ok: true };
   };
+  // améliorations : une recherche dans la file du bâtiment, effet pour toute la partie (unités déjà formées comprises)
+  BT.dureeFile = (B, j, f) => f.tech ? R.TECHS[f.tech].temps : BT.stats(B, j, f.cle).temps;
+  BT.emojiFile = (B, j, f) => f.tech ? R.TECHS[f.tech].emoji : R.emojiUnite(B.joueurs[j].pantheon, f.cle);
+  BT.techsDe = (B, b) => Object.keys(R.TECHS).filter(id => R.TECHS[id].bat === b.cle);
+  BT.peutRechercher = function (B, j, b, id) {
+    const T = R.TECHS[id], J = B.joueurs[j]; if (!T || !b || b.cle !== T.bat) return { ok: false, raison: 'Amélioration inconnue ici.' };
+    if ((J.techs || []).includes(id)) return { ok: false, raison: 'Déjà recherchée.', fait: true };
+    if (B.bats.some(x => !x.mort && x.j === j && x.file.some(f => f.tech === id))) return { ok: false, raison: 'Recherche en cours.', enCours: true };
+    if (!b.fini) return { ok: false, raison: 'Bâtiment en construction.' };
+    if (J.age < T.age) return { ok: false, raison: `Il faut l’${PM.AGES[T.age].nom.toLowerCase()}.`, verrou: true };
+    if (T.apres && !(J.techs || []).includes(T.apres)) return { ok: false, raison: `Recherche d’abord : ${R.TECHS[T.apres].nom}.`, verrou: true };
+    if (b.file.length >= 6) return { ok: false, raison: 'File pleine.' };
+    if (!assez(J, T.cout)) return { ok: false, raison: 'Pas assez de ressources.' };
+    return { ok: true };
+  };
+  BT.rechercher = function (B, j, batId, id) {
+    const b = B.parId.get(batId); if (!b || b.j !== j || b.mort) return { ok: false, raison: 'Bâtiment introuvable.' };
+    const r = BT.peutRechercher(B, j, b, id); if (!r.ok) return r;
+    const T = R.TECHS[id]; payer(B.joueurs[j], T.cout); b.file.push({ tech: id, t: 0, cout: Object.assign({}, T.cout) }); return { ok: true };
+  };
+  function appliquerTech(B, J, id) {
+    const T = R.TECHS[id], e = T.effet, b = J.bonus; (J.techs = J.techs || []).push(id);
+    for (const r of ['nourriture', 'bois', 'or', 'poisson']) if (e['recolte_' + r]) b['recolte_' + r] = (b['recolte_' + r] || 1) * e['recolte_' + r];
+    if (e.faveur) b.faveur = (b.faveur || 1) * e.faveur;
+    if (e.porte) b.porte = (b.porte || 0) + e.porte;
+    if (e.fleches) b.fleches = (b.fleches || 0) + e.fleches;
+    if (e.cats) { J.bonusCat = J.bonusCat || {}; for (const c of e.cats) { const x = J.bonusCat[c] || (J.bonusCat[c] = {}); if (e.att) x.att = (x.att || 1) * e.att; if (e.pv) x.pv = (x.pv || 1) * e.pv; if (e.portee) x.portee = (x.portee || 0) + e.portee; } }
+    J.cacheStats = {};
+    for (const u of B.unites) { if (u.mort || u.j !== J.id) continue; const s = BT.stats(B, J.id, u.cle); if (!s || s === u.s) continue; const k = s.pv / (u.s.pv || s.pv); u.s = s; u.pvMax = Math.round(u.pvMax * k); u.pv = Math.min(u.pvMax, u.pv * k); }
+    B.evts.push({ type: 'tech', j: J.id, id });
+  }
   BT.annulerFormation = function (B, j, batId, i) { const b = B.parId.get(batId); if (!b || b.j !== j || !b.file[i]) return; rendre(B.joueurs[j], b.file[i].cout); b.file.splice(i, 1); };
   BT.ralliement = function (B, j, batId, x, z, cibleId) { const b = B.parId.get(batId); if (b && b.j === j) b.rally = { x, z, cible: cibleId || 0 }; };
   BT.detruire = function (B, j, ids) { for (const i of ids) { const e = B.parId.get(i); if (e && e.j === j && !e.mort) { if (e.sorte === 'b' && !e.fini && e.payé) rendre(B.joueurs[j], e.payé, e.prog < 0.01 ? 1 : 0); mourir(B, e, null); } } };
@@ -732,7 +765,13 @@
   function majUnite2(B, u, dt) {
     if (u.gele > B.temps) { u.anim = 'repos'; return; }
     u.cd = Math.max(0, u.cd - dt);
-    if (u.frappe != null) { u.frappe -= dt; if (u.frappe <= 0) { const c = B.parId.get(u.cibleFrappe); u.frappe = null; if (c && vivant(c) && distBord(u, c) <= u.s.portee + u.s.rayon + 1.8) blesser(B, c, degatsContre(B, u, c), u.j); } }
+    if (u.frappe != null) { u.frappe -= dt; if (u.frappe <= 0) { const c = B.parId.get(u.cibleFrappe); u.frappe = null; if (c && vivant(c) && distBord(u, c) <= u.s.portee + u.s.rayon + 1.8) {
+      // créatures : coup spécial de temps en temps, qui touche et repousse tout ce qui est autour de la cible
+      if (u.s.cat === 'mythe' && B.temps > (u.tSpecial || 0)) {
+        u.tSpecial = B.temps + 14; const r = 3 + u.s.rayon;
+        autour(B, c.x, c.z, r, e => { if (e === c || e.sorte !== 'u' || !ennemis(B, u.j, e.j) || e.s.naval || Math.hypot(e.x - c.x, e.z - c.z) > r) return; blesser(B, e, degatsContre(B, u, e) * 0.6, u.j); const d = Math.hypot(e.x - u.x, e.z - u.z) || 1, nx = e.x + (e.x - u.x) / d * 2.2, nz = e.z + (e.z - u.z) / d * 2.2; contexte(B, e); if (marchableXZ(B, nx, nz)) { e.x = nx; e.z = nz; } contexte(B, u); });
+        blesser(B, c, degatsContre(B, u, c) * 1.8, u.j); B.evts.push({ type: 'special', id: u.id, x: c.x, z: c.z, r });
+      } else blesser(B, c, degatsContre(B, u, c), u.j); } } }
     const o = u.ordre;
     // coincé (cible inaccessible) : la ressource est évitée, les autres ordres abandonnés
     if (u.coince) { u.coince = false; if (o && o.type === 'recolter' && !(u.porte && u.porte.n >= (u.s.porte || R.PORTE))) { (u.evite || (u.evite = new Set())).add(o.cible); o.cible = 0; } else if (o && o.type !== 'recolter') { u.ordre = null; u.chemin = null; u.anim = 'repos'; return; } }
@@ -851,7 +890,7 @@
   }
   function gagner(B, u, t, taux, dt, c) {
     const J = B.joueurs[u.j], D = J.ia ? R.DIFFICULTES[J.difficulte].recolte : 1;
-    let k = taux * (J.bonus['recolte_' + t] || 1) * D * (u.lent > B.temps ? 0.5 : 1);
+    let k = taux * (J.bonus['recolte_' + t] || 1) * (c && c.sous === 'poisson' ? J.bonus.recolte_poisson || 1 : 1) * D * (u.lent > B.temps ? 0.5 : 1);
     for (const x of J.temp) if (x.cle === 'recolte_' + t) k *= 1 + x.valeur;
     let q = k * dt; if (c) { q = Math.min(q, c.qte); c.qte -= q; if (c.qte <= 0) epuiser(B, c); }
     if (!u.porte || u.porte.t !== t) u.porte = { t, n: 0 };
@@ -875,9 +914,11 @@
     if (b.batisseurs && b.pv < b.pvMax) b.pv = Math.min(b.pvMax, b.pv + b.pvMax / b.d.temps * 0.6 * Math.pow(b.batisseurs, 0.7) * dt); b.batisseurs = 0;
     // production
     if (b.file.length) {
-      const f = b.file[0], s = BT.stats(B, b.j, f.cle);
-      if (J.pop + s.pop > J.popMax) { b.attentePop = true; }
-      else { b.attentePop = false; f.t += dt; if (f.t >= s.temps) { b.file.shift(); sortir(B, b, f.cle); } }
+      const f = b.file[0];
+      if (f.tech) { b.attentePop = false; f.t += dt; if (f.t >= R.TECHS[f.tech].temps) { b.file.shift(); appliquerTech(B, J, f.tech); } }
+      else { const s = BT.stats(B, b.j, f.cle);
+        if (J.pop + s.pop > J.popMax) { b.attentePop = true; }
+        else { b.attentePop = false; f.t += dt; if (f.t >= s.temps) { b.file.shift(); sortir(B, b, f.cle); } } }
     }
     // passage d'âge au centre-ville
     if (b.cle === 'centre' && J.ageEnCours && J.ageEnCours.centre == null) J.ageEnCours.centre = b.id;
@@ -892,7 +933,7 @@
       if (!cibles.length) { b.cd = 0.5; return; }
       cibles.sort((p, q) => d2(p.x, p.z, b.x, b.z) - d2(q.x, q.z, b.x, b.z));
       const proj = R.PROJ_EPOQUE[B.epoque] ? R.PROJ_EPOQUE[B.epoque].fleche : 'fleche';
-      const nf = (b.d.fleches || 1) + (B.contenus && B.contenus.has(b.id) ? Math.floor(contenu(B, b).reduce((n, u) => n + (u.cle === 'villageois' ? 1 / 3 : 1), 0)) : 0);
+      const nf = (b.d.fleches || 1) + (b.cle === 'tour' ? J.bonus.fleches || 0 : 0) + (B.contenus && B.contenus.has(b.id) ? Math.floor(contenu(B, b).reduce((n, u) => n + (u.cle === 'villageois' ? 1 / 3 : 1), 0)) : 0);
       for (let k = 0; k < nf; k++) { const c = cibles[k % cibles.length]; tirer(B, b.id, b.j, b.x, BT.hauteur(B, b.x, b.z) + b.taille * 0.5, b.z, c, b.d.att * (c.s.cat === 'siege' ? 0.4 : 1), proj); }
     }
   }
@@ -1057,6 +1098,12 @@
     if (centre && centre.fini && centre.file.length < 2 && vill.length + centre.file.length < cible && J.res.nourriture >= 50 && (J.pop < J.popMax)) BT.former(B, j, centre.id, 'villageois');
     // maisons
     if (J.popMax < (B.popMax || R.POP_MAX) && J.popMax - J.pop <= 3 + J.age * 3 && enCours.filter(b => b.cle === 'maison').length < (J.age >= 2 ? 2 : 1) && J.res.bois >= 50) { const p = trouverPlace(B, J, 'maison', bx, bz, 14, 30 + J.nbMaisons * 2); if (p) construire('maison', p[0], p[1], 1); }
+    // améliorations : la première disponible et payable, dans un bâtiment qui ne forme rien d'urgent
+    if (!C.tTech || B.temps > C.tTech) {
+      C.tTech = B.temps + 8;
+      const ordre = ['haches', 'houes', 'milice', 'pioches', 'charrettes', 'lames', 'armures', 'empennage', 'harnais', 'ferveur', 'coques', 'acier', 'irrigation', 'meurtrieres', 'ingenieurs'];
+      for (const id of ordre) { const T = R.TECHS[id], b = bats.find(x => x.cle === T.bat && x.fini && x.file.length < 2); if (!b || (T.age === 0 && vill.length < 12)) continue; if (!BT.peutRechercher(B, j, b, id).ok || !Object.entries(T.cout).every(([r, v]) => surplus(r) >= v)) continue; BT.rechercher(B, j, b.id, id); break; }
+    }
     // or épuisé : un marché pour échanger le bois et la nourriture en trop
     const sansOr = !ressourceProche(B, bx, bz, 'or', 110, j, 'mine');
     if (J.age >= 1 && sansOr && !nb('marche') && J.res.bois >= 150 && !enCours.some(b => b.cle === 'marche')) { const p = trouverPlace(B, J, 'marche', bx, bz, 16, 40); if (p) construire('marche', p[0], p[1], 2); }

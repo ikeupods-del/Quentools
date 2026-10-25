@@ -157,7 +157,7 @@
   function boucle(ts) {
     requestAnimationFrame(boucle);
     const dt = Math.min(100, ts - (S.der || ts)); S.der = ts;
-    if (UI.ecran !== 'bataille' || !S.B || !S.vue || UI.modalOuvert()) { const a = $('#batAide'); if (a) a.classList.add('cache'); if (UI.ecran !== 'bataille' || !S.B || !S.vue) { if (S.merOn !== false && PM.ambianceMer) { PM.ambianceMer(0); S.merOn = false; } return; } }
+    if (UI.ecran !== 'bataille' || !S.B || !S.vue || UI.modalOuvert()) { const a = $('#batAide'); if (a) a.classList.add('cache'); const fi = $('#batFiche'); if (fi) fi.classList.add('cache'); if (UI.ecran !== 'bataille' || !S.B || !S.vue) { if (S.merOn !== false && PM.ambianceMer) { PM.ambianceMer(0); S.merOn = false; } return; } }
     S.merOn = true;
     const B = S.B;
     if (!S.pause && !UI.modalOuvert() && !B.fin) { BT.avancer(B, dt / 1000); S.tAuto = (S.tAuto || 0) + dt; if (S.tAuto > 60000) { S.tAuto = 0; enregistrer(B, 'auto'); } }
@@ -198,6 +198,7 @@
       else if (e.type === 'vaincu') { message(e.j === ji ? 'Ton peuple est vaincu.' : `${B.joueurs[e.j].nom} est vaincu !`, e.j === ji ? 'ko' : 'ok'); son('conquete'); }
       else if (e.type === 'treve') { message('🕊️ Fin de la trêve : les armées peuvent attaquer !', 'ko'); son('guerre'); }
       else if (e.type === 'vague' && BT.ennemis(B, ji, e.j)) { message(`⚔️ ${e.n} assaillants de ${B.joueurs[e.j].nom} marchent sur ta cité !`, 'ko', e.x, e.z); S.lieuAlerte = { x: e.x, z: e.z, t: B.temps }; son('guerre'); }
+      else if (e.type === 'tech' && e.j === ji) { message(`✅ ${R.TECHS[e.id].nom} : ${R.TECHS[e.id].desc}`, 'ok'); son('age'); }
       else if (e.type === 'objectif') { message('✅ Objectif atteint : ' + e.texte, 'ok'); son('age'); }
     }
     // alerte : on est attaqué
@@ -210,6 +211,7 @@
       if (e.type === 'tir') jouer(e.sorte === 'fleche' ? 'fleche' : e.sorte === 'balle' || e.sorte === 'laser' ? 'tir' : 'coup', 90);
       else if (e.type === 'impact') jouer(e.sorte === 'eclair' ? 'eclair' : e.sorte === 'meteore' || e.sorte === 'obus' || e.sorte === 'plasma' || e.sorte === 'boulet' ? 'explosion' : 'coup', 120);
       else if (e.type === 'ruine') jouer('explosion', 300);
+      else if (e.type === 'special') jouer('rugit', 400);
       else if (e.type === 'mort') jouer('epee', 160);
       else if (e.type === 'forme' && e.j === ji) jouer('forme', 400);
     }
@@ -298,7 +300,7 @@
   function selBatiment() { const B = S.B; if (!B || S.sel.length !== 1) return null; const b = B.parId.get(S.sel[0]); return b && b.sorte === 'b' ? b : null; }
   // voix : réplique de l'unité choisie ou de celle qui reçoit l'ordre (pas pour les créatures)
   function parler(us, genreOrdre) {
-    const u = us.find(x => x.s.cat !== 'mythe'); if (!u || !PM.voix) return;
+    const u = us.find(x => x.s.cat !== 'mythe'); if (!u && us.length && !genreOrdre) { son('rugit'); return; } if (!u || !PM.voix) return;
     const g = genreOrdre ? (genreOrdre === 'ordre' && u.s.naval ? 'marin' : genreOrdre) : u.s.naval ? 'navire' : u.cle === 'villageois' ? 'villageois' : 'soldat';
     PM.voix(g, u.cle === 'villageois' && u.id % 2 === 1);
   }
@@ -380,6 +382,7 @@
     if (chiffre) { const g = (S.groupes[chiffre] || []).filter(id => { const x = B.parId.get(id); return x && !x.mort; }); if (!g.length) return; const deux = S.dernierGroupe === chiffre && performance.now() - S.tGroupe < 400; choisir(g); S.dernierGroupe = chiffre; S.tGroupe = performance.now(); if (deux) centrerSel(); return; }
     if (k === 'h' || k === 'H') { const c = B.bats.find(b => !b.mort && b.j === B.joueur && b.cle === 'centre'); if (c) { choisir([c.id]); S.vue.centrerXZ(c.x, c.z); } return; }
     if (k === '.' || k === ';') { villageoisInactif(); return; }
+    if (k === ',') { toutLArmee(e.shiftKey); return; }
     if (k === ' ') { e.preventDefault(); if (S.lieuAlerte) S.vue.centrerXZ(S.lieuAlerte.x, S.lieuAlerte.z); else centrerSel(); return; }
     if (k === 'Delete' || k === 'Backspace') { BT.detruire(B, B.joueur, S.sel); choisir([]); return; }
     if (k === '+' || k === '=') { S.vue.zoomer(1.2, innerWidth / 2, innerHeight / 2); return; }
@@ -392,6 +395,10 @@
   function inactifs() { const B = S.B; return B.unites.filter(u => !u.mort && !u.dans && u.j === B.joueur && u.cle === 'villageois' && !u.ordre); }
   function villageoisInactif() { const l = inactifs(); if (!l.length) return; S.iInactif = ((S.iInactif || 0) + 1) % l.length; const u = l[S.iInactif]; choisir([u.id]); S.vue.centrerXZ(u.x, u.z); }
   ACT['b-inactif'] = villageoisInactif;
+  // toute l'armée (sans les villageois ni les bateaux de pêche et de transport) ; Maj : seulement les soldats inactifs
+  const armee = () => { const B = S.B; return B.unites.filter(u => !u.mort && !u.dans && u.j === B.joueur && u.cle !== 'villageois' && u.cle !== 'peche' && u.cle !== 'transport'); };
+  function toutLArmee(inactifsSeuls) { const l = armee().filter(u => !inactifsSeuls || !u.ordre); if (!l.length) { message('Aucun soldat.', 'ko'); return; } choisir(l.map(u => u.id)); centrerSel(); parler(l); }
+  ACT['b-armee'] = () => toutLArmee(false);
 
   // ---------- interface : barre, pouvoirs, panneau, grille ----------
   function construireHud() {
@@ -400,6 +407,7 @@
         <button class="btn petit" data-act="b-vitesse" id="batVitesse" title="Vitesse du jeu">×1</button><button class="btn petit" data-act="b-menu" title="Pause et menu (Échap)">⏸ Menu</button></div></header>
       <div class="rts-pouvoirs" id="batPouvoirs"></div><div class="rts-objectifs cache" id="batObj"></div>
       <button class="rts-inactifs cache" id="batInactifs" data-act="b-inactif" title="Villageois inactif (touche .)"></button>
+      <button class="rts-inactifs rts-armee cache" id="batArmee" data-act="b-armee" title="Choisir toute l’armée (touche ,)"></button>
       <footer class="rts-bas"><div class="rts-carte"><canvas id="batCarte" width="200" height="200"></canvas></div><div class="rts-sel" id="batSel"></div><div class="rts-ordres" id="batOrdres"></div></footer>`;
     const cv = $('#batCarte'); let tient = 0;
     const versMonde = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * S.B.cote, (e.clientY - r.top) / r.height * S.B.cote]; };
@@ -429,6 +437,7 @@
     const sigP = J.pouvoirs.map(p => p.id + p.utilise).join() + (S.mode && S.mode.type === 'pouvoir' ? S.mode.idx : '');
     if (sigP !== S.sigPouvoirs) { S.sigPouvoirs = sigP; $('#batPouvoirs').innerHTML = J.pouvoirs.map((p, i) => { const P = PM.POUVOIRS[p.id] || { nom: p.id, emoji: '✨' }; return `<button class="rts-pouvoir ${S.mode && S.mode.type === 'pouvoir' && S.mode.idx === i ? 'actif' : ''}" data-act="b-pouvoir" data-v="${i}" ${p.utilise ? 'disabled' : ''} title="${esc(P.nom)} — ${esc(R.descPouvoir(p.id))}${p.utilise ? ' (déjà utilisé)' : ''}">${P.emoji}</button>`; }).join(''); }
     const ina = inactifs().length, bi = $('#batInactifs'); bi.classList.toggle('cache', !ina); bi.textContent = `🧑‍🌾 ${ina} inactif${ina > 1 ? 's' : ''}`;
+    const na = armee().length, ba = $('#batArmee'); ba.classList.toggle('cache', !na); ba.textContent = `⚔️ Armée (${na})`;
     panneauSel(); grille();
   }
   ACT['b-pouvoir'] = e => {
@@ -458,7 +467,7 @@
           const A = J.ageEnCours;
           det = (e.d.marche ? `<p>Cours : 100 ${PM.ICONES.bois} = ${BT.prixEchange(B, B.joueur, 'bois>or').recoit} ${PM.ICONES.or} · 100 ${PM.ICONES.nourriture} = ${BT.prixEchange(B, B.joueur, 'nourriture>or').recoit} ${PM.ICONES.or}</p><p><small>Chaque vente fait baisser le cours, qui remonte avec le temps.</small></p>` : '') + (e.d.depot ? `<p>Dépôt : ${e.d.depot.map(r => PM.ICONES[r]).join(' ')}</p>` : '') + (e.d.pop ? `<p>👥 +${e.d.pop} population</p>` : '') + (e.cle === 'ferme' ? `<p>${e.occupant ? 'Un villageois cultive.' : 'Libre : envoie un villageois.'}</p>` : '') +
             (e.cle === 'centre' && A && A.centre === e.id ? `<p>Passage à l’${esc(PM.AGES[A.age].nom.toLowerCase())} : <span class="rts-prog large"><i style="width:${A.t / A.temps * 100}%"></i></span></p>` : '') +
-            (e.file.length ? `<div class="rts-file">${e.file.map((f, i) => `<button class="rts-mini" data-act="b-annuler" data-v="${i}" title="Annuler (rembourse)">${R.emojiUnite(J.pantheon, f.cle)}${i === 0 ? `<i style="width:${Math.min(100, f.t / BT.stats(B, e.j, f.cle).temps * 100)}%"></i>` : ''}</button>`).join('')}</div>${e.attentePop ? '<p class="rouge">Population pleine : bâtis des maisons.</p>' : ''}` : '');
+            (e.file.length ? `<div class="rts-file">${e.file.map((f, i) => `<button class="rts-mini" data-act="b-annuler" data-v="${i}" title="Annuler (rembourse)">${BT.emojiFile(B, e.j, f)}${i === 0 ? `<i style="width:${Math.min(100, f.t / BT.dureeFile(B, e.j, f) * 100)}%"></i>` : ''}</button>`).join('')}</div>${e.attentePop ? '<p class="rouge">Population pleine : bâtis des maisons.</p>' : ''}` : '');
         }
       } else det = `<p>${PM.ICONES[e.t] || ''} ${Math.ceil(e.qte)} restant${e.animal && e.vivant ? ' — à chasser' : ''}</p>`;
       det += detOcc;
@@ -471,12 +480,18 @@
   }
   ACT['b-ne-garder'] = e => { const B = S.B; choisir(S.sel.filter(i => { const x = B.parId.get(i); return x && x.sorte + x.cle === e.dataset.v; })); };
   ACT['b-annuler'] = e => { const b = selBatiment(); if (b) { BT.annulerFormation(S.B, S.B.joueur, b.id, +e.dataset.v); S.sigSel = ''; majHud(true); } };
+  // fiches détaillées de la grille : rôle, points forts et faibles, chiffres
+  const ROLE = { milice: 'Récolte, construit, répare et prie ; se défend mal.', inf: 'Fort contre la cavalerie, faible contre les archers.', archer: 'Fort contre l’infanterie, faible contre la cavalerie ; tire de loin.', cav: 'Rapide ; fort contre les archers, faible contre l’infanterie.', heros: 'Écrase les créatures mythiques.', siege: 'Abat murs et bâtiments ; fragile au corps à corps.', mythe: 'Écrase les humains, craint les héros.', navire: 'Ne va que sur l’eau.' };
+  const ROLE_NAV = { peche: 'Pêche les bancs de poissons et rapporte au port.', transport: 'Emporte 10 places d’unités à terre d’une rive à l’autre.', navire: 'Combat sur l’eau et tire sur les côtes.' };
+  const BAT_DESC = { centre: 'Forme les villageois, reçoit toutes les ressources, fait passer les âges ; abrite 15 unités.', maison: '+10 de population.', grenier: 'Dépôt de nourriture ; améliorations des récoltes.', entrepot: 'Dépôt de bois et d’or ; améliorations des outils.', ferme: 'Nourriture sans fin, un villageois à la fois.', temple: 'Forme les créatures du dieu mineur.', port: 'Forme bateaux de pêche, transports et navires de guerre.', marche: 'Échange bois et nourriture contre de l’or.', caserne: 'Forme l’infanterie ; armes et armures.', archerie: 'Forme les archers.', ecurie: 'Forme la cavalerie.', tour: 'Tire sur les ennemis proches ; abrite 5 soldats.', forteresse: 'Forme héros et engins de siège ; tire et abrite 15 soldats.', mur: 'Bloque le passage de l’ennemi.', porte: 'Laisse passer ton peuple et tes alliés, pas l’ennemi.', merveille: 'Gardée assez longtemps, elle donne la victoire.' };
+  const ficheUnite = cle => { const J = S.B.joueurs[S.B.joueur], s = BT.stats(S.B, S.B.joueur, cle); return `<b>${esc(R.nomUnite(J.pantheon, cle))}</b><span>${coutTxt(s.cout)} · ⏱ ${s.temps} s · 👥 ${s.pop}</span><span>⚔️ ${Math.round(s.att)} · ❤️ ${s.pv}${s.portee ? ' · 🏹 ' + s.portee + ' m' : ''} · 👟 ${s.vitesse.toFixed(1)} m/s</span><i>${esc(ROLE_NAV[cle] || ROLE[s.cat] || '')}</i>`; };
+  const ficheBat = cle => `<b>${esc(R.nomBat(cle))}</b><span>${coutTxt(BT.coutBat(S.B, S.B.joueur, cle))}${R.BATIMENTS[cle].age ? ' · ' + esc(PM.AGES[R.BATIMENTS[cle].age].nom) : ''}</span><i>${esc(BAT_DESC[cle] || '')}</i>`;
   function grille() {
     const B = S.B, J = B.joueurs[B.joueur], us = unitesChoisies(), b = selBatiment(), cases = new Array(15).fill(null);
     const vill = us.filter(u => u.cle === 'villageois');
     if (vill.length) {
       const l = R.CONSTRUIRE[S.page === 'mil' ? 1 : 0];
-      l.forEach((cle, i) => { const d = R.BATIMENTS[cle], c = BT.coutBat(B, B.joueur, cle), verrou = J.age < d.age; cases[i] = { act: 'b-construire', v: cle, em: d.emoji, titre: `${R.nomBat(cle)} — ${coutTxt(c)}${verrou ? ' · ' + PM.AGES[d.age].nom : ''}`, ko: verrou || !BT.assez(B, B.joueur, c), verrou }; });
+      l.forEach((cle, i) => { const d = R.BATIMENTS[cle], c = BT.coutBat(B, B.joueur, cle), verrou = J.age < d.age; cases[i] = { act: 'b-construire', v: cle, em: d.emoji, info: ficheBat(cle), titre: `${R.nomBat(cle)} — ${coutTxt(c)}${verrou ? ' · ' + PM.AGES[d.age].nom : ''}`, ko: verrou || !BT.assez(B, B.joueur, c), verrou }; });
       cases[S.page === 'mil' ? 9 : 9] = S.page === 'mil' ? { act: 'b-page', v: 'eco', em: '🏠', titre: 'Bâtiments de l’économie' } : { act: 'b-page', v: 'mil', em: '⚔️', titre: 'Bâtiments militaires' };
     }
     if (us.length && !b) {
@@ -485,8 +500,10 @@
       cases[10] = { act: 'b-stop', em: '✋', titre: 'Arrêter' }; if (us.some(u => u.cle !== 'villageois')) cases[11] = { act: 'b-attaque', em: '🗡️', titre: 'Marche à l’attaque : clique un lieu, les unités combattent en chemin' }; cases[14] = { act: 'b-detruire', em: '🗑️', titre: 'Supprimer (Suppr)' }; }
     if (b && b.j === B.joueur) {
       if (b.fini) {
-        BT.formables(B, b).forEach((cle, i) => { if (i > 8) return; const s = BT.stats(B, B.joueur, cle), r = BT.peutFormer(B, b, cle); cases[i] = { act: 'b-former', v: cle, em: R.emojiUnite(J.pantheon, cle), titre: `${R.nomUnite(J.pantheon, cle)} — ${coutTxt(s.cout)} · ${s.temps} s${!r.ok ? ' (' + r.raison + ')' : ''}`, ko: !r.ok, verrou: (s.age || 0) > J.age }; });
+        BT.formables(B, b).forEach((cle, i) => { if (i > 4) return; const s = BT.stats(B, B.joueur, cle), r = BT.peutFormer(B, b, cle); cases[i] = { act: 'b-former', v: cle, em: R.emojiUnite(J.pantheon, cle), info: ficheUnite(cle) + (r.ok ? '' : `<em>${esc(r.raison)}</em>`), titre: `${R.nomUnite(J.pantheon, cle)} — ${coutTxt(s.cout)} · ${s.temps} s${!r.ok ? ' (' + r.raison + ')' : ''}`, ko: !r.ok, verrou: (s.age || 0) > J.age }; });
         if (b.cle === 'centre' && J.age < 3) { const a = J.age + 1, r = BT.peutAvancer(B, B.joueur); cases[9] = { act: 'b-age', em: '🏛️', titre: `${PM.AGES[a].nom} — ${coutTxt(R.AGES[a].cout)}${!r.ok ? ' (' + r.raison + ')' : ''}`, ko: !r.ok }; }
+        // améliorations du bâtiment (rangée du milieu)
+        BT.techsDe(B, b).filter(id => !(J.techs || []).includes(id)).slice(0, 4).forEach((id, k) => { const T = R.TECHS[id], r = BT.peutRechercher(B, B.joueur, b, id); cases[5 + k] = { act: 'b-tech', v: id, em: T.emoji, titre: `${T.nom} — ${T.desc} · ${coutTxt(T.cout)}`, info: `<b>${esc(T.nom)}</b><span>${coutTxt(T.cout)} · ⏱ ${T.temps} s${T.age ? ' · ' + esc(PM.AGES[T.age].nom) : ''}</span><i>${esc(T.desc)}</i>${r.ok ? '' : `<em>${esc(r.raison)}</em>`}`, ko: !r.ok, verrou: !!r.verrou }; });
         if (b.d.forme) cases[10] = { act: 'b-ralliement', em: '🚩', titre: 'Point de ralliement (ou clic droit)' };
         if (b.d.marche) [['bois>or', '🪵➜🪙'], ['nourriture>or', '🌾➜🪙'], ['or>bois', '🪙➜🪵'], ['or>nourriture', '🪙➜🌾']].forEach(([v, em], i) => { const [de, vers] = v.split('>'), px = BT.prixEchange(B, B.joueur, v); cases[i] = { act: 'b-echange', v, em, titre: `${de === 'or' ? 'Acheter' : 'Vendre'} : ${px.donne} ${PM.ICONES[de]} ➜ ${px.recoit} ${PM.ICONES[vers]}`, ko: J.res[de] < px.donne }; });
         if (b.d.garnison) { const n = BT.contenu(B, b).length; if (n) cases[11] = { act: 'b-liberer', em: '🚪', titre: `Faire sortir la garnison (${n})` }; }
@@ -494,9 +511,19 @@
       }
       cases[14] = { act: 'b-detruire', em: b.fini ? '🗑️' : '✖️', titre: b.fini ? 'Démolir' : 'Annuler la construction (remboursée si rien n’est bâti)' };
     }
-    const sig = cases.map(c => c ? c.act + c.v + c.ko + c.titre : '-').join('|'); if (sig === S.sigGrille) return; S.sigGrille = sig;
-    $('#batOrdres').innerHTML = cases.map((c, i) => c ? `<button class="rts-cmd ${c.ko ? 'ko' : ''} ${c.verrou ? 'verrou' : ''}" data-act="${c.act}" ${c.v ? `data-v="${esc(c.v)}"` : ''} data-i="${i}" title="${esc(c.titre)}">${c.em}<kbd>${GRILLE[i].toUpperCase()}</kbd></button>` : `<span class="rts-cmd vide"></span>`).join('');
+    const sig = cases.map(c => c ? c.act + c.v + c.ko + c.titre + (c.info || '') : '-').join('|'); if (sig === S.sigGrille) return; S.sigGrille = sig; S.cases = cases;
+    $('#batOrdres').innerHTML = cases.map((c, i) => c ? `<button class="rts-cmd ${c.ko ? 'ko' : ''} ${c.verrou ? 'verrou' : ''}" data-act="${c.act}" ${c.v ? `data-v="${esc(c.v)}"` : ''} data-i="${i}" aria-label="${esc(c.titre)}">${c.em}<kbd>${GRILLE[i].toUpperCase()}</kbd></button>` : `<span class="rts-cmd vide"></span>`).join('');
   }
+  // panneau d'information au survol d'un bouton de la grille (remplace la bulle du navigateur)
+  function ficheGrille(btn) {
+    let d = $('#batFiche'); if (!d) { d = document.createElement('div'); d.id = 'batFiche'; d.className = 'rts-fiche cache'; document.body.appendChild(d); }
+    const c = btn && S.cases && S.cases[+btn.dataset.i]; if (!c) { d.classList.add('cache'); return; }
+    d.innerHTML = c.info || `<b>${esc(c.titre.split(' — ')[0])}</b>${c.titre.includes(' — ') ? `<span>${esc(c.titre.split(' — ').slice(1).join(' — '))}</span>` : ''}`;
+    d.innerHTML += `<small>Touche ${GRILLE[+btn.dataset.i].toUpperCase()}</small>`;
+    const r = $('#batOrdres').getBoundingClientRect(); d.classList.remove('cache'); d.style.right = Math.max(8, innerWidth - r.right) + 'px'; d.style.bottom = (innerHeight - r.top + 8) + 'px';
+  }
+  document.addEventListener('mouseover', e => { if (UI.ecran !== 'bataille') return; const b = e.target.closest && e.target.closest('#batOrdres .rts-cmd:not(.vide)'); ficheGrille(b); });
+  ACT['b-tech'] = e => { const b = selBatiment(); if (!b) return; const r = BT.rechercher(S.B, S.B.joueur, b.id, e.dataset.v); if (!r.ok) { message(r.raison, 'ko'); son('refus'); } else son('clic'); S.sigSel = S.sigGrille = ''; majHud(true); };
   ACT['b-page'] = e => { S.page = e.dataset.v; S.sigGrille = ''; grille(); };
   ACT['b-construire'] = e => {
     const B = S.B, r = BT.peutPoser(B, B.joueur, e.dataset.v, -1e3, -1e3); if (!r.ok && r.raison !== 'La place est prise.' && !/rivage|eau|place/i.test(r.raison)) { message(r.raison, 'ko'); son('refus'); return; }
@@ -562,7 +589,7 @@
     UI.ouvrirModal(`<h2>Pause</h2><p class="recit">${esc(PM.AGES[S.B.joueurs[S.B.joueur].age].nom)} · ${Math.floor(S.B.temps / 60)} min de bataille.</p>
       <ul class="aide"><li><b>Clic droit</b> : agir (marcher, récolter, bâtir, attaquer, ralliement d’un bâtiment). <b>Ctrl-clic</b> fait de même sur le pavé tactile. Avec des unités choisies, le <b>clic gauche</b> sur une ressource, un chantier ou un ennemi donne aussi l’ordre.</li>
       <li><b>Glisser</b> : choisir au cadre ; <b>double-clic</b> : toutes les unités du même genre ; <b>Maj</b> : ajouter.</li>
-      <li><kbd>H</kbd> centre-ville · <kbd>.</kbd> villageois inactif · <kbd>Espace</kbd> dernière alerte · <kbd>⌘</kbd>+<kbd>1</kbd>…<kbd>9</kbd> créer un groupe, <kbd>1</kbd>…<kbd>9</kbd> le rappeler · <kbd>Suppr</kbd> supprimer · lettres de la grille (<kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd>…) · flèches ou bord de l’écran pour se déplacer.</li>
+      <li><kbd>H</kbd> centre-ville · <kbd>.</kbd> villageois inactif · <kbd>,</kbd> toute l’armée (<kbd>Maj</kbd> : soldats inactifs) · <kbd>Espace</kbd> dernière alerte · <kbd>⌘</kbd>+<kbd>1</kbd>…<kbd>9</kbd> créer un groupe, <kbd>1</kbd>…<kbd>9</kbd> le rappeler · <kbd>Suppr</kbd> supprimer · lettres de la grille (<kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd>…) · flèches ou bord de l’écran pour se déplacer.</li>
       <li>Contres : infanterie > cavalerie > archers > infanterie ; les héros battent les créatures, les créatures écrasent les humains ; les engins de siège abattent les bâtiments.</li></ul>
       ${S.B.mission ? `<h3>Objectifs</h3><ul class="aide">${S.B.mission.objectifs.map(o => `<li>${o.fait ? '✅' : '⬜'} ${esc(o.texte)}</li>`).join('')}</ul>` : ''}
       <div class="actions-bas"><button class="btn" data-act="b-quitter">Quitter</button><button class="btn" data-act="b-rejouer">Recommencer</button><button class="btn" data-act="b-charger-menu">📂 Charger</button><button class="btn" data-act="b-sauver-menu">💾 Enregistrer</button><button class="btn or" data-act="b-reprendre">Reprendre</button></div>`);

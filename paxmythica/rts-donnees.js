@@ -74,6 +74,25 @@
   R.NOMS_VILLAGEOIS = { antique: 'Villageois', medieval: 'Paysans', industriel: 'Ouvriers', moderne: 'Ouvriers', futur: 'Techniciens' };
   R.NOMS_BATEAUX = { antique: ['Bateau de pêche', 'Trière', 'Navire de transport'], medieval: ['Barque de pêche', 'Nef de guerre', 'Cogue de transport'], industriel: ['Chalutier', 'Frégate', 'Vapeur de transport'], moderne: ['Chalutier', 'Destroyer', 'Barge de débarquement'], futur: ['Drone de pêche', 'Croiseur', 'Transporteur'] };
 
+  // améliorations à rechercher dans les bâtiments (comme les techniques d'AoM) : une fois pour toute la partie
+  // effet : recolte_<ressource> (multiplie la récolte), att / pv (multiplient, pour les catégories cats), portee (ajoute), porte (ajoute à la charge), fleches (ajoute aux tours), faveur (multiplie)
+  R.TECHS = {
+    houes: { bat: 'grenier', age: 0, cout: { bois: 100, nourriture: 50 }, temps: 25, emoji: '🌾', nom: 'Houes et faucilles', desc: 'Les villageois récoltent la nourriture 20 % plus vite.', effet: { recolte_nourriture: 1.2 } },
+    irrigation: { bat: 'grenier', age: 2, apres: 'houes', cout: { bois: 300, or: 150 }, temps: 40, emoji: '💧', nom: 'Irrigation', desc: 'Encore 20 % de nourriture en plus.', effet: { recolte_nourriture: 1.2 } },
+    haches: { bat: 'entrepot', age: 0, cout: { nourriture: 100, bois: 50 }, temps: 25, emoji: '🪓', nom: 'Haches de fer', desc: 'Les villageois coupent le bois 20 % plus vite.', effet: { recolte_bois: 1.2 } },
+    pioches: { bat: 'entrepot', age: 1, cout: { nourriture: 150, bois: 100 }, temps: 30, emoji: '⛏️', nom: 'Pioches', desc: 'Les villageois extraient l’or 20 % plus vite.', effet: { recolte_or: 1.2 } },
+    charrettes: { bat: 'entrepot', age: 1, cout: { bois: 150, or: 50 }, temps: 30, emoji: '🛒', nom: 'Charrettes', desc: 'Chaque villageois porte 5 de plus par voyage.', effet: { porte: 5 } },
+    lames: { bat: 'caserne', age: 1, cout: { nourriture: 150, or: 100 }, temps: 35, emoji: '🗡️', nom: 'Lames affûtées', desc: 'Infanterie et cavalerie : attaque +15 %.', effet: { att: 1.15, cats: ['inf', 'cav', 'heros'] } },
+    armures: { bat: 'caserne', age: 1, cout: { nourriture: 100, or: 150 }, temps: 35, emoji: '🛡️', nom: 'Armures renforcées', desc: 'Infanterie et cavalerie : vie +20 %.', effet: { pv: 1.2, cats: ['inf', 'cav', 'heros'] } },
+    acier: { bat: 'caserne', age: 2, apres: 'lames', cout: { nourriture: 250, or: 250 }, temps: 45, emoji: '⚔️', nom: 'Forge de guerre', desc: 'Infanterie et cavalerie : encore +15 % d’attaque et +10 % de vie.', effet: { att: 1.15, pv: 1.1, cats: ['inf', 'cav', 'heros'] } },
+    empennage: { bat: 'archerie', age: 1, cout: { bois: 150, or: 100 }, temps: 35, emoji: '🏹', nom: 'Flèches empennées', desc: 'Archers : attaque +15 % et portée +2 m.', effet: { att: 1.15, portee: 2, cats: ['archer'] } },
+    harnais: { bat: 'ecurie', age: 1, cout: { nourriture: 150, or: 100 }, temps: 35, emoji: '🐎', nom: 'Harnais de guerre', desc: 'Cavalerie : vie +20 %.', effet: { pv: 1.2, cats: ['cav'] } },
+    ingenieurs: { bat: 'forteresse', age: 2, cout: { bois: 300, or: 200 }, temps: 45, emoji: '🏗️', nom: 'Ingénieurs', desc: 'Engins de siège : attaque +25 %.', effet: { att: 1.25, cats: ['siege'] } },
+    meurtrieres: { bat: 'tour', age: 2, cout: { bois: 200, or: 150 }, temps: 40, emoji: '🗼', nom: 'Meurtrières', desc: 'Toutes tes tours tirent une flèche de plus.', effet: { fleches: 1 } },
+    ferveur: { bat: 'temple', age: 1, cout: { nourriture: 150, or: 150 }, temps: 35, emoji: '✨', nom: 'Ferveur', desc: 'La faveur des dieux arrive 25 % plus vite ; créatures : vie +10 %.', effet: { faveur: 1.25, pv: 1.1, cats: ['mythe'] } },
+    coques: { bat: 'port', age: 1, cout: { bois: 200, or: 100 }, temps: 35, emoji: '⚓', nom: 'Coques renforcées', desc: 'Navires : vie +25 % ; bateaux de pêche : +25 % de poisson.', effet: { pv: 1.25, cats: ['navire'], recolte_poisson: 1.25 } },
+    milice: { bat: 'centre', age: 1, cout: { nourriture: 200, bois: 100 }, temps: 35, emoji: '💪', nom: 'Villageois robustes', desc: 'Villageois : vie +30 % et attaque +30 %.', effet: { pv: 1.3, att: 1.3, cats: ['milice'] } }
+  };
   // marché : 100 d'une ressource contre de l'or (ou l'inverse) ; chaque échange fait baisser le cours, qui remonte avec le temps
   R.MARCHE = { lot: 100, cours: 0.8, baisse: 0.04, minimum: 0.3, remontee: 0.004 };
   // âges : coût et durée du passage (s) ; le dieu mineur se choisit au début du passage

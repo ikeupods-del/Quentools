@@ -48,6 +48,7 @@
     tir: t => { bruit(t, 0.12, 0.45, 3200, 0.8); bruit(t + 0.02, 0.4, 0.2, 400, 0.6); },
     eclair: t => { bruit(t, 0.12, 0.7, 6000, 0.5); bruit(t + 0.05, 1.4, 0.6, 300, 0.6); note(60, t + 0.05, 1.2, 'sine', 0.25); },
     ordre: t => { note(520, t, 0.07, 'sine', 0.05); note(780, t + 0.05, 0.09, 'sine', 0.04); },
+    rugit: t => { bruit(t, 0.7, 0.35, 380, 2.5); note(70, t, 0.6, 'sawtooth', 0.05); note(52, t + 0.05, 0.7, 'sine', 0.2); },
     forme: t => { note(392, t, 0.18, 'triangle', 0.05); note(523, t + 0.08, 0.25, 'triangle', 0.045); }
   };
   PM.son = function (nom) {
