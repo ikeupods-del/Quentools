@@ -1112,7 +1112,7 @@
     if (menace) { for (const u of libresMil) if (!u.ordre || u.ordre.type !== 'attaquer') poserOrdre(B, u, { type: 'deplacer', x: menace.x, z: menace.z, attaque: true }); C.attaque = false; }
     // attaque par vagues : seuil croissant, cible = bâtiment ennemi le plus proche
     // un ennemi sans soldats se laisse achever avec une petite armée
-    const sansDefense = B.joueurs.some(x => !x.vaincu && ennemis(B, j, x.id) && !B.unites.some(u => !u.mort && u.j === x.id && u.cle !== 'villageois'));
+    const sansDefense = B.temps > 900 && B.joueurs.some(x => !x.vaincu && ennemis(B, j, x.id) && !B.unites.some(u => !u.mort && u.j === x.id && u.cle !== 'villageois') && B.unites.filter(u => !u.mort && u.j === x.id).length <= 12);
     const popMil = mil.reduce((s, u) => s + u.s.pop, 0), seuil = sansDefense ? Math.min(8, D.attaque) : D.attaque + C.vague * 6 + J.age * 2;
     // cibles : bâtiments ennemis, sinon les dernières unités (on achève les fuyards)
     const ciblesEnnemies = () => { const l = B.bats.filter(b => !b.mort && ennemis(B, j, b.j)); return (l.length ? l : B.unites.filter(u => !u.mort && ennemis(B, j, u.j))).sort((a, b) => d2(a.x, a.z, bx, bz) - d2(b.x, b.z, bx, bz)); };
