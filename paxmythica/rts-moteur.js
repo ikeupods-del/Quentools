@@ -1258,8 +1258,10 @@
     }
     // or épuisé : un marché pour échanger le bois et la nourriture en trop
     const sansOr = !ressourceProche(B, bx, bz, 'or', 110, j, 'mine');
-    if (J.age >= 1 && (sansOr || B.mode === 'diplomatie') && !nb('marche') && J.res.bois >= 150 && !enCours.some(b => b.cle === 'marche')) { const p = trouverPlace(B, J, 'marche', bx, bz, 16, 40); if (p) construire('marche', p[0], p[1], 2); }
-    if (nb('marche')) { for (const r of ['bois', 'nourriture']) if (J.res.or < 400 && J.res[r] > (r === 'bois' ? 700 : 1400)) BT.echanger(B, j, r + '>or'); if (J.res.or > 2500 && J.res.nourriture < 200) BT.echanger(B, j, 'or>nourriture'); }
+    // ressources mal réparties (beaucoup d'une, presque rien d'une autre) : le marché rééquilibre
+    const desequilibre = Math.max(J.res.bois, J.res.or, J.res.nourriture) > 1500 && Math.min(J.res.or, J.res.nourriture) < 600;
+    if (J.age >= 1 && (sansOr || desequilibre || B.mode === 'diplomatie') && !nb('marche') && J.res.bois >= 150 && !enCours.some(b => b.cle === 'marche')) { const p = trouverPlace(B, J, 'marche', bx, bz, 16, 40); if (p) construire('marche', p[0], p[1], 2); }
+    if (nb('marche')) { for (const r of ['bois', 'nourriture']) if (J.res.or < 400 && J.res[r] > (r === 'bois' ? 700 : 1400)) BT.echanger(B, j, r + '>or'); if (J.res.or > 1500 && J.res.nourriture < 300) BT.echanger(B, j, 'or>nourriture'); }
     // bâtiments à poser
     const plan = [[0, 'caserne', 9], [0, 'temple', 13], [1, 'archerie', 0], [1, 'ecurie', 0], [1, 'tour', 0], [2, 'forteresse', 0], [2, 'tour', 0], [3, 'merveille', 0]];
     if (!enCours.some(b => b.cle !== 'maison' && b.cle !== 'ferme')) for (const [a, cle, v] of plan) {
@@ -1273,6 +1275,9 @@
     // dépôts près des ressources éloignées
     const loinDuDepot = t => { const r = ressourceProche(B, bx, bz, t, 90, j, t === 'or' ? 'mine' : t === 'bois' ? 'arbre' : null); if (!r || r.sorte === 'b') return null; const d = depotProche(B, { j, x: r.x, z: r.z }, t); return !d || distBord({ x: r.x, z: r.z }, d) > 16 ? r : null; };
     if (!enCours.some(b => b.cle === 'entrepot') && J.res.bois >= 50) for (const t of ['bois', 'or']) { const r = loinDuDepot(t); if (r) { const p = trouverPlace(B, J, 'entrepot', r.x, r.z, 5, 11); if (p && construire('entrepot', p[0], p[1], 1)) break; } }
+    // un entrepôt et un grenier tôt dans la partie, comme un joueur : ils ouvrent les améliorations de récolte
+    if (vill.length >= 12 && !nb('entrepot') && J.res.bois >= 100) { const r = ressourceProche(B, bx, bz, 'bois', 70, j, 'arbre'), p = r && r.sorte !== 'b' ? trouverPlace(B, J, 'entrepot', r.x, r.z, 5, 12) : trouverPlace(B, J, 'entrepot', bx, bz, 12, 26); if (p) construire('entrepot', p[0], p[1], 1); }
+    else if (vill.length >= 16 && !nb('grenier') && J.res.bois >= 100) { const p = trouverPlace(B, J, 'grenier', bx, bz, 10, 24); if (p) construire('grenier', p[0], p[1], 1); }
     // fermes quand la nourriture sauvage s'épuise
     const sauvage = ressourceProche(B, bx, bz, 'nourriture', 45, j);
     const fermes = nb('ferme'), mangeurs = vill.filter(u => u.ordre && u.ordre.type === 'recolter' && (B.parId.get(u.ordre.cible) || {}).t === 'nourriture').length;
@@ -1301,9 +1306,11 @@
       if (!b.fini || !b.d.forme || b.cle === 'centre' || b.cle === 'port' || b.file.length >= 2) continue;
       const l = BT.formables(B, b).filter(cle => BT.peutFormer(B, b, cle).ok); if (!l.length) continue;
       // au hasard parmi ce qu'on peut payer (sans or, des archers plutôt que rien)
-      const payable = l.filter(k => { const c = BT.stats(B, j, k).cout; return Object.keys(c).every(r => surplus(r) >= c[r]); });
+      // presque sans armée : on ne garde plus de réserve pour l'âge suivant
+      const dispo = r => mil.length < 6 ? J.res[r] : surplus(r);
+      const payable = l.filter(k => { const c = BT.stats(B, j, k).cout; return Object.keys(c).every(r => dispo(r) >= c[r]); });
       const cle = (payable.length ? payable : l)[Math.floor(B.rnd() * (payable.length || l.length))], s = BT.stats(B, j, cle);
-      if (Object.keys(s.cout).every(r => surplus(r) >= s.cout[r]) || (J.res.nourriture > 1200 && assez(J, s.cout))) BT.former(B, j, b.id, cle);
+      if (Object.keys(s.cout).every(r => dispo(r) >= s.cout[r]) || (J.res.nourriture > 1200 && assez(J, s.cout))) BT.former(B, j, b.id, cle);
     }
     // défense : ennemis près de la base
     let menace = null; autour(B, bx, bz, 40, e => { if (e.sorte === 'u' && ennemis(B, j, e.j) && !menace) menace = e; });

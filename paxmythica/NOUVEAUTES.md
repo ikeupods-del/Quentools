@@ -7,6 +7,7 @@
 - **Caravanes et routes commerciales** : le marché forme des caravanes ; clic droit sur le marché d’un autre peuple en paix ou allié et elles font l’aller-retour en rapportant de l’or (plus la route est longue, plus elle rapporte, et ton partenaire y gagne aussi). Une guerre coupe la route.
 - **Nouvelles victoires** : par le commerce (8 000 d’or gagnés par les caravanes), par la « paix des dieux » (tous les peuples restants alliés pendant 3 minutes) ou par la merveille ; une victoire est partagée avec tes alliés.
 - **Combat corrigé** : les créatures et les cavaliers, plus gros que les fantassins, tournaient parfois autour de leur cible sans frapper ; ils attaquent désormais à la bonne distance.
+- **Ordinateur plus malin** : il bâtit tôt un entrepôt et un grenier et recherche bien plus d’améliorations, construit un marché quand ses ressources sont mal réparties (beaucoup de bois mais plus d’or, par exemple) et ne reste plus sans armée à économiser pour l’âge suivant.
 - **Jusqu’à 10 adversaires** sur la même carte, chacun avec son nom et sa couleur ; la carte s’agrandit toute seule quand on est nombreux.
 
 ## 1.9.0
