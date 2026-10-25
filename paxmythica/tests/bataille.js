@@ -15,7 +15,7 @@ for (const [pid, P] of Object.entries(PM.PANTHEONS)) {
   ok(R.CULTURE[pid], `culture ${pid}`);
 }
 for (const [id, d] of Object.entries(R.POUVOIRS)) { ok(PM.POUVOIRS[id], `pouvoir ${id} connu de donnees.js`); if (d.type === 'invoquer') ok(PM.UNITES[d.unite], `invocation ${id}`); }
-for (const [id, b] of Object.entries(R.BATIMENTS)) { ok(b.taille >= 4 && b.pv > 0 && b.temps > 0 && b.emoji, `bâtiment ${id}`); for (const f of b.forme || []) ok(f === 'mythe' || R.ROLES[f], `${id} forme ${f}`); for (const e of Object.keys(R.NOMS_BAT)) ok(R.NOMS_BAT[e][id], `nom de ${id} (${e})`); }
+for (const [id, b] of Object.entries(R.BATIMENTS)) { ok(b.taille >= 2 && b.pv > 0 && b.temps > 0 && b.emoji, `bâtiment ${id}`); for (const f of b.forme || []) ok(f === 'mythe' || R.ROLES[f], `${id} forme ${f}`); for (const e of Object.keys(R.NOMS_BAT)) ok(R.NOMS_BAT[e][id], `nom de ${id} (${e})`); }
 for (const l of R.CONSTRUIRE) for (const c of l) ok(R.BATIMENTS[c], `grille : ${c}`);
 
 const nouvelle = (o) => BT.nouvelle(Object.assign({ epoque: 'antique', carte: 'plaine', taille: 'petite', graine: 7, joueur: 0,
@@ -104,6 +104,84 @@ const jouer = (B, s) => { for (let t = 0; t < s / BT.PAS; t++) BT.pas(B); };
   ok(Object.values(J.res).every(v => Number.isFinite(v) && v >= -1e-6), 'ressources valides');
 }
 
+// 3 bis. murs et portes, port et bateaux, trêve, enregistrement, missions
+{
+  const B = nouvelle({ graine: 21 }), J = B.joueurs[0]; B.joueurs[1].ia = false; J.connu.fill(1); J.age = 1; J.cacheStats = {}; J.res.bois += 3000; J.res.or += 3000; J.res.nourriture += 3000;
+  const c = B.bats.find(b => b.j === 0 && b.cle === 'centre'), vill = B.unites.filter(u => u.j === 0 && u.cle === 'villageois');
+  // mur en ligne : tronçons bâtis de proche en proche
+  let a0 = null; for (let a = 0; a < 6.28 && !a0; a += 0.2) { const x0 = c.x + Math.cos(a) * 20, z0 = c.z + Math.sin(a) * 20, x1 = x0 + Math.cos(a + 1.57) * 16, z1 = z0 + Math.sin(a + 1.57) * 16; const l = BT.casesMur(B, 0, x0, z0, x1, z1); if (l.length >= 8 && l.every(k => k.ok === true)) a0 = [x0, z0, x1, z1]; }
+  ok(a0, 'tracé de mur libre');
+  const rm = BT.poserMur(B, 0, ...a0, vill.slice(0, 3).map(u => u.id));
+  ok(rm.ok && rm.n >= 8, `mur posé (${rm.n} tronçons)`);
+  jouer(B, 40); ok(rm.bats.every(b => b.fini), 'mur entièrement bâti');
+  // porte posée sur le mur : nos unités passent, l'ennemi non
+  const mid = rm.bats[Math.floor(rm.bats.length / 2)];
+  const rp = BT.poser(B, 0, 'porte', mid.x, mid.z, vill.slice(0, 3).map(u => u.id));
+  ok(rp.ok && !B.bats.includes(mid), 'porte posée à la place des tronçons');
+  jouer(B, 30); ok(rp.bat.fini, 'porte bâtie');
+  const gx = Math.floor(rp.bat.x / BT.CEL), gz = Math.floor(rp.bat.z / BT.CEL), o = gz * B.n + gx;
+  ok(B.bloc[o] === 5, 'case de la porte marquée');
+  const ami = BT.ajouterUnite(B, 0, 'inf', rp.bat.x, rp.bat.z), ennemi = BT.ajouterUnite(B, 1, 'inf', rp.bat.x, rp.bat.z);
+  ok(BT.marchable(B, rp.bat.x, rp.bat.z) === false, 'porte fermée par défaut');
+  ami.mort = ennemi.mort = 1;
+  // trêve d'une partie longue
+  const L = nouvelle({ graine: 23, duree: 'longue', taille: 'moyenne' });
+  ok(L.treve === R.DUREES.longue.treve && L.popMax === 250, 'partie longue : trêve et population');
+  ok(L.res.find(r => r.sous === 'mine').qte > BT.RES.mine.q * 1.5, 'partie longue : ressources abondantes');
+  const a = L.unites.find(u => u.j === 0 && u.cle === 'cav'), e = L.unites.find(u => u.j === 1 && u.cle === 'villageois');
+  ok(BT.ordreContexte(L, 0, [a.id], e.x, e.z, e.id) === 'treve', 'trêve : attaque refusée');
+  L.joueurs[0].connu.fill(1); ok(!BT.pouvoir(L, 0, 0, e.x, e.z).ok || R.POUVOIRS[L.joueurs[0].pouvoirs[0].id].type === 'ressources', 'trêve : pouvoir offensif refusé');
+  // port et pêche sur la mer intérieure
+  const M = nouvelle({ carte: 'mediterranee', taille: 'moyenne', graine: 4 }); M.joueurs[1].ia = false;
+  const JM = M.joueurs[0]; JM.connu.fill(1); JM.res.bois += 2000; JM.res.or += 1000; JM.res.nourriture += 1000;
+  ok(M.aEau && M.res.some(r => r.sous === 'poisson'), 'mer intérieure : eau navigable et poissons');
+  const cm = M.bats.find(b => b.j === 0 && b.cle === 'centre');
+  let pp = null; for (let r = 10; r < 90 && !pp; r += 2) for (let t = 0; t < 40 && !pp; t++) { const x = cm.x + Math.cos(t / 40 * 6.28) * r, z = cm.z + Math.sin(t / 40 * 6.28) * r; if (BT.peutPoser(M, 0, 'port', (Math.floor(x / 2) + 0.5) * 2, (Math.floor(z / 2) + 0.5) * 2).ok) pp = [(Math.floor(x / 2) + 0.5) * 2, (Math.floor(z / 2) + 0.5) * 2]; }
+  ok(pp, 'place de port au bord de l’eau');
+  const port = BT.poser(M, 0, 'port', pp[0], pp[1], M.unites.filter(u => u.j === 0 && u.cle === 'villageois').map(u => u.id)).bat;
+  for (let t = 0; t < 70 / BT.PAS && !port.fini; t++) BT.pas(M);
+  ok(port.fini, 'port bâti');
+  ok(BT.formables(M, port).join() === 'peche,navire', 'le port forme bateaux de pêche et navires');
+  BT.former(M, 0, port.id, 'peche'); BT.former(M, 0, port.id, 'navire');
+  for (let t = 0; t < 45 / BT.PAS; t++) BT.pas(M);
+  const bp = M.unites.find(u => u.cle === 'peche' && u.j === 0), nav = M.unites.find(u => u.cle === 'navire' && u.j === 0);
+  ok(bp && nav, 'bateaux formés');
+  ok(bp && M.eau[Math.floor(bp.z / 2) * M.n + Math.floor(bp.x / 2)] === 1, 'bateau posé sur l’eau');
+  const poisson = BT.ressourceProche(M, bp.x, bp.z, 'nourriture', 300, 0, 'poisson'), nour = JM.res.nourriture;
+  ok(BT.ordreContexte(M, 0, [bp.id], poisson.x, poisson.z, poisson.id) === 'recolter', 'clic droit sur les poissons : pêche');
+  for (let t = 0; t < 120 / BT.PAS; t++) BT.pas(M);
+  ok(JM.res.nourriture > nour + 10, `poisson rapporté au port (${Math.round(JM.res.nourriture - nour)})`);
+  ok(M.unites.filter(u => u.s.naval).every(u => M.eau[Math.floor(u.z / 2) * M.n + Math.floor(u.x / 2)] === 1), 'les bateaux restent sur l’eau');
+  const cible2 = BT.ajouterUnite(M, 1, 'navire', nav.x + 10, nav.z); M.eau[0] = M.eau[0];
+  const pvAv = cible2.pv; BT.ordreContexte(M, 0, [nav.id], cible2.x, cible2.z, cible2.id);
+  for (let t = 0; t < 20 / BT.PAS; t++) BT.pas(M);
+  ok(cible2.pv < pvAv || cible2.mort, 'combat naval');
+  // enregistrement puis rechargement : même état
+  const avant = BT.sauver(M), json = JSON.stringify(avant), M2 = BT.charger(JSON.parse(json));
+  ok(json.length < 400000, `enregistrement compact (${Math.round(json.length / 1024)} Ko)`);
+  ok(M2.unites.length === M.unites.filter(u => !u.mort).length && M2.bats.length === M.bats.filter(b => !b.mort).length, 'rechargement : unités et bâtiments');
+  ok(Math.round(M2.joueurs[0].res.nourriture) === Math.round(JM.res.nourriture) && M2.temps === M.temps, 'rechargement : ressources et temps');
+  ok(M2.res.length === M.res.filter(r => r.qte > 0).length, 'rechargement : ressources de la carte');
+  ok([...M2.bloc].every((v, i) => v === M.bloc[i]), 'rechargement : grille de passage identique');
+  for (let t = 0; t < 30 / BT.PAS; t++) { BT.pas(M2); }
+  ok(M2.unites.every(u => Number.isFinite(u.x)) && !M2.fin, 'la partie rechargée continue');
+  // missions : chacune se crée et ses objectifs se lisent
+  for (const def of R.CAMPAGNE) {
+    const X = BT.nouvelleMission(def);
+    ok(X.mission && X.mission.objectifs.length === def.objectifs.length && X.joueurs.length === def.adversaires.length + 1, `mission ${def.id} créée`);
+    for (let t = 0; t < 5 / BT.PAS; t++) BT.pas(X);
+    ok(!X.fin && X.mission.objectifs.every(o => o.texte), `mission ${def.id} en cours`);
+    if (def.id === 'siege') ok(X.bats.filter(b => b.j === 1 && b.cle === 'mur').length > 30 && X.bats.some(b => b.j === 1 && b.cle === 'porte'), 'mission siege : enceinte du duc');
+  }
+  // première mission jouée par l'ordinateur à la place du joueur : objectifs atteints
+  const F = BT.nouvelleMission(R.CAMPAGNE[0]); F.joueurs[0].ia = true; F.joueurs[0].difficulte = 2;
+  for (let t = 0; t < 900 / BT.PAS && !F.fin; t++) BT.pas(F);
+  ok(F.fin && F.fin.raison === 'mission', `mission 1 réussie par l’ordinateur (${F.fin ? Math.round(F.fin.temps / 60) + ' min' : 'non'})`);
+  // vagues de la deuxième mission
+  const V = BT.nouvelleMission(R.CAMPAGNE[1]); for (let t = 0; t < 160 / BT.PAS; t++) BT.pas(V);
+  ok(V.mission.vagues[0].fait && V.unites.some(u => u.j === 1 && u.ordre && (u.ordre.type === 'deplacer' || u.ordre.type === 'attaquer')), 'mission 2 : la première vague attaque');
+}
+
 // 4. parties entières : l'ordinateur contre lui-même
 const partie = (o, minutes) => {
   const B = nouvelle(Object.assign({}, o, { joueurs: o.joueurs.map(p => Object.assign({ ia: true }, p)) }));
@@ -116,16 +194,18 @@ const cas = [
   { titre: 'Égyptiens contre Atlantes (oasis, Moyen Âge)', epoque: 'medieval', carte: 'oasis', graine: 5, joueurs: [{ pantheon: 'egyptiens', dieu: 'ra', difficulte: 1 }, { pantheon: 'atlantes', dieu: 'gaia', difficulte: 1 }] },
   { titre: 'Quatre peuples (rivière, futur)', epoque: 'futur', carte: 'riviere', taille: 'moyenne', graine: 9, joueurs: [{ pantheon: 'grecs', equipe: 0 }, { pantheon: 'egyptiens', equipe: 1 }, { pantheon: 'nordiques', equipe: 0 }, { pantheon: 'atlantes', equipe: 1 }] }
 ];
+cas.push({ titre: 'Partie longue sur la mer intérieure', epoque: 'medieval', carte: 'mediterranee', taille: 'moyenne', duree: 'longue', graine: 12, minutes: 55, joueurs: [{ pantheon: 'atlantes', difficulte: 2 }, { pantheon: 'nordiques', difficulte: 1 }] });
 if (process.env.BATAILLE_LONG) for (const carte of Object.keys(R.CARTES)) for (const epoque of Object.keys(PM.EPOQUES)) cas.push({ titre: `${carte} ${epoque}`, epoque, carte, graine: carte.length * 7 + epoque.length, joueurs: [{ pantheon: 'grecs', difficulte: 2 }, { pantheon: 'nordiques', difficulte: 1 }] });
 for (const c of cas) {
-  const { B, ms, maxPas } = partie(c, 35);
+  const { B, ms, maxPas } = partie(c, c.minutes || 35);
   const J = B.joueurs, s = J.map(x => `${x.pantheon} âge ${x.age} pop ${x.pop}/${x.popMax} formées ${x.stats.formees} tuées ${x.stats.tues} récolte ${Math.round(x.stats.recolte)} bât ${x.stats.construits}${x.vaincu ? ' VAINCU' : ''}`).join(' | ');
   console.log(`${c.titre} : ${B.fin ? `fin à ${Math.round(B.fin.temps / 60)} min (${B.fin.raison})` : `pas de fin en ${Math.round(B.temps / 60)} min`} — ${ms} ms, pas le plus long ${maxPas.toFixed(1)} ms\n   ${s}`);
   ok(J.every(x => x.stats.recolte > 3000), `${c.titre} : économie qui tourne`);
   ok(J.every(x => x.age >= 2 || x.vaincu), `${c.titre} : passages d’âge`);
   ok(J.every(x => x.stats.formees >= 25 || x.vaincu), `${c.titre} : unités formées`);
   ok(J.some(x => x.stats.tues > 10), `${c.titre} : combats`);
-  ok(B.fin, `${c.titre} : la partie se termine`);
+  if (c.duree) { ok(J.every(x => x.stats.recolte > 30000), `${c.titre} : grandes économies`); ok(B.bats.some(b => b.cle === 'port') || B.unites.some(u => u.s.naval), `${c.titre} : l’ordinateur prend la mer`); }
+  else ok(B.fin, `${c.titre} : la partie se termine`);
   ok(maxPas < 25, `${c.titre} : pas de simulation rapide (${maxPas.toFixed(1)} ms)`);
   ok([...B.unites, ...B.bats].every(e => Number.isFinite(e.x) && Number.isFinite(e.z)), `${c.titre} : positions valides`);
 }

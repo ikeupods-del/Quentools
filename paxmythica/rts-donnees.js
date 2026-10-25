@@ -8,7 +8,7 @@
 
   // récolte : quantité portée par un villageois et vitesse (par seconde)
   R.PORTE = 10;
-  R.RECOLTE = { bois: 0.62, or: 0.55, baies: 0.72, viande: 0.95, ferme: 0.5, priere: 0.16 };
+  R.RECOLTE = { bois: 0.62, or: 0.55, baies: 0.72, viande: 0.95, ferme: 0.5, priere: 0.16, poisson: 0.85 };
   R.POP_MAX = 150;
   R.MAISONS_MAX = 12;
 
@@ -20,7 +20,10 @@
     archer: { pv: 65, att: 7, portee: 18, cadence: 1.8, vitesse: 3.6, vue: 22, cout: { nourriture: 40, bois: 40 }, temps: 13, pop: 1, rayon: 0.45, vsBat: 0.25, cat: 'archer', proj: 'fleche' },
     cav: { pv: 150, att: 9, portee: 0, cadence: 1.4, vitesse: 5.8, vue: 20, cout: { nourriture: 60, or: 60 }, temps: 15, pop: 2, rayon: 0.9, vsBat: 0.8, cat: 'cav' },
     heros: { pv: 280, att: 16, portee: 0, cadence: 1.4, vitesse: 4.2, vue: 20, cout: { nourriture: 100, or: 120 }, temps: 20, pop: 3, rayon: 0.55, vsBat: 1.1, cat: 'heros', age: 1 },
-    siege: { pv: 240, att: 45, portee: 24, cadence: 4.5, vitesse: 2.6, vue: 22, cout: { bois: 150, or: 100 }, temps: 25, pop: 3, rayon: 1.4, vsBat: 5, cat: 'siege', proj: 'pierre', zone: 2.5, age: 2 }
+    siege: { pv: 240, att: 45, portee: 24, cadence: 4.5, vitesse: 2.6, vue: 22, cout: { bois: 150, or: 100 }, temps: 25, pop: 3, rayon: 1.4, vsBat: 5, cat: 'siege', proj: 'pierre', zone: 2.5, age: 2 },
+    // bateaux (formés au port, ne vont que sur l'eau profonde)
+    peche: { pv: 90, att: 0, portee: 0, cadence: 2, vitesse: 4.6, vue: 18, cout: { bois: 50 }, temps: 14, pop: 1, rayon: 1.5, vsBat: 0, cat: 'navire', naval: true, porte: 20 },
+    navire: { pv: 380, att: 11, portee: 20, cadence: 2.2, vitesse: 4.3, vue: 24, cout: { bois: 120, or: 60 }, temps: 24, pop: 2, rayon: 2.3, vsBat: 1.2, cat: 'navire', proj: 'fleche', naval: true, salve: 3 }
   };
   // armes à feu et rayons des époques récentes : même équilibre, autre projectile
   R.PROJ_EPOQUE = { industriel: { fleche: 'balle', pierre: 'boulet' }, moderne: { fleche: 'balle', pierre: 'obus' }, futur: { fleche: 'laser', pierre: 'plasma' } };
@@ -44,22 +47,28 @@
     ecurie: { taille: 12, pv: 1500, cout: { bois: 150, or: 60 }, temps: 35, age: 1, forme: ['cav'], vue: 14, emoji: '🐎' },
     tour: { taille: 4, pv: 1000, cout: { bois: 100, or: 60 }, temps: 30, age: 1, vue: 24, att: 8, portee: 22, cadence: 1.8, fleches: 1, emoji: '🗼' },
     forteresse: { taille: 16, pv: 4000, cout: { bois: 300, or: 300 }, temps: 70, age: 2, forme: ['heros', 'siege'], vue: 24, att: 9, portee: 22, cadence: 2, fleches: 3, emoji: '🏰' },
-    merveille: { taille: 22, pv: 8000, cout: { nourriture: 1000, bois: 1000, or: 1000, faveur: 100 }, temps: 240, age: 3, vue: 20, emoji: '🗼' }
+    merveille: { taille: 22, pv: 8000, cout: { nourriture: 1000, bois: 1000, or: 1000, faveur: 100 }, temps: 240, age: 3, vue: 20, emoji: '🗼' },
+    // port : posé au bord de l'eau (une partie dans l'eau), forme les bateaux, reçoit le poisson
+    port: { taille: 10, pv: 1800, cout: { bois: 150 }, temps: 40, age: 0, forme: ['peche', 'navire'], depot: ['nourriture'], vue: 22, port: true, emoji: '⚓' },
+    // murs : un tronçon par case de 2 m, posés en ligne ; porte : laisse passer ses unités et celles des alliés
+    mur: { taille: 2, pv: 700, cout: { bois: 4, or: 2 }, temps: 3, age: 1, vue: 6, mur: true, emoji: '🧱' },
+    porte: { taille: 6, pv: 1600, cout: { bois: 40, or: 25 }, temps: 18, age: 1, vue: 8, porte: true, emoji: '🚪' }
   };
   // ordre de la grille de construction : économie puis armée
-  R.CONSTRUIRE = [['maison', 'grenier', 'entrepot', 'ferme', 'temple'], ['caserne', 'archerie', 'ecurie', 'tour', 'forteresse', 'centre', 'merveille']];
+  R.CONSTRUIRE = [['maison', 'grenier', 'entrepot', 'ferme', 'temple', 'port'], ['caserne', 'archerie', 'ecurie', 'tour', 'forteresse', 'mur', 'porte', 'centre', 'merveille']];
   // durée de garde d'une merveille achevée avant la victoire (s)
   R.GARDE_MERVEILLE = 180;
 
   // noms des bâtiments selon l'époque
   R.NOMS_BAT = {
-    antique: { centre: 'Centre-ville', maison: 'Maison', grenier: 'Grenier', entrepot: 'Entrepôt', ferme: 'Ferme', caserne: 'Caserne', temple: 'Temple', archerie: 'Champ de tir', ecurie: 'Écurie', tour: 'Tour de guet', forteresse: 'Forteresse', merveille: 'Merveille' },
-    medieval: { centre: 'Donjon', maison: 'Chaumière', grenier: 'Moulin', entrepot: 'Camp de bûcherons', ferme: 'Champ', caserne: 'Caserne', temple: 'Cathédrale', archerie: 'Lices des archers', ecurie: 'Écurie', tour: 'Tour', forteresse: 'Château fort', merveille: 'Cathédrale de légende' },
-    industriel: { centre: 'Hôtel de ville', maison: 'Maison ouvrière', grenier: 'Silo', entrepot: 'Dépôt', ferme: 'Ferme', caserne: 'Caserne', temple: 'Académie des sciences', archerie: 'Stand de tir', ecurie: 'Haras', tour: 'Redoute', forteresse: 'Arsenal', merveille: 'Exposition universelle' },
-    moderne: { centre: 'Quartier général', maison: 'Immeuble', grenier: 'Coopérative', entrepot: 'Dépôt logistique', ferme: 'Exploitation', caserne: 'Caserne', temple: 'Centre de recherche', archerie: 'Base de missiles', ecurie: 'Garage blindé', tour: 'Bunker', forteresse: 'Usine d’armement', merveille: 'Gratte-ciel' },
-    futur: { centre: 'Nexus', maison: 'Habitat', grenier: 'Hydroponie', entrepot: 'Extracteur', ferme: 'Serre', caserne: 'Clonerie', temple: 'Sanctuaire quantique', archerie: 'Batterie laser', ecurie: 'Hangar', tour: 'Tourelle', forteresse: 'Forge orbitale', merveille: 'Ascenseur spatial' }
+    antique: { centre: 'Centre-ville', maison: 'Maison', grenier: 'Grenier', entrepot: 'Entrepôt', ferme: 'Ferme', caserne: 'Caserne', temple: 'Temple', archerie: 'Champ de tir', ecurie: 'Écurie', tour: 'Tour de guet', forteresse: 'Forteresse', merveille: 'Merveille', port: 'Port', mur: 'Mur', porte: 'Porte fortifiée' },
+    medieval: { centre: 'Donjon', maison: 'Chaumière', grenier: 'Moulin', entrepot: 'Camp de bûcherons', ferme: 'Champ', caserne: 'Caserne', temple: 'Cathédrale', archerie: 'Lices des archers', ecurie: 'Écurie', tour: 'Tour', forteresse: 'Château fort', merveille: 'Cathédrale de légende', port: 'Port', mur: 'Muraille', porte: 'Porte du château' },
+    industriel: { centre: 'Hôtel de ville', maison: 'Maison ouvrière', grenier: 'Silo', entrepot: 'Dépôt', ferme: 'Ferme', caserne: 'Caserne', temple: 'Académie des sciences', archerie: 'Stand de tir', ecurie: 'Haras', tour: 'Redoute', forteresse: 'Arsenal', merveille: 'Exposition universelle', port: 'Docks', mur: 'Mur d’enceinte', porte: 'Porte blindée' },
+    moderne: { centre: 'Quartier général', maison: 'Immeuble', grenier: 'Coopérative', entrepot: 'Dépôt logistique', ferme: 'Exploitation', caserne: 'Caserne', temple: 'Centre de recherche', archerie: 'Base de missiles', ecurie: 'Garage blindé', tour: 'Bunker', forteresse: 'Usine d’armement', merveille: 'Gratte-ciel', port: 'Base navale', mur: 'Mur de béton', porte: 'Poste de contrôle' },
+    futur: { centre: 'Nexus', maison: 'Habitat', grenier: 'Hydroponie', entrepot: 'Extracteur', ferme: 'Serre', caserne: 'Clonerie', temple: 'Sanctuaire quantique', archerie: 'Batterie laser', ecurie: 'Hangar', tour: 'Tourelle', forteresse: 'Forge orbitale', merveille: 'Ascenseur spatial', port: 'Spatioport marin', mur: 'Champ de force', porte: 'Porte énergétique' }
   };
   R.NOMS_VILLAGEOIS = { antique: 'Villageois', medieval: 'Paysans', industriel: 'Ouvriers', moderne: 'Ouvriers', futur: 'Techniciens' };
+  R.NOMS_BATEAUX = { antique: ['Bateau de pêche', 'Trière'], medieval: ['Barque de pêche', 'Nef de guerre'], industriel: ['Chalutier', 'Frégate'], moderne: ['Chalutier', 'Destroyer'], futur: ['Drone de pêche', 'Croiseur'] };
 
   // âges : coût et durée du passage (s) ; le dieu mineur se choisit au début du passage
   R.AGES = [null, { cout: { nourriture: 400 }, temps: 45 }, { cout: { nourriture: 800, or: 500 }, temps: 55 }, { cout: { nourriture: 1000, or: 1000 }, temps: 65 }];
@@ -143,15 +152,23 @@
     riviere: { nom: 'Rivière et gués', emoji: '🏞️', pack: 'realiste', foret: 0.55, desert: 0, collines: 0.3, eau: 'riviere' },
     oasis: { nom: 'Oasis du désert', emoji: '🏜️', pack: 'olympe', foret: 0.25, desert: 1, collines: 0.3, eau: 'oasis' },
     lac: { nom: 'Lac sacré', emoji: '💧', pack: 'realiste', foret: 0.5, desert: 0, collines: 0.35, eau: 'lac' },
+    mediterranee: { nom: 'Mer intérieure', emoji: '⛵', pack: 'olympe', foret: 0.45, desert: 0.15, collines: 0.35, eau: 'mer' },
     toundra: { nom: 'Toundra nordique', emoji: '❄️', pack: 'hiver', foret: 0.65, desert: 0, collines: 0.6, eau: 'aucune' },
     automne: { nom: 'Forêt d’automne', emoji: '🍂', pack: 'automne', foret: 0.8, desert: 0, collines: 0.5, eau: 'aucune' }
   };
-  R.TAILLES = { petite: { cote: 200, nom: 'Petite' }, moyenne: { cote: 256, nom: 'Moyenne' }, grande: { cote: 320, nom: 'Grande' } };
+  R.TAILLES = { petite: { cote: 200, nom: 'Petite' }, moyenne: { cote: 256, nom: 'Moyenne' }, grande: { cote: 320, nom: 'Grande' }, immense: { cote: 400, nom: 'Immense' } };
+  // durée de la partie : trêve du début (personne ne peut attaquer), population, ressources de la carte, garde de la merveille
+  R.DUREES = {
+    normale: { nom: 'Normale', treve: 0, pop: 150, res: 1, garde: 180, desc: 'Une bataille de 20 à 30 minutes.' },
+    longue: { nom: 'Longue', treve: 480, pop: 250, res: 1.7, garde: 300, desc: 'Trêve de 8 minutes pour bâtir, 250 de population, ressources abondantes.' },
+    epique: { nom: 'Épique', treve: 900, pop: 300, res: 2.6, garde: 420, desc: 'Trêve de 15 minutes, 300 de population, carte très riche : de grandes villes et de grandes armées.' }
+  };
   R.DIFFICULTES = [{ nom: 'Facile', recolte: 0.75, attaque: 28, pense: 1.6 }, { nom: 'Normal', recolte: 1, attaque: 18, pense: 1 }, { nom: 'Difficile', recolte: 1.2, attaque: 12, pense: 0.7 }];
 
   // nom affiché d'une unité selon le peuple et l'époque
   R.nomUnite = (pantheon, cle) => {
     if (cle === 'villageois') return R.NOMS_VILLAGEOIS[PM.epoque] || 'Villageois';
+    if (cle === 'peche' || cle === 'navire') return (R.NOMS_BATEAUX[PM.epoque] || R.NOMS_BATEAUX.antique)[cle === 'peche' ? 0 : 1];
     if (cle === 'mouton' || cle === 'vache') return cle === 'mouton' ? 'Mouton' : 'Vache';
     const P = PM.PANTHEONS[pantheon], i = ['inf', 'archer', 'cav', 'heros', 'siege'].indexOf(cle);
     if (i >= 0 && P) { const u = PM.UNITES[P.unites[i]]; return u ? u.nom : cle; }
@@ -159,9 +176,49 @@
   };
   R.emojiUnite = (pantheon, cle) => {
     if (cle === 'villageois') return '🧑‍🌾';
+    if (cle === 'peche') return '🛶';
+    if (cle === 'navire') return PM.epoque === 'antique' || PM.epoque === 'medieval' ? '⛵' : '🚢';
     const P = PM.PANTHEONS[pantheon], i = ['inf', 'archer', 'cav', 'heros', 'siege'].indexOf(cle);
     if (i >= 0 && P) { const u = PM.UNITES[P.unites[i]]; return u ? u.emoji : '⚔️'; }
     return PM.UNITES[cle] ? PM.UNITES[cle].emoji : '❔';
   };
+  // campagne : missions à la suite, chacune avec son récit, ses objectifs, ses adversaires et ses vagues d'assaillants
+  // objectifs : villageois, construire, age, armee, navires, survivre, detruireBat, vaincre, merveille
+  R.CAMPAGNE = [
+    { id: 'fondation', titre: 'La fondation de Mégara', epoque: 'antique', carte: 'plaine', taille: 'petite',
+      joueur: { pantheon: 'grecs', dieu: 'zeus', nom: 'Mégara' }, adversaires: [{ pantheon: 'nordiques', difficulte: 0, passif: true, nom: 'Clans du Nord' }],
+      recit: 'Les dieux t’ont confié une vallée fertile. Avant de penser à la guerre, il faut une cité : des villageois au travail, un temple pour Zeus et une caserne pour se défendre.',
+      fin: 'Mégara est née. Les feux de ses foyers se voient depuis les collines, et Zeus regarde ta cité avec bienveillance.',
+      objectifs: [{ type: 'villageois', n: 15, texte: 'Avoir 15 villageois' }, { type: 'construire', cle: 'temple', n: 1, texte: 'Bâtir un temple' }, { type: 'construire', cle: 'caserne', n: 1, texte: 'Bâtir une caserne' }, { type: 'age', age: 1, texte: 'Atteindre l’âge classique' }] },
+    { id: 'pillards', titre: 'Les pillards du Nord', epoque: 'antique', carte: 'plaine', taille: 'petite',
+      joueur: { pantheon: 'grecs', dieu: 'poseidon', nom: 'Mégara' }, adversaires: [{ pantheon: 'nordiques', dieu: 'thor', difficulte: 1, passif: true, nom: 'Pillards de Hrafn' }],
+      depart: { res: { nourriture: 500, bois: 400, or: 300 }, unites: [[0, 'inf', 4], [0, 'archer', 3]] },
+      vagues: [{ t: 150, j: 1, unites: [['inf', 4]] }, { t: 300, j: 1, unites: [['inf', 5], ['archer', 3]] }, { t: 450, j: 1, unites: [['inf', 6], ['cav', 3], ['archer', 3]] }],
+      recit: 'Des drakkars ont été vus sur la côte. Les pillards de Hrafn vont frapper Mégara par vagues. Tiens bon, puis porte la guerre chez eux.',
+      fin: 'Le camp de Hrafn n’est plus que cendres. Les terres de Mégara sont sûres.',
+      objectifs: [{ type: 'survivre', duree: 540, texte: 'Tenir 9 minutes face aux assauts' }, { type: 'detruireBat', j: 1, cle: 'centre', texte: 'Raser le centre-ville des pillards' }] },
+    { id: 'nil', titre: 'Le Nil en colère', epoque: 'antique', carte: 'oasis', taille: 'moyenne',
+      joueur: { pantheon: 'egyptiens', dieu: 'ra', nom: 'Thèbes' }, adversaires: [{ pantheon: 'grecs', difficulte: 1, nom: 'Expédition grecque' }, { pantheon: 'atlantes', difficulte: 0, nom: 'Colons atlantes' }],
+      recit: 'Deux peuples étrangers ont planté leurs tentes près des oasis sacrées. Râ exige qu’ils repartent. Deviens assez fort pour les chasser tous les deux.',
+      fin: 'Les oasis sont de nouveau à Thèbes. Les prêtres chantent ton nom sur les rives du Nil.',
+      objectifs: [{ type: 'age', age: 2, texte: 'Atteindre l’âge héroïque' }, { type: 'vaincre', texte: 'Vaincre les deux envahisseurs' }] },
+    { id: 'mer', titre: 'La mer intérieure', epoque: 'antique', carte: 'mediterranee', taille: 'moyenne',
+      joueur: { pantheon: 'atlantes', dieu: 'kronos', nom: 'Poséidonia' }, adversaires: [{ pantheon: 'nordiques', dieu: 'loki', difficulte: 1, nom: 'Flotte de Jarl Eirik' }],
+      depart: { res: { nourriture: 400, bois: 700, or: 300 } },
+      recit: 'La mer qui baigne Poséidonia est convoitée par la flotte de Jarl Eirik. Bâtis un port, arme des navires et coule sa flotte avant de débarquer.',
+      fin: 'La mer intérieure est atlante. Les marchands reviennent, escortés par tes navires.',
+      objectifs: [{ type: 'construire', cle: 'port', n: 1, texte: 'Bâtir un port' }, { type: 'navires', n: 5, texte: 'Armer 5 navires de guerre' }, { type: 'detruireBat', j: 1, cle: 'port', texte: 'Détruire le port ennemi' }, { type: 'vaincre', texte: 'Vaincre Jarl Eirik' }] },
+    { id: 'siege', titre: 'Le siège du château', epoque: 'medieval', carte: 'toundra', taille: 'moyenne',
+      joueur: { pantheon: 'nordiques', dieu: 'odin', nom: 'Jarls de Norvège' }, adversaires: [{ pantheon: 'grecs', difficulte: 1, passif: true, nom: 'Duché fortifié', muraille: 26 }],
+      depart: { age: 2, ageEnnemi: 2, res: { nourriture: 1500, bois: 1500, or: 1500, faveur: 60 }, unites: [[0, 'inf', 10], [0, 'siege', 3], [0, 'cav', 4]] },
+      recit: 'Le duc s’est enfermé derrière ses murailles et ses tours. Tes béliers et tes trébuchets sont prêts : ouvre une brèche et prends le donjon.',
+      fin: 'Le donjon est tombé. Le duché paie désormais tribut aux jarls.',
+      objectifs: [{ type: 'detruireBat', j: 1, cle: 'centre', texte: 'Prendre le donjon du duc' }] },
+    { id: 'ascension', titre: 'L’ascension', epoque: 'futur', carte: 'lac', taille: 'moyenne', duree: 'longue',
+      joueur: { pantheon: 'grecs', dieu: 'zeus', nom: 'Concorde d’Hélios' }, adversaires: [{ pantheon: 'egyptiens', difficulte: 2, nom: 'Dynastie rouge', equipe: 1 }, { pantheon: 'nordiques', difficulte: 1, nom: 'Hégémonie boréale', equipe: 1 }],
+      recit: 'Le dernier défi : élever l’ascenseur spatial, la merveille qui unira les peuples, et la défendre pendant que deux puissances tentent de l’abattre. Une trêve de 8 minutes te laisse le temps de bâtir.',
+      fin: 'L’ascenseur spatial touche les étoiles. Ton peuple entre dans la légende.',
+      objectifs: [{ type: 'merveille', texte: 'Bâtir la merveille et la garder 5 minutes' }] }
+  ];
   R.nomBat = cle => (R.NOMS_BAT[PM.epoque] || R.NOMS_BAT.antique)[cle] || cle;
 })(typeof window !== 'undefined' ? window : globalThis);
