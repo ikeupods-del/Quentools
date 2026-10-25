@@ -202,6 +202,10 @@ const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? '✓ ' : '�
   ok(await ev(() => UI.bat.B.unites.some(u => u.dans)), 'villageois abrités dans le centre-ville');
   await p.click('#batOrdres [data-act=b-cloche]');
   ok(await ev(() => !UI.bat.B.unites.some(u => u.dans)), 'fin de l’alerte');
+  await p.hover('#batOrdres [data-act=b-former]'); await p.waitForTimeout(250);
+  ok(await ev(() => { const f = document.querySelector('#batFiche'); return !!f && !f.classList.contains('cache') && /⚔️/.test(f.textContent); }), 'fiche détaillée au survol de la grille');
+  await p.mouse.move(640, 300); await p.keyboard.press(',');
+  ok(await ev(() => UI.bat.sel.length >= 1 && UI.bat.sel.every(i => UI.bat.B.parId.get(i).cle !== 'villageois')), 'touche , : toute l’armée');
   await ev(() => { UI.bat.B.toutVoir = true; for (let k = 0; k < 12; k++) PM.Bataille.pas(UI.bat.B); const c = UI.bat.B.unites.find(u => u.j === 1); UI.bat.vue.centrerXZ(c.x, c.z + 6); UI.bat.vue.stabiliser(); });
   await p.waitForTimeout(300); await p.click('#batPouvoirs [data-act=b-pouvoir]');
   const ennemi = await ev(() => { const u = UI.bat.B.unites.find(u => u.j === 1 && !u.mort); return UI.bat.vue.versEcran(u.x, u.z, 0); });
