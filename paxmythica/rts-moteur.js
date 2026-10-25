@@ -1337,6 +1337,7 @@
       else if (o.type === 'survivre') ok = B.temps >= o.duree && bats.some(b => b.cle === 'centre');
       else if (o.type === 'detruireBat') ok = !B.bats.some(b => !b.mort && b.j === o.j && b.cle === o.cle);
       else if (o.type === 'debarquer') { const iles = new Set(B.bats.filter(b => !b.mort && b.cle === 'centre' && ennemis(B, ji, b.j)).map(b => ileDe(B, b.x, b.z))); ok = mes.filter(u => !recolteur(u) && !u.s.naval && !u.dans && iles.has(ileDe(B, u.x, u.z))).length >= o.n; }
+      else if (o.type === 'tech') ok = (J.techs || []).includes(o.id);
       else if (o.type === 'vaincre') ok = B.joueurs.every(x => !ennemis(B, ji, x.id) || x.vaincu);
       else if (o.type === 'merveille') { const m = bats.find(b => b.cle === 'merveille' && b.fini); o.progres = m ? Math.min(1, (m.garde || 0) / (B.gardeMerveille || R.GARDE_MERVEILLE)) : 0; ok = o.progres >= 1; }
       if (ok) { o.fait = true; B.evts.push({ type: 'objectif', texte: o.texte }); }

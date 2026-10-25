@@ -5,6 +5,7 @@
 - **Fiches détaillées** au survol de la grille d’ordres : coût, temps, chiffres de l’unité, ses points forts et ses points faibles.
 - **Postures des soldats** (rangée du haut de la grille) : agressive (poursuit l’ennemi), défensive (combat près de sa place et y revient), tenir la position (ne bouge pas, frappe ce qui est à portée).
 - **Toute l’armée** d’un coup : touche « , » ou bouton « ⚔️ Armée » (Maj + , : seulement les soldats inactifs).
+- **Campagne de quatorze missions** : quatre nouvelles — « Le tombeau du pharaon » (bâtir et garder la merveille face aux pilleurs), « Les drakkars du fjord » (débarquement nordique), « La ville-usine » (économie industrielle et améliorations) et « Bataille pour l’orbite » (guerre navale au futur).
 - **Coup spécial des créatures** : de temps en temps, un coup qui frappe fort et repousse les ennemis autour, avec un grognement.
 - **Les unités parlent** : quand tu les choisis ou leur donnes un ordre, elles répondent en français avec la voix du Mac (« Oui ? », « Au travail ! », « À l’attaque ! », « Cap paré ! »). Case « Voix des unités » dans les réglages pour les faire taire.
 - **Bruit de la mer** : le souffle des vagues monte quand la caméra survole l’eau, avec quelques mouettes.

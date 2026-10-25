@@ -69,7 +69,7 @@
   const missionDe = B => B && B.mission ? R.CAMPAGNE.find(m => m.id === B.mission.id) : null;
   ACT.campagne = () => {
     const fait = lireP('pm:campagne', []);
-    $('#creationContenu').innerHTML = `<h1>Campagne</h1><p class="sous">Dix missions, de la fondation d’une cité grecque jusqu’à l’ascenseur spatial. Chaque victoire ouvre la mission suivante.</p>
+    $('#creationContenu').innerHTML = `<h1>Campagne</h1><p class="sous">Quatorze missions, de la fondation d’une cité grecque jusqu’à l’ascenseur spatial. Chaque victoire ouvre la mission suivante.</p>
       <div class="cartes">${R.CAMPAGNE.map((m, i) => { const fini = fait.includes(m.id), ouvert = i === 0 || fini || fait.includes(R.CAMPAGNE[i - 1].id);
         return `<button class="carte-choix ${fini ? 'choisie' : ''}" data-act="b-mission" data-v="${m.id}" ${ouvert ? '' : 'disabled'}><div class="em">${ouvert ? (fini ? '🏆' : PM.EPOQUES[m.epoque].emoji) : '🔒'}</div><h3>${i + 1}. ${esc(m.titre)}</h3>
           <p>${esc(PM.EPOQUES[m.epoque].nom)} · ${esc(PM.PANTHEONS[m.joueur.pantheon].nom)} · ${esc(R.CARTES[m.carte].nom)}${m.duree === 'longue' ? ' · partie longue' : ''}</p><p>${ouvert ? esc(m.recit) : 'Gagne la mission précédente pour l’ouvrir.'}</p></button>`; }).join('')}</div>

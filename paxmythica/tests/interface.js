@@ -248,8 +248,9 @@ const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? '✓ ' : '�
   ok(await p.isVisible('[data-act=b-continuer]'), 'continuer la bataille (sauvegarde automatique)');
 
   // campagne : six missions, la première ouverte, objectifs à l'écran, victoire qui ouvre la suivante
+  const R_CAMPAGNE = await ev(() => PM.RTS.CAMPAGNE.length);
   await p.click('[data-act=campagne]');
-  ok(await p.locator('#creationContenu [data-act=b-mission]').count() === 10, 'campagne : dix missions');
+  ok(await p.locator('#creationContenu [data-act=b-mission]').count() === R_CAMPAGNE, 'campagne : toutes les missions');
   ok(await p.isDisabled('[data-act=b-mission][data-v=pillards]') && !(await p.isDisabled('[data-act=b-mission][data-v=fondation]')), 'missions suivantes verrouillées');
   await p.click('[data-act=b-mission][data-v=fondation]');
   ok(await ev(() => UI.bat.B.mission && UI.bat.B.mission.id === 'fondation' && UI.modalOuvert()), 'mission lancée avec son récit');
