@@ -156,7 +156,7 @@
       <li>Tes <b>villageois</b> récoltent la nourriture (baies, chasse, fermes), le bois et l’or, et bâtissent : choisis un villageois puis un bâtiment dans la grille en bas à droite.</li>
       <li>Les <b>maisons</b> donnent de la population. Le <b>${esc(R.nomBat('temple').toLowerCase())}</b> forme les créatures ; passe les <b>âges</b> au ${esc(R.nomBat('centre').toLowerCase())} pour choisir un dieu mineur.</li>
       <li>${esc((R.CULTURE[J.pantheon] || {}).desc || '')}</li>
-      ${B.mode === 'diplomatie' ? `<li>🤝 <b>Mode Diplomatie</b> : tout le monde commence en paix. Bouton « Diplomatie » (touche <kbd>Y</kbd>) pour déclarer la guerre, proposer la paix ou une alliance, envoyer un tribut. Les caravanes du marché commercent avec les marchés des autres peuples. Victoire par la conquête, la merveille, le commerce ou la paix des dieux.</li>` : ''}
+      ${B.mode === 'diplomatie' ? `<li>🤝 <b>Mode Diplomatie</b> : tout le monde commence en paix. Bouton « Diplomatie » (touche <kbd>Y</kbd>) : pactes de non-agression, accords commerciaux, alliances, tributs, menaces. Pas d’attaque surprise : une guerre s’annonce ${R.DIPLO.preavis} s à l’avance, et la déclarer sans <b>motif de guerre</b> (ultimatum rejeté, troupes à ta frontière, empiétement, trahison, défense d’un allié) coûte de la parole. Les caravanes du marché commercent avec les marchés des autres peuples. Victoire par la conquête, la merveille, le commerce ou la paix des dieux.</li>` : ''}
       ${B.treve ? `<li>🕊️ <b>Partie ${esc(R.DUREES[B.duree].nom.toLowerCase())}</b> : trêve de ${Math.round(B.treve / 60)} minutes, personne ne peut attaquer avant. Population jusqu’à ${B.popMax}.</li>` : ''}
       <li>Raccourcis : <kbd>H</kbd> ${esc(R.nomBat('centre').toLowerCase())}, <kbd>.</kbd> villageois inactif, <kbd>⌘</kbd>+<kbd>1</kbd>…<kbd>9</kbd> groupes, <kbd>Échap</kbd> pause, deux doigts pour se déplacer, pincer pour zoomer.</li></ul>
       <div class="actions-bas"><button class="btn or grand" data-act="b-commencer">À l’assaut !</button></div>`);
@@ -213,8 +213,22 @@
         const t = e.r === 'guerre' ? (moi ? `⚔️ Guerre avec ${autre} !` : `⚔️ ${a} déclare la guerre à ${b}.`) : e.r === 'paix' ? (moi ? `🕊️ Paix avec ${autre}.` : `🕊️ ${a} et ${b} font la paix.`) : (moi ? `🤝 Alliance avec ${autre} !` : `🤝 ${a} et ${b} s’allient.`);
         message(t, moi && e.r === 'guerre' ? 'ko' : moi ? 'ok' : ''); if (moi) son(e.r === 'guerre' ? 'guerre' : 'ok'); }
       else if (e.type === 'appel') { if (e.contre === ji) message(`⚔️ ${B.joueurs[e.j].nom} répond à l’appel de ${B.joueurs[e.allie].nom} et te déclare la guerre !`, 'ko'); else if (e.allie === ji) message(`🤝 ${B.joueurs[e.j].nom} entre en guerre à tes côtés contre ${B.joueurs[e.contre].nom}.`, 'ok'); }
-      else if (e.type === 'tribut' && e.a === ji) { message(`🎁 ${B.joueurs[e.de].nom} t’envoie ${Math.round(e.qte * 0.9)} ${PM.ICONES[e.res]}.`, 'ok'); }
-      else if (e.type === 'offre' && e.offre.a === ji) { son('evenement'); majOffres(true); }
+      else if (e.type === 'tribut' && e.a === ji) { message(`🎁 ${B.joueurs[e.de].nom} t’envoie ${e.force ? e.qte : Math.round(e.qte * 0.9)} ${PM.ICONES[e.res]}.`, 'ok'); }
+      else if (e.type === 'declaration') { const de = B.joueurs[e.de].nom, a = B.joueurs[e.a].nom, mot = e.trahison ? ' en trahissant sa parole' : e.motif ? ` (motif : ${(R.MOTIFS[e.motif] || {}).nom})` : ' sans motif';
+        if (e.a === ji) { message(`⚠️ ${de} te déclare la guerre${mot} ! Elle commence dans ${R.DIPLO.preavis} s.`, 'ko'); son('guerre'); majOffres(true); }
+        else if (e.de === ji) { message(`📯 Déclaration envoyée à ${a} : la guerre commence dans ${R.DIPLO.preavis} s.`, 'ko'); majOffres(true); }
+        else message(`📯 ${de} déclare la guerre à ${a}${mot}.`); }
+      else if (e.type === 'annule') { if (e.a === ji) message(`🕊️ ${B.joueurs[e.de].nom} retire sa déclaration de guerre.`, 'ok'); else if (e.de !== ji) message(`🕊️ ${B.joueurs[e.de].nom} renonce à attaquer ${B.joueurs[e.a].nom}.`); majOffres(true); }
+      else if (e.type === 'grief' && (e.de === ji || e.contre === ji) && !(e.motif === 'refus' && e.de === ji) && e.motif !== 'trahison') { const m = R.MOTIFS[e.motif] || { emoji: '⚖️', nom: e.motif };
+        message(e.de === ji ? `⚖️ Motif de guerre contre ${B.joueurs[e.contre].nom} : ${m.emoji} ${m.nom}.` : `⚖️ ${B.joueurs[e.de].nom} tient un motif de guerre contre toi : ${m.emoji} ${m.nom}.`, e.de === ji ? 'ok' : 'ko'); }
+      else if (e.type === 'frontiere') { if (e.b === ji) message(`🛡️ ${B.joueurs[e.a].nom} se plaint de tes soldats près de ses bâtiments : éloigne-les, sinon il tiendra un motif de guerre.`, 'ko'); else if (e.a === ji) message(`🛡️ Des soldats de ${B.joueurs[e.b].nom} stationnent près de tes bâtiments.`, 'ko'); }
+      else if (e.type === 'exigence' && e.a === ji) { son('evenement'); majOffres(true); }
+      else if (e.type === 'cede' && e.de === ji) { message(`✅ ${B.joueurs[e.j].nom} cède à ton exigence.`, 'ok'); }
+      else if (e.type === 'refus' && e.de === ji) { message(`❌ ${B.joueurs[e.j].nom} rejette ton ultimatum : tu tiens un motif de guerre.`, 'ko'); }
+      else if (e.type === 'parole' && e.j === ji) { message(`📉 Ta parole baisse : ${{ alliance: 'alliance trahie', pacte: 'pacte trahi', traite: 'traité de paix rompu', sansMotif: 'guerre sans motif', abandon: 'allié abandonné' }[e.raison] || e.raison}. Les autres peuples te font moins confiance.`, 'ko'); }
+      else if (e.type === 'pacte' && (e.a === ji || e.b === ji)) { const autre = B.joueurs[e.a === ji ? e.b : e.a].nom; message(e.pacte === 'nonagression' ? `📃 Pacte de non-agression avec ${autre} (${Math.round(R.DIPLO.nonAgression / 60)} minutes).` : `💰 Accord commercial avec ${autre} : vos caravanes rapportent 25 % de plus.`, 'ok'); }
+      else if (e.type === 'abandon') { if (e.allie === ji) message(`💔 ${B.joueurs[e.j].nom} refuse de t’aider contre ${B.joueurs[e.contre].nom} et rompt votre alliance.`, 'ko'); else if (e.j === ji) message(`💔 Tu as abandonné ${B.joueurs[e.allie].nom} : alliance rompue.`, 'ko'); }
+      else if (e.type === 'offre' && e.offre.a === ji) { son(e.offre.type === 'appel' || e.offre.type === 'exigence' ? 'guerre' : 'evenement'); majOffres(true); }
       else if (e.type === 'objectif') { message('✅ Objectif atteint : ' + e.texte, 'ok'); son('age'); }
     }
     // alerte : on est attaqué
@@ -437,42 +451,110 @@
   }
   ACT['b-vitesse'] = () => { const B = S.B, l = [1, 1.5, 2, 0.5], i = (l.indexOf(B.vitesse) + 1) % l.length; B.vitesse = l[i]; $('#batVitesse').textContent = '×' + String(l[i]).replace('.', ','); };
   ACT['b-menu'] = () => menuPause();
-  // ---------- diplomatie ----------
+  // ---------- diplomatie : relations, motifs de guerre, pactes, menaces, déclarations avec préavis ----------
   const RELNOM = { 0: ['⚔️', 'Guerre', 'guerre'], 1: ['🕊️', 'Paix', 'paix'], 2: ['🤝', 'Alliance', 'alliance'] };
   const CARACT = { conquerant: 'conquérant', marchand: 'marchand', diplomate: 'diplomate' };
+  const mnS = s => `${Math.floor(s / 60)}:${String(Math.max(0, Math.floor(s % 60))).padStart(2, '0')}`;
+  const nomMotif = m => (R.MOTIFS[m] || { nom: m }).nom;
+  const puceMotif = (m, contre) => `<span class="rts-motif ${contre ? 'contre' : ''}" title="${esc((R.MOTIFS[m] || {}).desc || '')}">${(R.MOTIFS[m] || {}).emoji || '⚖️'} ${esc(nomMotif(m))}</span>`;
+  const paroleTexte = p => p >= 80 ? 'fiable' : p >= 50 ? 'douteuse' : p >= 25 ? 'peu fiable' : 'traître';
   function panneauDiplo() {
     const B = S.B, ji = B.joueur, J = B.joueurs[ji], diplo = B.mode === 'diplomatie', enTreve = B.treve && B.temps < B.treve;
     const lignes = B.joueurs.filter(x => x.id !== ji).map(x => {
       const r = BT.relation(B, ji, x.id), [em, nom, cl] = RELNOM[r], P = PM.PANTHEONS[x.pantheon];
       if (x.vaincu) return `<tr class="vaincu"><td><span class="pastille" style="background:${esc(x.couleur)}"></span> ${esc(x.nom)}</td><td colspan="4">💀 Vaincu</td></tr>`;
       const att = x.ia ? BT.attitude(B, x.id, ji) : '—', fo = BT.visible(B, ji, ...(c => c ? [c.x, c.z] : [-1, -1])(B.bats.find(b => !b.mort && b.j === x.id && b.cle === 'centre'))) || r === 2 ? Math.round(BT.force(B, x.id)) : '?';
-      const boutons = !diplo ? '' : [
-        r !== 0 ? `<button class="btn petit rouge" data-act="b-d-guerre" data-v="${x.id}" ${enTreve ? 'disabled title="Trêve en cours"' : ''}>⚔️ Guerre</button>` : `<button class="btn petit" data-act="b-d-paix" data-v="${x.id}">🕊️ Proposer la paix</button>`,
-        r === 1 ? `<button class="btn petit or" data-act="b-d-alliance" data-v="${x.id}">🤝 Proposer l’alliance</button>` : '',
-        r === 2 ? `<button class="btn petit" data-act="b-d-rompre" data-v="${x.id}">✂️ Rompre</button>` : ''].join('');
+      const pa = diplo ? BT.pacte(B, ji, x.id) : {}, dec = diplo ? BT.declarationEntre(B, ji, x.id) : null, prix = (S.prixPaix || {})[x.id];
+      const mesMotifs = diplo ? BT.motifs(B, ji, x.id) : [], leursMotifs = diplo ? BT.motifs(B, x.id, ji) : [];
+      let etat = `${em} ${nom}`;
+      if (pa.nonAgression) etat += `<br><small>📃 non-agression ${mnS(pa.nonAgression)}</small>`;
+      else if (r === 1 && BT.traite(B, ji, x.id)) etat += '<br><small>traité de paix récent</small>';
+      if (pa.commerce) etat += '<br><small>💰 accord commercial</small>';
+      if (dec) etat += `<br><small class="rts-dec">⚠️ ${dec.de === ji ? 'ta déclaration' : 'il te déclare la guerre'} : ${mnS(dec.fin - B.temps)}</small>`;
+      const motifs = (mesMotifs.length ? `<div>Tes motifs : ${mesMotifs.map(m => puceMotif(m)).join(' ')}</div>` : '') + (leursMotifs.length ? `<div>Ses motifs contre toi : ${leursMotifs.map(m => puceMotif(m, true)).join(' ')}</div>` : '');
+      let boutons = '';
+      if (diplo) {
+        const b = [];
+        if (dec && dec.de === ji) b.push(`<button class="btn petit" data-act="b-d-annuler" data-v="${x.id}">↩️ Annuler la déclaration</button>`);
+        else if (r !== 0 && !dec) {
+          const pd = BT.peutDeclarer(B, ji, x.id), libelle = pd.trahison ? '🗡️ Trahir et déclarer la guerre' : pd.motif ? `⚔️ Déclarer la guerre (${nomMotif(pd.motif)})` : '⚔️ Déclarer la guerre sans motif';
+          const aide = pd.trahison ? 'Trahison : ta parole s’effondre et tous les peuples t’en voudront.' : pd.motif ? `Motif légitime : ${nomMotif(pd.motif)}. La guerre commence ${R.DIPLO.preavis} s après l’annonce.` : `Sans motif, ta parole baisse et les autres peuples se méfient. Menace-le d’abord : un refus te donnera un motif. La guerre commence ${R.DIPLO.preavis} s après l’annonce.`;
+          b.push(`<button class="btn petit rouge" data-act="b-d-guerre" data-v="${x.id}" ${enTreve ? 'disabled title="Trêve en cours"' : `title="${esc(aide)}"`}>${libelle}</button>`);
+        }
+        if (r === 1) b.push(`<button class="btn petit" data-act="b-d-menacer" data-v="${x.id}" title="Exiger un tribut, le retrait de ses troupes ou la rupture d’une alliance : un refus te donne un motif de guerre">📜 Menacer</button>`);
+        if (r === 0) b.push(`<button class="btn petit" data-act="b-d-paix" data-v="${x.id}">🏳️ Proposer la paix</button>`);
+        if (r === 0 && prix) b.push(`<button class="btn petit or" data-act="b-d-paixpayer" data-v="${x.id}" ${J.res[prix.res] < prix.qte ? 'disabled' : ''}>💰 Payer ${prix.qte} ${PM.ICONES[prix.res]} pour la paix</button>`);
+        if (r === 1 && !pa.nonAgression && !dec) b.push(`<button class="btn petit" data-act="b-d-pacte" data-v="${x.id}:nonagression" title="${Math.round(R.DIPLO.nonAgression / 60)} minutes sans guerre entre vous ; le rompre est une trahison">📃 Non-agression</button>`);
+        if (r >= 1 && !pa.commerce) b.push(`<button class="btn petit" data-act="b-d-pacte" data-v="${x.id}:commerce" title="Tes caravanes rapportent 25 % de plus chez lui (et les siennes chez toi)">💰 Accord commercial</button>`);
+        if (r === 1 && !dec) b.push(`<button class="btn petit or" data-act="b-d-alliance" data-v="${x.id}" title="Alliance défensive : vision partagée, chacun vient au secours de l’autre">🤝 Alliance</button>`);
+        if (r === 2) b.push(`<button class="btn petit" data-act="b-d-rompre" data-v="${x.id}">✂️ Rompre l’alliance</button>`);
+        boutons = b.join('');
+      }
       const tribut = ['nourriture', 'bois', 'or'].map(res => `<button class="btn petit" data-act="b-d-tribut" data-v="${x.id}:${res}" title="Donner 100 ${res} (90 arrivent)">${PM.ICONES[res]}</button>`).join('');
-      return `<tr><td><span class="pastille" style="background:${esc(x.couleur)}"></span> <b>${esc(x.nom)}</b><br><small>${P.emoji} ${esc(P.nom)}${x.caractere && diplo ? ' · ' + CARACT[x.caractere] : ''}</small></td>
-        <td class="rel-${cl}">${em} ${nom}${r === 1 && BT.traite && BT.traite(B, ji, x.id) ? '<br><small>traité récent</small>' : ''}</td><td>${esc(att)}</td><td>⚔️ ${fo}</td><td class="rts-d-actions">${boutons}<span class="tribut">Tribut ${tribut}</span></td></tr>`;
+      return `<tr><td><span class="pastille" style="background:${esc(x.couleur)}"></span> <b>${esc(x.nom)}</b><br><small>${P.emoji} ${esc(P.nom)}${x.caractere && diplo ? ' · ' + CARACT[x.caractere] : ''}${diplo ? ' · parole ' + paroleTexte(BT.parole(B, x.id)) : ''}</small></td>
+        <td class="rel-${cl}">${etat}</td><td>${esc(att)}</td><td>⚔️ ${fo}</td><td class="rts-d-actions">${motifs ? `<div class="rts-motifs">${motifs}</div>` : ''}${boutons}<span class="tribut">Tribut ${tribut}</span></td></tr>`;
     }).join('');
-    const vic = diplo ? `<p class="sous">Victoires : conquête de tous tes ennemis · merveille gardée · 💰 commerce ${Math.floor(J.stats.commerce || 0)} / ${Math.round(R.VICTOIRE_COMMERCE * (B.mulRes || 1))} or · 🤝 paix des dieux (tous les survivants alliés pendant 3 minutes). Tes alliés gagnent avec toi.</p>` : '<p class="sous">Mode Conquête : les camps sont fixés. Tu peux seulement envoyer des tributs.</p>';
+    const vic = diplo ? `<p class="sous">Ta parole : <b>${paroleTexte(BT.parole(B, ji))}</b> (${BT.parole(B, ji)}/100). Une guerre s’annonce ${R.DIPLO.preavis} s à l’avance ; sans motif de guerre, elle coûte de la parole. Victoires : conquête · merveille · 💰 commerce ${Math.floor(J.stats.commerce || 0)} / ${Math.round(R.VICTOIRE_COMMERCE * (B.mulRes || 1))} or · 🤝 paix des dieux (tous les survivants alliés 3 minutes). Tes alliés gagnent avec toi.</p>` : '<p class="sous">Mode Conquête : les camps sont fixés. Tu peux seulement envoyer des tributs.</p>';
     return `<h2>🤝 Diplomatie</h2>${vic}<div class="rts-diplo-liste"><table class="rts-diplo"><tr><th>Peuple</th><th>Relation</th><th>Attitude envers toi</th><th>Armée</th><th></th></tr>${lignes}</table></div>
       <div class="actions-bas"><button class="btn or" data-act="b-reprendre">Fermer</button></div>`;
   }
+  // menacer : exigences possibles envers un peuple en paix
+  function panneauMenace(j) {
+    const B = S.B, x = B.joueurs[j], ji = B.joueur, autres = B.joueurs.filter(z => !z.vaincu && z.id !== j && z.id !== ji && BT.relation(B, j, z.id) === 2);
+    const btn = (v, t) => `<button class="btn" data-act="b-d-exiger" data-v="${j}|${v}">${t}</button>`;
+    const tributs = [['or', 200], ['or', 500], ['nourriture', 300], ['bois', 300]].map(([r, q]) => btn(`tribut|${r}|${q}`, `${q} ${PM.ICONES[r]}`)).join('');
+    return `<h2>📜 Exigence aux ${esc(x.nom)}</h2><p class="sous">S’il cède, tu obtiens ce que tu demandes. S’il refuse (ou ne répond pas), tu tiens un motif de guerre : « ${esc(R.MOTIFS.refus.nom)} ». Il pèse ta force, la sienne et celle de ses alliés.</p>
+      <div class="rts-menaces"><div><b>Tribut</b> ${tributs}</div><div>${btn('retrait', '🛡️ Retirer ses soldats de tes terres')}</div>${autres.map(z => `<div>${btn('rompre|' + z.id, `✂️ Rompre son alliance avec ${esc(z.nom)}`)}</div>`).join('')}</div>
+      <div class="actions-bas"><button class="btn" data-act="b-diplo-retour">← Diplomatie</button><button class="btn or" data-act="b-reprendre">Fermer</button></div>`;
+  }
   ACT['b-diplo'] = () => { if (!S.B || UI.modalOuvert()) return; S.pause = true; UI.ouvrirModal(panneauDiplo(), true); };
   const rafraichirDiplo = () => { UI.fermerModal(); S.pause = true; UI.ouvrirModal(panneauDiplo(), true); };
+  ACT['b-diplo-retour'] = () => rafraichirDiplo();
   const nomJ = j => S.B.joueurs[j].nom;
-  ACT['b-d-guerre'] = e => { const r = BT.declarerGuerre(S.B, S.B.joueur, +e.dataset.v); if (!r.ok) UI.toast(r.raison, 'ko'); else son('guerre'); rafraichirDiplo(); };
-  ACT['b-d-paix'] = e => { const j = +e.dataset.v, r = BT.proposer(S.B, S.B.joueur, j, 'paix'); UI.toast(r.ok ? `${nomJ(j)} accepte la paix.` : `${nomJ(j)} refuse : ${r.raison}`, r.ok ? 'ok' : 'ko'); son(r.ok ? 'ok' : 'refus'); rafraichirDiplo(); };
-  ACT['b-d-alliance'] = e => { const j = +e.dataset.v, r = BT.proposer(S.B, S.B.joueur, j, 'alliance'); UI.toast(r.ok ? `${nomJ(j)} devient ton allié !` : `${nomJ(j)} refuse : ${r.raison}`, r.ok ? 'ok' : 'ko'); son(r.ok ? 'age' : 'refus'); rafraichirDiplo(); };
+  ACT['b-d-guerre'] = e => {
+    const j = +e.dataset.v, pd = BT.peutDeclarer(S.B, S.B.joueur, j);
+    // sans motif ou par trahison : deuxième clic pour confirmer
+    if (pd.ok && (!pd.motif || pd.trahison) && S.confirmeGuerre !== j) { S.confirmeGuerre = j; UI.toast(pd.trahison ? `Trahir ${nomJ(j)} ruinera ta parole. Clique encore pour confirmer.` : `Aucun motif de guerre contre ${nomJ(j)} : ta parole baissera. Clique encore pour confirmer (ou menace-le d’abord).`, 'ko'); return; }
+    S.confirmeGuerre = null; const r = BT.declarerGuerre(S.B, S.B.joueur, j); if (!r.ok) UI.toast(r.raison, 'ko'); else son('guerre'); rafraichirDiplo();
+  };
+  ACT['b-d-annuler'] = e => { const r = BT.annulerDeclaration(S.B, S.B.joueur, +e.dataset.v); UI.toast(r.ok ? 'Déclaration de guerre retirée.' : r.raison, r.ok ? 'ok' : 'ko'); rafraichirDiplo(); };
+  ACT['b-d-paix'] = e => { const j = +e.dataset.v, r = BT.proposer(S.B, S.B.joueur, j, 'paix'); (S.prixPaix || (S.prixPaix = {}))[j] = r.prix || null; UI.toast(r.ok ? `${nomJ(j)} accepte la paix.` : `${nomJ(j)} refuse : ${r.raison}`, r.ok ? 'ok' : 'ko'); son(r.ok ? 'ok' : 'refus'); rafraichirDiplo(); };
+  ACT['b-d-paixpayer'] = e => { const j = +e.dataset.v, prix = (S.prixPaix || {})[j]; if (!prix) return; const r = BT.proposer(S.B, S.B.joueur, j, 'paix', prix); S.prixPaix[j] = null; UI.toast(r.ok ? `Paix signée avec ${nomJ(j)} contre ${prix.qte} ${PM.ICONES[prix.res]}.` : `${nomJ(j)} refuse : ${r.raison}`, r.ok ? 'ok' : 'ko'); son(r.ok ? 'ok' : 'refus'); rafraichirDiplo(); };
+  ACT['b-d-alliance'] = e => { const j = +e.dataset.v, r = BT.proposer(S.B, S.B.joueur, j, 'alliance'); UI.toast(r.ok ? (r.attente ? 'Proposition envoyée.' : `${nomJ(j)} devient ton allié !`) : `${nomJ(j)} refuse : ${r.raison}`, r.ok ? 'ok' : 'ko'); son(r.ok ? 'age' : 'refus'); rafraichirDiplo(); };
+  ACT['b-d-pacte'] = e => { const [j, type] = e.dataset.v.split(':'), r = BT.proposer(S.B, S.B.joueur, +j, type); UI.toast(r.ok ? (r.attente ? 'Proposition envoyée.' : `${R.PACTES[type].nom} signé avec ${nomJ(+j)}.`) : `${nomJ(+j)} refuse : ${r.raison}`, r.ok ? 'ok' : 'ko'); son(r.ok ? 'ok' : 'refus'); rafraichirDiplo(); };
   ACT['b-d-rompre'] = e => { BT.rompre(S.B, S.B.joueur, +e.dataset.v); son('refus'); rafraichirDiplo(); };
   ACT['b-d-tribut'] = e => { const [j, res] = e.dataset.v.split(':'), r = BT.tribut(S.B, S.B.joueur, +j, res, 100); UI.toast(r.ok ? `Tribut envoyé à ${nomJ(+j)}.` : r.raison, r.ok ? 'ok' : 'ko'); rafraichirDiplo(); };
-  ACT['b-offre'] = e => { const [id, oui] = e.dataset.v.split(':'), o = S.B.offres.find(x => x.id === +id), r = BT.repondreOffre(S.B, +id, oui === '1'); if (o && r.ok && !r.refus) { message(o.type === 'paix' ? `🕊️ Paix signée avec ${nomJ(o.de)}.` : `🤝 Alliance conclue avec ${nomJ(o.de)} !`, 'ok'); son('age'); } else if (!r.ok) message(r.raison, 'ko'); majOffres(true); };
+  ACT['b-d-menacer'] = e => { UI.fermerModal(); S.pause = true; UI.ouvrirModal(panneauMenace(+e.dataset.v), true); };
+  ACT['b-d-exiger'] = e => {
+    const [j, type, a, b] = e.dataset.v.split('|'), dem = type === 'tribut' ? { type, res: a, qte: +b } : type === 'rompre' ? { type, avec: +a } : { type };
+    const r = BT.exiger(S.B, S.B.joueur, +j, dem);
+    UI.toast(!r.ok ? r.raison : r.attente ? 'Exigence envoyée.' : r.cede ? `${nomJ(+j)} cède à ton exigence.` : `${nomJ(+j)} refuse : « ${r.raison} » Tu tiens un motif de guerre.`, r.ok && (r.cede || r.attente) ? 'ok' : 'ko'); son(r.ok && r.cede ? 'ok' : 'refus'); rafraichirDiplo();
+  };
+  ACT['b-offre'] = e => {
+    const [id, oui] = e.dataset.v.split(':'), o = S.B.offres.find(x => x.id === +id), r = BT.repondreOffre(S.B, +id, oui === '1');
+    if (o && r.ok && !r.refus) {
+      if (o.type === 'exigence') message(`Tu cèdes à l’exigence de ${nomJ(o.de)}.`);
+      else if (o.type !== 'appel') { message(`${R.PACTES[o.type].emoji} ${R.PACTES[o.type].nom} : accord conclu avec ${nomJ(o.de)}.`, 'ok'); son('age'); }
+    } else if (!r.ok) message(r.raison, 'ko');
+    majOffres(true);
+  };
+  const texteExigence = (B, o) => o.dem.type === 'tribut' ? `exige ${o.dem.qte} ${PM.ICONES[o.dem.res]}` : o.dem.type === 'retrait' ? 'exige que tu retires tes soldats de ses terres' : `exige que tu rompes ton alliance avec ${esc(nomJ(o.dem.avec))}`;
   function majOffres(force) {
-    const B = S.B, box = $('#batOffres'); if (!box) return; const l = (B.offres || []).filter(o => o.a === B.joueur);
-    const sig = l.map(o => o.id).join(); if (!force && sig === S.sigOffres) return; S.sigOffres = sig;
-    box.innerHTML = l.map(o => `<div class="rts-offre"><span class="pastille" style="background:${esc(B.joueurs[o.de].couleur)}"></span> <b>${esc(nomJ(o.de))}</b> propose ${o.type === 'paix' ? 'la paix 🕊️' : 'une alliance 🤝'}
-      <button class="btn petit or" data-act="b-offre" data-v="${o.id}:1">Accepter</button><button class="btn petit" data-act="b-offre" data-v="${o.id}:0">Refuser</button></div>`).join('');
-    const bd = $('#batDiplo'); if (bd) bd.classList.toggle('alerte', l.length > 0);
+    const B = S.B, box = $('#batOffres'); if (!box) return; const ji = B.joueur;
+    const l = (B.offres || []).filter(o => o.a === ji), decs = (B.declarations || []).filter(d => d.a === ji || d.de === ji);
+    const sig = l.map(o => o.id + ':' + Math.ceil(60 - (B.temps - o.t0))).join() + '|' + decs.map(d => d.de + '>' + d.a + ':' + Math.ceil(d.fin - B.temps)).join();
+    if (!force && sig === S.sigOffres) return; S.sigOffres = sig;
+    const past = j => `<span class="pastille" style="background:${esc(B.joueurs[j].couleur)}"></span> <b>${esc(nomJ(j))}</b>`, reste = o => `<small>${Math.max(0, Math.ceil(60 - (B.temps - o.t0)))} s</small>`;
+    const cartes = decs.map(d => d.a === ji
+      ? `<div class="rts-offre danger">⚠️ ${past(d.de)} te déclare la guerre${d.motif ? ` (${esc(nomMotif(d.motif))})` : ' sans motif'} : elle commence dans <b>${mnS(d.fin - B.temps)}</b> <button class="btn petit" data-act="b-diplo">Négocier</button></div>`
+      : `<div class="rts-offre">📯 Ta déclaration de guerre à ${past(d.a)} : <b>${mnS(d.fin - B.temps)}</b> <button class="btn petit" data-act="b-d-annuler" data-v="${d.a}">Annuler</button></div>`);
+    for (const o of l) {
+      if (o.type === 'exigence') cartes.push(`<div class="rts-offre danger">📜 ${past(o.de)} ${texteExigence(B, o)} — sinon il tiendra un motif de guerre ${reste(o)} <button class="btn petit or" data-act="b-offre" data-v="${o.id}:1">Céder</button><button class="btn petit" data-act="b-offre" data-v="${o.id}:0">Refuser</button></div>`);
+      else if (o.type === 'appel') cartes.push(`<div class="rts-offre danger">⚔️ Ton allié ${past(o.de)} est attaqué par <b>${esc(nomJ(o.contre))}</b> : entrer en guerre à ses côtés ? ${reste(o)} <button class="btn petit or" data-act="b-offre" data-v="${o.id}:1">Entrer en guerre</button><button class="btn petit" data-act="b-offre" data-v="${o.id}:0" title="Ton allié rompra l’alliance et ta parole baissera">Refuser</button></div>`);
+      else cartes.push(`<div class="rts-offre">${past(o.de)} propose ${R.PACTES[o.type].emoji} ${esc(R.PACTES[o.type].nom.toLowerCase())}${o.paiement ? ` et t’offre ${o.paiement.qte} ${PM.ICONES[o.paiement.res]}` : ''} ${reste(o)} <button class="btn petit or" data-act="b-offre" data-v="${o.id}:1">Accepter</button><button class="btn petit" data-act="b-offre" data-v="${o.id}:0">Refuser</button></div>`);
+    }
+    box.innerHTML = cartes.join('');
+    const bd = $('#batDiplo'); if (bd) bd.classList.toggle('alerte', l.length > 0 || decs.some(d => d.a === ji));
   }
   function majHud(force) {
     const B = S.B; if (!B) return; const J = B.joueurs[B.joueur];

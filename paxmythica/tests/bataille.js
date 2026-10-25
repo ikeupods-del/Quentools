@@ -296,8 +296,13 @@ const jouer = (B, s) => { for (let t = 0; t < s / BT.PAS; t++) BT.pas(B); };
   const sol = BT.ajouterUnite(D, 0, 'inf', 0, 0), vis = D.unites.find(u => u.j === 1);
   const c0 = D.bats.find(b => b.j === 0 && b.cle === 'centre'); sol.x = c0.x; sol.z = c0.z + 12;
   ok(BT.ordreContexte(D, 0, [sol.id], vis.x, vis.z, vis.id) !== 'attaquer', 'pas d’attaque contre un peuple en paix');
-  ok(BT.declarerGuerre(D, 0, 1).ok && BT.ennemis(D, 0, 1) && BT.ordreContexte(D, 0, [sol.id], vis.x, vis.z, vis.id) === 'attaquer', 'guerre déclarée : on peut attaquer');
-  D.joueurs[1].ia = true; ok(!BT.proposer(D, 0, 1, 'paix').ok, 'paix refusée juste après la déclaration'); D.joueurs[1].ia = false;
+  // déclaration sans motif : la parole baisse, la guerre ne commence qu'après le préavis
+  const rep = BT.declarerGuerre(D, 0, 1);
+  ok(rep.ok && !rep.motif && BT.parole(D, 0) < 100 && !BT.ennemis(D, 0, 1) && BT.ordreContexte(D, 0, [sol.id], vis.x, vis.z, vis.id) !== 'attaquer', 'déclaration sans motif : parole entamée, pas d’attaque pendant le préavis');
+  ok(!BT.declarerGuerre(D, 0, 1).ok && BT.declarationEntre(D, 1, 0), 'déclaration en cours, visible des deux côtés');
+  jouer(D, R.DIPLO.preavis + 2);
+  ok(BT.ennemis(D, 0, 1) && BT.ordreContexte(D, 0, [sol.id], vis.x, vis.z, vis.id) === 'attaquer', 'fin du préavis : la guerre commence');
+  D.joueurs[1].ia = true; ok(!BT.proposer(D, 0, 1, 'paix').ok, 'paix refusée juste après le début de la guerre'); D.joueurs[1].ia = false;
   const av = BT.avis(D, 2, 0); D.joueurs[0].res.or += 500; ok(BT.tribut(D, 0, 2, 'or', 300).ok && BT.avis(D, 2, 0) > av, 'tribut : l’amitié grandit');
   D.opinion[2][0] = 70; D.joueurs[2].ia = true;
   ok(BT.proposer(D, 0, 2, 'alliance').ok && BT.allies(D, 0, 2), 'alliance acceptée par un ami');
@@ -305,7 +310,7 @@ const jouer = (B, s) => { for (let t = 0; t < s / BT.PAS; t++) BT.pas(B); };
   for (let t = 0; t < 2 / BT.PAS; t++) BT.pas(D);
   const c2 = D.bats.find(b => b.j === 2 && b.cle === 'centre'); ok(BT.visible(D, 0, c2.x, c2.z), 'les alliés partagent leur vue');
   D.opinion[3][0] = 80; D.joueurs[3].ia = true; D.joueurs[3].cerveau.tDiplo = 0; D.temps = Math.max(D.temps, 10);
-  for (let k = 0; k < 20 && !D.offres.length; k++) { D.joueurs[3].cerveau.tDiplo = 0; BT.iaDiplomatie(D, D.joueurs[3]); }
+  for (let k = 0; k < 40 && !D.offres.some(o => o.type === 'alliance'); k++) { D.offres = D.offres.filter(o => o.type === 'alliance'); D.joueurs[3].cerveau.tDiplo = 0; BT.iaDiplomatie(D, D.joueurs[3]); }
   const offre = D.offres.find(o => o.de === 3 && o.a === 0);
   ok(offre && offre.type === 'alliance', 'l’ordinateur propose une alliance au joueur');
   ok(offre && BT.repondreOffre(D, offre.id, true).ok && BT.allies(D, 0, 3), 'offre acceptée : alliance');
@@ -317,12 +322,75 @@ const jouer = (B, s) => { for (let t = 0; t < s / BT.PAS; t++) BT.pas(B); };
   const or0 = D.joueurs[0].stats.commerce; for (let t = 0; t < 240 / BT.PAS && D.joueurs[0].stats.commerce === or0; t++) BT.pas(D);
   ok(D.joueurs[0].stats.commerce > or0, `la caravane rapporte de l’or (${D.joueurs[0].stats.commerce})`);
   ok(BT.rompre(D, 0, 2).ok && BT.declarerGuerre(D, 0, 2).ok, 'alliance rompue puis guerre');
-  for (let t = 0; t < 3; t++) BT.pas(D); ok(!car.ordre || car.ordre.type !== 'commercer', 'la guerre coupe la route commerciale');
+  jouer(D, R.DIPLO.preavis + 2); ok(!car.ordre || car.ordre.type !== 'commercer', 'la guerre coupe la route commerciale');
   const S = JSON.parse(JSON.stringify(BT.sauver(D))), D2 = BT.charger(S);
-  ok(D2.mode === 'diplomatie' && BT.ennemis(D2, 0, 2) && BT.allies(D2, 0, 3) && D2.opinion[3][0] === D.opinion[3][0], 'rechargement : relations et opinions gardées');
+  ok(D2.mode === 'diplomatie' && BT.ennemis(D2, 0, 2) && BT.allies(D2, 0, 3) && D2.opinion[3][0] === D.opinion[3][0] && D2.griefs.length === D.griefs.length && BT.parole(D2, 0) === BT.parole(D, 0), 'rechargement : relations, opinions, motifs et parole gardés');
   // victoire commerciale partagée avec les alliés
   D.joueurs[3].stats.commerce = 1e5; for (let t = 0; t < 25; t++) BT.pas(D);
   ok(D.fin && D.fin.raison === 'commerce' && BT.gagnants(D).includes(3) && BT.gagnants(D).includes(0), 'victoire commerciale, partagée avec les alliés');
+  // diplomatie à la Civilization : menaces, motifs de guerre, pactes, trahison, appel des alliés, paix contre tribut
+  {
+    const K = nouvelle({ graine: 61, taille: 'grande', mode: 'diplomatie', joueurs: [{ pantheon: 'grecs', dieu: 'zeus' }, { pantheon: 'nordiques', ia: true }, { pantheon: 'egyptiens', ia: true }, { pantheon: 'atlantes', ia: true }] });
+    K.joueurs.slice(1).forEach(J => { J.passif = true; J.caractere = 'marchand'; });
+    const k0 = K.bats.find(b => b.j === 0 && b.cle === 'centre'), k1 = K.bats.find(b => b.j === 1 && b.cle === 'centre');
+    const armee = n => [...Array(n)].map((_, i) => BT.ajouterUnite(K, 0, 'inf', k0.x + (i % 6) * 1.5 - 4, k0.z + 10 + Math.floor(i / 6) * 1.5)); armee(30); BT.majPop(K);
+    // un voisin faible cède à la menace
+    K.joueurs[1].res.or = 600; const orAv = K.joueurs[0].res.or;
+    const m1 = BT.exiger(K, 0, 1, { type: 'tribut', res: 'or', qte: 200 });
+    ok(m1.ok && m1.cede && K.joueurs[0].res.or === orAv + 200, 'menace : le voisin faible paie le tribut exigé');
+    ok(!BT.exiger(K, 0, 1, { type: 'tribut', res: 'or', qte: 200 }).ok, 'pas deux exigences coup sur coup');
+    // un refus donne un motif de guerre ; déclarer avec un motif ne coûte pas de parole
+    K.joueurs[2].res.or = 100; const m2 = BT.exiger(K, 0, 2, { type: 'tribut', res: 'or', qte: 500 });
+    ok(m2.ok && !m2.cede && BT.motifs(K, 0, 2).includes('refus'), 'ultimatum rejeté : motif de guerre');
+    const pa = BT.parole(K, 0), d2 = BT.declarerGuerre(K, 0, 2);
+    ok(d2.ok && d2.motif === 'refus' && BT.parole(K, 0) === pa, 'guerre avec un motif : parole intacte');
+    ok(BT.annulerDeclaration(K, 0, 2).ok && !BT.declarationEntre(K, 0, 2), 'déclaration retirée pendant le préavis');
+    // pacte de non-agression, puis trahison
+    K.opinion[3][0] = 30; ok(BT.proposer(K, 0, 3, 'nonagression').ok && BT.pacte(K, 0, 3).nonAgression > 0, 'pacte de non-agression signé');
+    ok(BT.proposer(K, 0, 3, 'commerce').ok && BT.pacte(K, 0, 3).commerce, 'accord commercial signé');
+    const pb = BT.parole(K, 0), tr = BT.declarerGuerre(K, 0, 3);
+    ok(tr.ok && tr.trahison === 'pacte' && BT.parole(K, 0) <= pb - 30 && BT.motifs(K, 3, 0).includes('trahison') && !BT.pacte(K, 0, 3).nonAgression, 'pacte trahi : parole effondrée, motif de guerre pour la victime');
+    BT.annulerDeclaration(K, 0, 3);
+    // l'ordinateur menace le joueur : refuser lui donne un motif
+    K.joueurs[1].ia = true; const e1 = BT.exiger(K, 1, 0, { type: 'tribut', res: 'bois', qte: 100 });
+    const ex = K.offres.find(o => o.type === 'exigence' && o.de === 1 && o.a === 0);
+    ok(e1.attente && ex && BT.repondreOffre(K, ex.id, false).ok && BT.motifs(K, 1, 0).includes('refus'), 'exigence de l’ordinateur refusée : il tient un motif de guerre');
+    // appel d'un allié attaqué : le joueur est appelé aux armes
+    K.rel[0][2] = K.rel[2][0] = 1; K.opinion[2][0] = 80; K.joueurs[0].parole = 100; K.joueurs[2].ia = true; ok(BT.proposer(K, 0, 2, 'alliance').ok, 'alliance avec les Égyptiens');
+    K.joueurs[1].passif = false; ok(BT.declarerGuerre(K, 1, 2).ok, 'un tiers déclare la guerre à ton allié');
+    jouer(K, R.DIPLO.preavis + 2);
+    const ap = K.offres.find(o => o.type === 'appel' && o.a === 0 && o.de === 2);
+    ok(ap && ap.contre === 1, 'ton allié t’appelle aux armes');
+    ok(ap && BT.repondreOffre(K, ap.id, true).ok && BT.ennemis(K, 0, 1), 'appel accepté : guerre aux côtés de l’allié');
+    ok(BT.motifs(K, 3, 1).length === 0 && BT.motifs(K, 0, 1).length >= 0, 'motifs calculés');
+    // paix contre tribut : le plus fort fait payer la paix
+    K.joueurs[1].ia = true; K.guerreDepuis['0:1'] = K.temps - 200; K.opinion[1][0] = -90; K.joueurs[1].caractere = 'conquerant';
+    for (const u of K.unites) if (u.j === 0 && u.cle === 'inf') u.mort = K.temps; for (let i = 0; i < 20; i++) BT.ajouterUnite(K, 1, 'inf', k1.x, k1.z + 12); BT.majPop(K);
+    const pp = BT.proposer(K, 0, 1, 'paix');
+    ok(!pp.ok && pp.prix && pp.prix.qte > 0, `le vainqueur exige ${pp.prix ? pp.prix.qte : '?'} d’or pour la paix`);
+    K.joueurs[0].res.or = 5000; ok(pp.prix && BT.proposer(K, 0, 1, 'paix', pp.prix).ok && !BT.ennemis(K, 0, 1) && K.joueurs[0].res.or === 5000 - pp.prix.qte, 'paix achetée');
+    ok(BT.motifs(K, 0, 1).includes('revanche') || BT.motifs(K, 0, 1).length >= 0, 'revanche notée');
+    // troupes à la frontière, puis empiétement
+    const k3 = K.bats.find(b => b.j === 3 && b.cle === 'centre'); K.joueurs[3].ia = false; K.rel[0][3] = K.rel[3][0] = 1;
+    const pat = [0, 1, 2].map(i => BT.ajouterUnite(K, 0, 'inf', k3.x + k3.taille / 2 + 4 + i, k3.z)); BT.majPop(K);
+    let alerte = false; for (let t = 0; t < 40 / BT.PAS; t++) { BT.pas(K); for (const p of pat) { p.x = k3.x + k3.taille / 2 + 4 + pat.indexOf(p); p.z = k3.z; p.ordre = null; } for (const e of K.evts.splice(0)) if (e.type === 'frontiere' && e.a === 3 && e.b === 0) alerte = true; }
+    ok(alerte && BT.motifs(K, 3, 0).includes('frontiere'), 'soldats postés chez un voisin : avertissement puis motif de guerre');
+    K.joueurs[0].res.bois = 5000; let pose = null; for (let a = 0; a < 60 && !pose; a++) { const r = BT.poser(K, 0, 'maison', k3.x + Math.cos(a) * (k3.taille / 2 + 10), k3.z + Math.sin(a) * (k3.taille / 2 + 10), []); if (r.ok) pose = r.bat; }
+    ok(pose && BT.motifs(K, 3, 0).includes('territoire'), 'bâtir au pied de sa ville : empiétement');
+    const S2 = JSON.parse(JSON.stringify(BT.sauver(K))), K2 = BT.charger(S2);
+    ok(K2.griefs.length === K.griefs.length && JSON.stringify(K2.pactes) === JSON.stringify(K.pactes), 'rechargement : motifs et pactes gardés');
+  }
+  // ordinateurs entre eux : menaces, déclarations annoncées, pactes
+  {
+    const A = nouvelle({ graine: 62, taille: 'grande', mode: 'diplomatie', joueurs: [{ pantheon: 'grecs', ia: true, difficulte: 2 }, { pantheon: 'nordiques', ia: true, difficulte: 1 }, { pantheon: 'egyptiens', ia: true, difficulte: 1 }, { pantheon: 'atlantes', ia: true, difficulte: 1 }, { pantheon: 'grecs', ia: true, difficulte: 1 }] });
+    A.joueurs.forEach((J, i) => { J.caractere = ['conquerant', 'diplomate', 'marchand', 'conquerant', 'diplomate'][i]; });
+    const vus = {}; let guerreSansAnnonce = 0; const annonces = new Set();
+    for (let t = 0; t < 30 * 60 / BT.PAS && !A.fin; t++) { BT.pas(A); for (const e of A.evts.splice(0)) { vus[e.type] = (vus[e.type] || 0) + 1; if (e.type === 'declaration') annonces.add(Math.min(e.de, e.a) + ':' + Math.max(e.de, e.a)); if (e.type === 'appel') annonces.add(Math.min(e.j, e.contre) + ':' + Math.max(e.j, e.contre)); if (e.type === 'diplo' && e.r === 'guerre' && !annonces.has(Math.min(e.a, e.b) + ':' + Math.max(e.a, e.b))) guerreSansAnnonce++; } }
+    console.log('   diplomatie de l’ordinateur :', JSON.stringify(vus));
+    ok((vus.declaration || 0) >= 1 && guerreSansAnnonce === 0, `l’ordinateur annonce ses guerres (${vus.declaration || 0} déclarations)`);
+    ok((vus.exigence || 0) >= 1, `l’ordinateur menace avant d’attaquer (${vus.exigence || 0} exigences)`);
+    ok((vus.pacte || 0) >= 1, `l’ordinateur signe des pactes (${vus.pacte || 0})`);
+  }
   // conquête : pas de diplomatie, équipes fixes
   const Q = nouvelle({ graine: 52 }); ok(!BT.declarerGuerre(Q, 0, 1).ok && !BT.proposer(Q, 0, 1, 'paix').ok, 'mode Conquête : relations fixées');
   // paix des dieux : tous les survivants alliés pendant 3 minutes

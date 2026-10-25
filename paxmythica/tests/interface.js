@@ -277,16 +277,23 @@ const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? '✓ ' : '�
   ok(await ev(() => UI.bat.B.mode === 'diplomatie' && UI.bat.B.joueurs.length === 6 && UI.bat.B.joueurs.slice(1).every(J => PM.Bataille.relation(UI.bat.B, 0, J.id) === 1)), 'diplomatie : six peuples, tous en paix');
   await p.keyboard.press('y'); await p.waitForTimeout(200);
   ok(await p.isVisible('#modalBoite .rts-diplo'), 'panneau Diplomatie');
-  await p.click('#modalBoite [data-act=b-d-guerre][data-v="1"]'); ok(await ev(() => PM.Bataille.ennemis(UI.bat.B, 0, 1)), 'guerre déclarée');
+  await p.click('#modalBoite [data-act=b-d-guerre][data-v="1"]'); ok(await ev(() => !PM.Bataille.declarationEntre(UI.bat.B, 0, 1)), 'guerre sans motif : confirmation demandée');
+  await p.click('#modalBoite [data-act=b-d-guerre][data-v="1"]'); ok(await ev(() => !!PM.Bataille.declarationEntre(UI.bat.B, 0, 1) && !PM.Bataille.ennemis(UI.bat.B, 0, 1)), 'guerre déclarée avec préavis');
+  await p.click('#modalBoite [data-act=b-d-menacer][data-v="4"]'); ok(await p.isVisible('#modalBoite .rts-menaces'), 'panneau des exigences');
+  await ev(() => { UI.bat.B.joueurs[4].res.or = 0; }); await p.click('#modalBoite [data-act=b-d-exiger][data-v="4|tribut|or|500"]');
+  ok(await ev(() => PM.Bataille.motifs(UI.bat.B, 0, 4).includes('refus')), 'ultimatum rejeté : motif de guerre');
   const boisAv = await ev(() => UI.bat.B.joueurs[0].res.bois);
   await p.click('#modalBoite [data-act=b-d-tribut][data-v="2:bois"]'); ok(await ev(b => UI.bat.B.joueurs[0].res.bois <= b - 100, boisAv), 'tribut envoyé');
   await ev(() => { UI.bat.B.opinion[2][0] = 80; }); await p.click('#modalBoite [data-act=b-d-alliance][data-v="2"]');
   ok(await ev(() => PM.Bataille.allies(UI.bat.B, 0, 2)), 'alliance conclue');
   await p.click('#modalBoite [data-act=b-reprendre]');
-  await ev(() => { const B = UI.bat.B; B.opinion[3][0] = 90; for (let k = 0; k < 30 && !B.offres.length; k++) { B.joueurs[3].cerveau.tDiplo = 0; PM.Bataille.iaDiplomatie(B, B.joueurs[3]); } });
+  await ev(() => { const B = UI.bat.B; B.opinion[3][0] = 90; for (let k = 0; k < 40 && !B.offres.some(o => o.type === 'alliance'); k++) { B.offres = B.offres.filter(o => o.type === 'alliance'); B.joueurs[3].cerveau.tDiplo = 0; PM.Bataille.iaDiplomatie(B, B.joueurs[3]); } });
   await p.waitForSelector('#batOffres [data-act=b-offre]', { timeout: 20000 }).catch(() => null);
   ok(await p.isVisible('#batOffres [data-act=b-offre]'), 'offre de l’ordinateur affichée');
-  await p.click('#batOffres [data-act=b-offre]'); ok(await ev(() => PM.Bataille.allies(UI.bat.B, 0, 3)), 'offre acceptée');
+  const idAl = await ev(() => (UI.bat.B.offres.find(o => o.type === 'alliance' && o.de === 3) || {}).id);
+  await p.click(`#batOffres [data-act=b-offre][data-v="${idAl}:1"]`); ok(await ev(() => PM.Bataille.allies(UI.bat.B, 0, 3)), 'offre acceptée');
+  ok((await p.textContent('#batOffres')).includes('Ta déclaration'), 'bandeau : compte à rebours de la déclaration');
+  await ev(() => { for (let k = 0; k < 20 * 62; k++) PM.Bataille.pas(UI.bat.B); }); ok(await ev(() => PM.Bataille.ennemis(UI.bat.B, 0, 1)), 'fin du préavis : guerre');
   await ev(() => UI.ACT['b-menu']()); await p.click('#modalBoite [data-act=b-quitter]');
 
   // partie longue : trêve affichée, attaque refusée pendant la trêve

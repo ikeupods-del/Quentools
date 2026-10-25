@@ -1,5 +1,15 @@
 # Nouveautés de Pax Mythica
 
+## 2.1.0
+- **Diplomatie comme dans Civilization** (mode Diplomatie) : plus aucune attaque surprise. Une guerre se **déclare** et ne commence que **60 secondes plus tard** ; un bandeau affiche le compte à rebours, la victime peut négocier ou payer pour l’éviter, et celui qui déclare peut se raviser.
+- **Motifs de guerre** : ultimatum rejeté, troupes postées près de tes bâtiments, empiétement (bâtir au pied de ton centre-ville), pacte trahi, défense d’un allié, revanche. Ils s’affichent dans le panneau Diplomatie et durent 10 minutes. Déclarer la guerre avec un motif est légitime ; sans motif, il faut confirmer et ta **parole** baisse.
+- **Menaces et ultimatums** (bouton 📜 Menacer) : exiger un tribut, le retrait de ses soldats ou la rupture d’une alliance. Le peuple menacé pèse ta force et celle de ses alliés : il cède, ou il refuse et te donne un motif de guerre. L’ordinateur te menace aussi (Céder / Refuser).
+- **Pactes** : pacte de non-agression (10 minutes ; le rompre est une trahison) et accord commercial (caravanes +25 % des deux côtés), en plus de la paix et de l’alliance.
+- **Alliance défensive** : quand un allié est attaqué, l’ordinateur entre en guerre à ses côtés ; toi, tu reçois son appel aux armes. Refuser rompt l’alliance et entame ta parole.
+- **Parole** : chaque peuple a une réputation (fiable, douteuse, peu fiable, traître). Trahir, attaquer sans motif ou abandonner un allié la fait chuter ; un peuple sans parole ne trouve plus d’alliés.
+- **Paix contre tribut** : le vainqueur fixe son prix (« Nous ferons la paix contre 400 d’or ») ; bouton pour payer et signer.
+- **L’ordinateur suit les mêmes règles** : il signe des pactes, menace avant d’attaquer, annonce ses guerres, se retire quand on se plaint de ses troupes et tente d’acheter la paix quand il est menacé.
+
 ## 2.0.0
 - **Mode Diplomatie** (choix « Mode » à la création d’une bataille) : tout le monde commence en paix, personne n’est obligé de se battre. On garde le jeu d’Age of Mythology (récolte, armées, âges, dieux, pouvoirs), mais on peut aussi déclarer la guerre, signer la paix, conclure des alliances ou les rompre.
 - **Panneau Diplomatie** (bouton 🤝 en haut ou touche Y) : pour chaque peuple, la relation (guerre, paix, alliance), son humeur envers toi et son armée ; boutons Guerre, Paix, Alliance, Rompre et **tributs** (100 de nourriture, de bois ou d’or : il t’en sera reconnaissant).

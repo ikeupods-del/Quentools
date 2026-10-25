@@ -100,6 +100,18 @@
   R.COMMERCE = { orParMetre: 0.2 };
   R.VICTOIRE_COMMERCE = 8000;
   R.NOMS_CARAVANE = { antique: 'Caravane', medieval: 'Convoi marchand', industriel: 'Chariot de commerce', moderne: 'Camion de livraison', futur: 'Drone cargo' };
+  // diplomatie : préavis d'une déclaration de guerre, durée d'un motif de guerre, d'un pacte de non-agression et d'un traité de paix (s)
+  R.DIPLO = { preavis: 60, dureeMotif: 600, nonAgression: 600, traite: 240 };
+  // motifs de guerre (casus belli) : sans motif, déclarer la guerre coûte de la parole et fâche tous les peuples
+  R.MOTIFS = {
+    allie: { emoji: '🤝', nom: 'Défense d’un allié', desc: 'Il est en guerre contre l’un de tes alliés.' },
+    refus: { emoji: '📜', nom: 'Ultimatum rejeté', desc: 'Il a refusé ton exigence.' },
+    frontiere: { emoji: '🛡️', nom: 'Troupes à la frontière', desc: 'Ses soldats stationnent près de tes bâtiments.' },
+    territoire: { emoji: '🚧', nom: 'Empiétement', desc: 'Il a bâti tout près de ton centre-ville.' },
+    trahison: { emoji: '🗡️', nom: 'Parole trahie', desc: 'Il a rompu un pacte ou une alliance avec toi.' },
+    revanche: { emoji: '🔥', nom: 'Revanche', desc: 'Il t’a déclaré la guerre lors du dernier conflit.' }
+  };
+  R.PACTES = { paix: { emoji: '🕊️', nom: 'Paix' }, alliance: { emoji: '🤝', nom: 'Alliance' }, nonagression: { emoji: '📃', nom: 'Pacte de non-agression' }, commerce: { emoji: '💰', nom: 'Accord commercial' } };
   // modes de bataille
   R.MODES = { conquete: { nom: 'Conquête', desc: 'Comme dans Age of Mythology : tout le monde est en guerre (ou en équipes fixes), le dernier debout gagne.' },
     diplomatie: { nom: 'Diplomatie', desc: 'Tout le monde commence en paix : commerce, tributs, alliances, guerres déclarées. On gagne par la conquête, la merveille, le commerce ou la paix des dieux.' } };
