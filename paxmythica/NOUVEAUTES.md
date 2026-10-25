@@ -1,5 +1,14 @@
 # Nouveautés de Pax Mythica
 
+## 2.0.0
+- **Mode Diplomatie** (choix « Mode » à la création d’une bataille) : tout le monde commence en paix, personne n’est obligé de se battre. On garde le jeu d’Age of Mythology (récolte, armées, âges, dieux, pouvoirs), mais on peut aussi déclarer la guerre, signer la paix, conclure des alliances ou les rompre.
+- **Panneau Diplomatie** (bouton 🤝 en haut ou touche Y) : pour chaque peuple, la relation (guerre, paix, alliance), son humeur envers toi et son armée ; boutons Guerre, Paix, Alliance, Rompre et **tributs** (100 de nourriture, de bois ou d’or : il t’en sera reconnaissant).
+- **L’ordinateur négocie** : il propose la paix quand la guerre tourne mal, l’alliance à ses amis, appelle ses alliés à l’aide, aide un allié à court de vivres, et certains peuples conquérants attaquent le voisin le plus faible. Ses propositions s’affichent en haut de l’écran (Accepter / Refuser). Chaque peuple a son caractère : conquérant, marchand ou diplomate. Trahir un allié ou attaquer un voisin en paix se paie : les autres s’en souviennent.
+- **Caravanes et routes commerciales** : le marché forme des caravanes ; clic droit sur le marché d’un autre peuple en paix ou allié et elles font l’aller-retour en rapportant de l’or (plus la route est longue, plus elle rapporte, et ton partenaire y gagne aussi). Une guerre coupe la route.
+- **Nouvelles victoires** : par le commerce (8 000 d’or gagnés par les caravanes), par la « paix des dieux » (tous les peuples restants alliés pendant 3 minutes) ou par la merveille ; une victoire est partagée avec tes alliés.
+- **Combat corrigé** : les créatures et les cavaliers, plus gros que les fantassins, tournaient parfois autour de leur cible sans frapper ; ils attaquent désormais à la bonne distance.
+- **Jusqu’à 10 adversaires** sur la même carte, chacun avec son nom et sa couleur ; la carte s’agrandit toute seule quand on est nombreux.
+
 ## 1.9.0
 - **Améliorations**, comme dans Age of Mythology : houes et irrigation au grenier, haches, pioches et charrettes à l’entrepôt, lames, armures et forge de guerre à la caserne, flèches empennées, harnais, ingénieurs, meurtrières des tours, ferveur au temple, coques au port, villageois robustes au centre-ville. Elles renforcent aussi les unités déjà formées ; l’ordinateur les recherche aussi.
 - **Fiches détaillées** au survol de la grille d’ordres : coût, temps, chiffres de l’unité, ses points forts et ses points faibles.

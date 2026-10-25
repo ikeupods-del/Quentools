@@ -19,7 +19,7 @@
   // ---------- création de la bataille ----------
   ACT.bataille = () => {
     const d = lireP('pm:bataille', {});
-    S.cre = Object.assign({ etape: 0, epoque: 'antique', pantheon: null, dieu: null, carte: 'plaine', taille: 'petite', adversaires: 1, difficulte: 1, equipes: false, duree: 'normale' }, d, { etape: 0, pantheon: null, dieu: null });
+    S.cre = Object.assign({ etape: 0, epoque: 'antique', pantheon: null, dieu: null, carte: 'plaine', taille: 'petite', adversaires: 1, difficulte: 1, equipes: false, duree: 'normale', mode: 'conquete' }, d, { etape: 0, pantheon: null, dieu: null });
     PM.appliquerEpoque(S.cre.epoque); creation(); UI.montrer('creation');
   };
   ACT['b-epoque'] = e => { S.cre.epoque = e.dataset.v; PM.appliquerEpoque(e.dataset.v); S.cre.etape = 1; creation(); };
@@ -44,7 +44,8 @@
       corps = `<div class="cartes">${Object.entries(R.CARTES).map(([id, k]) => `<button class="carte-choix ${c.carte === id ? 'choisie' : ''}" data-act="b-carte" data-v="${id}"><div class="em">${k.emoji}</div><h3>${esc(k.nom)}</h3></button>`).join('')}</div>
       <div class="bloc" style="max-width:720px;margin-top:18px">
         <div class="champ"><label>Taille</label>${opt('taille', Object.entries(R.TAILLES).map(([k, t]) => [k, t.nom]))}</div>
-        <div class="champ"><label>Adversaires</label>${opt('adversaires', [[1, '1'], [2, '2'], [3, '3']])}</div>
+        <div class="champ"><label>Mode</label>${opt('mode', Object.entries(R.MODES).map(([k, m]) => [k, m.nom]))}<p class="sous" style="margin:6px 0 0">${esc((R.MODES[c.mode] || R.MODES.conquete).desc)}</p></div>
+        <div class="champ"><label>Adversaires</label>${opt('adversaires', [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => [n, String(n)]))}${c.adversaires > 5 ? '<p class="sous" style="margin:6px 0 0">Beaucoup de peuples : la carte devient immense et la population de chacun est limitée.</p>' : ''}</div>
         ${c.adversaires === 3 ? `<div class="champ"><label>Camps</label>${opt('equipes', [['0', 'Chacun pour soi'], ['1', '2 contre 2']])}</div>` : ''}
         <div class="champ"><label>Ordinateur</label>${opt('difficulte', R.DIFFICULTES.map((d, i) => [i, d.nom]))}</div>
         <div class="champ"><label>Durée</label>${opt('duree', Object.entries(R.DUREES).map(([k, d]) => [k, d.nom]))}<p class="sous" style="margin:6px 0 0">${esc((R.DUREES[c.duree] || R.DUREES.normale).desc)}</p></div>
@@ -55,12 +56,20 @@
       <div class="actions-bas" style="justify-content:flex-start;margin-top:22px"><button class="btn" data-act="accueil">Menu principal</button></div>`;
   }
   ACT['b-lancer'] = () => {
-    const c = S.cre; ecrireP('pm:bataille', { epoque: c.epoque, carte: c.carte, taille: c.taille, adversaires: c.adversaires, difficulte: c.difficulte, equipes: c.equipes, duree: c.duree });
+    const c = S.cre; ecrireP('pm:bataille', { epoque: c.epoque, carte: c.carte, taille: c.taille, adversaires: c.adversaires, difficulte: c.difficulte, equipes: c.equipes, duree: c.duree, mode: c.mode });
     const autres = Object.keys(PM.PANTHEONS).filter(p => p !== c.pantheon).sort(() => Math.random() - 0.5), nb = c.adversaires + 1;
     const joueurs = [{ pantheon: c.pantheon, dieu: c.dieu, nom: PM.NOMS_PEUPLES[c.pantheon][0], couleur: PM.COULEURS[0], equipe: 0 }];
-    for (let i = 1; i < nb; i++) { const p = autres[(i - 1) % autres.length], P = PM.PANTHEONS[p]; joueurs.push({ pantheon: p, dieu: P.majeurs[Math.floor(Math.random() * 3)].id, nom: PM.NOMS_PEUPLES[p][1 + Math.floor(Math.random() * 2)], couleur: PM.COULEURS[[2, 1, 4][i - 1]], ia: true, difficulte: c.difficulte, equipe: c.equipes ? (i === 2 ? 0 : 1) : i }); }
-    if (nb === 2) c.taille = c.taille || 'petite'; else if (c.taille === 'petite' && nb > 2) c.taille = 'moyenne';
-    const B = BT.nouvelle({ epoque: c.epoque, carte: c.carte, taille: c.taille, graine: 1 + Math.floor(Math.random() * 999999), joueur: 0, joueurs, duree: R.DUREES[c.duree] ? c.duree : 'normale' });
+    // noms tous différents, couleurs bien distinctes ; jusqu'à dix adversaires (les peuples se répètent)
+    const pris = new Set([joueurs[0].nom]), ordreCouleurs = [2, 1, 4, 3, 5, 6, 7, 8, 9, 10, 11];
+    const tous = Object.keys(PM.PANTHEONS);
+    for (let i = 1; i < nb; i++) {
+      const p = i <= autres.length ? autres[i - 1] : tous[Math.floor(Math.random() * tous.length)], P = PM.PANTHEONS[p];
+      const noms = PM.NOMS_PEUPLES[p].filter(n => !pris.has(n)); const nom = noms.length ? noms[Math.floor(Math.random() * noms.length)] : `${PM.NOMS_PEUPLES[p][0]} ${i}`; pris.add(nom);
+      joueurs.push({ pantheon: p, dieu: P.majeurs[Math.floor(Math.random() * 3)].id, nom, couleur: PM.COULEURS[ordreCouleurs[i - 1]], ia: true, difficulte: c.difficulte, equipe: c.equipes && nb === 4 ? (i === 2 ? 0 : 1) : i });
+    }
+    const rang = ['petite', 'moyenne', 'grande', 'immense'], mini = nb > 5 ? 3 : nb > 3 ? 2 : nb > 2 ? 1 : 0;
+    if (rang.indexOf(c.taille) < mini) c.taille = rang[mini];
+    const B = BT.nouvelle({ epoque: c.epoque, carte: c.carte, taille: c.taille, graine: 1 + Math.floor(Math.random() * 999999), joueur: 0, joueurs, duree: R.DUREES[c.duree] ? c.duree : 'normale', mode: c.mode === 'diplomatie' ? 'diplomatie' : 'conquete' });
     B.pack = R.CARTES[c.carte].pack;
     demarrer(B);
   };
@@ -147,6 +156,7 @@
       <li>Tes <b>villageois</b> récoltent la nourriture (baies, chasse, fermes), le bois et l’or, et bâtissent : choisis un villageois puis un bâtiment dans la grille en bas à droite.</li>
       <li>Les <b>maisons</b> donnent de la population. Le <b>${esc(R.nomBat('temple').toLowerCase())}</b> forme les créatures ; passe les <b>âges</b> au ${esc(R.nomBat('centre').toLowerCase())} pour choisir un dieu mineur.</li>
       <li>${esc((R.CULTURE[J.pantheon] || {}).desc || '')}</li>
+      ${B.mode === 'diplomatie' ? `<li>🤝 <b>Mode Diplomatie</b> : tout le monde commence en paix. Bouton « Diplomatie » (touche <kbd>Y</kbd>) pour déclarer la guerre, proposer la paix ou une alliance, envoyer un tribut. Les caravanes du marché commercent avec les marchés des autres peuples. Victoire par la conquête, la merveille, le commerce ou la paix des dieux.</li>` : ''}
       ${B.treve ? `<li>🕊️ <b>Partie ${esc(R.DUREES[B.duree].nom.toLowerCase())}</b> : trêve de ${Math.round(B.treve / 60)} minutes, personne ne peut attaquer avant. Population jusqu’à ${B.popMax}.</li>` : ''}
       <li>Raccourcis : <kbd>H</kbd> ${esc(R.nomBat('centre').toLowerCase())}, <kbd>.</kbd> villageois inactif, <kbd>⌘</kbd>+<kbd>1</kbd>…<kbd>9</kbd> groupes, <kbd>Échap</kbd> pause, deux doigts pour se déplacer, pincer pour zoomer.</li></ul>
       <div class="actions-bas"><button class="btn or grand" data-act="b-commencer">À l’assaut !</button></div>`);
@@ -199,6 +209,12 @@
       else if (e.type === 'treve') { message('🕊️ Fin de la trêve : les armées peuvent attaquer !', 'ko'); son('guerre'); }
       else if (e.type === 'vague' && BT.ennemis(B, ji, e.j)) { message(`⚔️ ${e.n} assaillants de ${B.joueurs[e.j].nom} marchent sur ta cité !`, 'ko', e.x, e.z); S.lieuAlerte = { x: e.x, z: e.z, t: B.temps }; son('guerre'); }
       else if (e.type === 'tech' && e.j === ji) { message(`✅ ${R.TECHS[e.id].nom} : ${R.TECHS[e.id].desc}`, 'ok'); son('age'); }
+      else if (e.type === 'diplo') { const a = B.joueurs[e.a].nom, b = B.joueurs[e.b].nom, moi = e.a === ji || e.b === ji, autre = e.a === ji ? b : a;
+        const t = e.r === 'guerre' ? (moi ? `⚔️ Guerre avec ${autre} !` : `⚔️ ${a} déclare la guerre à ${b}.`) : e.r === 'paix' ? (moi ? `🕊️ Paix avec ${autre}.` : `🕊️ ${a} et ${b} font la paix.`) : (moi ? `🤝 Alliance avec ${autre} !` : `🤝 ${a} et ${b} s’allient.`);
+        message(t, moi && e.r === 'guerre' ? 'ko' : moi ? 'ok' : ''); if (moi) son(e.r === 'guerre' ? 'guerre' : 'ok'); }
+      else if (e.type === 'appel') { if (e.contre === ji) message(`⚔️ ${B.joueurs[e.j].nom} répond à l’appel de ${B.joueurs[e.allie].nom} et te déclare la guerre !`, 'ko'); else if (e.allie === ji) message(`🤝 ${B.joueurs[e.j].nom} entre en guerre à tes côtés contre ${B.joueurs[e.contre].nom}.`, 'ok'); }
+      else if (e.type === 'tribut' && e.a === ji) { message(`🎁 ${B.joueurs[e.de].nom} t’envoie ${Math.round(e.qte * 0.9)} ${PM.ICONES[e.res]}.`, 'ok'); }
+      else if (e.type === 'offre' && e.offre.a === ji) { son('evenement'); majOffres(true); }
       else if (e.type === 'objectif') { message('✅ Objectif atteint : ' + e.texte, 'ok'); son('age'); }
     }
     // alerte : on est attaqué
@@ -266,7 +282,7 @@
     if (!en) { if (pt && us.some(u => u.s.capacite && BT.contenu(B, u).length) && BT.hauteur(B, pt.x, pt.z) > 0) return '⚓ Débarquer ici'; return null; }
     if (en.sorte === 'r') { if (en.eau) return peche ? '🎣 Pêcher' : null; if (!vill) return null; return { arbre: '🪓 Couper du bois', baies: '🫐 Cueillir des baies', mine: '⛏️ Extraire l’or', mouton: '🍖 Chasser', vache: '🍖 Chasser' }[en.sous] || '🧺 Récolter'; }
     if (en.j !== B.joueur && BT.ennemis(B, B.joueur, en.j)) return us.some(u => u.s.att) ? '⚔️ Attaquer' : null;
-    if (en.j !== B.joueur) return null;
+    if (en.j !== B.joueur) return en.sorte === 'b' && en.d.marche && us.some(u => u.cle === 'caravane') ? '💰 Commercer avec ce marché' : null;
     if (en.sorte === 'u' && en.s.capacite && us.some(u => !u.s.naval && u !== en)) return '⛴️ Embarquer';
     if (en.sorte === 'b') {
       if (vill && (!en.fini || en.pv < en.pvMax)) return en.fini ? '🔨 Réparer' : '🔨 Construire';
@@ -307,11 +323,12 @@
   function clicDroit(p, shift) {
     const B = S.B, en = S.vue.entiteA(p.x, p.y), pt = S.vue.pointSol(p.x, p.y), us = unitesChoisies();
     const b = selBatiment();
-    if (!us.length && b && b.j === B.joueur && b.d.forme) { if (pt) { BT.ralliement(B, B.joueur, b.id, en ? en.x : pt.x, en ? en.z : pt.z, en && en.sorte === 'r' ? en.id : 0); S.vue.marqueOrdre(pt.x, pt.z, false); son('clic'); } return; }
+    if (!us.length && b && b.j === B.joueur && b.d.forme) { if (pt) { BT.ralliement(B, B.joueur, b.id, en ? en.x : pt.x, en ? en.z : pt.z, en && (en.sorte === 'r' || (b.d.marche && en.sorte === 'b' && en.d.marche && en.j !== B.joueur)) ? en.id : 0); S.vue.marqueOrdre(pt.x, pt.z, false); son('clic'); } return; }
     if (!us.length || (!pt && !en)) return;
     const x = en ? en.x : pt.x, z = en ? en.z : pt.z, t = BT.ordreContexte(B, B.joueur, us.map(u => u.id), x, z, en ? en.id : 0, false);
     if (t === 'treve') { refusTreve(); return; }
-    parler(us, t === 'attaquer' || t === 'attaque' ? 'attaque' : t === 'recolter' ? 'recolter' : t === 'construire' ? 'construire' : t === 'entrer' ? 'entrer' : 'ordre');
+    parler(us, t === 'attaquer' || t === 'attaque' ? 'attaque' : t === 'recolter' ? 'recolter' : t === 'construire' ? 'construire' : t === 'entrer' ? 'entrer' : t === 'commercer' ? 'recolter' : 'ordre');
+    if (t === 'commercer') message('💰 Route commerciale ouverte.', 'ok');
     if (t === 'entrer') { message(en && en.sorte === 'u' ? 'Embarquement : les unités rejoignent le navire.' : 'Les unités s’abritent dans le bâtiment.'); }
     else if (t === 'debarquer') message('Le navire gagne le rivage pour débarquer.');
     S.vue.marqueOrdre(x, z, t === 'attaquer'); son(t === 'attaquer' ? 'coup' : 'ordre'); void shift;
@@ -383,6 +400,7 @@
     if (k === 'h' || k === 'H') { const c = B.bats.find(b => !b.mort && b.j === B.joueur && b.cle === 'centre'); if (c) { choisir([c.id]); S.vue.centrerXZ(c.x, c.z); } return; }
     if (k === '.' || k === ';') { villageoisInactif(); return; }
     if (k === ',') { toutLArmee(e.shiftKey); return; }
+    if (k === 'y' || k === 'Y') { ACT['b-diplo'](); return; }
     if (k === ' ') { e.preventDefault(); if (S.lieuAlerte) S.vue.centrerXZ(S.lieuAlerte.x, S.lieuAlerte.z); else centrerSel(); return; }
     if (k === 'Delete' || k === 'Backspace') { BT.detruire(B, B.joueur, S.sel); choisir([]); return; }
     if (k === '+' || k === '=') { S.vue.zoomer(1.2, innerWidth / 2, innerHeight / 2); return; }
@@ -404,7 +422,8 @@
   function construireHud() {
     $('#batHud').innerHTML = `
       <header class="rts-haut"><div class="rts-res" id="batRes"></div><div class="rts-age" id="batAge"></div><div class="rts-droite"><span id="batTreve" class="rts-treve cache"></span><span id="batHorloge"></span>
-        <button class="btn petit" data-act="b-vitesse" id="batVitesse" title="Vitesse du jeu">×1</button><button class="btn petit" data-act="b-menu" title="Pause et menu (Échap)">⏸ Menu</button></div></header>
+        <button class="btn petit" data-act="b-vitesse" id="batVitesse" title="Vitesse du jeu">×1</button><button class="btn petit rts-diplo-btn" data-act="b-diplo" id="batDiplo" title="Diplomatie (touche Y)">🤝 Diplomatie</button><button class="btn petit" data-act="b-menu" title="Pause et menu (Échap)">⏸ Menu</button></div></header>
+      <div class="rts-offres" id="batOffres"></div>
       <div class="rts-pouvoirs" id="batPouvoirs"></div><div class="rts-objectifs cache" id="batObj"></div>
       <button class="rts-inactifs cache" id="batInactifs" data-act="b-inactif" title="Villageois inactif (touche .)"></button>
       <button class="rts-inactifs rts-armee cache" id="batArmee" data-act="b-armee" title="Choisir toute l’armée (touche ,)"></button>
@@ -418,6 +437,43 @@
   }
   ACT['b-vitesse'] = () => { const B = S.B, l = [1, 1.5, 2, 0.5], i = (l.indexOf(B.vitesse) + 1) % l.length; B.vitesse = l[i]; $('#batVitesse').textContent = '×' + String(l[i]).replace('.', ','); };
   ACT['b-menu'] = () => menuPause();
+  // ---------- diplomatie ----------
+  const RELNOM = { 0: ['⚔️', 'Guerre', 'guerre'], 1: ['🕊️', 'Paix', 'paix'], 2: ['🤝', 'Alliance', 'alliance'] };
+  const CARACT = { conquerant: 'conquérant', marchand: 'marchand', diplomate: 'diplomate' };
+  function panneauDiplo() {
+    const B = S.B, ji = B.joueur, J = B.joueurs[ji], diplo = B.mode === 'diplomatie', enTreve = B.treve && B.temps < B.treve;
+    const lignes = B.joueurs.filter(x => x.id !== ji).map(x => {
+      const r = BT.relation(B, ji, x.id), [em, nom, cl] = RELNOM[r], P = PM.PANTHEONS[x.pantheon];
+      if (x.vaincu) return `<tr class="vaincu"><td><span class="pastille" style="background:${esc(x.couleur)}"></span> ${esc(x.nom)}</td><td colspan="4">💀 Vaincu</td></tr>`;
+      const att = x.ia ? BT.attitude(B, x.id, ji) : '—', fo = BT.visible(B, ji, ...(c => c ? [c.x, c.z] : [-1, -1])(B.bats.find(b => !b.mort && b.j === x.id && b.cle === 'centre'))) || r === 2 ? Math.round(BT.force(B, x.id)) : '?';
+      const boutons = !diplo ? '' : [
+        r !== 0 ? `<button class="btn petit rouge" data-act="b-d-guerre" data-v="${x.id}" ${enTreve ? 'disabled title="Trêve en cours"' : ''}>⚔️ Guerre</button>` : `<button class="btn petit" data-act="b-d-paix" data-v="${x.id}">🕊️ Proposer la paix</button>`,
+        r === 1 ? `<button class="btn petit or" data-act="b-d-alliance" data-v="${x.id}">🤝 Proposer l’alliance</button>` : '',
+        r === 2 ? `<button class="btn petit" data-act="b-d-rompre" data-v="${x.id}">✂️ Rompre</button>` : ''].join('');
+      const tribut = ['nourriture', 'bois', 'or'].map(res => `<button class="btn petit" data-act="b-d-tribut" data-v="${x.id}:${res}" title="Donner 100 ${res} (90 arrivent)">${PM.ICONES[res]}</button>`).join('');
+      return `<tr><td><span class="pastille" style="background:${esc(x.couleur)}"></span> <b>${esc(x.nom)}</b><br><small>${P.emoji} ${esc(P.nom)}${x.caractere && diplo ? ' · ' + CARACT[x.caractere] : ''}</small></td>
+        <td class="rel-${cl}">${em} ${nom}${r === 1 && BT.traite && BT.traite(B, ji, x.id) ? '<br><small>traité récent</small>' : ''}</td><td>${esc(att)}</td><td>⚔️ ${fo}</td><td class="rts-d-actions">${boutons}<span class="tribut">Tribut ${tribut}</span></td></tr>`;
+    }).join('');
+    const vic = diplo ? `<p class="sous">Victoires : conquête de tous tes ennemis · merveille gardée · 💰 commerce ${Math.floor(J.stats.commerce || 0)} / ${Math.round(R.VICTOIRE_COMMERCE * (B.mulRes || 1))} or · 🤝 paix des dieux (tous les survivants alliés pendant 3 minutes). Tes alliés gagnent avec toi.</p>` : '<p class="sous">Mode Conquête : les camps sont fixés. Tu peux seulement envoyer des tributs.</p>';
+    return `<h2>🤝 Diplomatie</h2>${vic}<div class="rts-diplo-liste"><table class="rts-diplo"><tr><th>Peuple</th><th>Relation</th><th>Attitude envers toi</th><th>Armée</th><th></th></tr>${lignes}</table></div>
+      <div class="actions-bas"><button class="btn or" data-act="b-reprendre">Fermer</button></div>`;
+  }
+  ACT['b-diplo'] = () => { if (!S.B || UI.modalOuvert()) return; S.pause = true; UI.ouvrirModal(panneauDiplo(), true); };
+  const rafraichirDiplo = () => { UI.fermerModal(); S.pause = true; UI.ouvrirModal(panneauDiplo(), true); };
+  const nomJ = j => S.B.joueurs[j].nom;
+  ACT['b-d-guerre'] = e => { const r = BT.declarerGuerre(S.B, S.B.joueur, +e.dataset.v); if (!r.ok) UI.toast(r.raison, 'ko'); else son('guerre'); rafraichirDiplo(); };
+  ACT['b-d-paix'] = e => { const j = +e.dataset.v, r = BT.proposer(S.B, S.B.joueur, j, 'paix'); UI.toast(r.ok ? `${nomJ(j)} accepte la paix.` : `${nomJ(j)} refuse : ${r.raison}`, r.ok ? 'ok' : 'ko'); son(r.ok ? 'ok' : 'refus'); rafraichirDiplo(); };
+  ACT['b-d-alliance'] = e => { const j = +e.dataset.v, r = BT.proposer(S.B, S.B.joueur, j, 'alliance'); UI.toast(r.ok ? `${nomJ(j)} devient ton allié !` : `${nomJ(j)} refuse : ${r.raison}`, r.ok ? 'ok' : 'ko'); son(r.ok ? 'age' : 'refus'); rafraichirDiplo(); };
+  ACT['b-d-rompre'] = e => { BT.rompre(S.B, S.B.joueur, +e.dataset.v); son('refus'); rafraichirDiplo(); };
+  ACT['b-d-tribut'] = e => { const [j, res] = e.dataset.v.split(':'), r = BT.tribut(S.B, S.B.joueur, +j, res, 100); UI.toast(r.ok ? `Tribut envoyé à ${nomJ(+j)}.` : r.raison, r.ok ? 'ok' : 'ko'); rafraichirDiplo(); };
+  ACT['b-offre'] = e => { const [id, oui] = e.dataset.v.split(':'), o = S.B.offres.find(x => x.id === +id), r = BT.repondreOffre(S.B, +id, oui === '1'); if (o && r.ok && !r.refus) { message(o.type === 'paix' ? `🕊️ Paix signée avec ${nomJ(o.de)}.` : `🤝 Alliance conclue avec ${nomJ(o.de)} !`, 'ok'); son('age'); } else if (!r.ok) message(r.raison, 'ko'); majOffres(true); };
+  function majOffres(force) {
+    const B = S.B, box = $('#batOffres'); if (!box) return; const l = (B.offres || []).filter(o => o.a === B.joueur);
+    const sig = l.map(o => o.id).join(); if (!force && sig === S.sigOffres) return; S.sigOffres = sig;
+    box.innerHTML = l.map(o => `<div class="rts-offre"><span class="pastille" style="background:${esc(B.joueurs[o.de].couleur)}"></span> <b>${esc(nomJ(o.de))}</b> propose ${o.type === 'paix' ? 'la paix 🕊️' : 'une alliance 🤝'}
+      <button class="btn petit or" data-act="b-offre" data-v="${o.id}:1">Accepter</button><button class="btn petit" data-act="b-offre" data-v="${o.id}:0">Refuser</button></div>`).join('');
+    const bd = $('#batDiplo'); if (bd) bd.classList.toggle('alerte', l.length > 0);
+  }
   function majHud(force) {
     const B = S.B; if (!B) return; const J = B.joueurs[B.joueur];
     // villageois à chaque tâche
@@ -428,7 +484,13 @@
     const A = J.ageEnCours; $('#batAge').innerHTML = `<b>${esc(PM.AGES[J.age].nom)}</b>${A ? `<span class="rts-prog"><i style="width:${Math.round(A.t / A.temps * 100)}%"></i></span><small>${esc(PM.AGES[A.age].court)} — ${Math.ceil(A.temps - A.t)} s</small>` : ''}`;
     const t = Math.floor(B.temps), mn = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`; $('#batHorloge').textContent = mn(t);
     const tv = $('#batTreve'), enTreve = B.treve && B.temps < B.treve; tv.classList.toggle('cache', !enTreve); if (enTreve) { tv.textContent = `🕊️ Trêve ${mn(Math.ceil(B.treve - B.temps))}`; tv.title = 'Personne ne peut attaquer pendant la trêve'; }
-    const M = B.mission, ob = $('#batObj'); ob.classList.toggle('cache', !M);
+    majOffres();
+    const M = B.mission, ob = $('#batObj'); ob.classList.toggle('cache', !M && B.mode !== 'diplomatie');
+    if (!M && B.mode === 'diplomatie') {
+      const vivants = B.joueurs.filter(x => !x.vaincu), allies = vivants.filter(x => x.id !== B.joueur && BT.allies(B, B.joueur, x.id)).length, guerres = vivants.filter(x => BT.ennemis(B, B.joueur, x.id)).length;
+      const html = `<b>🤝 Diplomatie</b><ul><li>💰 Commerce : ${Math.floor(J.stats.commerce || 0)} / ${Math.round(R.VICTOIRE_COMMERCE * (B.mulRes || 1))} or</li><li>🤝 Alliés : ${allies} · ⚔️ en guerre : ${guerres}</li><li>🏛️ ${B.depuisAlliance != null ? 'Paix des dieux dans ' + mn(Math.max(0, 180 - (B.temps - B.depuisAlliance))) : 'Merveille, conquête ou paix des dieux'}</li></ul>`;
+      if (html !== S.sigObj) { S.sigObj = html; ob.innerHTML = html; }
+    }
     if (M) {
       const v = M.vagues.find(x => !x.fait), lignes = M.objectifs.map(o => { let plus = ''; if (!o.fait && o.type === 'survivre') plus = ` (${mn(Math.max(0, o.duree - B.temps))})`; else if (!o.fait && o.type === 'merveille' && o.progres) plus = ` (${Math.round(o.progres * 100)} %)`; return `<li class="${o.fait ? 'fait' : ''}">${o.fait ? '✅' : '⬜'} ${esc(o.texte)}${plus}</li>`; });
       const html = `<b>📜 ${esc((missionDe(B) || {}).titre || 'Mission')}</b><ul>${lignes.join('')}</ul>${v ? `<small>⚔️ Prochain assaut dans ${mn(Math.max(0, v.t - B.temps))}</small>` : ''}`;
@@ -448,7 +510,7 @@
   };
   const nomEntite = e => { const B = S.B; if (e.sorte === 'u') return R.nomUnite(B.joueurs[e.j].pantheon, e.cle); if (e.sorte === 'b') return R.nomBat(e.cle); return { arbre: 'Arbre', baies: 'Buisson de baies', mine: 'Mine d’or', mouton: 'Mouton', vache: 'Vache' }[e.sous] || e.sous; };
   const emojiEntite = e => { const B = S.B; if (e.sorte === 'u') return R.emojiUnite(B.joueurs[e.j].pantheon, e.cle); if (e.sorte === 'b') return R.BATIMENTS[e.cle].emoji; return { arbre: '🌳', baies: '🫐', mine: '🪙', mouton: '🐑', vache: '🐄' }[e.sous] || '❔'; };
-  const tache = u => { const o = u.ordre, B = S.B; if (!o) return 'Au repos'; const c = o.cible && B.parId.get(o.cible); return { deplacer: o.attaque ? 'Marche à l’attaque' : 'En marche', attaquer: 'Combat', construire: c && c.fini ? 'Répare' : 'Construit', prier: 'Prie', deposer: 'Dépose', recolter: c ? (c.sorte === 'b' ? 'Cultive' : c.t === 'bois' ? 'Coupe du bois' : c.t === 'or' ? 'Extrait de l’or' : c.animal ? 'Chasse' : 'Cueille') : 'Récolte' }[o.type] || ''; };
+  const tache = u => { const o = u.ordre, B = S.B; if (!o) return 'Au repos'; const c = o.cible && B.parId.get(o.cible); return { deplacer: o.attaque ? 'Marche à l’attaque' : 'En marche', attaquer: 'Combat', construire: c && c.fini ? 'Répare' : 'Construit', prier: 'Prie', deposer: 'Dépose', recolter: c ? (c.sorte === 'b' ? 'Cultive' : c.t === 'bois' ? 'Coupe du bois' : c.t === 'or' ? 'Extrait de l’or' : c.animal ? 'Chasse' : 'Cueille') : 'Récolte', commercer: 'Commerce', entrer: 'Va s’abriter', debarquer: 'Va débarquer' }[o.type] || ''; };
   function panneauSel() {
     const B = S.B, l = S.sel.map(i => B.parId.get(i)).filter(Boolean), box = $('#batSel');
     const occ = e => BT.capacite(e) && e.j === B.joueur ? BT.contenu(B, e) : null;
@@ -471,7 +533,9 @@
         }
       } else det = `<p>${PM.ICONES[e.t] || ''} ${Math.ceil(e.qte)} restant${e.animal && e.vivant ? ' — à chasser' : ''}</p>`;
       det += detOcc;
-      box.innerHTML = `<div class="rts-portrait" style="border-color:${esc(coul)}">${emojiEntite(e)}</div><div class="rts-info"><h3>${esc(nomEntite(e))}</h3>${J ? `<p class="rts-proprio"><span class="pastille" style="background:${esc(J.couleur)}"></span> ${esc(J.nom)}</p>` : ''}${pv(e)}${det}</div>`;
+      if (e.sorte === 'u' && e.cle === 'caravane' && e.ordre && e.ordre.type === 'commercer') { const m = B.parId.get(e.ordre.vers); det += `<p>💰 Route vers le marché de ${esc(m ? B.joueurs[m.j].nom : '?')} — ${e.ordre.aller ? 'à l’aller' : 'au retour'}</p>`; }
+      else if (e.sorte === 'u' && e.cle === 'caravane' && e.j === B.joueur) det += '<p><small>Clic droit sur le marché d’un peuple en paix ou allié pour ouvrir une route commerciale.</small></p>';
+      box.innerHTML = `<div class="rts-portrait" style="border-color:${esc(coul)}">${emojiEntite(e)}</div><div class="rts-info"><h3>${esc(nomEntite(e))}</h3>${J ? `<p class="rts-proprio"><span class="pastille" style="background:${esc(J.couleur)}"></span> ${esc(J.nom)}${e.j !== B.joueur ? ` · ${RELNOM[BT.relation(B, B.joueur, e.j)][0]} ${RELNOM[BT.relation(B, B.joueur, e.j)][1]}` : ''}</p>` : ''}${pv(e)}${det}</div>`;
       return;
     }
     // plusieurs : icônes regroupées par genre
@@ -509,7 +573,7 @@
         // améliorations du bâtiment (rangée du milieu)
         BT.techsDe(B, b).filter(id => !(J.techs || []).includes(id)).slice(0, 4).forEach((id, k) => { const T = R.TECHS[id], r = BT.peutRechercher(B, B.joueur, b, id); cases[5 + k] = { act: 'b-tech', v: id, em: T.emoji, titre: `${T.nom} — ${T.desc} · ${coutTxt(T.cout)}`, info: `<b>${esc(T.nom)}</b><span>${coutTxt(T.cout)} · ⏱ ${T.temps} s${T.age ? ' · ' + esc(PM.AGES[T.age].nom) : ''}</span><i>${esc(T.desc)}</i>${r.ok ? '' : `<em>${esc(r.raison)}</em>`}`, ko: !r.ok, verrou: !!r.verrou }; });
         if (b.d.forme) cases[10] = { act: 'b-ralliement', em: '🚩', titre: 'Point de ralliement (ou clic droit)' };
-        if (b.d.marche) [['bois>or', '🪵➜🪙'], ['nourriture>or', '🌾➜🪙'], ['or>bois', '🪙➜🪵'], ['or>nourriture', '🪙➜🌾']].forEach(([v, em], i) => { const [de, vers] = v.split('>'), px = BT.prixEchange(B, B.joueur, v); cases[i] = { act: 'b-echange', v, em, titre: `${de === 'or' ? 'Acheter' : 'Vendre'} : ${px.donne} ${PM.ICONES[de]} ➜ ${px.recoit} ${PM.ICONES[vers]}`, ko: J.res[de] < px.donne }; });
+        if (b.d.marche) [['bois>or', '🪵➜🪙'], ['nourriture>or', '🌾➜🪙'], ['or>bois', '🪙➜🪵'], ['or>nourriture', '🪙➜🌾']].forEach(([v, em], i) => { const [de, vers] = v.split('>'), px = BT.prixEchange(B, B.joueur, v); cases[5 + i] = { act: 'b-echange', v, em, titre: `${de === 'or' ? 'Acheter' : 'Vendre'} : ${px.donne} ${PM.ICONES[de]} ➜ ${px.recoit} ${PM.ICONES[vers]}`, ko: J.res[de] < px.donne }; });
         if (b.d.garnison) { const n = BT.contenu(B, b).length; if (n) cases[11] = { act: 'b-liberer', em: '🚪', titre: `Faire sortir la garnison (${n})` }; }
         if (b.cle === 'centre') { const dedans = B.bats.some(x => !x.mort && x.j === B.joueur && BT.contenu(B, x).some(u => u.cle === 'villageois')); cases[12] = { act: 'b-cloche', em: '🔔', titre: dedans ? 'Fin de l’alerte : les villageois ressortent' : 'Sonner la cloche : les villageois proches s’abritent (chaque abrité tire une flèche)' }; }
       }
@@ -603,7 +667,7 @@
   ACT['b-quitter'] = () => { UI.fermerModal(); if (S.B && !S.B.fin) enregistrer(S.B, 'auto'); S.B = null; S.pause = false; UI.accueil(); };
   ACT['b-rejouer'] = () => { const def = missionDe(S.B); UI.fermerModal(); if (def) ACT['b-mission'](def.id); else ACT.bataille(); };
   function finDePartie() {
-    const B = S.B; if (!B) return; const J = B.joueurs[B.joueur], gagne = B.fin && B.fin.gagnant === J.equipe, def = missionDe(B);
+    const B = S.B; if (!B) return; const J = B.joueurs[B.joueur], gagne = !!B.fin && BT.gagnants(B).includes(B.joueur), def = missionDe(B);
     son(gagne ? 'victoire' : 'refus'); oublier('auto');
     if (def) {
       const i = R.CAMPAGNE.indexOf(def), suite = gagne && R.CAMPAGNE[i + 1];
@@ -613,7 +677,7 @@
         <div class="actions-bas"><button class="btn" data-act="campagne">Campagne</button>${gagne ? '' : `<button class="btn or" data-act="b-mission" data-v="${def.id}">Réessayer</button>`}${suite ? `<button class="btn or grand" data-act="b-mission" data-v="${suite.id}">Mission suivante : ${esc(suite.titre)}</button>` : gagne ? '<button class="btn or grand" data-act="campagne">🏆 Campagne terminée</button>' : ''}</div>`, true);
       return;
     }
-    UI.ouvrirModal(`<h2>${gagne ? '🏆 Victoire !' : '💀 Défaite'}</h2><p class="recit">${gagne ? (B.fin.raison === 'merveille' ? 'Ta merveille a tenu : les dieux te couronnent.' : 'Tes ennemis sont vaincus. Ton nom traversera les âges.') : 'Ton peuple est tombé. Les dieux t’offriront une revanche.'} (${Math.floor(B.fin.temps / 60)} min)</p>
+    UI.ouvrirModal(`<h2>${gagne ? '🏆 Victoire !' : '💀 Défaite'}</h2><p class="recit">${gagne ? ({ merveille: 'La merveille a tenu : les dieux couronnent ton camp.', commerce: 'Tes caravanes ont fait ta fortune : victoire commerciale !', alliance: 'Tous les peuples sont alliés : la paix des dieux règne sur le monde.' }[B.fin.raison] || 'Tes ennemis sont vaincus. Ton nom traversera les âges.') + (BT.gagnants(B).length > 1 ? ` Victoire partagée avec ${BT.gagnants(B).filter(j => j !== B.joueur).map(j => B.joueurs[j].nom).join(', ')}.` : '') : (B.fin.raison === 'commerce' ? `${B.joueurs[B.fin.gagnants[0]].nom} l’emporte par le commerce.` : B.fin.raison === 'merveille' ? 'Une merveille ennemie a tenu.' : 'Ton peuple est tombé. Les dieux t’offriront une revanche.')} (${Math.floor(B.fin.temps / 60)} min)</p>
       <table class="rts-bilan"><tr><th></th><th>Âge</th><th>Unités formées</th><th>Ennemis abattus</th><th>Pertes</th><th>Récolte</th><th>Bâtiments</th></tr>
       ${B.joueurs.map(x => `<tr><td><span class="pastille" style="background:${esc(x.couleur)}"></span> ${esc(x.nom)}</td><td>${esc(PM.AGES[x.age].court)}</td><td>${x.stats.formees}</td><td>${x.stats.tues}</td><td>${x.stats.pertes}</td><td>${Math.round(x.stats.recolte)}</td><td>${x.stats.construits}</td></tr>`).join('')}</table>
       <div class="actions-bas"><button class="btn" data-act="b-quitter">Menu principal</button><button class="btn or grand" data-act="b-rejouer">Nouvelle bataille</button></div>`, true);

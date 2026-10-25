@@ -292,8 +292,11 @@
   // contact : près du bord, ou arrivé sur la case d'approche choisie (case diagonale du pourtour)
   const contact = (u, e) => distBord(u, e) <= u.s.rayon + 1.45 || (u.appr && u.appr[2] === e.id && Math.hypot(u.x - u.appr[0], u.z - u.appr[1]) < 0.9 && distBord(u, e) < 2.6);
   const vivant = e => e && !e.mort && (e.sorte !== 'r' || e.qte > 0);
-  const ennemis = (B, a, b) => a !== b && a >= 0 && b >= 0 && B.joueurs[a].equipe !== B.joueurs[b].equipe;
+  const ennemis = (B, a, b) => a !== b && a >= 0 && b >= 0 && (B.rel ? B.rel[a][b] === 0 : B.joueurs[a].equipe !== B.joueurs[b].equipe);
   BT.ennemis = ennemis;
+  const allies = (B, a, b) => a === b || (a >= 0 && b >= 0 && (B.rel ? B.rel[a][b] === 2 : B.joueurs[a].equipe === B.joueurs[b].equipe));
+  BT.allies = allies;
+  BT.relation = (B, a, b) => a === b ? 2 : B.rel ? B.rel[a][b] : B.joueurs[a].equipe === B.joueurs[b].equipe ? 2 : 0;
   // trêve du début de partie (parties longues) : aucune attaque entre peuples
   const treve = B => B.treve > 0 && B.temps < B.treve;
   BT.treve = treve;
@@ -313,9 +316,17 @@
       const cu = R.CULTURE[p.pantheon] || {}; if (cu.coutBat) bonus.coutBat = (bonus.coutBat || 1) * cu.coutBat; if (cu.recolte) for (const r of ['nourriture', 'bois', 'or']) bonus['recolte_' + r] = (bonus['recolte_' + r] || 1) * cu.recolte;
       return { id: i, nom: p.nom || P.nom, pantheon: p.pantheon || 'grecs', dieu: maj.id, couleur: p.couleur || PM.COULEURS[i], ia: !!p.ia, difficulte: p.difficulte == null ? 1 : p.difficulte, equipe: p.equipe == null ? i : p.equipe,
         age: 0, ageEnCours: null, mineurs: [], pouvoirs: [{ id: maj.pouvoir, utilise: false }], res: { nourriture: 300, bois: 250, or: 150, faveur: 10 }, pop: 0, popMax: 0, bonus, temp: [],
-        vaincu: false, passif: !!p.passif, stats: { formees: 0, tues: 0, pertes: 0, recolte: 0, construits: 0 }, cerveau: { t: 0, attaque: false, vague: 0, prochaineAttaque: 0 } };
+        caractere: p.caractere || null, vaincu: false, passif: !!p.passif, stats: { formees: 0, tues: 0, pertes: 0, recolte: 0, construits: 0 }, cerveau: { t: 0, attaque: false, vague: 0, prochaineAttaque: 0 } };
     });
-    B.joueurs.forEach(J => { J.stats.formees = 0; });
+    B.joueurs.forEach(J => { J.stats.formees = 0; J.stats.commerce = 0; });
+    // relations : en conquête, les équipes ; en diplomatie, tout le monde commence en paix (sauf les équipes choisies)
+    const nbJ = B.joueurs.length; B.mode = o.mode === 'diplomatie' ? 'diplomatie' : 'conquete';
+    B.rel = B.joueurs.map(a => B.joueurs.map(b => a === b || a.equipe === b.equipe ? 2 : B.mode === 'diplomatie' ? 1 : 0));
+    // première impression de chaque peuple sur les autres (symétrique, de −12 à +18)
+    B.opinion = B.joueurs.map(() => B.joueurs.map(() => 0)); for (let a = 0; a < nbJ; a++) for (let b = a + 1; b < nbJ; b++) B.opinion[a][b] = B.opinion[b][a] = Math.round(-12 + B.rnd() * 30);
+    B.offres = []; B.depuisAlliance = null;
+    const carac = ['conquerant', 'marchand', 'diplomate']; B.joueurs.forEach((J, i) => { if (J.ia && !J.caractere) J.caractere = carac[Math.floor(B.rnd() * 3)]; });
+    if (nbJ > 6) B.popMax = Math.min(B.popMax, 110); else if (nbJ > 4) B.popMax = Math.min(B.popMax, 130);
     genererCarte(B, o);
     B.idsRes = B.res.map(r => r.id);
     B.carte.departs.forEach(([x, z], i) => {
@@ -446,6 +457,12 @@
       // monter à bord d'un transport (toutes les unités à terre), s'abriter dans une tour, une forteresse ou un centre (soldats)
       const ok = us.filter(u => peutEntrer(u, c) && (c.sorte === 'u' || u.cle !== 'villageois') && u !== c);
       if (ok.length && (c.sorte === 'u' || ok.length === us.length)) { BT.garnison(B, j, ok.map(u => u.id), c.id); const reste = us.filter(u => !ok.includes(u)); if (reste.length) deplacerGroupe(B, reste, x, z, attaqueMarche); return 'entrer'; }
+    }
+    // caravanes : clic droit sur le marché d'un autre peuple (pas en guerre) → route commerciale depuis ton marché le plus proche
+    const car = us.filter(u => u.cle === 'caravane');
+    if (car.length && c && c.sorte === 'b' && c.d.marche && c.j !== j && !ennemis(B, j, c.j)) {
+      const mien = B.bats.filter(b => !b.mort && b.fini && b.j === j && b.d.marche).sort((a, b) => d2(a.x, a.z, car[0].x, car[0].z) - d2(b.x, b.z, car[0].x, car[0].z))[0];
+      if (mien) { for (const u of car) poserOrdre(B, u, { type: 'commercer', de: mien.id, vers: c.id, aller: true }); const reste = us.filter(u => !car.includes(u)); if (reste.length) deplacerGroupe(B, reste, x, z, attaqueMarche); return 'commercer'; }
     }
     // un transport chargé qui vise la terre y débarque ses passagers
     const tr = us.filter(u => u.s.capacite && contenu(B, u).length);
@@ -671,6 +688,7 @@
     if (treve(B) && j >= 0 && e.j >= 0 && e.j !== j) return;
     e.pv -= deg; e.touche = B.temps;
     if (j >= 0 && e.j >= 0) {
+      if (B.opinion && e.j !== j) B.opinion[e.j][j] = Math.max(-100, B.opinion[e.j][j] - Math.min(2, deg * 0.004));
       const A = B.joueurs[j]; if (A.pantheon === 'nordiques' && !divin) A.res.faveur = Math.min(200, A.res.faveur + deg * 0.012 * (1 + (A.bonus.faveurCombat || 0)));
       if (e.j !== j) { const V = B.joueurs[e.j]; V.dernAttaque = { t: B.temps, x: e.x, z: e.z, par: j }; }
     }
@@ -787,7 +805,8 @@
       const c = B.parId.get(o.cible);
       if (!c || !vivant(c) || (c.j >= 0 && !ennemis(B, u.j, c.j))) { u.ordre = o.retour ? { type: 'deplacer', x: o.retour[0], z: o.retour[1], attaque: !!o.suite } : null; u.anim = 'repos'; if (!o.retour) chercherEnnemi(B, u, u.s.vue, true); return; }
       if (o.garde && Math.hypot(u.x - o.garde[0], u.z - o.garde[1]) > (u.posture === 'defensive' ? 10 : 22)) { u.ordre = { type: 'deplacer', x: o.garde[0], z: o.garde[1] }; return; }
-      const portee = u.s.portee + (c.demiE ? 1.6 : 0.6);
+      // corps à corps : la taille de l'attaquant compte (les grosses unités ne peuvent pas coller leur centre à la cible)
+      const portee = u.s.portee + (c.demiE ? 1.6 : 0.6) + (u.s.portee ? 0 : Math.max(0, u.s.rayon - 0.5));
       if (distBord(u, c) <= portee) {
         u.chemin = null; u.but = null; u.dir = tourner(u.dir, Math.atan2(c.x - u.x, c.z - u.z), dt * 10); u.anim = 'attaque';
         if (u.cd <= 0) { u.cd = u.s.cadence; if (u.s.proj) { const y0 = u.s.naval ? 2.2 : BT.hauteur(B, u.x, u.z) + 1.4, n = u.s.salve || 1; for (let k = 0; k < n; k++) tirer(B, u.id, u.j, u.x + (k - (n - 1) / 2) * 0.8, y0, u.z, c, degatsContre(B, u, c) / (n > 1 ? n * 0.6 : 1), u.s.proj, u.s.zone); } else { u.frappe = 0.45; u.cibleFrappe = c.id; } }
@@ -810,6 +829,21 @@
     }
     if (o.type === 'deposer') { const b = B.parId.get(o.cible); if (!b || b.mort) { u.ordre = null; return; } if (contact(u, b)) { deposer(B, u); u.ordre = null; } else { const p = approche(B, u, b); if (!p) { u.ordre = null; return; } viser(B, u, p[0], p[1]); marcher(B, u, dt); } return; }
     if (o.type === 'recolter') recolter(B, u, o, dt);
+    if (o.type === 'commercer') {
+      const vers = B.parId.get(o.aller ? o.vers : o.de);
+      // route rompue : marché détruit ou guerre déclarée
+      const loin = B.parId.get(o.vers), chez = B.parId.get(o.de);
+      if (!loin || loin.mort || !chez || chez.mort || ennemis(B, u.j, loin.j)) { u.ordre = null; u.anim = 'repos'; return; }
+      if (contact(u, vers)) {
+        const J = B.joueurs[u.j], gain = Math.round(Math.hypot(loin.x - chez.x, loin.z - chez.z) * R.COMMERCE.orParMetre / 2);
+        J.res.or += gain; J.stats.commerce = (J.stats.commerce || 0) + gain; J.stats.recolte += gain;
+        if (o.aller && B.opinion && loin.j !== u.j) { B.opinion[loin.j][u.j] = Math.min(100, B.opinion[loin.j][u.j] + 0.6); B.joueurs[loin.j].res.or += Math.round(gain * 0.2); }
+        B.evts.push({ type: 'commerce', id: u.id, j: u.j, gain, x: vers.x, z: vers.z });
+        o.aller = !o.aller; u.chemin = null; u.but = null; u.appr = null; return;
+      }
+      const p = approche(B, u, vers); if (!p) { u.ordre = null; return; } viser(B, u, p[0], p[1]); marcher(B, u, dt);
+      return;
+    }
     if (o.type === 'entrer') {
       const c = B.parId.get(o.cible);
       if (!c || c.mort || c.j !== u.j || BT.place(B, c) < u.s.pop) { u.ordre = null; u.anim = 'repos'; return; }
@@ -953,7 +987,7 @@
     majPop(B);
     if (r) {
       const cible = r.cible ? B.parId.get(r.cible) : null;
-      if (cible && vivant(cible) && recolteur(u)) BT.ordreContexte(B, b.j, [u.id], r.x, r.z, r.cible);
+      if (cible && vivant(cible) && (recolteur(u) || (u.cle === 'caravane' && cible.d && cible.d.marche))) BT.ordreContexte(B, b.j, [u.id], r.x, r.z, r.cible);
       else poserOrdre(B, u, { type: 'deplacer', x: r.x + (B.rnd() - 0.5) * 3, z: r.z + (B.rnd() - 0.5) * 3 });
     }
   }
@@ -979,8 +1013,8 @@
     const m = B.mv;
     for (const J of B.joueurs) J.vis.fill(0);
     const voir = (J, x, z, r) => { const R2 = (r / VUE_CEL) ** 2, ci = x / VUE_CEL, ck = z / VUE_CEL, rr = Math.ceil(r / VUE_CEL); for (let k = Math.max(0, Math.floor(ck - rr)); k <= Math.min(m - 1, Math.ceil(ck + rr)); k++) for (let i = Math.max(0, Math.floor(ci - rr)); i <= Math.min(m - 1, Math.ceil(ci + rr)); i++) if ((i + 0.5 - ci) ** 2 + (k + 0.5 - ck) ** 2 <= R2) { J.vis[k * m + i] = 2; J.connu[k * m + i] = 1; } };
-    for (const u of B.unites) if (!u.mort && u.j >= 0) { const s = u.s; B.joueurs.forEach(J => { if (J.id === u.j || (J.equipe === B.joueurs[u.j].equipe)) voir(J, u.x, u.z, s.vue); }); }
-    for (const b of B.bats) if (!b.mort) B.joueurs.forEach(J => { if (J.id === b.j || J.equipe === B.joueurs[b.j].equipe) voir(J, b.x, b.z, b.d.vue + b.taille / 2); });
+    for (const u of B.unites) if (!u.mort && u.j >= 0) { const s = u.s; B.joueurs.forEach(J => { if (allies(B, J.id, u.j)) voir(J, u.x, u.z, s.vue); }); }
+    for (const b of B.bats) if (!b.mort) B.joueurs.forEach(J => { if (allies(B, J.id, b.j)) voir(J, b.x, b.z, b.d.vue + b.taille / 2); });
     for (const J of B.joueurs) if (J.vision > B.temps || B.toutVoir) { J.vis.fill(2); J.connu.fill(1); }
     B.versionBrouillard = (B.versionBrouillard || 0) + 1;
   }
@@ -1023,6 +1057,7 @@
     if (B.tick % 20 === 0) for (const J of B.joueurs) if (J.cours) for (const r of ['bois', 'nourriture']) { const c = J.cours[r], m = R.MARCHE.cours; J.cours[r] = c < m ? Math.min(m, c + R.MARCHE.remontee) : Math.max(m, c - R.MARCHE.remontee); }
     if (B.treve > 0 && !B.treveFinie && B.temps >= B.treve) { B.treveFinie = true; B.evts.push({ type: 'treve' }); }
     if (B.mission && B.tick % 20 === 0) vagues(B);
+    if (B.offres && B.offres.length && B.tick % 20 === 0) B.offres = B.offres.filter(o => B.temps - o.t0 < 60 && !B.joueurs[o.de].vaincu);
     if (B.tick % 20 === 0) { for (const J of B.joueurs) if (J.ia && !J.vaincu) { J.cerveau.t -= 1; if (J.cerveau.t <= 0) { J.cerveau.t = R.DIFFICULTES[J.difficulte].pense; ia(B, J); } } verifierFin(B); }
     // nettoyage des morts (après l'animation de chute)
     if (B.tick % 40 === 0) {
@@ -1050,12 +1085,126 @@
       const personne = !B.unites.some(u => !u.mort && u.j === J.id), demuni = personne && centre && J.res.nourriture < 50 && !bats.some(b => b.file.length || b.d.marche) && !J.ageEnCours && !B.effets.some(f => f.j === J.id);
       if ((!bats.length && !vill) || (!centre && !vill) || demuni) { J.vaincu = true; for (const u of B.unites) if (u.j === J.id && !u.mort) mourir(B, u, null); for (const b of B.bats) if (b.j === J.id && !b.mort) mourir(B, b, null); B.evts.push({ type: 'vaincu', j: J.id }); }
       const m = B.bats.find(b => !b.mort && b.j === J.id && b.cle === 'merveille' && b.fini);
-      if (m) { m.garde = (m.garde || 0) + 1; if (m.garde >= (B.gardeMerveille || R.GARDE_MERVEILLE) && !B.fin) B.fin = { gagnant: J.equipe, raison: 'merveille', temps: B.temps }; }
+      if (m) { m.garde = (m.garde || 0) + 1; if (m.garde >= (B.gardeMerveille || R.GARDE_MERVEILLE) && !B.fin) victoire(B, J, 'merveille'); }
+      if (B.mode === 'diplomatie' && !B.fin && J.stats.commerce >= R.VICTOIRE_COMMERCE * (B.mulRes || 1)) victoire(B, J, 'commerce');
     }
     if (B.mission) verifierMission(B);
-    const equipes = new Set(B.joueurs.filter(J => !J.vaincu).map(J => J.equipe));
-    if (equipes.size <= 1 && !B.fin) B.fin = { gagnant: [...equipes][0], raison: 'conquete', temps: B.temps };
+    if (B.fin) return;
+    const vivants = B.joueurs.filter(J => !J.vaincu);
+    if (vivants.length <= 1) { victoire(B, vivants[0] || B.joueurs[0], 'conquete'); return; }
+    if (B.mode === 'diplomatie') {
+      // paix des dieux : tous les survivants alliés entre eux pendant 3 minutes (à partir de trois peuples)
+      const tous = vivants.every(a => vivants.every(b => allies(B, a.id, b.id)));
+      if (tous && B.joueurs.length >= 3) { if (B.depuisAlliance == null) B.depuisAlliance = B.temps; if (B.temps - B.depuisAlliance >= 180) victoire(B, vivants[0], 'alliance'); } else B.depuisAlliance = null;
+      if (vivants.every(a => vivants.every(b => allies(B, a.id, b.id))) && B.joueurs.length < 3 && vivants.length === 1) victoire(B, vivants[0], 'conquete');
+    } else if (vivants.every(a => vivants.every(b => !ennemis(B, a.id, b.id)))) victoire(B, vivants[0], 'conquete');
   }
+  // fin de partie : le vainqueur et tous ses alliés encore en vie
+  function victoire(B, J, raison) { const g = B.joueurs.filter(x => !x.vaincu && allies(B, J.id, x.id)).map(x => x.id); B.fin = { gagnant: J.equipe, gagnants: g, raison, temps: B.temps }; }
+  BT.gagnants = B => B.fin ? B.fin.gagnants || B.joueurs.filter(J => J.equipe === B.fin.gagnant).map(J => J.id) : [];
+
+  // ---------- diplomatie : guerre, paix, alliance, tributs, propositions ----------
+  const REL = { 0: 'guerre', 1: 'paix', 2: 'alliance' };
+  const cle2 = (a, b) => Math.min(a, b) + ':' + Math.max(a, b);
+  function poser(B, a, b, r) { const avant = B.rel[a][b]; B.rel[a][b] = B.rel[b][a] = r; if (r === 0) { B.guerreDepuis = B.guerreDepuis || {}; B.guerreDepuis[cle2(a, b)] = B.temps; } if (r === 1 && avant === 0) { B.paixDepuis = B.paixDepuis || {}; B.paixDepuis[cle2(a, b)] = B.temps; } B.evts.push({ type: 'diplo', a, b, r: REL[r] }); }
+  // traité de paix récent : l'ordinateur le respecte au moins 4 minutes
+  const traite = (B, a, b) => B.temps - ((B.paixDepuis || {})[cle2(a, b)] ?? -1e9) < 240;
+  BT.traite = traite;
+  const borne = v => Math.max(-100, Math.min(100, v));
+  const op = (B, a, b, d) => { if (a !== b && B.opinion) B.opinion[a][b] = borne(B.opinion[a][b] + d); };
+  // force militaire (population des soldats et des créatures, tours comptées à moitié)
+  const force = (B, j) => B.unites.reduce((s, u) => s + (!u.mort && u.j === j && !recolteur(u) && u.cle !== 'caravane' && u.cle !== 'transport' ? u.s.pop : 0), 0) + B.bats.filter(b => !b.mort && b.j === j && b.d.att).length * 2;
+  BT.force = force;
+  // ce que le peuple a pense du peuple b : opinion accumulée, plus les ennemis et les alliés communs
+  function avis(B, a, b) {
+    let v = B.opinion[a][b];
+    const A = B.joueurs[a], Bj = B.joueurs[b]; if (A.pantheon === Bj.pantheon) v += 8;
+    for (const x of B.joueurs) { if (x.vaincu || x.id === a || x.id === b) continue; if (ennemis(B, a, x.id) && ennemis(B, b, x.id)) v += 12; if (allies(B, a, x.id) && ennemis(B, b, x.id)) v -= 25; }
+    const ca = B.bats.find(x => !x.mort && x.j === a && x.cle === 'centre'), cb = B.bats.find(x => !x.mort && x.j === b && x.cle === 'centre');
+    if (ca && cb && Math.hypot(ca.x - cb.x, ca.z - cb.z) < 100) v -= 6;
+    if (A.caractere === 'diplomate') v += 8; if (A.caractere === 'conquerant') v -= 8;
+    return borne(Math.round(v));
+  }
+  BT.avis = avis;
+  const ATTITUDE = v => v >= 40 ? 'amicale' : v >= 15 ? 'cordiale' : v > -15 ? 'neutre' : v > -40 ? 'méfiante' : 'hostile';
+  BT.attitude = (B, a, b) => ATTITUDE(avis(B, a, b));
+  // l'ordinateur a accepte-t-il la proposition du peuple b ?
+  function accepte(B, a, b, type) {
+    const r = B.rel[a][b], v = avis(B, a, b), fa = force(B, a), fb = force(B, b), A = B.joueurs[a];
+    if (type === 'paix') {
+      if (r !== 0) return { ok: false, raison: 'Nous ne sommes pas en guerre.' };
+      const duree = B.temps - ((B.guerreDepuis || {})[Math.min(a, b) + ':' + Math.max(a, b)] || 0);
+      if (duree < 90) return { ok: false, raison: 'La guerre vient de commencer : il est trop tôt pour parler de paix.' };
+      if (fa < fb * 0.8 || (v > -25 && duree > 300) || (A.caractere !== 'conquerant' && v > -45 && duree > 180)) return { ok: true };
+      return { ok: false, raison: fa > fb * 1.3 ? 'Votre armée ne nous impressionne pas.' : 'Nous n’avons pas fini de vous faire payer cette guerre.' };
+    }
+    if (type === 'alliance') {
+      if (r !== 1) return { ok: false, raison: r === 2 ? 'Nous sommes déjà alliés.' : 'Faisons d’abord la paix.' };
+      const conflit = B.joueurs.some(x => !x.vaincu && ((allies(B, a, x.id) && x.id !== a && ennemis(B, b, x.id)) || (allies(B, b, x.id) && x.id !== b && ennemis(B, a, x.id))));
+      if (conflit) return { ok: false, raison: 'Vous êtes en guerre avec nos amis (ou nous avec les vôtres).' };
+      if (B.joueurs.filter(x => x.id !== a && !x.vaincu && allies(B, a, x.id)).length >= 3) return { ok: false, raison: 'Nous avons déjà assez d’alliés.' };
+      if (v >= (A.caractere === 'diplomate' ? 12 : A.caractere === 'conquerant' ? 26 : 20)) return { ok: true };
+      return { ok: false, raison: v < -15 ? 'Nous ne vous faisons pas confiance.' : 'Montrez-nous d’abord votre amitié (commerce, tributs, ennemis communs).' };
+    }
+    return { ok: false, raison: 'Proposition inconnue.' };
+  }
+  BT.accepte = accepte;
+  // déclarer la guerre : les alliés de la victime peuvent répondre à son appel ; trahir un allié choque tout le monde
+  BT.declarerGuerre = function (B, a, b) {
+    if (!B.rel || a === b || B.rel[a][b] === 0) return { ok: false, raison: 'Déjà en guerre.' };
+    if (B.mode !== 'diplomatie') return { ok: false, raison: 'Les alliances sont fixées dans le mode Conquête.' };
+    if (treve(B)) return { ok: false, raison: 'La trêve interdit encore la guerre.' };
+    const trahison = B.rel[a][b] === 2 || traite(B, a, b); poser(B, a, b, 0); op(B, b, a, -45);
+    for (const x of B.joueurs) { if (x.vaincu || x.id === a || x.id === b) continue; if (trahison) op(B, x.id, a, -15);
+      if (allies(B, x.id, b)) { op(B, x.id, a, -20); if (x.ia && B.rel[x.id][a] !== 0 && !traite(B, x.id, a) && avis(B, x.id, b) >= 15 && (x.caractere !== 'marchand' || avis(B, x.id, b) >= 40)) { poser(B, x.id, a, 0); B.evts.push({ type: 'appel', j: x.id, allie: b, contre: a }); } } }
+    return { ok: true };
+  };
+  BT.rompre = function (B, a, b) { if (!B.rel || B.rel[a][b] !== 2 || B.mode !== 'diplomatie') return { ok: false, raison: 'Pas d’alliance à rompre.' }; poser(B, a, b, 1); op(B, b, a, -25); return { ok: true }; };
+  // proposer la paix ou l'alliance ; l'ordinateur répond tout de suite, un joueur humain reçoit une offre
+  BT.proposer = function (B, de, a, type) {
+    if (!B.rel || B.mode !== 'diplomatie') return { ok: false, raison: 'Les alliances sont fixées dans le mode Conquête.' };
+    const Ja = B.joueurs[a]; if (!Ja || Ja.vaincu || a === de) return { ok: false, raison: 'Ce peuple ne peut pas répondre.' };
+    if (!Ja.ia) { if (!B.offres.some(o => o.de === de && o.a === a && o.type === type)) { const o = { id: (B.prochainOffre = (B.prochainOffre || 0) + 1), de, a, type, t0: B.temps }; B.offres.push(o); B.evts.push({ type: 'offre', offre: o }); } return { ok: true, attente: true }; }
+    const r = accepte(B, a, de, type); if (!r.ok) { op(B, a, de, -1); return r; }
+    poser(B, a, de, type === 'paix' ? 1 : 2); op(B, a, de, 8); return { ok: true };
+  };
+  BT.repondreOffre = function (B, id, oui) {
+    const o = (B.offres || []).find(x => x.id === id); if (!o) return { ok: false, raison: 'Offre expirée.' };
+    B.offres = B.offres.filter(x => x !== o);
+    if (!oui) { op(B, o.de, o.a, -8); return { ok: true, refus: true }; }
+    const r = B.rel[o.a][o.de]; if ((o.type === 'paix' && r !== 0) || (o.type === 'alliance' && r !== 1)) return { ok: false, raison: 'La situation a changé.' };
+    poser(B, o.a, o.de, o.type === 'paix' ? 1 : 2); op(B, o.de, o.a, 15); return { ok: true };
+  };
+  // tribut : ressources données (10 % perdus en route), l'amitié grandit
+  BT.tribut = function (B, de, a, res, qte) {
+    const J = B.joueurs[de], A = B.joueurs[a]; if (!A || A.vaincu || a === de || !['nourriture', 'bois', 'or'].includes(res)) return { ok: false, raison: 'Tribut impossible.' };
+    if (J.res[res] < qte) return { ok: false, raison: 'Pas assez de ressources.' };
+    J.res[res] -= qte; A.res[res] += Math.round(qte * 0.9); op(B, a, de, Math.min(25, qte / 12)); B.evts.push({ type: 'tribut', de, a, res, qte }); return { ok: true };
+  };
+  // l'ordinateur négocie : paix quand la guerre tourne mal, alliances avec ses amis, guerres de conquête, appel des alliés
+  function iaDiplomatie(B, J) {
+    if (B.mode !== 'diplomatie' || J.vaincu) return; const C = J.cerveau, j = J.id;
+    if (C.tDiplo && B.temps < C.tDiplo) return; C.tDiplo = B.temps + 20 + B.rnd() * 25;
+    const autres = B.joueurs.filter(x => x.id !== j && !x.vaincu), fj = force(B, j);
+    for (const x of autres) {
+      const r = B.rel[j][x.id], v = avis(B, j, x.id);
+      // paix : on la demande quand on perd ou que la guerre s'éternise
+      if (r === 0 && accepte(B, j, x.id, 'paix').ok && B.rnd() < 0.6) { const rep = BT.proposer(B, j, x.id, 'paix'); if (rep.ok && !rep.attente) return; }
+      // alliance avec un peuple ami
+      if (r === 1 && v >= 24 && B.rnd() < 0.5 && !B.offres.some(o => o.de === j)) { const rep = BT.proposer(B, j, x.id, 'alliance'); if (rep.ok && !rep.attente) return; }
+      // entraide : un allié à court de nourriture ou d'or reçoit un tribut (surtout des diplomates et des marchands)
+      if (r === 2 && J.caractere !== 'conquerant' && !(C.tTribut > B.temps)) for (const res of ['nourriture', 'or']) if (x.res[res] < 120 && J.res[res] > 1200) { BT.tribut(B, j, x.id, res, 200); C.tTribut = B.temps + 120; break; }
+      // appel de l'allié : on rejoint sa guerre
+      if (r === 2 && v >= 30) for (const z of autres) if (z.id !== x.id && ennemis(B, x.id, z.id) && B.rel[j][z.id] === 1 && !traite(B, j, z.id) && J.caractere !== 'marchand' && B.rnd() < 0.25) { BT.declarerGuerre(B, j, z.id); B.evts.push({ type: 'appel', j, allie: x.id, contre: z.id }); return; }
+    }
+    // guerre : le conquérant s'en prend au voisin le plus faible ; les autres seulement à ceux qu'ils détestent
+    if (B.temps < 480 || treve(B) || J.passif || autres.some(x => B.rel[j][x.id] === 0) && J.caractere !== 'conquerant') return;
+    if (C.tGuerre && B.temps < C.tGuerre) return;
+    const cibles = autres.filter(x => B.rel[j][x.id] === 1 && !traite(B, j, x.id)).map(x => ({ x, v: avis(B, j, x.id), f: force(B, x.id) }));
+    const cible = cibles.filter(c => J.caractere === 'conquerant' ? fj > c.f * 1.3 && c.v < 20 : c.v < (J.caractere === 'marchand' ? -60 : -40)).sort((p, q) => p.f - q.f)[0];
+    if (cible && fj >= 15) { BT.declarerGuerre(B, j, cible.x.id); C.tGuerre = B.temps + 300; }
+  }
+  BT.iaDiplomatie = iaDiplomatie;
 
   // ---------- ordinateur ----------
   // économie (villageois répartis, maisons, dépôts, fermes), bâtiments par âge, passage des âges, armée, attaques par vagues, défense, pouvoirs
@@ -1109,7 +1258,7 @@
     }
     // or épuisé : un marché pour échanger le bois et la nourriture en trop
     const sansOr = !ressourceProche(B, bx, bz, 'or', 110, j, 'mine');
-    if (J.age >= 1 && sansOr && !nb('marche') && J.res.bois >= 150 && !enCours.some(b => b.cle === 'marche')) { const p = trouverPlace(B, J, 'marche', bx, bz, 16, 40); if (p) construire('marche', p[0], p[1], 2); }
+    if (J.age >= 1 && (sansOr || B.mode === 'diplomatie') && !nb('marche') && J.res.bois >= 150 && !enCours.some(b => b.cle === 'marche')) { const p = trouverPlace(B, J, 'marche', bx, bz, 16, 40); if (p) construire('marche', p[0], p[1], 2); }
     if (nb('marche')) { for (const r of ['bois', 'nourriture']) if (J.res.or < 400 && J.res[r] > (r === 'bois' ? 700 : 1400)) BT.echanger(B, j, r + '>or'); if (J.res.or > 2500 && J.res.nourriture < 200) BT.echanger(B, j, 'or>nourriture'); }
     // bâtiments à poser
     const plan = [[0, 'caserne', 9], [0, 'temple', 13], [1, 'archerie', 0], [1, 'ecurie', 0], [1, 'tour', 0], [2, 'forteresse', 0], [2, 'tour', 0], [3, 'merveille', 0]];
@@ -1181,6 +1330,7 @@
       const c = B.parId.get(C.cibleAttaque); if (!c || c.mort) { const cibles = ciblesEnnemies(); if (cibles.length) { C.cibleAttaque = cibles[0].id; BT.ordreContexte(B, j, aPied(cibles[0]), cibles[0].x, cibles[0].z, null, true); } else C.attaque = false; } else BT.ordreContexte(B, j, aPied(c), c.x, c.z, null, true);
     }
     iaDebarquement(B, J, mil, flotte, bats);
+    iaDiplomatie(B, J); iaCommerce(B, J, bats, mes);
     iaFlotte(B, J, bats, flotte, vill, bx, bz, surplus);
     // pouvoirs : sur un groupe d'ennemis, ou tout de suite pour l'économie
     if (!treve(B)) J.pouvoirs.forEach((p, i) => {
@@ -1195,6 +1345,15 @@
       else if (d.type === 'soin') { const blesses = mil.filter(u => u.pv < u.pvMax * 0.5); if (blesses.length >= 4) BT.pouvoir(B, j, i, blesses[0].x, blesses[0].z); }
       else if (d.type === 'bouclier') { if (menace) BT.pouvoir(B, j, i, bx, bz); }
     });
+  }
+  // caravanes de l'ordinateur : quelques-unes au marché, envoyées vers le marché étranger (en paix) le plus lointain qu'on peut atteindre
+  function iaCommerce(B, J, bats, mes) {
+    const j = J.id, marche = bats.find(b => b.d.marche && b.fini); if (!marche) return;
+    const loin = B.bats.filter(b => !b.mort && b.fini && b.d.marche && b.j !== j && !ennemis(B, j, b.j) && BT.memeIle(B, marche, b)).sort((a, b) => d2(b.x, b.z, marche.x, marche.z) - d2(a.x, a.z, marche.x, marche.z))[0];
+    if (!loin) return;
+    const car = mes.filter(u => u.cle === 'caravane'), voulu = J.caractere === 'marchand' ? 8 : 3 + J.age;
+    if (car.length + marche.file.length < voulu && marche.file.length < 2 && J.pop < J.popMax && J.res.nourriture > 200 && J.res.bois > 200) BT.former(B, j, marche.id, 'caravane');
+    for (const u of car) if (!u.ordre) BT.ordreContexte(B, j, [u.id], loin.x, loin.z, loin.id);
   }
   // plage de débarquement : terre de l'île visée, au bord de l'eau, hors de portée des tours et des centres ennemis
   function plage(B, j, x, z) {
@@ -1342,7 +1501,7 @@
       else if (o.type === 'merveille') { const m = bats.find(b => b.cle === 'merveille' && b.fini); o.progres = m ? Math.min(1, (m.garde || 0) / (B.gardeMerveille || R.GARDE_MERVEILLE)) : 0; ok = o.progres >= 1; }
       if (ok) { o.fait = true; B.evts.push({ type: 'objectif', texte: o.texte }); }
     }
-    if (M.objectifs.every(o => o.fait) && !J.vaincu) B.fin = { gagnant: J.equipe, raison: 'mission', temps: B.temps };
+    if (M.objectifs.every(o => o.fait) && !J.vaincu) victoire(B, J, 'mission');
   }
   BT.verifierMission = verifierMission;
 
@@ -1354,7 +1513,7 @@
   BT.sauver = function (B) {
     const res = {}; for (const r of B.res) if (r.qte !== r.qteMax || r.animal) res[r.id] = [Math.round(r.qte * 10) / 10, r.animal ? +r.x.toFixed(2) : 0, r.animal ? +r.z.toFixed(2) : 0, r.animal ? (r.vivant ? 1 : 0) : 0];
     const vivants = new Set(B.res.map(r => r.id));
-    return { version: 2, date: Date.now(), opts: B.opts, temps: B.temps, prochain: B.prochain, joueur: B.joueur, vitesse: B.vitesse, fin: B.fin, treveFinie: !!B.treveFinie, mission: B.mission || null,
+    return { version: 2, date: Date.now(), opts: B.opts, temps: B.temps, prochain: B.prochain, joueur: B.joueur, vitesse: B.vitesse, fin: B.fin, treveFinie: !!B.treveFinie, mission: B.mission || null, mode: B.mode, rel: B.rel, opinion: B.opinion, offres: B.offres || [], depuisAlliance: B.depuisAlliance, guerreDepuis: B.guerreDepuis || {}, paixDepuis: B.paixDepuis || {},
       joueurs: B.joueurs.map(J => { const o = {}; for (const k in J) if (!['vis', 'connu', 'cacheStats'].includes(k)) o[k] = J[k]; o.connu = Array.from(J.connu).join(''); return o; }),
       unites: B.unites.filter(u => !u.mort).map(u => { const o = garder(u, CHAMPS_U); if (o.ordre) o.ordre = Object.assign({}, o.ordre); return o; }),
       bats: B.bats.filter(b => !b.mort && !b.retire).map(b => garder(b, CHAMPS_B)),
@@ -1373,6 +1532,7 @@
     B.unites = []; B.bats = [];
     for (const o of S.bats) { const d = R.BATIMENTS[o.cle], demi = Math.floor(d.taille / CEL / 2); const b = Object.assign({ sorte: 'b', taille: d.taille, d, file: [], bx: o.x, bz: o.z, demiE: (demi + 0.5) * CEL }, o); B.bats.push(b); B.parId.set(b.id, b); marquer(B, b, demi, d.passable ? CHAMP : d.porte ? PORTE : BAT); }
     Object.assign(B, { temps: S.temps, prochain: S.prochain, joueur: S.joueur, vitesse: S.vitesse || 1, fin: S.fin, treveFinie: S.treveFinie, mission: S.mission, proj: S.proj || [] });
+    if (S.rel) Object.assign(B, { mode: S.mode || 'conquete', rel: S.rel, opinion: S.opinion || B.opinion, offres: S.offres || [], depuisAlliance: S.depuisAlliance == null ? null : S.depuisAlliance, guerreDepuis: S.guerreDepuis || {}, paixDepuis: S.paixDepuis || {} });
     B.joueurs = S.joueurs.map((o, i) => { const J = Object.assign({}, o); J.connu = Uint8Array.from(String(o.connu), c => +c); J.vis = new Uint8Array(B.mv * B.mv); J.cacheStats = {}; return J; });
     for (const o of S.unites) { const s = BT.stats(B, o.j, o.cle); if (!s) continue; const u = Object.assign({ sorte: 'u', s, chemin: null, ci: 0, anim: 'repos', cd: 0 }, o); B.unites.push(u); B.parId.set(u.id, u); }
     B.effets = (S.effets || []).map(f => Object.assign(f, { d: f.type === 'zone' ? R.POUVOIRS[f.id] : undefined })).filter(f => f.type !== 'zone' || f.d);

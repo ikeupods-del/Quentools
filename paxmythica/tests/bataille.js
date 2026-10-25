@@ -288,6 +288,55 @@ const jouer = (B, s) => { for (let t = 0; t < s / BT.PAS; t++) BT.pas(B); };
   ok(JSON.parse(JSON.stringify(BT.sauver(X))).unites.find(u => u.id === tient.id).posture === 'tenir', 'posture enregistrée');
 }
 
+// 3 sexies. diplomatie : relations, offres, tributs, alliances, commerce, victoires
+{
+  const D = nouvelle({ graine: 51, taille: 'grande', mode: 'diplomatie', joueurs: [{ pantheon: 'grecs', dieu: 'zeus' }, { pantheon: 'nordiques', ia: true }, { pantheon: 'egyptiens', ia: true }, { pantheon: 'atlantes', ia: true }] });
+  D.joueurs.slice(1).forEach(J => { J.ia = false; }); // l'ordinateur ne joue pas tout seul pendant l'essai
+  ok(D.mode === 'diplomatie' && [1, 2, 3].every(j => BT.relation(D, 0, j) === 1) && !BT.ennemis(D, 0, 1), 'diplomatie : tout le monde commence en paix');
+  const sol = BT.ajouterUnite(D, 0, 'inf', 0, 0), vis = D.unites.find(u => u.j === 1);
+  const c0 = D.bats.find(b => b.j === 0 && b.cle === 'centre'); sol.x = c0.x; sol.z = c0.z + 12;
+  ok(BT.ordreContexte(D, 0, [sol.id], vis.x, vis.z, vis.id) !== 'attaquer', 'pas d’attaque contre un peuple en paix');
+  ok(BT.declarerGuerre(D, 0, 1).ok && BT.ennemis(D, 0, 1) && BT.ordreContexte(D, 0, [sol.id], vis.x, vis.z, vis.id) === 'attaquer', 'guerre déclarée : on peut attaquer');
+  D.joueurs[1].ia = true; ok(!BT.proposer(D, 0, 1, 'paix').ok, 'paix refusée juste après la déclaration'); D.joueurs[1].ia = false;
+  const av = BT.avis(D, 2, 0); D.joueurs[0].res.or += 500; ok(BT.tribut(D, 0, 2, 'or', 300).ok && BT.avis(D, 2, 0) > av, 'tribut : l’amitié grandit');
+  D.opinion[2][0] = 70; D.joueurs[2].ia = true;
+  ok(BT.proposer(D, 0, 2, 'alliance').ok && BT.allies(D, 0, 2), 'alliance acceptée par un ami');
+  D.joueurs[2].ia = false;
+  for (let t = 0; t < 2 / BT.PAS; t++) BT.pas(D);
+  const c2 = D.bats.find(b => b.j === 2 && b.cle === 'centre'); ok(BT.visible(D, 0, c2.x, c2.z), 'les alliés partagent leur vue');
+  D.opinion[3][0] = 80; D.joueurs[3].ia = true; D.joueurs[3].cerveau.tDiplo = 0; D.temps = Math.max(D.temps, 10);
+  for (let k = 0; k < 20 && !D.offres.length; k++) { D.joueurs[3].cerveau.tDiplo = 0; BT.iaDiplomatie(D, D.joueurs[3]); }
+  const offre = D.offres.find(o => o.de === 3 && o.a === 0);
+  ok(offre && offre.type === 'alliance', 'l’ordinateur propose une alliance au joueur');
+  ok(offre && BT.repondreOffre(D, offre.id, true).ok && BT.allies(D, 0, 3), 'offre acceptée : alliance');
+  D.joueurs[3].ia = false;
+  // commerce : caravane entre ton marché et celui d'un allié
+  const m0 = BT.ajouterBat(D, 0, 'marche', c0.x + 26, c0.z, true), m2 = BT.ajouterBat(D, 2, 'marche', c2.x + 26, c2.z, true);
+  const car = BT.ajouterUnite(D, 0, 'caravane', m0.x, m0.z + 8); BT.majPop(D);
+  ok(BT.ordreContexte(D, 0, [car.id], m2.x, m2.z, m2.id) === 'commercer', 'clic droit d’une caravane sur un marché allié : route commerciale');
+  const or0 = D.joueurs[0].stats.commerce; for (let t = 0; t < 240 / BT.PAS && D.joueurs[0].stats.commerce === or0; t++) BT.pas(D);
+  ok(D.joueurs[0].stats.commerce > or0, `la caravane rapporte de l’or (${D.joueurs[0].stats.commerce})`);
+  ok(BT.rompre(D, 0, 2).ok && BT.declarerGuerre(D, 0, 2).ok, 'alliance rompue puis guerre');
+  for (let t = 0; t < 3; t++) BT.pas(D); ok(!car.ordre || car.ordre.type !== 'commercer', 'la guerre coupe la route commerciale');
+  const S = JSON.parse(JSON.stringify(BT.sauver(D))), D2 = BT.charger(S);
+  ok(D2.mode === 'diplomatie' && BT.ennemis(D2, 0, 2) && BT.allies(D2, 0, 3) && D2.opinion[3][0] === D.opinion[3][0], 'rechargement : relations et opinions gardées');
+  // victoire commerciale partagée avec les alliés
+  D.joueurs[3].stats.commerce = 1e5; for (let t = 0; t < 25; t++) BT.pas(D);
+  ok(D.fin && D.fin.raison === 'commerce' && BT.gagnants(D).includes(3) && BT.gagnants(D).includes(0), 'victoire commerciale, partagée avec les alliés');
+  // conquête : pas de diplomatie, équipes fixes
+  const Q = nouvelle({ graine: 52 }); ok(!BT.declarerGuerre(Q, 0, 1).ok && !BT.proposer(Q, 0, 1, 'paix').ok, 'mode Conquête : relations fixées');
+  // paix des dieux : tous les survivants alliés pendant 3 minutes
+  const P = nouvelle({ graine: 53, taille: 'moyenne', mode: 'diplomatie', joueurs: [{ pantheon: 'grecs' }, { pantheon: 'nordiques' }, { pantheon: 'egyptiens' }] });
+  for (const [a, b] of [[0, 1], [0, 2], [1, 2]]) { P.rel[a][b] = P.rel[b][a] = 2; }
+  for (let t = 0; t < 200 / BT.PAS && !P.fin; t++) BT.pas(P);
+  ok(P.fin && P.fin.raison === 'alliance' && BT.gagnants(P).length === 3, 'paix des dieux : victoire de tous les alliés');
+  // dix adversaires
+  const G = nouvelle({ graine: 54, taille: 'immense', mode: 'diplomatie', joueurs: [...Array(11)].map((_, i) => ({ pantheon: ['grecs', 'egyptiens', 'nordiques', 'atlantes'][i % 4], ia: i > 0 })) });
+  ok(G.joueurs.length === 11 && G.bats.filter(b => b.cle === 'centre').length === 11 && G.popMax <= 110, 'onze peuples sur la carte immense');
+  const dmin = Math.min(...G.carte.departs.flatMap((a, i) => G.carte.departs.slice(i + 1).map(b => Math.hypot(a[0] - b[0], a[1] - b[1]))));
+  ok(dmin > 50, `départs assez espacés (${Math.round(dmin)} m)`);
+}
+
 // 3 ter. archipel : l'ordinateur embarque son armée et débarque sur l'île ennemie
 {
   const A = nouvelle({ carte: 'iles', graine: 3, joueurs: [{ pantheon: 'grecs', ia: true, difficulte: 2 }, { pantheon: 'nordiques', ia: true, difficulte: 1 }] });

@@ -211,6 +211,19 @@ table.peuples input[type=text] { width: 100%; }
 .rts-emplacements .btn span { color: var(--doux); font-size: 12px; }
 .rts-inactifs.rts-armee { bottom: 244px; }
 .rts-cmd.actif { border-color: var(--or); box-shadow: 0 0 0 2px rgba(217,181,106,.45) inset; }
+.rts-offres { position: absolute; top: 54px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; z-index: 5; }
+.rts-offre { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 9px; background: rgba(28,20,12,.93); border: 1px solid var(--or); box-shadow: 0 6px 18px rgba(0,0,0,.45); font-size: 13px; }
+.rts-diplo-btn.alerte { border-color: var(--or); box-shadow: 0 0 0 2px rgba(217,181,106,.6); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 5px rgba(217,181,106,.15); } }
+.rts-diplo-liste { max-height: calc(100vh - 260px); overflow-y: auto; }
+.rts-diplo { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 13px; }
+.rts-diplo th { text-align: left; color: var(--doux); font-weight: 600; padding: 4px 6px; border-bottom: 1px solid var(--bord2); }
+.rts-diplo td { padding: 7px 6px; border-bottom: 1px solid rgba(255,255,255,.06); vertical-align: middle; }
+.rts-diplo tr.vaincu td { color: var(--doux); }
+.rts-diplo .rel-guerre { color: #ff8a73; font-weight: 600; } .rts-diplo .rel-paix { color: #e9dcb2; } .rts-diplo .rel-alliance { color: #8fd0ff; font-weight: 600; }
+.rts-d-actions { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.rts-d-actions .tribut { margin-left: 6px; color: var(--doux); display: inline-flex; gap: 3px; align-items: center; }
+.btn.rouge { border-color: #b8503e; color: #ffb3a3; }
 .rts-fiche { position: fixed; z-index: 61; pointer-events: none; width: 300px; padding: 9px 12px; border-radius: 10px; background: rgba(18,13,8,.94); border: 1px solid var(--bord2); box-shadow: 0 8px 24px rgba(0,0,0,.5); display: flex; flex-direction: column; gap: 3px; font-size: 13px; color: #efe4c8; }
 .rts-fiche.cache { display: none; }
 .rts-fiche b { color: var(--or2); font-size: 15px; }

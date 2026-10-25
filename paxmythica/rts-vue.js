@@ -203,6 +203,7 @@
     modele(u) {
       const B = this.B, J = B.joueurs[u.j], ep = B.epoque, D = O.DISTRIB[ep] || {}, P = D[J.pantheon] || {};
       if (u.cle === 'villageois') return u.id % 2 ? D.villageoise : D.villageois;
+      if (u.cle === 'caravane') return P.cav || P.inf || D.villageois;
       if (R.ROLES[u.cle]) return P[u.cle] || (typeof D[u.cle] === 'string' ? D[u.cle] : null) || (u.cle === 'cav' ? P.inf : null) || P.inf || 'c_hoplite';
       if (INVOQUES[u.cle] && (ep === 'antique' || u.cle !== 'automate')) return INVOQUES[u.cle];
       if (u.cle === 'heros_ragnarok') return P.heros || P.inf;
@@ -600,9 +601,9 @@
           else if (a === 'cultive') this.clip(m, i, 3, 3, 1, ph);
           else this.clip(m, i, (ph > 0.7 && m.userData.foule.meta.clips[3] && u.cle !== 'villageois') ? 3 : 0, 0, 1, ph);
         });
-        if (!u.mort && (this.sel.has(u.id) || this.survol === u.id)) anneaux.push([u.x, u.z, u.s.rayon * 1.6 + 0.3, ennemi ? 0xff4433 : u.j === this.ji ? 0x7dff8a : 0x6fb6ff, this.survol === u.id && !this.sel.has(u.id) ? 0.5 : 1]);
+        if (!u.mort && (this.sel.has(u.id) || this.survol === u.id)) anneaux.push([u.x, u.z, u.s.rayon * 1.6 + 0.3, ennemi ? 0xff4433 : u.j === this.ji ? 0x7dff8a : BT.allies(B, this.ji, u.j) ? 0x6fb6ff : 0xffd24a, this.survol === u.id && !this.sel.has(u.id) ? 0.5 : 1]);
       }
-      for (const b of B.bats) if (!b.mort && (this.sel.has(b.id) || this.survol === b.id)) anneaux.push([b.x, b.z, -b.demiE, BT.ennemis(B, this.ji, b.j) ? 0xff4433 : b.j === this.ji ? 0x7dff8a : 0x6fb6ff, this.sel.has(b.id) ? 1 : 0.5]);
+      for (const b of B.bats) if (!b.mort && (this.sel.has(b.id) || this.survol === b.id)) anneaux.push([b.x, b.z, -b.demiE, BT.ennemis(B, this.ji, b.j) ? 0xff4433 : b.j === this.ji ? 0x7dff8a : BT.allies(B, this.ji, b.j) ? 0x6fb6ff : 0xffd24a, this.sel.has(b.id) ? 1 : 0.5]);
       for (const r of B.res) if (r.qte > 0 && (this.sel.has(r.id) || this.survol === r.id)) anneaux.push([r.x, r.z, r.demiE ? -r.demiE : r.rayon + 0.6, 0xffe27a, this.sel.has(r.id) ? 1 : 0.5]);
       // lueurs des pouvoirs en cours
       for (const f of B.effets) { if (f.type === 'lueur') anneaux.push([f.x, f.z, f.rayon * (0.92 + 0.08 * Math.sin(this.temps / 160)), f.bleu ? 0x66c8ff : 0xffe08a, 0.9]); else if (f.type === 'zone') anneaux.push([f.x, f.z, f.d.rayon, f.j === this.ji ? 0xffb050 : 0xff5040, 0.6]); }

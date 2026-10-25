@@ -21,6 +21,8 @@
     cav: { pv: 150, att: 9, portee: 0, cadence: 1.4, vitesse: 5.8, vue: 20, cout: { nourriture: 60, or: 60 }, temps: 15, pop: 2, rayon: 0.9, vsBat: 0.8, cat: 'cav' },
     heros: { pv: 280, att: 16, portee: 0, cadence: 1.4, vitesse: 4.2, vue: 20, cout: { nourriture: 100, or: 120 }, temps: 20, pop: 3, rayon: 0.55, vsBat: 1.1, cat: 'heros', age: 1 },
     siege: { pv: 240, att: 45, portee: 24, cadence: 4.5, vitesse: 2.6, vue: 22, cout: { bois: 150, or: 100 }, temps: 25, pop: 3, rayon: 1.4, vsBat: 5, cat: 'siege', proj: 'pierre', zone: 2.5, age: 2 },
+    // caravane : fait la navette entre ton marché et celui d'un peuple en paix ou allié, rapporte de l'or à chaque arrivée
+    caravane: { pv: 120, att: 0, portee: 0, cadence: 2, vitesse: 3.6, vue: 14, cout: { nourriture: 60, bois: 60 }, temps: 14, pop: 1, rayon: 0.8, vsBat: 0, cat: 'commerce' },
     // bateaux (formés au port, ne vont que sur l'eau profonde)
     peche: { pv: 90, att: 0, portee: 0, cadence: 2, vitesse: 4.6, vue: 18, cout: { bois: 50 }, temps: 14, pop: 1, rayon: 1.6, vsBat: 0, cat: 'navire', naval: true, porte: 20 },
     transport: { pv: 320, att: 0, portee: 0, cadence: 2, vitesse: 4.8, vue: 18, cout: { bois: 100 }, temps: 16, pop: 1, rayon: 2.4, vsBat: 0, cat: 'navire', naval: true, capacite: 10 },
@@ -52,7 +54,7 @@
     forteresse: { taille: 16, pv: 4000, cout: { bois: 300, or: 300 }, temps: 70, age: 2, forme: ['heros', 'siege'], vue: 24, att: 9, portee: 22, cadence: 2, fleches: 3, garnison: 15, emoji: '🏰' },
     merveille: { taille: 22, pv: 8000, cout: { nourriture: 1000, bois: 1000, or: 1000, faveur: 100 }, temps: 240, age: 3, vue: 20, emoji: '🗼' },
     // port : posé au bord de l'eau (une partie dans l'eau), forme les bateaux, reçoit le poisson
-    marche: { taille: 10, pv: 1500, cout: { bois: 150 }, temps: 35, age: 1, vue: 14, marche: true, emoji: '⚖️' },
+    marche: { taille: 10, pv: 1500, cout: { bois: 150 }, temps: 35, age: 1, vue: 14, marche: true, forme: ['caravane'], emoji: '⚖️' },
     port: { taille: 10, pv: 1800, cout: { bois: 150 }, temps: 40, age: 0, forme: ['peche', 'transport', 'navire'], depot: ['nourriture'], vue: 22, port: true, emoji: '⚓' },
     // murs : un tronçon par case de 2 m, posés en ligne ; porte : laisse passer ses unités et celles des alliés
     mur: { taille: 2, pv: 700, cout: { bois: 4, or: 2 }, temps: 3, age: 1, vue: 6, mur: true, emoji: '🧱' },
@@ -94,6 +96,13 @@
     milice: { bat: 'centre', age: 1, cout: { nourriture: 200, bois: 100 }, temps: 35, emoji: '💪', nom: 'Villageois robustes', desc: 'Villageois : vie +30 % et attaque +30 %.', effet: { pv: 1.3, att: 1.3, cats: ['milice'] } }
   };
   // marché : 100 d'une ressource contre de l'or (ou l'inverse) ; chaque échange fait baisser le cours, qui remonte avec le temps
+  // commerce : or gagné par mètre de route à chaque arrivée d'une caravane ; victoire commerciale du mode Diplomatie
+  R.COMMERCE = { orParMetre: 0.2 };
+  R.VICTOIRE_COMMERCE = 8000;
+  R.NOMS_CARAVANE = { antique: 'Caravane', medieval: 'Convoi marchand', industriel: 'Chariot de commerce', moderne: 'Camion de livraison', futur: 'Drone cargo' };
+  // modes de bataille
+  R.MODES = { conquete: { nom: 'Conquête', desc: 'Comme dans Age of Mythology : tout le monde est en guerre (ou en équipes fixes), le dernier debout gagne.' },
+    diplomatie: { nom: 'Diplomatie', desc: 'Tout le monde commence en paix : commerce, tributs, alliances, guerres déclarées. On gagne par la conquête, la merveille, le commerce ou la paix des dieux.' } };
   R.MARCHE = { lot: 100, cours: 0.8, baisse: 0.04, minimum: 0.3, remontee: 0.004 };
   // âges : coût et durée du passage (s) ; le dieu mineur se choisit au début du passage
   R.AGES = [null, { cout: { nourriture: 400 }, temps: 45 }, { cout: { nourriture: 800, or: 500 }, temps: 55 }, { cout: { nourriture: 1000, or: 1000 }, temps: 65 }];
@@ -194,6 +203,7 @@
   // nom affiché d'une unité selon le peuple et l'époque
   R.nomUnite = (pantheon, cle) => {
     if (cle === 'villageois') return R.NOMS_VILLAGEOIS[PM.epoque] || 'Villageois';
+    if (cle === 'caravane') return R.NOMS_CARAVANE[PM.epoque] || 'Caravane';
     if (cle === 'peche' || cle === 'navire' || cle === 'transport') return (R.NOMS_BATEAUX[PM.epoque] || R.NOMS_BATEAUX.antique)[{ peche: 0, navire: 1, transport: 2 }[cle]];
     if (cle === 'mouton' || cle === 'vache') return cle === 'mouton' ? 'Mouton' : 'Vache';
     const P = PM.PANTHEONS[pantheon], i = ['inf', 'archer', 'cav', 'heros', 'siege'].indexOf(cle);
@@ -204,6 +214,7 @@
     if (cle === 'villageois') return '🧑‍🌾';
     if (cle === 'peche') return '🛶';
     if (cle === 'transport') return '⛴️';
+    if (cle === 'caravane') return PM.epoque === 'antique' || PM.epoque === 'medieval' ? '🐫' : PM.epoque === 'futur' ? '🛸' : '🚚';
     if (cle === 'navire') return PM.epoque === 'antique' || PM.epoque === 'medieval' ? '⛵' : '🚢';
     const P = PM.PANTHEONS[pantheon], i = ['inf', 'archer', 'cav', 'heros', 'siege'].indexOf(cle);
     if (i >= 0 && P) { const u = PM.UNITES[P.unites[i]]; return u ? u.emoji : '⚔️'; }

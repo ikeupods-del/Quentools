@@ -266,6 +266,25 @@ const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? '✓ ' : '�
   ok((await p.textContent('#batObj')).includes('Prochain assaut'), 'annonce du prochain assaut');
   await ev(() => UI.ACT['b-menu']()); await p.click('#modalBoite [data-act=b-quitter]');
 
+  // diplomatie : mode choisi à la création, panneau (touche Y), guerre, tribut, alliance, offre de l'ordinateur
+  await p.click('[data-act=bataille]'); await p.click('[data-act=b-epoque][data-v=antique]'); await p.click('[data-act=b-pantheon][data-v=grecs]'); await p.click('[data-act=b-dieu][data-v=zeus]');
+  await p.click('[data-act=b-option][data-k=mode][data-v=diplomatie]'); await p.click('[data-act=b-option][data-k=adversaires][data-v="5"]');
+  await p.click('[data-act=b-lancer]'); await p.click('#modalBoite [data-act=b-commencer]'); await p.waitForTimeout(300);
+  ok(await ev(() => UI.bat.B.mode === 'diplomatie' && UI.bat.B.joueurs.length === 6 && UI.bat.B.joueurs.slice(1).every(J => PM.Bataille.relation(UI.bat.B, 0, J.id) === 1)), 'diplomatie : six peuples, tous en paix');
+  await p.keyboard.press('y'); await p.waitForTimeout(200);
+  ok(await p.isVisible('#modalBoite .rts-diplo'), 'panneau Diplomatie');
+  await p.click('#modalBoite [data-act=b-d-guerre][data-v="1"]'); ok(await ev(() => PM.Bataille.ennemis(UI.bat.B, 0, 1)), 'guerre déclarée');
+  const boisAv = await ev(() => UI.bat.B.joueurs[0].res.bois);
+  await p.click('#modalBoite [data-act=b-d-tribut][data-v="2:bois"]'); ok(await ev(b => UI.bat.B.joueurs[0].res.bois <= b - 100, boisAv), 'tribut envoyé');
+  await ev(() => { UI.bat.B.opinion[2][0] = 80; }); await p.click('#modalBoite [data-act=b-d-alliance][data-v="2"]');
+  ok(await ev(() => PM.Bataille.allies(UI.bat.B, 0, 2)), 'alliance conclue');
+  await p.click('#modalBoite [data-act=b-reprendre]');
+  await ev(() => { const B = UI.bat.B; B.opinion[3][0] = 90; for (let k = 0; k < 30 && !B.offres.length; k++) { B.joueurs[3].cerveau.tDiplo = 0; PM.Bataille.iaDiplomatie(B, B.joueurs[3]); } });
+  await p.waitForSelector('#batOffres [data-act=b-offre]', { timeout: 20000 }).catch(() => null);
+  ok(await p.isVisible('#batOffres [data-act=b-offre]'), 'offre de l’ordinateur affichée');
+  await p.click('#batOffres [data-act=b-offre]'); ok(await ev(() => PM.Bataille.allies(UI.bat.B, 0, 3)), 'offre acceptée');
+  await ev(() => UI.ACT['b-menu']()); await p.click('#modalBoite [data-act=b-quitter]');
+
   // partie longue : trêve affichée, attaque refusée pendant la trêve
   await p.click('[data-act=bataille]'); await p.click('[data-act=b-epoque][data-v=antique]'); await p.click('[data-act=b-pantheon][data-v=grecs]'); await p.click('[data-act=b-dieu][data-v=zeus]');
   await p.click('[data-act=b-option][data-k=duree][data-v=longue]'); await p.click('[data-act=b-carte][data-v=mediterranee]'); await p.click('[data-act=b-lancer]'); await p.click('#modalBoite [data-act=b-commencer]'); await p.waitForTimeout(300);
