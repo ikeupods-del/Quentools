@@ -480,6 +480,8 @@
     }
     contexte(B, null);
   }
+  // posture : agressive (par défaut), défensive (reste près de sa place), tenir (ne bouge pas, tire sur ce qui est à portée)
+  BT.posture = function (B, j, ids, p) { let n = 0; for (const i of ids) { const u = B.parId.get(i); if (u && u.sorte === 'u' && u.j === j && !u.mort && u.cle !== 'villageois') { u.posture = p === 'agressive' ? undefined : p; n++; } } return n; };
   BT.arreter = function (B, j, ids) { for (const i of ids) { const u = B.parId.get(i); if (u && u.sorte === 'u' && u.j === j) { poserOrdre(B, u, null); u.anim = 'repos'; } } };
   // pose d'une fondation : vérifie la place et le coût, puis envoie les villageois construire
   BT.peutPoser = function (B, j, cle, x, z) {
@@ -775,7 +777,7 @@
     const o = u.ordre;
     // coincé (cible inaccessible) : la ressource est évitée, les autres ordres abandonnés
     if (u.coince) { u.coince = false; if (o && o.type === 'recolter' && !(u.porte && u.porte.n >= (u.s.porte || R.PORTE))) { (u.evite || (u.evite = new Set())).add(o.cible); o.cible = 0; } else if (o && o.type !== 'recolter') { u.ordre = null; u.chemin = null; u.anim = 'repos'; return; } }
-    if (!o) { u.anim = u.anim === 'attaque' ? 'repos' : u.anim === 'marche' ? 'repos' : u.anim; if (!recolteur(u)) chercherEnnemi(B, u, u.s.vue * 0.85, true); else if (u.anim === 'travail') u.anim = 'repos'; return; }
+    if (!o) { u.anim = u.anim === 'attaque' ? 'repos' : u.anim === 'marche' ? 'repos' : u.anim; if (!recolteur(u)) chercherEnnemi(B, u, u.posture === 'tenir' ? (u.s.portee || 0) + u.s.rayon + 1.6 : u.posture === 'defensive' ? Math.min(u.s.vue * 0.85, (u.s.portee || 0) + 10) : u.s.vue * 0.85, true); else if (u.anim === 'travail') u.anim = 'repos'; return; }
     if (o.type === 'deplacer') {
       if (o.attaque && chercherEnnemi(B, u, u.s.vue * 0.9, false)) return;
       viser(B, u, o.x, o.z); if (marcher(B, u, dt) || Math.hypot(u.x - o.x, u.z - o.z) < 0.5) { u.ordre = null; u.chemin = null; u.anim = 'repos'; }
@@ -784,12 +786,13 @@
     if (o.type === 'attaquer') {
       const c = B.parId.get(o.cible);
       if (!c || !vivant(c) || (c.j >= 0 && !ennemis(B, u.j, c.j))) { u.ordre = o.retour ? { type: 'deplacer', x: o.retour[0], z: o.retour[1], attaque: !!o.suite } : null; u.anim = 'repos'; if (!o.retour) chercherEnnemi(B, u, u.s.vue, true); return; }
-      if (o.garde && Math.hypot(u.x - o.garde[0], u.z - o.garde[1]) > 22) { u.ordre = { type: 'deplacer', x: o.garde[0], z: o.garde[1] }; return; }
+      if (o.garde && Math.hypot(u.x - o.garde[0], u.z - o.garde[1]) > (u.posture === 'defensive' ? 10 : 22)) { u.ordre = { type: 'deplacer', x: o.garde[0], z: o.garde[1] }; return; }
       const portee = u.s.portee + (c.demiE ? 1.6 : 0.6);
       if (distBord(u, c) <= portee) {
         u.chemin = null; u.but = null; u.dir = tourner(u.dir, Math.atan2(c.x - u.x, c.z - u.z), dt * 10); u.anim = 'attaque';
         if (u.cd <= 0) { u.cd = u.s.cadence; if (u.s.proj) { const y0 = u.s.naval ? 2.2 : BT.hauteur(B, u.x, u.z) + 1.4, n = u.s.salve || 1; for (let k = 0; k < n; k++) tirer(B, u.id, u.j, u.x + (k - (n - 1) / 2) * 0.8, y0, u.z, c, degatsContre(B, u, c) / (n > 1 ? n * 0.6 : 1), u.s.proj, u.s.zone); } else { u.frappe = 0.45; u.cibleFrappe = c.id; } }
-      } else { const p = c.sorte === 'u' ? [c.x, c.z] : approche(B, u, c) || [c.x, c.z]; viser(B, u, p[0], p[1]); marcher(B, u, dt); }
+      } else if (u.posture === 'tenir' && o.auto) { u.ordre = null; u.anim = 'repos'; }
+      else { const p = c.sorte === 'u' ? [c.x, c.z] : approche(B, u, c) || [c.x, c.z]; viser(B, u, p[0], p[1]); marcher(B, u, dt); }
       return;
     }
     if (o.type === 'construire') {
@@ -1344,7 +1347,7 @@
 
   // ---------- enregistrement ----------
   // la carte se recrée depuis sa graine ; on garde les entités, les ressources entamées, les joueurs et la mission
-  const CHAMPS_U = ['id', 'cle', 'j', 'x', 'z', 'dir', 'pv', 'pvMax', 'ordre', 'porte', 'invoque', 'gele', 'lent', 'cd', 'mort', 'tNe', 'dans', 'avant'];
+  const CHAMPS_U = ['id', 'cle', 'j', 'x', 'z', 'dir', 'pv', 'pvMax', 'ordre', 'porte', 'invoque', 'gele', 'lent', 'cd', 'mort', 'tNe', 'dans', 'avant', 'posture'];
   const CHAMPS_B = ['id', 'cle', 'j', 'x', 'z', 'pv', 'pvMax', 'fini', 'prog', 'file', 'rally', 'invuln', 'garde', 'occupant', 'payé', 'dir', 'cd', 'tNe', 'mort'];
   const garder = (e, l) => { const o = {}; for (const k of l) if (e[k] !== undefined) o[k] = e[k]; return o; };
   BT.sauver = function (B) {

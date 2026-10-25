@@ -272,6 +272,22 @@ const jouer = (B, s) => { for (let t = 0; t < s / BT.PAS; t++) BT.pas(B); };
   ok(voisins.some((v, i) => v.mort || v.pv < pv[i]), 'coup spécial : les ennemis voisins sont touchés');
 }
 
+// 3 quinquies. postures : tenir la position (ne bouge pas), défensive (reste près de sa place), agressive (poursuit)
+{
+  const X = nouvelle({ graine: 41 }); X.joueurs[1].ia = false; const c = X.bats.find(b => b.j === 0 && b.cle === 'centre');
+  const x0 = c.x, z0 = c.z + c.taille + 6;
+  const tient = BT.ajouterUnite(X, 0, 'inf', x0, z0), def = BT.ajouterUnite(X, 0, 'inf', x0 + 6, z0), agr = BT.ajouterUnite(X, 0, 'inf', x0 + 12, z0);
+  BT.posture(X, 0, [tient.id], 'tenir'); BT.posture(X, 0, [def.id], 'defensive');
+  for (const u of [tient, def, agr]) { const e = BT.ajouterUnite(X, 1, 'villageois', u.x, u.z + 9); e.pv = 1e6; e.pvMax = 1e6; e.s = Object.assign({}, e.s, { att: 0, vitesse: 0 }); }
+  BT.majPop(X); const pos = [tient, def, agr].map(u => [u.x, u.z]);
+  for (let t = 0; t < 12 / BT.PAS; t++) BT.pas(X);
+  const dep = [tient, def, agr].map((u, i) => Math.hypot(u.x - pos[i][0], u.z - pos[i][1]));
+  ok(dep[0] < 1, `tenir la position : ne bouge pas (${dep[0].toFixed(1)} m)`);
+  ok(dep[2] > 5, `posture agressive : va chercher l’ennemi (${dep[2].toFixed(1)} m)`);
+  ok(dep[1] > 3 && dep[1] < 12, `posture défensive : combat près de sa place (${dep[1].toFixed(1)} m)`);
+  ok(JSON.parse(JSON.stringify(BT.sauver(X))).unites.find(u => u.id === tient.id).posture === 'tenir', 'posture enregistrée');
+}
+
 // 3 ter. archipel : l'ordinateur embarque son armée et débarque sur l'île ennemie
 {
   const A = nouvelle({ carte: 'iles', graine: 3, joueurs: [{ pantheon: 'grecs', ia: true, difficulte: 2 }, { pantheon: 'nordiques', ia: true, difficulte: 1 }] });

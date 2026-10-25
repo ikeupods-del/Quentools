@@ -497,6 +497,10 @@
     if (us.length && !b) {
       if (us.some(u => !u.s.naval)) cases[12] = { act: 'b-garnison', em: '🛡️', titre: 'S’abriter : clique ensuite une tour, une forteresse, un centre-ville ou un navire de transport (ou clic droit dessus)' };
       const tr = us.filter(u => u.s.capacite && BT.contenu(B, u).length); if (tr.length) cases[13] = { act: 'b-debarquer', em: '⚓', titre: 'Faire descendre les passagers ici (près d’un rivage) — ou clic droit sur la terre' };
+      // postures des soldats (sans villageois choisis) : rangée du haut
+      const sol = us.filter(u => u.cle !== 'villageois' && u.s.att);
+      if (sol.length && !vill.length) { const p0 = sol[0].posture || 'agressive', meme = sol.every(u => (u.posture || 'agressive') === p0);
+        [['agressive', '⚔️', 'Posture agressive', 'Poursuit tout ennemi aperçu.'], ['defensive', '🛡️', 'Posture défensive', 'Combat près de sa place et y revient.'], ['tenir', '🚩', 'Tenir la position', 'Ne bouge pas ; frappe ou tire seulement ce qui est à portée.']].forEach(([v, em, nom, d], i) => { cases[i] = { act: 'b-posture', v, em, titre: `${nom} — ${d}`, info: `<b>${nom}${meme && p0 === v ? ' (actuelle)' : ''}</b><i>${d}</i>`, actif: meme && p0 === v }; }); }
       cases[10] = { act: 'b-stop', em: '✋', titre: 'Arrêter' }; if (us.some(u => u.cle !== 'villageois')) cases[11] = { act: 'b-attaque', em: '🗡️', titre: 'Marche à l’attaque : clique un lieu, les unités combattent en chemin' }; cases[14] = { act: 'b-detruire', em: '🗑️', titre: 'Supprimer (Suppr)' }; }
     if (b && b.j === B.joueur) {
       if (b.fini) {
@@ -511,8 +515,8 @@
       }
       cases[14] = { act: 'b-detruire', em: b.fini ? '🗑️' : '✖️', titre: b.fini ? 'Démolir' : 'Annuler la construction (remboursée si rien n’est bâti)' };
     }
-    const sig = cases.map(c => c ? c.act + c.v + c.ko + c.titre + (c.info || '') : '-').join('|'); if (sig === S.sigGrille) return; S.sigGrille = sig; S.cases = cases;
-    $('#batOrdres').innerHTML = cases.map((c, i) => c ? `<button class="rts-cmd ${c.ko ? 'ko' : ''} ${c.verrou ? 'verrou' : ''}" data-act="${c.act}" ${c.v ? `data-v="${esc(c.v)}"` : ''} data-i="${i}" aria-label="${esc(c.titre)}">${c.em}<kbd>${GRILLE[i].toUpperCase()}</kbd></button>` : `<span class="rts-cmd vide"></span>`).join('');
+    const sig = cases.map(c => c ? c.act + c.v + c.ko + c.actif + c.titre + (c.info || '') : '-').join('|'); if (sig === S.sigGrille) return; S.sigGrille = sig; S.cases = cases;
+    $('#batOrdres').innerHTML = cases.map((c, i) => c ? `<button class="rts-cmd ${c.ko ? 'ko' : ''} ${c.verrou ? 'verrou' : ''} ${c.actif ? 'actif' : ''}" data-act="${c.act}" ${c.v ? `data-v="${esc(c.v)}"` : ''} data-i="${i}" aria-label="${esc(c.titre)}">${c.em}<kbd>${GRILLE[i].toUpperCase()}</kbd></button>` : `<span class="rts-cmd vide"></span>`).join('');
   }
   // panneau d'information au survol d'un bouton de la grille (remplace la bulle du navigateur)
   function ficheGrille(btn) {
@@ -523,6 +527,7 @@
     const r = $('#batOrdres').getBoundingClientRect(); d.classList.remove('cache'); d.style.right = Math.max(8, innerWidth - r.right) + 'px'; d.style.bottom = (innerHeight - r.top + 8) + 'px';
   }
   document.addEventListener('mouseover', e => { if (UI.ecran !== 'bataille') return; const b = e.target.closest && e.target.closest('#batOrdres .rts-cmd:not(.vide)'); ficheGrille(b); });
+  ACT['b-posture'] = e => { const n = BT.posture(S.B, S.B.joueur, S.sel, e.dataset.v); if (n) { son('ordre'); message({ agressive: '⚔️ Posture agressive', defensive: '🛡️ Posture défensive', tenir: '🚩 Tenir la position' }[e.dataset.v] + ` (${n})`); } S.sigGrille = ''; majHud(true); };
   ACT['b-tech'] = e => { const b = selBatiment(); if (!b) return; const r = BT.rechercher(S.B, S.B.joueur, b.id, e.dataset.v); if (!r.ok) { message(r.raison, 'ko'); son('refus'); } else son('clic'); S.sigSel = S.sigGrille = ''; majHud(true); };
   ACT['b-page'] = e => { S.page = e.dataset.v; S.sigGrille = ''; grille(); };
   ACT['b-construire'] = e => {
