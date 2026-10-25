@@ -189,7 +189,7 @@
   function evenementsJeu(ev) {
     const B = S.B, ji = B.joueur, J = B.joueurs[ji];
     for (const e of ev) {
-      if (e.type === 'construit' && e.j === ji && e.cle !== 'ferme' && e.cle !== 'maison') { message(`${R.nomBat(e.cle)} : construction terminée.`, 'ok', e.x, e.z); son('ok'); }
+      if (e.type === 'construit' && e.j === ji && e.cle !== 'ferme' && e.cle !== 'maison' && e.cle !== 'mur') { message(`${R.nomBat(e.cle)} : construction terminée.`, 'ok', e.x, e.z); son('ok'); }
       else if (e.type === 'age') { const A = PM.AGES[e.age].nom, g = BT.mineurDe(B.joueurs[e.j], e.mineur); if (e.j === ji) { message(`${A} ! ${g ? g.nom + ' t’offre ' + PM.UNITES[g.unite].nom.toLowerCase() + ' et un pouvoir.' : ''}`, 'ok'); son('age'); } else message(`${B.joueurs[e.j].nom} entre dans l’${A.charAt(0).toLowerCase() + A.slice(1)}.`); }
       else if (e.type === 'pouvoir') { son('pouvoir'); if (e.j !== ji) message(`${B.joueurs[e.j].nom} : ${e.nom} !`, 'ko', e.x, e.z); }
       else if (e.type === 'vaincu') { message(e.j === ji ? 'Ton peuple est vaincu.' : `${B.joueurs[e.j].nom} est vaincu !`, e.j === ji ? 'ko' : 'ok'); son('conquete'); }
