@@ -97,6 +97,24 @@
   const lire = (k, d) => { try { return localStorage.getItem(k) || d; } catch (e) { return d; } };
   PM.packGraphique = () => { const id = lire('pm:pack', 'olympe'); return PM.PACKS_GRAPHIQUES[id] ? id : 'olympe'; };
   PM.qualite = () => { const id = lire('pm:qualite', 'haute'); return PM.QUALITES[id] ? id : 'haute'; };
+  // économie de batterie : sur batterie (réglage « auto ») ou toujours, l'image est limitée à 30 images par seconde
+  // et la qualité ne dépasse pas « Moyenne » ; fenêtre au second plan : 10 images par seconde ; sinon 60 au plus (écrans 120 Hz)
+  PM.ENERGIE = { auto: 'Sur batterie', toujours: 'Toujours', jamais: 'Jamais' };
+  PM.surBatterie = false;
+  PM.reglageEnergie = () => { const v = lire('pm:energie', 'auto'); return PM.ENERGIE[v] ? v : 'auto'; };
+  PM.economie = () => { const r = PM.reglageEnergie(); return r === 'toujours' || (r === 'auto' && PM.surBatterie); };
+  PM.qualiteEffective = id => PM.economie() && (id === 'ultra' || id === 'haute') ? 'moyenne' : id;
+  PM.imagesParSeconde = () => (typeof document !== 'undefined' && document.hasFocus && !document.hasFocus()) ? 10 : PM.economie() ? 30 : 60;
+  // une image toutes les 1000/n ms : la boucle saute les images en trop (renvoie faux)
+  PM.imageDue = (etat, ts) => { const pas = 1000 / PM.imagesParSeconde(); if (etat.tImage && ts - etat.tImage < pas - 1.5) return false; etat.tImage = etat.tImage && ts - etat.tImage < pas * 2 ? etat.tImage + pas : ts; return true; };
+  const abonnes = [];
+  PM.surEnergie = f => abonnes.push(f);
+  PM.majEnergie = () => { for (const f of abonnes) try { f(); } catch (e) { /* vue fermée */ } };
+  PM.choisirEnergie = v => { try { localStorage.setItem('pm:energie', v); } catch (e) { /* sans stockage */ } PM.majEnergie(); };
+  PM.changerBatterie = oui => { if (PM.surBatterie === !!oui) return; PM.surBatterie = !!oui; PM.majEnergie(); };
+  // source d'alimentation : donnée par l'application Mac, sinon par le navigateur quand il la connaît
+  if (G.paxEnergie) G.paxEnergie.surChangement(b => PM.changerBatterie(b));
+  else if (G.navigator && G.navigator.getBattery) G.navigator.getBattery().then(bt => { const f = () => PM.changerBatterie(!bt.charging); f(); bt.addEventListener('chargingchange', f); }).catch(() => { /* inconnue */ });
   PM.choisirPack = id => { try { localStorage.setItem('pm:pack', id); } catch (e) { /* sans stockage */ } };
   PM.choisirQualite = id => { try { localStorage.setItem('pm:qualite', id); } catch (e) { /* sans stockage */ } };
 })(typeof window !== 'undefined' ? window : globalThis);

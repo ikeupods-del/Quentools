@@ -49,6 +49,7 @@ Jeu de stratégie pour Mac façon *Age of Mythology* : batailles en temps réel 
 
 - L’oracle demande le modèle d’IA partagé avec QuentMovie (~2,5 Go, téléchargé une fois dans `~/Movies/QuentMovie/modeles`).
 - Les sauvegardes restent dans l’application (stockage local) : exporter en fichier pour les garder ailleurs.
+- **Batterie** : sur batterie, le jeu se limite à 30 images par seconde et à la qualité « Moyenne » (Réglages → Batterie : sur batterie, toujours ou jamais) ; 60 images par seconde au plus sur secteur, 10 quand la fenêtre est au second plan, son en veille quand elle est réduite.
 - Mac à puce Apple uniquement.
 
 ## Pour le développement

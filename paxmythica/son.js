@@ -128,6 +128,8 @@
       S.cancel(); S.speak(d);
     } catch (e) { /* voix indisponible */ }
   };
+  // fenêtre cachée ou réduite : le son se met en veille (il ne consomme plus rien) et reprend au retour
+  if (G.document) G.document.addEventListener('visibilitychange', () => { if (!ac) return; if (G.document.hidden) ac.suspend(); else ac.resume(); });
   PM.reglagesSon = () => Object.assign({}, reglages);
   PM.changerSon = function (k, v) { reglages[k] = v; garder(); if (maitre && k === 'volume') maitre.gain.value = v; if (k === 'musique') PM.musique(v); if (k === 'sons' && !v) PM.ambianceMer(0); };
 })(typeof window !== 'undefined' ? window : globalThis);

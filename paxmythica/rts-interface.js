@@ -166,6 +166,7 @@
   // ---------- boucle ----------
   function boucle(ts) {
     requestAnimationFrame(boucle);
+    if (PM.imageDue && !PM.imageDue(S, ts)) return; // 60 images/s au plus, 30 en économie de batterie
     const dt = Math.min(100, ts - (S.der || ts)); S.der = ts;
     if (UI.ecran !== 'bataille' || !S.B || !S.vue || UI.modalOuvert()) { const a = $('#batAide'); if (a) a.classList.add('cache'); const fi = $('#batFiche'); if (fi) fi.classList.add('cache'); if (UI.ecran !== 'bataille' || !S.B || !S.vue) { if (S.merOn !== false && PM.ambianceMer) { PM.ambianceMer(0); S.merOn = false; } return; } }
     S.merOn = true;

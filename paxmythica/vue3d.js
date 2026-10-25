@@ -901,7 +901,8 @@ void main() {
       return { tex, env, rt, k, moyenne: moy, horizon: hor, soleil, soleilC: sc };
     }
     appliquerQualite(id, sansReconstruire) {
-      this.idQualite = PM.QUALITES[id] ? id : 'haute'; const Q = this.Q = PM.QUALITES[this.idQualite];
+      this.idQualite = PM.QUALITES[id] ? id : 'haute'; this.qEff = PM.qualiteEffective ? PM.qualiteEffective(this.idQualite) : this.idQualite; const Q = this.Q = PM.QUALITES[this.qEff];
+      if (!this.suitEnergie && PM.surEnergie) { this.suitEnergie = true; PM.surEnergie(() => { if (this.renderer && this.qEff !== PM.qualiteEffective(this.idQualite)) this.appliquerQualite(this.idQualite); }); }
       this.renderer.setPixelRatio(Math.min(Q.finesse, window.devicePixelRatio || 1) * (G.PM_ECHELLE || 1)); // PM_ECHELLE : image réduite pour les essais sans carte graphique
       this.soleil.castShadow = Q.ombres > 0;
       if (Q.ombres && this.soleil.shadow.mapSize.x !== Q.ombres) { this.soleil.shadow.mapSize.set(Q.ombres, Q.ombres); if (this.soleil.shadow.map) { this.soleil.shadow.map.dispose(); this.soleil.shadow.map = null; } }
@@ -919,7 +920,7 @@ void main() {
     creerPost(w, h) {
       const Q = this.Q, R = this.renderer, pr = R.getPixelRatio();
       this.libererPost();
-      if (this.idQualite === 'basse' || !THREE.EffectComposer) return;
+      if ((this.qEff || this.idQualite) === 'basse' || !THREE.EffectComposer) return;
       try {
         const rt = new THREE.WebGLRenderTarget(w * pr, h * pr, { type: THREE.HalfFloatType, samples: Q.ao ? 0 : 4 });
         const C = new THREE.EffectComposer(R, rt); C.setPixelRatio(pr); C.setSize(w, h);

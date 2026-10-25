@@ -314,7 +314,9 @@
   ACT.commencer = () => { fermerModal(); reglerVitesse(1); };
   const signature = () => UI.j.etat.provinces.map(p => p.owner).join(',');
   let dernier = 0, acc = 0;
+  const cadence = {};
   function boucle(ts) {
+    if (PM.imageDue && !PM.imageDue(cadence, ts)) { requestAnimationFrame(boucle); return; } // 60 images/s au plus, 30 en économie de batterie
     const dt = Math.min(100, ts - (dernier || ts)); dernier = ts;
     if (UI.j && UI.ecran === 'jeu') {
       if (UI.vitesse > 0 && !UI.editeur && !modalOuvert() && !UI.j.etat.fin && !UI.decretEnCours) {
@@ -786,6 +788,9 @@
       <div class="champ"><label>Musique d’ambiance</label><input type="checkbox" id="rMusique" ${s.musique ? 'checked' : ''}></div>
       <div class="champ"><label>Voix des unités</label><input type="checkbox" id="rVoix" ${s.voix !== false ? 'checked' : ''}></div>
       <div class="champ"><label>Volume</label><input type="range" id="rVolume" min="0" max="100" value="${Math.round(s.volume * 100)}"></div>
+      <h3>Batterie</h3>
+      <div class="champ"><label>Économie de batterie</label><select id="rEnergie">${Object.entries(PM.ENERGIE).map(([k, n]) => `<option value="${k}" ${PM.reglageEnergie() === k ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
+      <p class="sous">${PM.economie() ? '🔋 Économie active : image à 30 images par seconde, qualité « Moyenne » au plus.' : PM.surBatterie ? 'Sur batterie, sans économie.' : 'Sur secteur : image à 60 images par seconde.'} Fenêtre au second plan : le jeu ralentit son image tout seul.</p>
       ${PM.vue3dPossible && PM.vue3dPossible() ? `<h3>Image</h3><p class="sous">Pack : <b>${esc(PM.PACKS_GRAPHIQUES[PM.packGraphique()].nom)}</b> · qualité ${esc(PM.QUALITES[PM.qualite()].nom.toLowerCase())}</p><button class="btn petit" data-act="packs">Packs graphiques et qualité…</button>` : ''}
       <h3>Oracle (IA du Mac)</h3>
       ${!ia ? '<p class="info">L’oracle n’existe que dans l’application Mac. Les décrets sont lus par mots-clés.</p>'
@@ -799,6 +804,7 @@
     $('#rSons').onchange = e => PM.changerSon('sons', e.target.checked);
     $('#rMusique').onchange = e => PM.changerSon('musique', e.target.checked);
     $('#rVoix').onchange = e => PM.changerSon('voix', e.target.checked);
+    $('#rEnergie').onchange = e => PM.choisirEnergie(e.target.value);
     $('#rVolume').oninput = e => PM.changerSon('volume', +e.target.value / 100);
     const o = $('#rOracle'); if (o) o.onchange = e => { UI.oracle.actif = e.target.checked; try { localStorage.setItem('pm:oracle', e.target.checked ? 'oui' : 'non'); } catch (er) { /* sans stockage */ } };
     const b = $('#rInstaller'); if (b) b.onclick = async () => {

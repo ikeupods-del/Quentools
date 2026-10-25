@@ -1,5 +1,9 @@
 # Nouveautés de Pax Mythica
 
+## 2.2.0
+- **Économie de batterie** : sur batterie, le jeu limite son image à 30 images par seconde et passe en qualité « Moyenne » au plus (sans halo lumineux, ombres et herbe allégées) ; il revient tout seul à la qualité choisie quand le Mac est branché. Réglage dans Réglages → Batterie : « Sur batterie » (par défaut), « Toujours » ou « Jamais ».
+- **Moins de travail inutile** : jamais plus de 60 images par seconde, même sur les écrans à 120 Hz ; 10 images par seconde quand la fenêtre du jeu est au second plan ; le son se met en veille quand la fenêtre est réduite ou cachée.
+
 ## 2.1.0
 - **Diplomatie comme dans Civilization** (mode Diplomatie) : plus aucune attaque surprise. Une guerre se **déclare** et ne commence que **60 secondes plus tard** ; un bandeau affiche le compte à rebours, la victime peut négocier ou payer pour l’éviter, et celui qui déclare peut se raviser.
 - **Motifs de guerre** : ultimatum rejeté, troupes postées près de tes bâtiments, empiétement (bâtir au pied de ton centre-ville), pacte trahi, défense d’un allié, revanche. Ils s’affichent dans le panneau Diplomatie et durent 10 minutes. Déclarer la guerre avec un motif est légitime ; sans motif, il faut confirmer et ta **parole** baisse.

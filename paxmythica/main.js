@@ -1,7 +1,7 @@
 // Pax Mythica : fenêtre de l'application Mac (Electron) autour de index.html.
 // Le jeu tourne entièrement sur le Mac ; seuls l'oracle (téléchargement unique du modèle) et les mises à jour utilisent internet.
 'use strict';
-const { app, BrowserWindow, Menu, shell, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, shell, ipcMain, powerMonitor } = require('electron');
 const path = require('path');
 
 let win = null, ia = null;
@@ -77,6 +77,7 @@ function ouvrir() {
     webPreferences: { contextIsolation: true, sandbox: true, nodeIntegration: false, preload: path.join(__dirname, 'preload.js') }
   });
   win.loadFile(path.join(__dirname, 'index.html'));
+  win.webContents.on('did-finish-load', envoyerEnergie);
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https:/.test(url)) shell.openExternal(url); return { action: 'deny' }; });
   win.webContents.on('will-navigate', e => e.preventDefault());
   win.on('closed', () => { win = null; });
@@ -156,6 +157,8 @@ function autotest() {
   });
 }
 
-app.whenReady().then(() => { menu(); ouvrir(); setTimeout(verifierMaj, 6000); setInterval(verifierMaj, 6 * 3600 * 1000); });
+// batterie ou secteur : prévient la page, qui limite son image sur batterie
+function envoyerEnergie() { try { if (win && !win.isDestroyed()) win.webContents.send('energie', powerMonitor.isOnBatteryPower()); } catch (e) { /* inconnue */ } }
+app.whenReady().then(() => { powerMonitor.on('on-battery', envoyerEnergie); powerMonitor.on('on-ac', envoyerEnergie); menu(); ouvrir(); setTimeout(verifierMaj, 6000); setInterval(verifierMaj, 6 * 3600 * 1000); });
 app.on('activate', () => { if (!win) ouvrir(); });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin' || process.env.PAX_AUTOTEST) app.quit(); });

@@ -170,6 +170,7 @@ const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? '✓ ' : '�
   ok(await ev(() => { PM.voix('villageois'); PM.ambianceMer(0.6); PM.ambianceMer(0); return typeof PM.voix === 'function'; }), 'voix des unités et bruit de la mer');
   await p.waitForFunction(() => UI.bat.vue.pret && UI.bat.vue.unitesPretes);
   ok(await p.isVisible('#batRes') && await p.isVisible('#batCarte') && await p.isVisible('#batOrdres'), 'barre des ressources, mini-carte et grille d’ordres');
+  ok(await ev(() => { const v = UI.bat.vue, q = v.idQualite; PM.changerBatterie(true); const eco = PM.imagesParSeconde() <= 30 && (q === 'ultra' || q === 'haute' ? v.qEff === 'moyenne' : v.qEff === q); PM.changerBatterie(false); return eco && v.qEff === q; }), 'économie de batterie : image allégée sur batterie, rétablie sur secteur');
   await ev(() => { UI.bat.B.joueurs[1].ia = false; });
   const cadre = await ev(() => { const B = UI.bat.B, v = UI.bat.vue, l = B.unites.filter(u => u.j === 0 && u.cle === 'villageois').map(u => v.versEcran(u.x, u.z, 1)); return [Math.min(...l.map(e => e.x)) - 25, Math.min(...l.map(e => e.y)) - 25, Math.max(...l.map(e => e.x)) + 25, Math.max(...l.map(e => e.y)) + 25]; });
   await p.mouse.move(cadre[0], cadre[1]); await p.mouse.down(); await p.mouse.move(cadre[2], cadre[3], { steps: 6 }); await p.mouse.up();
