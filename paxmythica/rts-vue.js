@@ -559,6 +559,7 @@
       const B = this.B, ob = new THREE.Object3D(), coul = new THREE.Color(); if (!this.unitesPretes) return;
       const anneaux = [];
       for (const u of B.unites) {
+        if (u.dans) continue;
         const ennemi = u.j !== this.ji && BT.ennemis(B, this.ji, u.j);
         if (ennemi && this.brouillardEn(u.x, u.z) !== 2 && !u.mort) continue;
         if (u.mort && ennemi && this.brouillardEn(u.x, u.z) === 0) continue;
@@ -593,8 +594,9 @@
     // bateaux : modèle de l'époque posé sur l'eau, qui tangue, coque teintée et pavillon du joueur, sillage
     dessinerBateau(u, ennemi, ob, coul, anneaux) {
       const B = this.B, ep = B.epoque, t = this.temps / 1000, grand = u.cle === 'navire';
-      const nom = grand ? (O.NAVIRES[ep] || O.NAVIRES.antique)[0] : ep === 'moderne' || ep === 'futur' ? 'navire-vedette' : 'navire-barque';
-      const pg = this.partiesGLB(nom, grand ? 11 : 4.6, true); if (!pg) return;
+      const tr = u.cle === 'transport', recent = ep === 'moderne' || ep === 'futur';
+      const nom = grand ? (O.NAVIRES[ep] || O.NAVIRES.antique)[0] : tr ? (recent ? 'navire-vedette' : ep === 'industriel' ? 'navire-galion' : 'navire') : recent ? 'navire-vedette' : 'navire-barque';
+      const pg = this.partiesGLB(nom, grand ? 11 : tr ? 8 : 4.6, true) || this.partiesGLB('navire-barque', tr ? 7 : 4.6, true); if (!pg) return;
       let y = Math.sin(t * 1.3 + u.id) * 0.08, chute = 0; const roulis = Math.sin(t * 0.9 + u.id * 2) * 0.04;
       if (u.mort) { const k = Math.min(1, (B.temps - u.mort) / 4); y -= k * 3.5; chute = k * 0.5; }
       ob.position.set(u.x, y, u.z); ob.rotation.set(chute, u.dir, roulis, 'YXZ'); ob.scale.setScalar(1); ob.updateMatrix();
@@ -666,7 +668,7 @@
     entiteA(sx, sy) {
       const B = this.B; let best = null, bd = 1e9;
       for (const u of B.unites) {
-        if (u.mort) continue; if (u.j !== this.ji && BT.ennemis(B, this.ji, u.j) && this.brouillardEn(u.x, u.z) !== 2) continue;
+        if (u.mort || u.dans) continue; if (u.j !== this.ji && BT.ennemis(B, this.ji, u.j) && this.brouillardEn(u.x, u.z) !== 2) continue;
         const hh = (u.s.cat === 'mythe' ? 2.4 : u.cle === 'cav' ? 1.6 : 1) * ECHELLE_HUMAINS, e = this.versEcran(u.x, u.z, hh); if (!e.devant) continue;
         const r = (16 + u.s.rayon * 10) * Math.min(1.6, 70 / this.cam.d), d = Math.hypot(e.x - sx, e.y - sy); if (d < r && d < bd) { bd = d; best = u; }
       }
@@ -680,7 +682,7 @@
     }
     unitesDans(x0, y0, x1, y1) {
       const B = this.B, l = [], a = Math.min(x0, x1), b = Math.max(x0, x1), c = Math.min(y0, y1), d = Math.max(y0, y1);
-      for (const u of B.unites) { if (u.mort || u.j !== this.ji) continue; const e = this.versEcran(u.x, u.z, 0.9); if (e.devant && e.x >= a && e.x <= b && e.y >= c && e.y <= d) l.push(u); }
+      for (const u of B.unites) { if (u.mort || u.dans || u.j !== this.ji) continue; const e = this.versEcran(u.x, u.z, 0.9); if (e.devant && e.x >= a && e.x <= b && e.y >= c && e.y <= d) l.push(u); }
       return l;
     }
     surEcran(u) { const e = this.versEcran(u.x, u.z, 1), w = this.cv.clientWidth, h = this.cv.clientHeight; return e.devant && e.x > 0 && e.y > 0 && e.x < w && e.y < h; }
@@ -694,15 +696,17 @@
       const coulPv = k => k > 0.6 ? '#5fe36b' : k > 0.3 ? '#f2c94c' : '#f0533e';
       const z = Math.min(1.5, 80 / this.cam.d);
       for (const u of B.unites) {
-        if (u.mort) continue; const montre = this.sel.has(u.id) || this.survol === u.id || (u.touche && B.temps - u.touche < 2.5 && u.pv < u.pvMax);
+        if (u.mort || u.dans) continue; const montre = this.sel.has(u.id) || this.survol === u.id || (u.touche && B.temps - u.touche < 2.5 && u.pv < u.pvMax);
         if (!montre) continue; if (u.j !== this.ji && BT.ennemis(B, this.ji, u.j) && this.brouillardEn(u.x, u.z) !== 2) continue;
         const hh = (u.s.cat === 'mythe' ? HAUTEUR_CREATURE(u.s.pop) : (u.cle === 'cav' ? 2.6 : 2.1) * ECHELLE_HUMAINS) + 0.3, e = this.versEcran(u.x, u.z, hh); if (!e.devant) continue;
         const k = u.pv / u.pvMax; barre(e.x, e.y, Math.max(16, 26 * z * (0.6 + u.s.rayon)), k, coulPv(k));
+        if (u.s.capacite && u.j === this.ji) { const n = BT.contenu(B, u).length; if (n) { ctx.font = '600 12px -apple-system,sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff'; ctx.fillText(`👥 ${n}`, e.x, e.y - 6); } }
         if (u.porte && u.porte.n > 0.5 && this.sel.has(u.id)) { ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(PM.ICONES[u.porte.t] || '', e.x, e.y - 7); }
       }
       for (const b of B.bats) {
         if (b.mort) continue; const vu = b.j === this.ji || this.brouillardEn(b.x, b.z); if (!vu) continue;
-        const sel = this.sel.has(b.id) || this.survol === b.id, chantier = !b.fini && b.j === this.ji, abime = b.touche && B.temps - b.touche < 4;
+        const sel = this.sel.has(b.id) || this.survol === b.id, chantier = !b.fini && b.j === this.ji, abime = b.touche && B.temps - b.touche < 4, gar = b.j === this.ji && b.d.garnison ? BT.contenu(B, b).length : 0;
+        if (gar) { const eg = this.versEcran(b.x, b.z, this.geoBat(b).h + 0.6); if (eg.devant) { ctx.font = '600 12px -apple-system,sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(eg.x - 20, eg.y - 13, 40, 17); ctx.fillStyle = '#ffe9a8'; ctx.fillText(`🛡️ ${gar}`, eg.x, eg.y); } }
         if (!sel && !chantier && !abime && !(b.file.length && b.j === this.ji)) continue;
         const e = this.versEcran(b.x, b.z, this.geoBat(b).h + 1.5); if (!e.devant) continue;
         const lw = Math.max(30, b.taille * 5 * z);

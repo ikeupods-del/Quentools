@@ -192,10 +192,10 @@
     return true;
   }
   BT.ligneLibre = vue;
-  function caseLibreProche(B, cx, cz, vx, vz) {
+  function caseLibreProche(B, cx, cz, vx, vz, rmax = 14) {
     if (marchable(B, cx, cz)) return [cx, cz];
     let best = null, bd = 1e9;
-    for (let r = 1; r < 14 && !best; r++) for (let k = cz - r; k <= cz + r; k++) for (let i = cx - r; i <= cx + r; i++) {
+    for (let r = 1; r < rmax && !best; r++) for (let k = cz - r; k <= cz + r; k++) for (let i = cx - r; i <= cx + r; i++) {
       if (Math.max(Math.abs(i - cx), Math.abs(k - cz)) !== r || !marchable(B, i, k)) continue;
       const d = d2(i, k, vx, vz) + r * r * 4; if (d < bd) { bd = d; best = [i, k]; }
     }
@@ -320,8 +320,71 @@
   function majHash(B) {
     const H = B.hash, m = B.mh; for (const c of H) c.length = 0;
     const mettre = e => { const i = Math.min(m - 1, Math.max(0, Math.floor(e.x / HASH))), k = Math.min(m - 1, Math.max(0, Math.floor(e.z / HASH))); H[k * m + i].push(e); };
-    for (const u of B.unites) if (!u.mort) mettre(u);
+    B.contenus = new Map();
+    for (const u of B.unites) { if (u.mort) continue; if (u.dans) { const l = B.contenus.get(u.dans); if (l) l.push(u); else B.contenus.set(u.dans, [u]); } else mettre(u); }
     for (const b of B.bats) if (!b.mort) mettre(b);
+  }
+
+  // ---------- garnison et transport : une unité abritée (u.dans) quitte la carte jusqu'à sa sortie ----------
+  const contenu = (B, e) => { if (!B.contenus) majHash(B); return (B.contenus.get(e.id) || []).filter(u => !u.mort && u.dans === e.id); };
+  BT.contenu = contenu;
+  const capacite = e => e.sorte === 'b' ? (e.fini && e.d.garnison) || 0 : (e.s && e.s.capacite) || 0;
+  BT.capacite = capacite;
+  BT.place = (B, e) => capacite(e) - contenu(B, e).reduce((n, u) => n + u.s.pop, 0);
+  const peutEntrer = (u, e) => e.sorte === 'b' ? R.GARNISON_CATS.includes(u.s.cat) : !u.s.naval;
+  BT.peutEntrer = peutEntrer;
+  function entrer(B, u, e) {
+    poserOrdre(B, u, null); u.dans = e.id; u.x = e.x; u.z = e.z; u.anim = 'repos';
+    const l = B.contenus.get(e.id); if (l) l.push(u); else B.contenus.set(e.id, [u]);
+    B.evts.push({ type: 'entre', id: u.id, dans: e.id, j: u.j, x: e.x, z: e.z });
+  }
+  // sortie de tous les occupants autour de l'abri (vers x, z si donné) ; un bateau ne débarque que près d'un rivage
+  function ejecter(B, e, x, z, seul) {
+    const l = seul ? [seul] : contenu(B, e); if (!l.length) return 0;
+    const cx = Math.floor(e.x / CEL), cz = Math.floor(e.z / CEL), vx = Math.floor((x != null ? x : e.x) / CEL), vz = Math.floor((z != null ? z : e.z + e.taille) / CEL), sortis = [];
+    for (const u of l) {
+      contexte(B, u); const c = caseLibreProche(B, cx, cz, vx, vz, e.sorte === 'b' ? 14 : 7); contexte(B, null); if (!c) continue;
+      u.dans = 0; u.x = c[0] * CEL + 1 + (B.rnd() - 0.5) * 0.6; u.z = c[1] * CEL + 1 + (B.rnd() - 0.5) * 0.6; u.chemin = null; u.but = null; sortis.push(u);
+      // après l'alerte, chacun reprend son travail
+      if (u.avant && x == null && !u.ordre) { const o = u.avant; u.avant = null; const c2 = o.cible ? B.parId.get(o.cible) : null; if (!o.cible || (c2 && vivant(c2))) poserOrdre(B, u, o); } else u.avant = null;
+    }
+    if (sortis.length) { B.contenus.set(e.id, l.filter(u => u.dans === e.id)); B.evts.push({ type: 'sortie', id: e.id, n: sortis.length, j: e.j, x: e.x, z: e.z }); if (x != null) deplacerGroupe(B, sortis, x, z, false); }
+    return sortis.length;
+  }
+  BT.ejecter = ejecter;
+  // abriter des unités dans un bâtiment ou un bateau du joueur
+  BT.garnison = function (B, j, ids, cibleId) {
+    const e = B.parId.get(cibleId); if (!e || e.mort || e.j !== j || !capacite(e)) return 0;
+    const us = ids.map(i => B.parId.get(i)).filter(u => u && u.sorte === 'u' && u.j === j && !u.mort && !u.dans && u !== e && peutEntrer(u, e));
+    for (const u of us) poserOrdre(B, u, { type: 'entrer', cible: e.id });
+    // le bateau vient chercher ses passagers au plus près d'eux
+    if (us.length && e.sorte === 'u') { const mx = us.reduce((s, u) => s + u.x, 0) / us.length, mz = us.reduce((s, u) => s + u.z, 0) / us.length; contexte(B, e); const c = caseLibreProche(B, Math.floor(mx / CEL), Math.floor(mz / CEL), Math.floor(e.x / CEL), Math.floor(e.z / CEL), 45); contexte(B, null); if (c) poserOrdre(B, e, { type: 'deplacer', x: c[0] * CEL + 1, z: c[1] * CEL + 1 }); }
+    return us.length;
+  };
+  BT.liberer = function (B, j, id) {
+    const e = B.parId.get(id); if (!e || e.j !== j) return { ok: false, raison: 'Rien à faire sortir.' };
+    if (!contenu(B, e).length) return { ok: false, raison: 'Personne à l’intérieur.' };
+    const n = ejecter(B, e); return n ? { ok: true, n } : { ok: false, raison: 'Trop loin du rivage pour débarquer.' };
+  };
+  // cloche : les villageois proches courent s'abriter ; second appel : tout le monde ressort
+  BT.cloche = function (B, j) {
+    const abris = B.bats.filter(b => !b.mort && b.j === j && capacite(b));
+    const dedans = abris.filter(b => contenu(B, b).some(u => u.cle === 'villageois'));
+    if (dedans.length) { for (const b of dedans) ejecter(B, b); return 'fin'; }
+    const reste = new Map(abris.map(b => [b.id, BT.place(B, b)]));
+    for (const u of B.unites) {
+      if (u.mort || u.dans || u.j !== j || u.cle !== 'villageois') continue;
+      let best = null, bd = 55 * 55; for (const b of abris) { const dd = d2(b.x, b.z, u.x, u.z); if (dd < bd && reste.get(b.id) > 0) { bd = dd; best = b; } }
+      if (best) { reste.set(best.id, reste.get(best.id) - 1); const avant = u.ordre && u.ordre.type !== 'entrer' ? Object.assign({}, u.ordre) : null; poserOrdre(B, u, { type: 'entrer', cible: best.id }); u.avant = avant; }
+    }
+    return 'cloche';
+  };
+  function majDedans(B, u, dt) {
+    const e = B.parId.get(u.dans);
+    if (!e || e.mort) { u.dans = 0; return; }
+    u.x = e.x; u.z = e.z;
+    if (e.sorte === 'b') { u.pv = Math.min(u.pvMax, u.pv + u.pvMax * 0.015 * dt); if (u.ordre) { const o = u.ordre; u.ordre = null; ejecter(B, e, null, null, u); if (!u.dans) u.ordre = o; } }
+    else u.ordre = null;
   }
   function autour(B, x, z, r, f) {
     const m = B.mh, i0 = Math.max(0, Math.floor((x - r - 10) / HASH)), i1 = Math.min(m - 1, Math.floor((x + r + 10) / HASH)), k0 = Math.max(0, Math.floor((z - r - 10) / HASH)), k1 = Math.min(m - 1, Math.floor((z + r + 10) / HASH));
@@ -351,9 +414,21 @@
   const ordreRang = u => ({ mythe: 0, heros: 1, inf: 2, cav: 3, milice: 4, archer: 5, siege: 6 }[u.s.cat] || 4);
   // ordre selon ce qui est sous la souris (clic droit) : attaquer, récolter, construire, prier, cultiver, marcher
   BT.ordreContexte = function (B, j, ids, x, z, cibleId, attaqueMarche) {
-    const us = ids.map(i => B.parId.get(i)).filter(u => u && u.sorte === 'u' && u.j === j && !u.mort); if (!us.length) return null;
+    const us = ids.map(i => B.parId.get(i)).filter(u => u && u.sorte === 'u' && u.j === j && !u.mort && !u.dans); if (!us.length) return null;
     const c = cibleId ? B.parId.get(cibleId) : null, J = B.joueurs[j];
     let type = 'deplacer';
+    if (c && vivant(c) && c.j === j && capacite(c) && c !== us[0]) {
+      // monter à bord d'un transport (toutes les unités à terre), s'abriter dans une tour, une forteresse ou un centre (soldats)
+      const ok = us.filter(u => peutEntrer(u, c) && (c.sorte === 'u' || u.cle !== 'villageois') && u !== c);
+      if (ok.length && (c.sorte === 'u' || ok.length === us.length)) { BT.garnison(B, j, ok.map(u => u.id), c.id); const reste = us.filter(u => !ok.includes(u)); if (reste.length) deplacerGroupe(B, reste, x, z, attaqueMarche); return 'entrer'; }
+    }
+    // un transport chargé qui vise la terre y débarque ses passagers
+    const tr = us.filter(u => u.s.capacite && contenu(B, u).length);
+    if (tr.length && (!c || c.sorte === 'b' || c.sorte === 'r') && (CTX.naval = true, CTX.j = j, !marchableXZ(B, x, z))) {
+      contexte(B, null); for (const u of tr) poserOrdre(B, u, { type: 'debarquer', x, z });
+      const reste = us.filter(u => !tr.includes(u)); if (reste.length) deplacerGroupe(B, reste, x, z, attaqueMarche); return 'debarquer';
+    }
+    contexte(B, null);
     if (c && vivant(c)) {
       if (c.sorte !== 'r' && ennemis(B, j, c.j)) { if (treve(B)) return 'treve'; for (const u of us) poserOrdre(B, u, { type: 'attaquer', cible: c.id }); return 'attaquer'; }
       const vill = us.filter(u => u.cle === 'villageois' && !(c.sorte === 'r' && c.eau)), peche = us.filter(u => u.cle === 'peche'), autres = us.filter(u => !vill.includes(u) && !peche.includes(u));
@@ -531,7 +606,9 @@
     if (e.pv <= 0) mourir(B, e, j);
   }
   function mourir(B, e, par) {
-    if (e.mort) return; e.mort = B.temps; e.pv = 0;
+    if (e.mort) return;
+    if (B.contenus && B.contenus.has(e.id)) { if (e.sorte === 'b') ejecter(B, e); else for (const u of contenu(B, e)) { u.dans = 0; mourir(B, u, par); } }
+    e.mort = B.temps; e.pv = 0;
     if (e.sorte === 'u') { B.joueurs[e.j].stats.pertes++; if (par != null && par >= 0 && par !== e.j) B.joueurs[par].stats.tues++; if (e.ordre && e.ordre.type === 'recolter') { const c = B.parId.get(e.ordre.cible); if (c && c.occupant === e.id) c.occupant = 0; } B.evts.push({ type: 'mort', id: e.id, x: e.x, z: e.z, cle: e.cle, j: e.j }); }
     else if (e.sorte === 'b') { marquer(B, e, Math.floor(e.taille / CEL / 2), LIBRE); B.evts.push({ type: 'ruine', id: e.id, x: e.x, z: e.z, taille: e.taille, j: e.j }); if (par != null && par >= 0) B.joueurs[par].stats.tues++; }
     majPop(B);
@@ -554,7 +631,7 @@
       if (p.t >= p.duree) {
         p.fini = true;
         if (p.zone) { autour(B, p.x, p.z, p.zone, e => { if (!ennemis(B, p.j, e.j)) return; const de = e.sorte === 'b' ? distBord({ x: p.x, z: p.z }, e) : Math.hypot(e.x - p.x, e.z - p.z); if (de <= p.zone) blesser(B, e, p.deg * (e.sorte === 'b' ? 1 : 0.25) * (e === c ? 1 : 0.6), p.j); }); B.evts.push({ type: 'impact', sorte: p.type, x: p.x, z: p.z }); }
-        else if (c && !c.mort && Math.hypot(c.x - p.x, c.z - p.z) < 3) blesser(B, c, p.deg, p.j);
+        else if (c && !c.mort && !c.dans && Math.hypot(c.x - p.x, c.z - p.z) < 3) blesser(B, c, p.deg, p.j);
       }
     }
     B.proj = B.proj.filter(p => !p.fini);
@@ -590,7 +667,7 @@
   // écartement : les unités ne se marchent pas dessus
   function separer(B) {
     for (const u of B.unites) {
-      if (u.mort) continue; const r = u.s.rayon;
+      if (u.mort || u.dans) continue; const r = u.s.rayon;
       autour(B, u.x, u.z, 3, v => {
         if (v === u || v.sorte !== 'u' || v.id < u.id || !!v.s.naval !== !!u.s.naval) return;
         const dx = v.x - u.x, dz = v.z - u.z, dd = dx * dx + dz * dz, m = r + v.s.rayon; if (dd >= m * m || dd < 1e-6) { if (dd < 1e-6) { v.x += 0.05; } return; }
@@ -655,6 +732,25 @@
     }
     if (o.type === 'deposer') { const b = B.parId.get(o.cible); if (!b || b.mort) { u.ordre = null; return; } if (contact(u, b)) { deposer(B, u); u.ordre = null; } else { const p = approche(B, u, b); if (!p) { u.ordre = null; return; } viser(B, u, p[0], p[1]); marcher(B, u, dt); } return; }
     if (o.type === 'recolter') recolter(B, u, o, dt);
+    if (o.type === 'entrer') {
+      const c = B.parId.get(o.cible);
+      if (!c || c.mort || c.j !== u.j || BT.place(B, c) < u.s.pop) { u.ordre = null; u.anim = 'repos'; return; }
+      if (c.sorte === 'b') { if (contact(u, c)) { entrer(B, u, c); return; } const p = approche(B, u, c); if (!p) { u.ordre = null; return; } viser(B, u, p[0], p[1]); marcher(B, u, dt); return; }
+      // bateau : on gagne le rivage le plus proche de lui et on monte à bord quand il est là
+      if (Math.hypot(u.x - c.x, u.z - c.z) < c.s.rayon + u.s.rayon + 6.5) { entrer(B, u, c); return; }
+      if (!o.quai || B.tick % 40 === u.id % 40) { const q = caseLibreProche(B, Math.floor(c.x / CEL), Math.floor(c.z / CEL), Math.floor(u.x / CEL), Math.floor(u.z / CEL), 10); o.quai = q ? [q[0] * CEL + 1, q[1] * CEL + 1] : null; }
+      if (!o.quai) { u.ordre = null; u.anim = 'repos'; return; }
+      viser(B, u, o.quai[0], o.quai[1]); if (marcher(B, u, dt)) u.anim = 'repos';
+      return;
+    }
+    if (o.type === 'debarquer') {
+      // le bateau gagne l'eau la plus proche du point visé, puis tout le monde descend vers ce point
+      if (!o.eau) { const c = caseLibreProche(B, Math.floor(o.x / CEL), Math.floor(o.z / CEL), Math.floor(u.x / CEL), Math.floor(u.z / CEL), 45); if (!c) { u.ordre = null; return; } o.eau = [c[0] * CEL + 1, c[1] * CEL + 1]; }
+      const arrive = Math.hypot(u.x - o.eau[0], u.z - o.eau[1]) < 2.5;
+      if (!arrive) { viser(B, u, o.eau[0], o.eau[1]); if (!marcher(B, u, dt)) return; }
+      const x = o.x, z = o.z; u.ordre = null; u.chemin = null; u.anim = 'repos'; ejecter(B, u, x, z);
+      return;
+    }
   }
   function apresConstruction(B, u, b) {
     if (b.cle === 'ferme' && !b.occupant) { poserOrdre(B, u, { type: 'recolter', cible: b.id }); return; }
@@ -760,7 +856,8 @@
       if (!cibles.length) { b.cd = 0.5; return; }
       cibles.sort((p, q) => d2(p.x, p.z, b.x, b.z) - d2(q.x, q.z, b.x, b.z));
       const proj = R.PROJ_EPOQUE[B.epoque] ? R.PROJ_EPOQUE[B.epoque].fleche : 'fleche';
-      for (let k = 0; k < (b.d.fleches || 1); k++) { const c = cibles[k % cibles.length]; tirer(B, b.id, b.j, b.x, BT.hauteur(B, b.x, b.z) + b.taille * 0.5, b.z, c, b.d.att * (c.s.cat === 'siege' ? 0.4 : 1), proj); }
+      const nf = (b.d.fleches || 1) + (B.contenus && B.contenus.has(b.id) ? Math.floor(contenu(B, b).reduce((n, u) => n + (u.cle === 'villageois' ? 1 / 3 : 1), 0)) : 0);
+      for (let k = 0; k < nf; k++) { const c = cibles[k % cibles.length]; tirer(B, b.id, b.j, b.x, BT.hauteur(B, b.x, b.z) + b.taille * 0.5, b.z, c, b.d.att * (c.s.cat === 'siege' ? 0.4 : 1), proj); }
     }
   }
   function sortir(B, b, cle) {
@@ -830,7 +927,7 @@
       const u = B.parId.get(B.fileChemins.shift()); if (!u || u.mort || !u.attente || !u.but) continue;
       contexte(B, u); u.attente = false; u.chemin = aEtoile(B, u.x, u.z, u.but[0], u.but[1]) || [[u.but[0], u.but[1]]]; u.ci = 0; contexte(B, null);
     }
-    for (const u of B.unites) if (!u.mort) majUnite(B, u, dt);
+    for (const u of B.unites) if (!u.mort) { if (u.dans) majDedans(B, u, dt); else majUnite(B, u, dt); }
     for (const b of B.bats) if (!b.mort) majBat(B, b, dt);
     separer(B);
     majProjectiles(B, dt); majEffets(B); majAnimaux(B, dt);
@@ -896,13 +993,19 @@
   function ia(B, J) {
     const j = J.id, D = R.DIFFICULTES[J.difficulte], C = J.cerveau;
     const mes = B.unites.filter(u => !u.mort && u.j === j), bats = B.bats.filter(b => !b.mort && b.j === j);
-    const vill = mes.filter(u => u.cle === 'villageois'), mil = mes.filter(u => u.cle !== 'villageois' && !u.s.naval), flotte = mes.filter(u => u.s.naval);
+    const vill = mes.filter(u => u.cle === 'villageois'), mil = mes.filter(u => u.cle !== 'villageois' && !u.s.naval && !u.dans), flotte = mes.filter(u => u.s.naval);
     const centre = bats.find(b => b.cle === 'centre' && b.fini) || bats.find(b => b.cle === 'centre');
+    // cloche : villageois à l'abri quand la ville est envahie, retour au travail quand elle est libre
+    if (centre && centre.fini) {
+      let n = 0; autour(B, centre.x, centre.z, 30, e => { if (e.sorte === 'u' && ennemis(B, j, e.j) && !e.s.naval && e.cle !== 'villageois') n++; });
+      if (n >= 8 && !C.alerte && J.difficulte > 0 && B.temps > (C.finAlerte || 0) + 90) { C.alerte = B.temps; BT.cloche(B, j); }
+      else if (C.alerte && (n <= 2 || B.temps - C.alerte > 60) && B.temps - C.alerte > 12) { C.alerte = 0; C.finAlerte = B.temps; if (vill.some(u => u.dans)) BT.cloche(B, j); }
+    }
     const nb = cle => bats.filter(b => b.cle === cle).length, enCours = bats.filter(b => !b.fini);
     const base = centre || bats[0] || vill[0]; if (!base) return;
     const bx = base.x, bz = base.z;
     const construire = (cle, x, z, n) => {
-      if (!x) return false; const libres = vill.filter(u => !u.ordre || u.ordre.type === 'recolter').sort((a, b) => d2(a.x, a.z, x, z) - d2(b.x, b.z, x, z)).slice(0, n || 2);
+      if (!x) return false; const libres = vill.filter(u => !u.dans && (!u.ordre || u.ordre.type === 'recolter')).sort((a, b) => d2(a.x, a.z, x, z) - d2(b.x, b.z, x, z)).slice(0, n || 2);
       if (!libres.length) return false; const r = BT.poser(B, j, cle, x, z, libres.map(u => u.id)); return r.ok;
     };
     // chantier abandonné depuis 40 s : démoli (remboursé) pour reconstruire ailleurs
@@ -943,7 +1046,7 @@
     const occ = new Map(); for (const u of vill) if (u.ordre && u.ordre.type === 'recolter') occ.set(u.ordre.cible, (occ.get(u.ordre.cible) || 0) + 1);
     const CAP = { arbre: 2, baies: 2, mine: 7, mouton: 4, vache: 4 }, pleins = new Set(); for (const [id, k] of occ) { const r = B.parId.get(id); if (r && r.sorte === 'r' && k >= (CAP[r.sous] || 3)) pleins.add(id); }
     for (const u of vill) {
-      if (u.ordre) continue;
+      if (u.ordre || u.dans) continue;
       if (temple && J.pantheon === 'grecs' && compte.faveur < Math.min(5, Math.floor(vill.length / 9)) && J.res.faveur < 120) { poserOrdre(B, u, { type: 'prier', cible: temple.id }); compte.faveur++; continue; }
       const t = Object.keys(part).sort((a, b) => (compte[a] / Math.max(1, vill.length) - part[a]) - (compte[b] / Math.max(1, vill.length) - part[b]))[0];
       let r = ressourceProche(B, u.x, u.z, t, 70, j, null, pleins);
@@ -993,7 +1096,7 @@
     const port = bats.find(b => b.cle === 'port');
     if (!port) {
       if (vill.length < 12 || J.res.bois < 150 || C.essaiPort > B.temps) return; C.essaiPort = B.temps + 25;
-      for (let r = 14; r < 80 && !C.portPose; r += 12) { const p = trouverPlace(B, J, 'port', bx, bz, r, r + 12); if (p) { const libres = vill.filter(u => !u.ordre || u.ordre.type === 'recolter').slice(0, 3); if (libres.length && BT.poser(B, j, 'port', p[0], p[1], libres.map(u => u.id)).ok) break; } }
+      for (let r = 14; r < 80 && !C.portPose; r += 12) { const p = trouverPlace(B, J, 'port', bx, bz, r, r + 12); if (p) { const libres = vill.filter(u => !u.dans && (!u.ordre || u.ordre.type === 'recolter')).slice(0, 3); if (libres.length && BT.poser(B, j, 'port', p[0], p[1], libres.map(u => u.id)).ok) break; } }
       return;
     }
     if (!port.fini) return;
@@ -1027,6 +1130,8 @@
     if (D.ageEnnemi) for (const J of B.joueurs.slice(1)) { ages(J, D.ageEnnemi); Object.assign(J.res, { nourriture: 1200, bois: 1200, or: 1200, faveur: 50 }); }
     for (const [j, cle, n] of D.unites || []) { const [x, z] = B.carte.departs[j]; for (let k = 0; k < n; k++) { const a = k / n * 6.28, c = caseLibreProche(B, Math.floor((x + 14 + Math.cos(a) * 3) / CEL), Math.floor((z + Math.sin(a) * 3) / CEL), 0, 0); if (c) ajouterUnite(B, j, cle, c[0] * CEL + 1, c[1] * CEL + 1); } }
     def.adversaires.forEach((a, i) => { if (a.muraille) muraille(B, i + 1, a.muraille); });
+    // maisons de départ : la population de l'armée offerte tient sous le plafond
+    majPop(B); { const [cx, cz] = B.carte.departs[0]; for (let k = 0; k < 12 && J0.pop + 5 > J0.popMax; k++) { const p = trouverPlace(B, J0, 'maison', cx, cz, 12, 34); if (!p) break; ajouterBat(B, 0, 'maison', p[0], p[1], true); majPop(B); } }
     B.joueurs.forEach(J => { J.stats.formees = 0; });
     B.mission = { id: def.id, objectifs: def.objectifs.map(o => Object.assign({ fait: false }, o)), vagues: (def.vagues || []).map(v => Object.assign({ fait: false }, v)) };
     majPop(B); majBrouillard(B);
@@ -1088,7 +1193,7 @@
 
   // ---------- enregistrement ----------
   // la carte se recrée depuis sa graine ; on garde les entités, les ressources entamées, les joueurs et la mission
-  const CHAMPS_U = ['id', 'cle', 'j', 'x', 'z', 'dir', 'pv', 'pvMax', 'ordre', 'porte', 'invoque', 'gele', 'lent', 'cd', 'mort', 'tNe'];
+  const CHAMPS_U = ['id', 'cle', 'j', 'x', 'z', 'dir', 'pv', 'pvMax', 'ordre', 'porte', 'invoque', 'gele', 'lent', 'cd', 'mort', 'tNe', 'dans', 'avant'];
   const CHAMPS_B = ['id', 'cle', 'j', 'x', 'z', 'pv', 'pvMax', 'fini', 'prog', 'file', 'rally', 'invuln', 'garde', 'occupant', 'payé', 'dir', 'cd', 'tNe', 'mort'];
   const garder = (e, l) => { const o = {}; for (const k of l) if (e[k] !== undefined) o[k] = e[k]; return o; };
   BT.sauver = function (B) {

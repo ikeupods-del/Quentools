@@ -163,7 +163,7 @@
     if (!S.mode || S.mode.type !== 'mur') S.vue.fantomeMur = null;
     defilement(dt);
     const ev = B.evts.splice(0); B.evtsVue = (B.evtsVue || []).concat(ev); evenementsJeu(ev);
-    S.sel = S.sel.filter(id => { const e = B.parId.get(id); return e && !e.mort && (e.sorte !== 'r' || e.qte > 0); });
+    S.sel = S.sel.filter(id => { const e = B.parId.get(id); return e && !e.mort && !e.dans && (e.sorte !== 'r' || e.qte > 0); });
     const v = S.vue; v.sel = new Set(S.sel); v.survol = S.survol;
     const bs = selBatiment(); v.ralliement = bs && bs.rally && bs.j === B.joueur ? bs.rally : null;
     v.dessiner(dt);
@@ -264,7 +264,7 @@
     else choisir([en.id], shift && en.sorte === 'u' && en.j === B.joueur);
     son('clic');
   }
-  function unitesChoisies() { const B = S.B; return S.sel.map(i => B.parId.get(i)).filter(u => u && u.sorte === 'u' && u.j === B.joueur && !u.mort); }
+  function unitesChoisies() { const B = S.B; return S.sel.map(i => B.parId.get(i)).filter(u => u && u.sorte === 'u' && u.j === B.joueur && !u.mort && !u.dans); }
   function selBatiment() { const B = S.B; if (!B || S.sel.length !== 1) return null; const b = B.parId.get(S.sel[0]); return b && b.sorte === 'b' ? b : null; }
   function clicDroit(p, shift) {
     const B = S.B, en = S.vue.entiteA(p.x, p.y), pt = S.vue.pointSol(p.x, p.y), us = unitesChoisies();
@@ -273,6 +273,8 @@
     if (!us.length || (!pt && !en)) return;
     const x = en ? en.x : pt.x, z = en ? en.z : pt.z, t = BT.ordreContexte(B, B.joueur, us.map(u => u.id), x, z, en ? en.id : 0, false);
     if (t === 'treve') { refusTreve(); return; }
+    if (t === 'entrer') { message(en && en.sorte === 'u' ? 'Embarquement : les unités rejoignent le navire.' : 'Les unités s’abritent dans le bâtiment.'); }
+    else if (t === 'debarquer') message('Le navire gagne le rivage pour débarquer.');
     S.vue.marqueOrdre(x, z, t === 'attaquer'); son(t === 'attaquer' ? 'coup' : 'ordre'); void shift;
   }
   function clicMode(p, shift) {
@@ -281,6 +283,11 @@
       const ids = unitesChoisies().filter(u => u.cle === 'villageois').map(u => u.id), r = BT.poser(B, B.joueur, M.cle, pt.x, pt.z, ids);
       if (!r.ok) { message(r.raison, 'ko'); son('refus'); return; }
       son('ok'); S.vue.marqueOrdre(r.bat.x, r.bat.z, false); if (!shift) { S.mode = null; S.vue.fantome = null; }
+    } else if (M.type === 'garnison') {
+      const en = S.vue.entiteA(p.x, p.y), us = unitesChoisies();
+      if (!en || en.j !== B.joueur || !BT.capacite(en)) { message('Clique une tour, une forteresse, un centre-ville ou un navire de transport à toi.', 'ko'); son('refus'); return; }
+      const n = BT.garnison(B, B.joueur, us.map(u => u.id), en.id); if (!n) { message(en.sorte === 'b' ? 'Seuls les villageois, l’infanterie, les archers et les héros s’abritent dans un bâtiment.' : 'Ces unités ne peuvent pas monter à bord.', 'ko'); son('refus'); return; }
+      son('ordre'); S.vue.marqueOrdre(en.x, en.z, false); S.mode = null;
     } else if (M.type === 'mur') {
       if (!M.debut) { M.debut = { x: pt.x, z: pt.z }; son('clic'); majFantome(p); return; }
       const ids = unitesChoisies().filter(u => u.cle === 'villageois').map(u => u.id), r = BT.poserMur(B, B.joueur, M.debut.x, M.debut.z, pt.x, pt.z, ids);
@@ -345,7 +352,7 @@
   document.addEventListener('keyup', e => S.touches.delete(e.key));
   window.addEventListener('blur', () => S.touches.clear());
   function centrerSel() { const B = S.B, l = S.sel.map(i => B.parId.get(i)).filter(Boolean); if (!l.length) return; S.vue.centrerXZ(l.reduce((s, u) => s + u.x, 0) / l.length, l.reduce((s, u) => s + u.z, 0) / l.length); }
-  function inactifs() { const B = S.B; return B.unites.filter(u => !u.mort && u.j === B.joueur && u.cle === 'villageois' && !u.ordre); }
+  function inactifs() { const B = S.B; return B.unites.filter(u => !u.mort && !u.dans && u.j === B.joueur && u.cle === 'villageois' && !u.ordre); }
   function villageoisInactif() { const l = inactifs(); if (!l.length) return; S.iInactif = ((S.iInactif || 0) + 1) % l.length; const u = l[S.iInactif]; choisir([u.id]); S.vue.centrerXZ(u.x, u.z); }
   ACT['b-inactif'] = villageoisInactif;
 
@@ -398,13 +405,15 @@
   const tache = u => { const o = u.ordre, B = S.B; if (!o) return 'Au repos'; const c = o.cible && B.parId.get(o.cible); return { deplacer: o.attaque ? 'Marche à l’attaque' : 'En marche', attaquer: 'Combat', construire: c && c.fini ? 'Répare' : 'Construit', prier: 'Prie', deposer: 'Dépose', recolter: c ? (c.sorte === 'b' ? 'Cultive' : c.t === 'bois' ? 'Coupe du bois' : c.t === 'or' ? 'Extrait de l’or' : c.animal ? 'Chasse' : 'Cueille') : 'Récolte' }[o.type] || ''; };
   function panneauSel() {
     const B = S.B, l = S.sel.map(i => B.parId.get(i)).filter(Boolean), box = $('#batSel');
-    const sig = l.map(e => e.id + ':' + Math.round(e.pv || e.qte || 0) + ':' + (e.file ? e.file.length + ':' + Math.round((e.file[0] || {}).t || 0) : '') + ':' + (e.ordre ? e.ordre.type : '') + ':' + (e.prog != null ? Math.round(e.prog * 50) : '') + (e.porte ? e.porte.n | 0 : '')).join('|') + (B.joueurs[B.joueur].ageEnCours ? Math.round(B.joueurs[B.joueur].ageEnCours.t) : '');
+    const occ = e => BT.capacite(e) && e.j === B.joueur ? BT.contenu(B, e) : null;
+    const sig = l.map(e => e.id + ':' + (occ(e) || []).length + ':' + Math.round(e.pv || e.qte || 0) + ':' + (e.file ? e.file.length + ':' + Math.round((e.file[0] || {}).t || 0) : '') + ':' + (e.ordre ? e.ordre.type : '') + ':' + (e.prog != null ? Math.round(e.prog * 50) : '') + (e.porte ? e.porte.n | 0 : '')).join('|') + (B.joueurs[B.joueur].ageEnCours ? Math.round(B.joueurs[B.joueur].ageEnCours.t) : '');
     if (sig === S.sigSel) return; S.sigSel = sig;
     if (!l.length) { box.innerHTML = `<div class="rts-vide">Choisis une unité ou un bâtiment.<br><small>Glisse un cadre pour en choisir plusieurs, double-clic pour toutes celles du même genre.</small></div>`; return; }
     const pv = e => e.pvMax ? `<div class="rts-pv"><i style="width:${Math.max(0, e.pv / e.pvMax * 100)}%;background:${e.pv / e.pvMax > 0.6 ? '#5fe36b' : e.pv / e.pvMax > 0.3 ? '#f2c94c' : '#f0533e'}"></i></div><small>${Math.ceil(e.pv)} / ${e.pvMax}</small>` : '';
     if (l.length === 1) {
       const e = l[0], J = e.j >= 0 ? B.joueurs[e.j] : null, coul = J ? J.couleur : '#d9b56a';
       let det = '';
+      const oc = occ(e), detOcc = oc ? `<p>${e.sorte === 'u' ? '👥 Passagers' : '🛡️ Garnison'} : ${oc.reduce((n, u) => n + u.s.pop, 0)} / ${BT.capacite(e)}${oc.length ? ' — ' + [...oc.reduce((m, u) => m.set(u.cle, (m.get(u.cle) || 0) + 1), new Map())].map(([k, n]) => `${R.emojiUnite(J.pantheon, k)}×${n}`).join(' ') : ''}</p>` : '';
       if (e.sorte === 'u') { const s = e.s; det = `<p>⚔️ ${Math.round(s.att)} · ${s.portee ? '🏹 ' + s.portee + ' m · ' : ''}👟 ${s.vitesse.toFixed(1)} m/s · ${esc(PM.CATEGORIES[s.cat] || '')}</p><p><i>${esc(tache(e))}</i>${e.porte && e.porte.n > 0.5 ? ` · porte ${Math.floor(e.porte.n)} ${PM.ICONES[e.porte.t]}` : ''}</p>`; }
       else if (e.sorte === 'b') {
         if (!e.fini) det = `<p>Construction : ${Math.round(e.prog * 100)} %${e.j === B.joueur ? ' — envoie des villageois (clic droit) pour aller plus vite.' : ''}</p>`;
@@ -415,6 +424,7 @@
             (e.file.length ? `<div class="rts-file">${e.file.map((f, i) => `<button class="rts-mini" data-act="b-annuler" data-v="${i}" title="Annuler (rembourse)">${R.emojiUnite(J.pantheon, f.cle)}${i === 0 ? `<i style="width:${Math.min(100, f.t / BT.stats(B, e.j, f.cle).temps * 100)}%"></i>` : ''}</button>`).join('')}</div>${e.attentePop ? '<p class="rouge">Population pleine : bâtis des maisons.</p>' : ''}` : '');
         }
       } else det = `<p>${PM.ICONES[e.t] || ''} ${Math.ceil(e.qte)} restant${e.animal && e.vivant ? ' — à chasser' : ''}</p>`;
+      det += detOcc;
       box.innerHTML = `<div class="rts-portrait" style="border-color:${esc(coul)}">${emojiEntite(e)}</div><div class="rts-info"><h3>${esc(nomEntite(e))}</h3>${J ? `<p class="rts-proprio"><span class="pastille" style="background:${esc(J.couleur)}"></span> ${esc(J.nom)}</p>` : ''}${pv(e)}${det}</div>`;
       return;
     }
@@ -432,12 +442,17 @@
       l.forEach((cle, i) => { const d = R.BATIMENTS[cle], c = BT.coutBat(B, B.joueur, cle), verrou = J.age < d.age; cases[i] = { act: 'b-construire', v: cle, em: d.emoji, titre: `${R.nomBat(cle)} — ${coutTxt(c)}${verrou ? ' · ' + PM.AGES[d.age].nom : ''}`, ko: verrou || !BT.assez(B, B.joueur, c), verrou }; });
       cases[S.page === 'mil' ? 9 : 9] = S.page === 'mil' ? { act: 'b-page', v: 'eco', em: '🏠', titre: 'Bâtiments de l’économie' } : { act: 'b-page', v: 'mil', em: '⚔️', titre: 'Bâtiments militaires' };
     }
-    if (us.length && !b) { cases[10] = { act: 'b-stop', em: '✋', titre: 'Arrêter' }; if (us.some(u => u.cle !== 'villageois')) cases[11] = { act: 'b-attaque', em: '🗡️', titre: 'Marche à l’attaque : clique un lieu, les unités combattent en chemin' }; cases[14] = { act: 'b-detruire', em: '🗑️', titre: 'Supprimer (Suppr)' }; }
+    if (us.length && !b) {
+      if (us.some(u => !u.s.naval)) cases[12] = { act: 'b-garnison', em: '🛡️', titre: 'S’abriter : clique ensuite une tour, une forteresse, un centre-ville ou un navire de transport (ou clic droit dessus)' };
+      const tr = us.filter(u => u.s.capacite && BT.contenu(B, u).length); if (tr.length) cases[13] = { act: 'b-debarquer', em: '⚓', titre: 'Faire descendre les passagers ici (près d’un rivage) — ou clic droit sur la terre' };
+      cases[10] = { act: 'b-stop', em: '✋', titre: 'Arrêter' }; if (us.some(u => u.cle !== 'villageois')) cases[11] = { act: 'b-attaque', em: '🗡️', titre: 'Marche à l’attaque : clique un lieu, les unités combattent en chemin' }; cases[14] = { act: 'b-detruire', em: '🗑️', titre: 'Supprimer (Suppr)' }; }
     if (b && b.j === B.joueur) {
       if (b.fini) {
         BT.formables(B, b).forEach((cle, i) => { if (i > 8) return; const s = BT.stats(B, B.joueur, cle), r = BT.peutFormer(B, b, cle); cases[i] = { act: 'b-former', v: cle, em: R.emojiUnite(J.pantheon, cle), titre: `${R.nomUnite(J.pantheon, cle)} — ${coutTxt(s.cout)} · ${s.temps} s${!r.ok ? ' (' + r.raison + ')' : ''}`, ko: !r.ok, verrou: (s.age || 0) > J.age }; });
         if (b.cle === 'centre' && J.age < 3) { const a = J.age + 1, r = BT.peutAvancer(B, B.joueur); cases[9] = { act: 'b-age', em: '🏛️', titre: `${PM.AGES[a].nom} — ${coutTxt(R.AGES[a].cout)}${!r.ok ? ' (' + r.raison + ')' : ''}`, ko: !r.ok }; }
         if (b.d.forme) cases[10] = { act: 'b-ralliement', em: '🚩', titre: 'Point de ralliement (ou clic droit)' };
+        if (b.d.garnison) { const n = BT.contenu(B, b).length; if (n) cases[11] = { act: 'b-liberer', em: '🚪', titre: `Faire sortir la garnison (${n})` }; }
+        if (b.cle === 'centre') { const dedans = B.bats.some(x => !x.mort && x.j === B.joueur && BT.contenu(B, x).some(u => u.cle === 'villageois')); cases[12] = { act: 'b-cloche', em: '🔔', titre: dedans ? 'Fin de l’alerte : les villageois ressortent' : 'Sonner la cloche : les villageois proches s’abritent (chaque abrité tire une flèche)' }; }
       }
       cases[14] = { act: 'b-detruire', em: b.fini ? '🗑️' : '✖️', titre: b.fini ? 'Démolir' : 'Annuler la construction (remboursée si rien n’est bâti)' };
     }
@@ -455,6 +470,10 @@
   ACT['b-stop'] = () => { BT.arreter(S.B, S.B.joueur, S.sel); };
   ACT['b-attaque'] = () => { S.mode = { type: 'attaque' }; majCurseur(); };
   ACT['b-ralliement'] = () => { S.mode = { type: 'ralliement' }; majCurseur(); };
+  ACT['b-garnison'] = () => { S.mode = { type: 'garnison' }; majCurseur(); message('Clique l’abri : tour, forteresse, centre-ville ou navire de transport.'); };
+  ACT['b-liberer'] = () => { const b = selBatiment(); if (!b) return; const r = BT.liberer(S.B, S.B.joueur, b.id); if (!r.ok) { message(r.raison, 'ko'); son('refus'); } else son('ordre'); S.sigGrille = S.sigSel = ''; majHud(true); };
+  ACT['b-debarquer'] = () => { const B = S.B; let n = 0, raison = ''; for (const u of unitesChoisies().filter(u => u.s.capacite)) { const r = BT.liberer(B, B.joueur, u.id); if (r.ok) n += r.n; else raison = r.raison; } if (!n) { message(raison || 'Personne à bord.', 'ko'); son('refus'); } else { message(`${n} passager${n > 1 ? 's' : ''} débarqué${n > 1 ? 's' : ''}.`, 'ok'); son('ordre'); } S.sigGrille = S.sigSel = ''; majHud(true); };
+  ACT['b-cloche'] = () => { const r = BT.cloche(S.B, S.B.joueur); message(r === 'fin' ? 'Fin de l’alerte : les villageois reprennent le travail.' : '🔔 La cloche sonne : les villageois courent s’abriter !', r === 'fin' ? 'ok' : 'ko'); son(r === 'fin' ? 'ok' : 'guerre'); S.sigGrille = ''; majHud(true); };
   ACT['b-detruire'] = () => { BT.detruire(S.B, S.B.joueur, S.sel); choisir([]); };
   ACT['b-age'] = () => {
     const B = S.B, J = B.joueurs[B.joueur], r = BT.peutAvancer(B, B.joueur); if (!r.ok) { message(r.raison, 'ko'); son('refus'); return; }
@@ -487,7 +506,7 @@
     // ressources (or, baies), bâtiments, unités
     for (const r of B.res) { if (r.qte <= 0 || r.sous === 'arbre' || !BT.connu(B, B.joueur, r.x, r.z)) continue; c.fillStyle = r.sous === 'mine' ? '#ffd24a' : r.animal ? '#f5efe0' : '#e0475a'; c.fillRect(r.x * k - 1.5, r.z * k - 1.5, r.sous === 'mine' ? 4 : 3, r.sous === 'mine' ? 4 : 3); }
     for (const b of B.bats) { if (b.mort || (b.j !== B.joueur && !BT.connu(B, B.joueur, b.x, b.z))) continue; const t = Math.max(3, b.taille * k); c.fillStyle = B.joueurs[b.j].couleur; c.fillRect(b.x * k - t / 2, b.z * k - t / 2, t, t); c.strokeStyle = 'rgba(0,0,0,.6)'; c.strokeRect(b.x * k - t / 2, b.z * k - t / 2, t, t); }
-    for (const u of B.unites) { if (u.mort || (BT.ennemis(B, B.joueur, u.j) && !BT.visible(B, B.joueur, u.x, u.z))) continue; c.fillStyle = S.sel.includes(u.id) ? '#ffffff' : B.joueurs[u.j].couleur; c.fillRect(u.x * k - 1.2, u.z * k - 1.2, 2.6, 2.6); }
+    for (const u of B.unites) { if (u.mort || u.dans || (BT.ennemis(B, B.joueur, u.j) && !BT.visible(B, B.joueur, u.x, u.z))) continue; c.fillStyle = S.sel.includes(u.id) ? '#ffffff' : B.joueurs[u.j].couleur; c.fillRect(u.x * k - 1.2, u.z * k - 1.2, 2.6, 2.6); }
     // brouillard
     const m = B.mv, t = n / m; c.fillStyle = 'rgba(0,0,0,.92)';
     for (let z = 0; z < m; z++) for (let x = 0; x < m; x++) { const o = z * m + x; if (J.vis[o] === 2) continue; c.fillStyle = J.connu[o] ? 'rgba(0,0,0,.45)' : 'rgba(6,5,4,.97)'; c.fillRect(x * t, z * t, t + 0.6, t + 0.6); }

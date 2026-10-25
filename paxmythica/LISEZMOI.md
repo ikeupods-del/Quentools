@@ -17,7 +17,9 @@ Jeu de stratégie pour Mac façon *Age of Mythology* : batailles en temps réel 
 - **📜 Campagne** (menu principal) : six missions à la suite — fonder Mégara, repousser les pillards du Nord par vagues, chasser les envahisseurs du Nil, gagner la mer intérieure, prendre un château fortifié, bâtir l’ascenseur spatial. Objectifs affichés en haut à droite ; chaque victoire ouvre la mission suivante.
 - **Enregistrer** : Échap → 💾 Enregistrer (trois emplacements) ; la bataille s’enregistre aussi toute seule chaque minute et en quittant (« Continuer la bataille » au menu principal, « 📂 Charger une bataille »).
 - **Murs et portes** (âge classique) : choisis Mur puis clique le début et la fin du tracé (Maj pour continuer) ; la porte se pose sur un mur et laisse passer tes unités et tes alliés, pas l’ennemi.
-- **Mer** : le port se pose sur le rivage ; il forme des bateaux de pêche (bancs de poissons au large) et des navires de guerre qui tirent sur les navires et les bâtiments proches de l’eau.
+- **Mer** : le port se pose sur le rivage ; il forme des bateaux de pêche (bancs de poissons au large), des navires de transport et des navires de guerre qui tirent sur les navires et les bâtiments proches de l’eau.
+- **Transport** : choisis des unités puis clic droit sur ton navire de transport (10 places) ; choisis ensuite le navire et clic droit sur la terre visée : il traverse et débarque (ou bouton ⚓ près d’un rivage).
+- **Garnison** : clic droit d’un soldat sur ta tour, ta forteresse ou ton centre-ville, ou bouton 🛡️ puis clic sur l’abri (villageois, infanterie, archers, héros) ; bouton 🚪 pour les faire sortir. **Cloche** 🔔 au centre-ville : les villageois s’abritent, un second appui les renvoie au travail.
 - **Commandes** : clic gauche ou cadre pour choisir, **clic droit** (ou ctrl-clic sur le pavé tactile) pour agir — marcher, récolter, construire, réparer, prier (Grecs), attaquer, point de ralliement d’un bâtiment. Double-clic : toutes les unités du même genre à l’écran ; Maj : ajouter. Deux doigts ou flèches ou bord de l’écran pour se déplacer, pincer ou molette pour zoomer, mini-carte pour aller loin.
 - **Économie** : les villageois récoltent la nourriture (baies, chasse, fermes), le bois et l’or, et les rapportent au centre-ville, au grenier ou à l’entrepôt. Les maisons donnent la population (150 au plus, davantage en partie longue). La faveur : prière au temple (Grecs), temples (Égyptiens), combats (Nordiques), centres-villes (Atlantes).
 - **Âges** : au centre-ville, choisis un dieu mineur ; il débloque une créature (formée au temple) et un pouvoir divin à usage unique (colonne des pouvoirs en haut à gauche). Chaque âge ouvre de nouveaux bâtiments et unités.
@@ -36,7 +38,7 @@ Jeu de stratégie pour Mac façon *Age of Mythology* : batailles en temps réel 
 
 ## Limites
 
-- Mode Bataille : pas encore de garnison dans les bâtiments ni de transport de troupes par bateau (les navires restent sur l’eau, les armées à pied sur la terre).
+- Mode Bataille : l’ordinateur ne se sert pas encore des navires de transport (il passe par la terre).
 - Une bataille enregistrée se reprend avec la même version du jeu ou une plus récente (les anciennes sauvegardes incompatibles sont écartées).
 
 - L’oracle demande le modèle d’IA partagé avec QuentMovie (~2,5 Go, téléchargé une fois dans `~/Movies/QuentMovie/modeles`).

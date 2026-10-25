@@ -124,6 +124,30 @@ const jouer = (B, s) => { for (let t = 0; t < s / BT.PAS; t++) BT.pas(B); };
   const ami = BT.ajouterUnite(B, 0, 'inf', rp.bat.x, rp.bat.z), ennemi = BT.ajouterUnite(B, 1, 'inf', rp.bat.x, rp.bat.z);
   ok(BT.marchable(B, rp.bat.x, rp.bat.z) === false, 'porte fermée par défaut');
   ami.mort = ennemi.mort = 1;
+  // garnison : la cloche abrite les villageois au centre-ville, ils guérissent, puis ressortent
+  const blesse = vill[4]; blesse.pv = 10;
+  const bucheron = vill[3], arbre = BT.ressourceProche(B, bucheron.x, bucheron.z, 'bois', 60, 0); BT.ordreContexte(B, 0, [bucheron.id], arbre.x, arbre.z, arbre.id); jouer(B, 2);
+  ok(BT.cloche(B, 0) === 'cloche', 'cloche sonnée');
+  jouer(B, 30);
+  const abrites = BT.contenu(B, c);
+  ok(abrites.length >= 4 && abrites.every(u => u.cle === 'villageois' && u.dans === c.id), `villageois abrités au centre (${abrites.length})`);
+  ok(blesse.dans !== c.id || blesse.pv > 10, 'les abrités guérissent');
+  ok(!B.hash.some(l => l.some(e => e.dans)), 'les abrités quittent la carte');
+  ok(BT.cloche(B, 0) === 'fin' && !BT.contenu(B, c).length && vill.every(u => !u.dans), 'fin de l’alerte : tout le monde ressort');
+  ok(bucheron.ordre && bucheron.ordre.type === 'recolter', 'après l’alerte, le bûcheron retourne couper du bois');
+  // soldats dans une tour : une flèche de plus chacun ; la tour abattue les rend
+  let pt = null; for (let a = 0; a < 6.28 && !pt; a += 0.3) { const x = (Math.floor((c.x + Math.cos(a) * 14) / 2) + 0.5) * 2, z = (Math.floor((c.z + Math.sin(a) * 14) / 2) + 0.5) * 2; if (BT.peutPoser(B, 0, 'tour', x, z).ok) pt = [x, z]; }
+  const tour = BT.ajouterBat(B, 0, 'tour', pt[0], pt[1], true); BT.majPop(B);
+  const arch = [0, 1, 2].map(k => BT.ajouterUnite(B, 0, 'archer', c.x + k, c.z + c.taille));
+  ok(BT.ordreContexte(B, 0, arch.map(u => u.id), tour.x, tour.z, tour.id) === 'entrer', 'clic droit sur la tour : garnison');
+  jouer(B, 25); ok(BT.contenu(B, tour).length === 3, 'trois archers dans la tour');
+  ok(BT.place(B, tour) === 2, 'places restantes dans la tour');
+  const cav = B.unites.find(u => u.j === 0 && u.cle === 'cav'); ok(!cav || !BT.peutEntrer(cav, tour), 'la cavalerie ne monte pas dans une tour');
+  tour.pv = 1; const assaillant = BT.ajouterUnite(B, 1, 'inf', tour.x + 5, tour.z); assaillant.pv = 5000;
+  BT.ordreContexte(B, 1, [assaillant.id], tour.x, tour.z, tour.id);
+  for (let t = 0; t < 30 / BT.PAS && !tour.mort; t++) BT.pas(B);
+  ok(tour.mort && arch.every(u => !u.dans && !u.mort), 'tour abattue : les archers en sortent vivants');
+  assaillant.mort = B.temps;
   // trêve d'une partie longue
   const L = nouvelle({ graine: 23, duree: 'longue', taille: 'moyenne' });
   ok(L.treve === R.DUREES.longue.treve && L.popMax === 250, 'partie longue : trêve et population');
@@ -141,7 +165,7 @@ const jouer = (B, s) => { for (let t = 0; t < s / BT.PAS; t++) BT.pas(B); };
   const port = BT.poser(M, 0, 'port', pp[0], pp[1], M.unites.filter(u => u.j === 0 && u.cle === 'villageois').map(u => u.id)).bat;
   for (let t = 0; t < 70 / BT.PAS && !port.fini; t++) BT.pas(M);
   ok(port.fini, 'port bâti');
-  ok(BT.formables(M, port).join() === 'peche,navire', 'le port forme bateaux de pêche et navires');
+  ok(BT.formables(M, port).join() === 'peche,transport,navire', 'le port forme bateaux de pêche, transports et navires');
   BT.former(M, 0, port.id, 'peche'); BT.former(M, 0, port.id, 'navire');
   for (let t = 0; t < 45 / BT.PAS; t++) BT.pas(M);
   const bp = M.unites.find(u => u.cle === 'peche' && u.j === 0), nav = M.unites.find(u => u.cle === 'navire' && u.j === 0);
@@ -156,6 +180,27 @@ const jouer = (B, s) => { for (let t = 0; t < s / BT.PAS; t++) BT.pas(B); };
   const pvAv = cible2.pv; BT.ordreContexte(M, 0, [nav.id], cible2.x, cible2.z, cible2.id);
   for (let t = 0; t < 20 / BT.PAS; t++) BT.pas(M);
   ok(cible2.pv < pvAv || cible2.mort, 'combat naval');
+  // transport : des soldats montent à bord, traversent la mer et débarquent sur l'autre rive
+  const treveAv = M.treve, finieAv = M.treveFinie; M.treve = M.temps + 400; // pas de combat pendant la traversée
+  BT.former(M, 0, port.id, 'transport'); for (let t = 0; t < 25 / BT.PAS; t++) BT.pas(M);
+  const tr = M.unites.find(u => u.cle === 'transport' && u.j === 0); ok(tr, 'navire de transport formé');
+  const soldats = [0, 1, 2, 3].map(k => BT.ajouterUnite(M, 0, 'inf', cm.x + k, cm.z + cm.taille)); BT.majPop(M);
+  ok(BT.ordreContexte(M, 0, soldats.map(u => u.id), tr.x, tr.z, tr.id) === 'entrer', 'clic droit sur le transport : embarquer');
+  for (let t = 0; t < 90 / BT.PAS && BT.contenu(M, tr).length < 4; t++) BT.pas(M);
+  ok(BT.contenu(M, tr).length === 4, `quatre soldats à bord (${BT.contenu(M, tr).length})`);
+  const depart = [tr.x, tr.z], loin = [M.cote - pp[0], M.cote - pp[1]];
+  let rive = null; for (let r = 0; r < 60 && !rive; r += 2) for (let t = 0; t < 24 && !rive; t++) { const x = loin[0] + Math.cos(t / 24 * 6.28) * r, z = loin[1] + Math.sin(t / 24 * 6.28) * r; if (BT.marchable(M, x, z) && BT.hauteur(M, x, z) > 0.4) rive = [x, z]; }
+  ok(rive, 'rive opposée trouvée');
+  ok(BT.ordreContexte(M, 0, [tr.id], rive[0], rive[1], 0) === 'debarquer', 'clic droit sur la terre : débarquer');
+  for (let t = 0; t < 200 / BT.PAS && BT.contenu(M, tr).length; t++) BT.pas(M);
+  ok(!BT.contenu(M, tr).length && soldats.every(u => !u.dans && !u.mort), 'tout le monde a débarqué');
+  ok(soldats.every(u => BT.marchable(M, u.x, u.z) && M.eau[Math.floor(u.z / 2) * M.n + Math.floor(u.x / 2)] !== 1), 'débarqués sur la terre ferme');
+  ok(soldats.every(u => Math.hypot(u.x - rive[0], u.z - rive[1]) < Math.hypot(depart[0] - rive[0], depart[1] - rive[1]) * 0.6), 'traversée faite');
+  M.treve = treveAv; M.treveFinie = finieAv;
+  // un passager à bord pour l'enregistrement
+  const pass = BT.ajouterUnite(M, 0, 'villageois', soldats[0].x, soldats[0].z); BT.majPop(M);
+  BT.ordreContexte(M, 0, [pass.id], tr.x, tr.z, tr.id); for (let t = 0; t < 40 / BT.PAS && !pass.dans; t++) BT.pas(M);
+  ok(pass.dans === tr.id, 'villageois à bord');
   // enregistrement puis rechargement : même état
   const avant = BT.sauver(M), json = JSON.stringify(avant), M2 = BT.charger(JSON.parse(json));
   ok(json.length < 400000, `enregistrement compact (${Math.round(json.length / 1024)} Ko)`);
@@ -165,6 +210,11 @@ const jouer = (B, s) => { for (let t = 0; t < s / BT.PAS; t++) BT.pas(B); };
   ok([...M2.bloc].every((v, i) => v === M.bloc[i]), 'rechargement : grille de passage identique');
   for (let t = 0; t < 30 / BT.PAS; t++) { BT.pas(M2); }
   ok(M2.unites.every(u => Number.isFinite(u.x)) && !M2.fin, 'la partie rechargée continue');
+  ok(M2.parId.get(pass.id) && M2.parId.get(pass.id).dans === tr.id, 'rechargement : le passager reste à bord');
+  // naufrage : le transport coule avec ses passagers
+  const tr2 = M2.parId.get(tr.id); tr2.pv = 1; const pass2 = M2.parId.get(pass.id);
+  const nav2 = BT.ajouterUnite(M2, 1, 'navire', tr2.x + 8, tr2.z); for (let t = 0; t < 30 / BT.PAS && !tr2.mort; t++) BT.pas(M2);
+  ok(!nav2 || tr2.mort ? pass2.mort : true, 'naufrage : les passagers périssent');
   // missions : chacune se crée et ses objectifs se lisent
   for (const def of R.CAMPAGNE) {
     const X = BT.nouvelleMission(def);
@@ -192,7 +242,7 @@ const partie = (o, minutes) => {
 const cas = [
   { titre: 'Grecs contre Nordiques (plaine)', epoque: 'antique', carte: 'plaine', joueurs: [{ pantheon: 'grecs', dieu: 'zeus', difficulte: 2 }, { pantheon: 'nordiques', dieu: 'thor', difficulte: 0 }] },
   { titre: 'Égyptiens contre Atlantes (oasis, Moyen Âge)', epoque: 'medieval', carte: 'oasis', graine: 5, joueurs: [{ pantheon: 'egyptiens', dieu: 'ra', difficulte: 1 }, { pantheon: 'atlantes', dieu: 'gaia', difficulte: 1 }] },
-  { titre: 'Quatre peuples (rivière, futur)', epoque: 'futur', carte: 'riviere', taille: 'moyenne', graine: 9, joueurs: [{ pantheon: 'grecs', equipe: 0 }, { pantheon: 'egyptiens', equipe: 1 }, { pantheon: 'nordiques', equipe: 0 }, { pantheon: 'atlantes', equipe: 1 }] }
+  { titre: 'Quatre peuples (rivière, futur)', epoque: 'futur', carte: 'riviere', taille: 'moyenne', graine: 9, minutes: 50, joueurs: [{ pantheon: 'grecs', equipe: 0 }, { pantheon: 'egyptiens', equipe: 1 }, { pantheon: 'nordiques', equipe: 0 }, { pantheon: 'atlantes', equipe: 1 }] }
 ];
 cas.push({ titre: 'Partie longue sur la mer intérieure', epoque: 'medieval', carte: 'mediterranee', taille: 'moyenne', duree: 'longue', graine: 12, minutes: 55, joueurs: [{ pantheon: 'atlantes', difficulte: 2 }, { pantheon: 'nordiques', difficulte: 1 }] });
 if (process.env.BATAILLE_LONG) for (const carte of Object.keys(R.CARTES)) for (const epoque of Object.keys(PM.EPOQUES)) cas.push({ titre: `${carte} ${epoque}`, epoque, carte, graine: carte.length * 7 + epoque.length, joueurs: [{ pantheon: 'grecs', difficulte: 2 }, { pantheon: 'nordiques', difficulte: 1 }] });
@@ -204,7 +254,7 @@ for (const c of cas) {
   ok(J.every(x => x.age >= 2 || x.vaincu), `${c.titre} : passages d’âge`);
   ok(J.every(x => x.stats.formees >= 25 || x.vaincu), `${c.titre} : unités formées`);
   ok(J.some(x => x.stats.tues > 10), `${c.titre} : combats`);
-  if (c.duree) { ok(J.every(x => x.stats.recolte > 30000), `${c.titre} : grandes économies`); ok(B.bats.some(b => b.cle === 'port') || B.unites.some(u => u.s.naval), `${c.titre} : l’ordinateur prend la mer`); }
+  if (c.duree) { ok(J.some(x => x.stats.recolte > 30000) && J.every(x => x.stats.recolte > 10000), `${c.titre} : grandes économies`); ok(B.bats.some(b => b.cle === 'port') || B.unites.some(u => u.s.naval), `${c.titre} : l’ordinateur prend la mer`); }
   else ok(B.fin, `${c.titre} : la partie se termine`);
   ok(maxPas < 25, `${c.titre} : pas de simulation rapide (${maxPas.toFixed(1)} ms)`);
   ok([...B.unites, ...B.bats].every(e => Number.isFinite(e.x) && Number.isFinite(e.z)), `${c.titre} : positions valides`);

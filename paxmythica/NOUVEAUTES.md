@@ -1,5 +1,12 @@
 # Nouveautés de Pax Mythica
 
+## 1.7.0
+- **Navire de transport** (au port) : clic droit sur le navire avec tes soldats ou tes villageois, ils montent à bord (10 places) ; clic droit sur la terre avec le navire, il traverse et débarque tout le monde sur l’autre rive. Le navire vient chercher ses passagers au bord de l’eau ; s’il coule, ils périssent avec lui.
+- **Garnison** : tes villageois, ton infanterie, tes archers et tes héros s’abritent dans le centre-ville, les tours et la forteresse (clic droit dessus, ou bouton 🛡️). Ils y guérissent, chaque soldat abrité ajoute une flèche aux tirs du bâtiment, et ils ressortent vivants si le bâtiment tombe.
+- **Cloche du centre-ville** (🔔) : les villageois proches courent s’abriter ; un second appui et chacun retourne à son travail. L’ordinateur sonne aussi la cloche quand sa ville est envahie.
+- Mission « Le siège du château » : des maisons de départ pour loger toute ton armée.
+- Les navires de guerre ne se chevauchent plus au mouillage.
+
 ## 1.6.0
 - **Campagne** de six missions dans le mode Bataille : fonder Mégara, repousser les pillards du Nord qui attaquent par vagues, chasser deux envahisseurs du Nil, gagner la mer intérieure, prendre un château entouré de murailles, bâtir l’ascenseur spatial et le défendre. Récit, objectifs à l’écran et mission suivante ouverte à chaque victoire.
 - **Partie longue** et **partie épique** : trêve de 8 ou 15 minutes pour bâtir en paix, 250 ou 300 de population, ressources bien plus abondantes, merveille à garder plus longtemps.

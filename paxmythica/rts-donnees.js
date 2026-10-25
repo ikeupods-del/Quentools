@@ -22,9 +22,12 @@
     heros: { pv: 280, att: 16, portee: 0, cadence: 1.4, vitesse: 4.2, vue: 20, cout: { nourriture: 100, or: 120 }, temps: 20, pop: 3, rayon: 0.55, vsBat: 1.1, cat: 'heros', age: 1 },
     siege: { pv: 240, att: 45, portee: 24, cadence: 4.5, vitesse: 2.6, vue: 22, cout: { bois: 150, or: 100 }, temps: 25, pop: 3, rayon: 1.4, vsBat: 5, cat: 'siege', proj: 'pierre', zone: 2.5, age: 2 },
     // bateaux (formés au port, ne vont que sur l'eau profonde)
-    peche: { pv: 90, att: 0, portee: 0, cadence: 2, vitesse: 4.6, vue: 18, cout: { bois: 50 }, temps: 14, pop: 1, rayon: 1.5, vsBat: 0, cat: 'navire', naval: true, porte: 20 },
-    navire: { pv: 380, att: 11, portee: 20, cadence: 2.2, vitesse: 4.3, vue: 24, cout: { bois: 120, or: 60 }, temps: 24, pop: 2, rayon: 2.3, vsBat: 1.2, cat: 'navire', proj: 'fleche', naval: true, salve: 3 }
+    peche: { pv: 90, att: 0, portee: 0, cadence: 2, vitesse: 4.6, vue: 18, cout: { bois: 50 }, temps: 14, pop: 1, rayon: 1.6, vsBat: 0, cat: 'navire', naval: true, porte: 20 },
+    transport: { pv: 320, att: 0, portee: 0, cadence: 2, vitesse: 4.8, vue: 18, cout: { bois: 100 }, temps: 16, pop: 1, rayon: 2.4, vsBat: 0, cat: 'navire', naval: true, capacite: 10 },
+    navire: { pv: 380, att: 11, portee: 20, cadence: 2.2, vitesse: 4.3, vue: 24, cout: { bois: 120, or: 60 }, temps: 24, pop: 2, rayon: 3, vsBat: 1.2, cat: 'navire', proj: 'fleche', naval: true, salve: 3 }
   };
+  // unités qui peuvent s'abriter dans un bâtiment (garnison) ; chaque soldat abrité ajoute une flèche aux tirs du bâtiment, trois villageois en ajoutent une
+  R.GARNISON_CATS = ['milice', 'inf', 'archer', 'heros'];
   // armes à feu et rayons des époques récentes : même équilibre, autre projectile
   R.PROJ_EPOQUE = { industriel: { fleche: 'balle', pierre: 'boulet' }, moderne: { fleche: 'balle', pierre: 'obus' }, futur: { fleche: 'laser', pierre: 'plasma' } };
   // créatures (gardent les rapports d'attaque et de vie de donnees.js, ramenés au temps réel)
@@ -36,7 +39,7 @@
   // bâtiments : taille (côté de l'emprise, m), pv, coût, temps de construction (s), âge, ce qu'ils forment, dépôt de ressources, population
   // att/portee/cadence : bâtiments qui tirent ; passable : on marche dessus (champs)
   R.BATIMENTS = {
-    centre: { taille: 14, pv: 3000, cout: { bois: 400, or: 400 }, temps: 100, age: 1, forme: ['villageois'], depot: ['nourriture', 'bois', 'or'], pop: 15, vue: 26, att: 7, portee: 20, cadence: 2, fleches: 3, emoji: '🏛️' },
+    centre: { taille: 14, pv: 3000, cout: { bois: 400, or: 400 }, temps: 100, age: 1, forme: ['villageois'], depot: ['nourriture', 'bois', 'or'], pop: 15, vue: 26, att: 7, portee: 20, cadence: 2, fleches: 3, garnison: 15, emoji: '🏛️' },
     maison: { taille: 6, pv: 600, cout: { bois: 50 }, temps: 15, age: 0, pop: 10, vue: 10, emoji: '🏠' },
     grenier: { taille: 7, pv: 800, cout: { bois: 50 }, temps: 15, age: 0, depot: ['nourriture'], vue: 12, emoji: '🌾' },
     entrepot: { taille: 7, pv: 800, cout: { bois: 50 }, temps: 15, age: 0, depot: ['bois', 'or'], vue: 12, emoji: '🪓' },
@@ -45,11 +48,11 @@
     temple: { taille: 12, pv: 1500, cout: { bois: 100, or: 50 }, temps: 40, age: 0, forme: ['mythe'], vue: 16, emoji: '✨' },
     archerie: { taille: 12, pv: 1500, cout: { bois: 150, or: 30 }, temps: 35, age: 1, forme: ['archer'], vue: 14, emoji: '🏹' },
     ecurie: { taille: 12, pv: 1500, cout: { bois: 150, or: 60 }, temps: 35, age: 1, forme: ['cav'], vue: 14, emoji: '🐎' },
-    tour: { taille: 4, pv: 1000, cout: { bois: 100, or: 60 }, temps: 30, age: 1, vue: 24, att: 8, portee: 22, cadence: 1.8, fleches: 1, emoji: '🗼' },
-    forteresse: { taille: 16, pv: 4000, cout: { bois: 300, or: 300 }, temps: 70, age: 2, forme: ['heros', 'siege'], vue: 24, att: 9, portee: 22, cadence: 2, fleches: 3, emoji: '🏰' },
+    tour: { taille: 4, pv: 1000, cout: { bois: 100, or: 60 }, temps: 30, age: 1, vue: 24, att: 8, portee: 22, cadence: 1.8, fleches: 1, garnison: 5, emoji: '🗼' },
+    forteresse: { taille: 16, pv: 4000, cout: { bois: 300, or: 300 }, temps: 70, age: 2, forme: ['heros', 'siege'], vue: 24, att: 9, portee: 22, cadence: 2, fleches: 3, garnison: 15, emoji: '🏰' },
     merveille: { taille: 22, pv: 8000, cout: { nourriture: 1000, bois: 1000, or: 1000, faveur: 100 }, temps: 240, age: 3, vue: 20, emoji: '🗼' },
     // port : posé au bord de l'eau (une partie dans l'eau), forme les bateaux, reçoit le poisson
-    port: { taille: 10, pv: 1800, cout: { bois: 150 }, temps: 40, age: 0, forme: ['peche', 'navire'], depot: ['nourriture'], vue: 22, port: true, emoji: '⚓' },
+    port: { taille: 10, pv: 1800, cout: { bois: 150 }, temps: 40, age: 0, forme: ['peche', 'transport', 'navire'], depot: ['nourriture'], vue: 22, port: true, emoji: '⚓' },
     // murs : un tronçon par case de 2 m, posés en ligne ; porte : laisse passer ses unités et celles des alliés
     mur: { taille: 2, pv: 700, cout: { bois: 4, or: 2 }, temps: 3, age: 1, vue: 6, mur: true, emoji: '🧱' },
     porte: { taille: 6, pv: 1600, cout: { bois: 40, or: 25 }, temps: 18, age: 1, vue: 8, porte: true, emoji: '🚪' }
@@ -68,7 +71,7 @@
     futur: { centre: 'Nexus', maison: 'Habitat', grenier: 'Hydroponie', entrepot: 'Extracteur', ferme: 'Serre', caserne: 'Clonerie', temple: 'Sanctuaire quantique', archerie: 'Batterie laser', ecurie: 'Hangar', tour: 'Tourelle', forteresse: 'Forge orbitale', merveille: 'Ascenseur spatial', port: 'Spatioport marin', mur: 'Champ de force', porte: 'Porte énergétique' }
   };
   R.NOMS_VILLAGEOIS = { antique: 'Villageois', medieval: 'Paysans', industriel: 'Ouvriers', moderne: 'Ouvriers', futur: 'Techniciens' };
-  R.NOMS_BATEAUX = { antique: ['Bateau de pêche', 'Trière'], medieval: ['Barque de pêche', 'Nef de guerre'], industriel: ['Chalutier', 'Frégate'], moderne: ['Chalutier', 'Destroyer'], futur: ['Drone de pêche', 'Croiseur'] };
+  R.NOMS_BATEAUX = { antique: ['Bateau de pêche', 'Trière', 'Navire de transport'], medieval: ['Barque de pêche', 'Nef de guerre', 'Cogue de transport'], industriel: ['Chalutier', 'Frégate', 'Vapeur de transport'], moderne: ['Chalutier', 'Destroyer', 'Barge de débarquement'], futur: ['Drone de pêche', 'Croiseur', 'Transporteur'] };
 
   // âges : coût et durée du passage (s) ; le dieu mineur se choisit au début du passage
   R.AGES = [null, { cout: { nourriture: 400 }, temps: 45 }, { cout: { nourriture: 800, or: 500 }, temps: 55 }, { cout: { nourriture: 1000, or: 1000 }, temps: 65 }];
@@ -168,7 +171,7 @@
   // nom affiché d'une unité selon le peuple et l'époque
   R.nomUnite = (pantheon, cle) => {
     if (cle === 'villageois') return R.NOMS_VILLAGEOIS[PM.epoque] || 'Villageois';
-    if (cle === 'peche' || cle === 'navire') return (R.NOMS_BATEAUX[PM.epoque] || R.NOMS_BATEAUX.antique)[cle === 'peche' ? 0 : 1];
+    if (cle === 'peche' || cle === 'navire' || cle === 'transport') return (R.NOMS_BATEAUX[PM.epoque] || R.NOMS_BATEAUX.antique)[{ peche: 0, navire: 1, transport: 2 }[cle]];
     if (cle === 'mouton' || cle === 'vache') return cle === 'mouton' ? 'Mouton' : 'Vache';
     const P = PM.PANTHEONS[pantheon], i = ['inf', 'archer', 'cav', 'heros', 'siege'].indexOf(cle);
     if (i >= 0 && P) { const u = PM.UNITES[P.unites[i]]; return u ? u.nom : cle; }
@@ -177,6 +180,7 @@
   R.emojiUnite = (pantheon, cle) => {
     if (cle === 'villageois') return '🧑‍🌾';
     if (cle === 'peche') return '🛶';
+    if (cle === 'transport') return '⛴️';
     if (cle === 'navire') return PM.epoque === 'antique' || PM.epoque === 'medieval' ? '⛵' : '🚢';
     const P = PM.PANTHEONS[pantheon], i = ['inf', 'archer', 'cav', 'heros', 'siege'].indexOf(cle);
     if (i >= 0 && P) { const u = PM.UNITES[P.unites[i]]; return u ? u.emoji : '⚔️'; }

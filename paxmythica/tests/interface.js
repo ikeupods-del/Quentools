@@ -184,6 +184,13 @@ const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? '✓ ' : '�
   await ev(() => { const J = UI.bat.B.joueurs[0]; J.res.nourriture += 3000; J.res.or += 3000; });
   await p.keyboard.press('h'); await p.waitForTimeout(150); await p.click('#batOrdres [data-act=b-age]'); await p.click('#modalBoite [data-act=b-mineur]');
   ok(await ev(() => !!UI.bat.B.joueurs[0].ageEnCours && !UI.bat.pause), 'passage d’âge avec choix du dieu mineur');
+  // cloche du centre-ville (touche C de la grille) : les villageois s'abritent, puis ressortent
+  await p.keyboard.press('h'); await p.waitForTimeout(150); await p.keyboard.press('c');
+  ok(await ev(() => UI.bat.B.unites.filter(u => u.j === 0 && u.cle === 'villageois' && u.ordre && u.ordre.type === 'entrer').length >= 3), 'cloche : les villageois courent s’abriter');
+  await ev(() => { for (let k = 0; k < 20 * 20; k++) PM.Bataille.pas(UI.bat.B); }); await p.waitForTimeout(300);
+  ok(await ev(() => UI.bat.B.unites.some(u => u.dans)), 'villageois abrités dans le centre-ville');
+  await p.click('#batOrdres [data-act=b-cloche]');
+  ok(await ev(() => !UI.bat.B.unites.some(u => u.dans)), 'fin de l’alerte');
   await ev(() => { UI.bat.B.toutVoir = true; for (let k = 0; k < 12; k++) PM.Bataille.pas(UI.bat.B); const c = UI.bat.B.unites.find(u => u.j === 1); UI.bat.vue.centrerXZ(c.x, c.z + 6); UI.bat.vue.stabiliser(); });
   await p.waitForTimeout(300); await p.click('#batPouvoirs [data-act=b-pouvoir]');
   const ennemi = await ev(() => { const u = UI.bat.B.unites.find(u => u.j === 1 && !u.mort); return UI.bat.vue.versEcran(u.x, u.z, 0); });
