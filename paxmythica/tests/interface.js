@@ -210,7 +210,7 @@ const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? 'âœ“ ' : 'âœ
   const murs = await ev(() => { const B = UI.bat.B, J = B.joueurs[0], v = UI.bat.vue; J.age = Math.max(1, J.age); J.res.bois += 800; J.res.or += 800; B.joueurs[1].ia = false;
     UI.bat.sel = B.unites.filter(u => !u.mort && u.j === 0 && u.cle === 'villageois').slice(0, 3).map(u => u.id); const c = B.bats.find(b => b.j === 0 && b.cle === 'centre');
     v.vise.d = 80; v.centrerXZ(c.x, c.z); v.stabiliser(); UI.ACT['b-construire']({ dataset: { v: 'mur' } });
-    for (let dz = 14; dz < 40; dz += 2) { const l = PM.Bataille.casesMur(B, 0, c.x - 14, c.z + dz, c.x + 14, c.z + dz); if (l.filter(x => x.ok === true).length > 10) { const a = v.versEcran(c.x - 14, c.z + dz, 0), b = v.versEcran(c.x + 14, c.z + dz, 0); if (a.y > 60 && b.y < 600 && a.y < 600) return { a, b, n: B.bats.filter(x => x.cle === 'mur').length }; } }
+    for (let k = 7; k < 22; k++) for (const dz of [-2 * k, 2 * k]) { const l = PM.Bataille.casesMur(B, 0, c.x - 14, c.z + dz, c.x + 14, c.z + dz); if (l.filter(x => x.ok === true).length > 10) { const a = v.versEcran(c.x - 14, c.z + dz, 0), b = v.versEcran(c.x + 14, c.z + dz, 0); if (Math.min(a.y, b.y) > 60 && Math.max(a.y, b.y) < 590 && a.x > 20 && b.x < innerWidth - 20) return { a, b, n: B.bats.filter(x => x.cle === 'mur').length }; } }
     return null; });
   ok(murs, 'place pour un mur');
   if (murs) {
