@@ -222,7 +222,7 @@
         const x = rnd() * B.cote, z = rnd() * B.cote; if (!BT.marchable(B, x, z)) continue;
         const h = this.sol(x, z); if (h < 0.6) continue;
         if (B.carte.departs.some(([dx, dz]) => (dx - x) ** 2 + (dz - z) ** 2 < 20 * 20)) continue;
-        const des = this.poidsA('desert', x, z); if (rnd() < des * 0.9) continue;
+        const des = this.poidsA('desert', x, z); if (des > 0.4 || rnd() < des * 1.5) continue;
         l.push([x, z, 0.55 + rnd() * 0.5, rnd()]);
       }
       this.listeHerbe = l;
