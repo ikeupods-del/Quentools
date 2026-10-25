@@ -287,6 +287,7 @@ const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? '✓ ' : '�
 
   // partie longue : trêve affichée, attaque refusée pendant la trêve
   await p.click('[data-act=bataille]'); await p.click('[data-act=b-epoque][data-v=antique]'); await p.click('[data-act=b-pantheon][data-v=grecs]'); await p.click('[data-act=b-dieu][data-v=zeus]');
+  await p.click('[data-act=b-option][data-k=mode][data-v=conquete]'); await p.click('[data-act=b-option][data-k=adversaires][data-v="1"]');
   await p.click('[data-act=b-option][data-k=duree][data-v=longue]'); await p.click('[data-act=b-carte][data-v=mediterranee]'); await p.click('[data-act=b-lancer]'); await p.click('#modalBoite [data-act=b-commencer]'); await p.waitForTimeout(300);
   ok(await ev(() => UI.bat.B.treve === 480 && UI.bat.B.popMax === 250), 'partie longue créée');
   ok(await p.isVisible('#batTreve') && (await p.textContent('#batTreve')).includes('Trêve'), 'trêve affichée');
