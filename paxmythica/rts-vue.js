@@ -162,7 +162,8 @@
       ...[0, 1, 2, 3].map(i => [Bx(0.5, 2.6, 0.06, Math.cos(i * 1.571 + 0.785) * 6.05, 0.9, Math.sin(i * 1.571 + 0.785) * 6.05).rotateY(0), EQ]), [Bx(2.4, 2.4, 0.2, 0, 0.5, 5.9), 0x203040], ...marches(3, 2, 0, 0, 6.6, st.socle)], [])
   };
   // gravats d'un bâtiment détruit, échafaudage d'un chantier
-  const GRAVATS = (() => { const r = PM.aleatoire(91), l = []; for (let k = 0; k < 22; k++) { const a = r() * 6.28, d = Math.sqrt(r()) * 0.46, t = 0.06 + r() * 0.12; l.push([new THREE.BoxGeometry(t * 2, t, t * 1.5).rotateY(r() * 3).rotateX(r() * 0.6).translate(Math.cos(a) * d, t * 0.4, Math.sin(a) * d), r() < 0.3 ? 0x6a4a30 : 0x8a8478]); } return l; })();
+  // gravats : tas de pierres, de poutres et de cendres, plus haut au milieu
+  const GRAVATS = (() => { const r = PM.aleatoire(91), l = []; for (let k = 0; k < 64; k++) { const a = r() * 6.28, d = Math.sqrt(r()) * 0.46, t = 0.025 + r() * 0.045, y = (1 - d / 0.46) * 0.09, poutre = r() < 0.22; l.push([(poutre ? new THREE.BoxGeometry(t * 5, t * 0.8, t * 0.8) : new THREE.BoxGeometry(t * 1.6, t, t * 1.3)).rotateY(r() * 3).rotateX((r() - 0.5) * 0.8).translate(Math.cos(a) * d, y + t * 0.4, Math.sin(a) * d), poutre ? 0x7a5232 : r() < 0.25 ? 0x7e705e : 0xb4a892]); } return l; })();
 
   class VueBataille extends PM.Vue3D {
     constructor(canvas, calque) {
@@ -554,10 +555,10 @@
         const abime = 1 - b.pv / b.pvMax;
         if (abime > 0.4 && rnd() < dts * (abime * 10)) { const x = b.x + (rnd() - 0.5) * b.demiE * 1.4, z = b.z + (rnd() - 0.5) * b.demiE * 1.4, yy = y + e.h * (0.5 + rnd() * 0.45); this.particules.emettre(x, yy, z, 0.3, 1.4, 0.1, 3.5, 3.2, 0.22, 0.2, 0.19, -0.08); if (abime > 0.6) this.feux.emettre(x, yy, z, 0, 1.6, 0, 0.6, 1.6, 1, 0.45, 0.12, -0.8); }
       }
-      // gravats des bâtiments détruits (restent 40 secondes)
+      // gravats des bâtiments détruits (s'enfoncent puis disparaissent au bout d'une demi-minute)
       const pg = this.meshGeo('gravats', this.geoGravats || (this.geoGravats = O.fusion(GRAVATS)), this.matBat());
-      this.gravats = (this.gravats || []).filter(g => t - g.t0 < 45);
-      for (const g of this.gravats) { const enf = Math.max(0, t - g.t0 - 38) * 0.15; ob.position.set(g.x, this.sol(g.x, g.z) - 0.1 - enf, g.z); ob.rotation.set(0, g.x, 0); ob.scale.set(g.taille * 1.1, Math.min(2.5, g.taille * 0.3), g.taille * 1.1); ob.updateMatrix(); this.ajouterInst(pg, ob.matrix, coul.setScalar(this.brouillardEn(g.x, g.z) === 2 ? 0.85 : 0.4)); }
+      this.gravats = (this.gravats || []).filter(g => t - g.t0 < 32);
+      for (const g of this.gravats) { const enf = Math.max(0, t - g.t0 - 24) * 0.12; ob.position.set(g.x, this.sol(g.x, g.z) - 0.05 - enf, g.z); ob.rotation.set(0, g.x, 0); ob.scale.set(g.taille, g.taille * 0.7, g.taille); ob.updateMatrix(); this.ajouterInst(pg, ob.matrix, coul.setScalar(this.brouillardEn(g.x, g.z) === 2 ? 0.8 : 0.35)); }
       // point de ralliement du bâtiment choisi
       if (this.ralliement) { const r = this.ralliement, pd = this.meshGeo('drapeau', this.M.drapeau, this.mat({ vertexColors: true, roughness: 0.8 })); ob.position.set(r.x, Math.max(0, this.sol(r.x, r.z)), r.z); ob.rotation.set(0, 0, 0); ob.scale.setScalar(0.32); ob.updateMatrix(); this.ajouterInst(pd, ob.matrix, coul.set(B.joueurs[this.ji].couleur)); }
       // fantôme du bâtiment à poser, ou du mur à tracer
@@ -623,6 +624,17 @@
       ob.position.set(u.x, y, u.z); ob.rotation.set(chute, u.dir, roulis, 'YXZ'); ob.scale.setScalar(1); ob.updateMatrix();
       coul.set(B.joueurs[u.j].couleur).lerp(C2.setRGB(1, 1, 1), 0.65);
       this.poserGLB('nav:' + nom, pg.parts, ob.matrix, coul);
+      // passagers debout sur le pont, deux par rang, aux couleurs du joueur
+      if (u.s.capacite && !u.mort && this.unitesPretes) {
+        const l = BT.contenu(B, u), rangs = Math.ceil(l.length / 2), cd = Math.cos(u.dir), sd = Math.sin(u.dir), pont = y + pg.hauteur * 0.32;
+        l.forEach((p, k) => {
+          const nomP = this.modele(p), m = this.meshFoule(nomP); if (!m) return;
+          const lx = (k % 2 - 0.5) * 1.1, lz = (Math.floor(k / 2) - (rangs - 1) / 2) * 1.05;
+          ob.position.set(u.x + cd * lx + sd * lz, pont, u.z - sd * lx + cd * lz); ob.rotation.set(0, u.dir + (k % 2 ? 0.4 : -0.4), roulis, 'YXZ'); ob.scale.setScalar(this.echelleUnite(p, nomP) * 0.85); ob.updateMatrix();
+          const ph = (p.id * 0.618) % 1; this.ajouterInst(m, ob.matrix, C2.set(B.joueurs[p.j].couleur), (mm, i) => this.clip(mm, i, 0, 0, 1, ph));
+        });
+        ob.scale.setScalar(1);
+      }
       const pd = this.meshGeo('drapeau', this.M.drapeau, this.mat({ vertexColors: true, roughness: 0.8 }));
       ob.position.set(u.x, y + pg.hauteur * 0.6, u.z); ob.rotation.set(0, u.dir + Math.PI / 2, 0); ob.scale.setScalar(grand ? 0.42 : 0.22); ob.updateMatrix(); this.ajouterInst(pd, ob.matrix, coul.set(B.joueurs[u.j].couleur));
       if (u.anim === 'marche' && !u.mort && Math.random() < 0.6) { const d = grand ? 5 : 2, bx = u.x - Math.sin(u.dir) * d, bz = u.z - Math.cos(u.dir) * d; this.particules.emettre(bx + (Math.random() - 0.5), 0.1, bz + (Math.random() - 0.5), (Math.random() - 0.5) * 0.6, 0.15, (Math.random() - 0.5) * 0.6, 1.6, 1.6, 0.92, 0.95, 0.97, 0); }

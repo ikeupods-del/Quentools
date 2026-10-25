@@ -784,6 +784,7 @@
       <h3>Son</h3>
       <div class="champ"><label>Effets sonores</label><input type="checkbox" id="rSons" ${s.sons ? 'checked' : ''}></div>
       <div class="champ"><label>Musique d’ambiance</label><input type="checkbox" id="rMusique" ${s.musique ? 'checked' : ''}></div>
+      <div class="champ"><label>Voix des unités</label><input type="checkbox" id="rVoix" ${s.voix !== false ? 'checked' : ''}></div>
       <div class="champ"><label>Volume</label><input type="range" id="rVolume" min="0" max="100" value="${Math.round(s.volume * 100)}"></div>
       ${PM.vue3dPossible && PM.vue3dPossible() ? `<h3>Image</h3><p class="sous">Pack : <b>${esc(PM.PACKS_GRAPHIQUES[PM.packGraphique()].nom)}</b> · qualité ${esc(PM.QUALITES[PM.qualite()].nom.toLowerCase())}</p><button class="btn petit" data-act="packs">Packs graphiques et qualité…</button>` : ''}
       <h3>Oracle (IA du Mac)</h3>
@@ -797,6 +798,7 @@
       <div class="actions-bas"><button class="btn or" data-act="fermer">Fermer</button></div>`);
     $('#rSons').onchange = e => PM.changerSon('sons', e.target.checked);
     $('#rMusique').onchange = e => PM.changerSon('musique', e.target.checked);
+    $('#rVoix').onchange = e => PM.changerSon('voix', e.target.checked);
     $('#rVolume').oninput = e => PM.changerSon('volume', +e.target.value / 100);
     const o = $('#rOracle'); if (o) o.onchange = e => { UI.oracle.actif = e.target.checked; try { localStorage.setItem('pm:oracle', e.target.checked ? 'oui' : 'non'); } catch (er) { /* sans stockage */ } };
     const b = $('#rInstaller'); if (b) b.onclick = async () => {

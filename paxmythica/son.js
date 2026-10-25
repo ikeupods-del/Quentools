@@ -5,7 +5,7 @@
 (function (G) {
   const PM = G.PM = G.PM || {};
   let ac = null, maitre = null, musiqueGain = null, minuterie = null;
-  const reglages = { sons: true, musique: true, volume: 0.7 };
+  const reglages = { sons: true, musique: true, voix: true, volume: 0.7 };
   try { Object.assign(reglages, JSON.parse(localStorage.getItem('pm:son') || '{}')); } catch (e) { /* stockage indisponible : réglages par défaut */ }
   const garder = () => { try { localStorage.setItem('pm:son', JSON.stringify(reglages)); } catch (e) { /* sans stockage */ } };
 
@@ -94,6 +94,39 @@
     if (!contexte()) return; if (ac.state === 'suspended') ac.resume();
     phrase(); minuterie = setInterval(phrase, 8000);
   };
+  // mer : souffle des vagues (bruit filtré qui monte et descend), plus fort quand la caméra survole l'eau ; mouettes de temps en temps
+  let mer = null, tMouette = 0;
+  PM.ambianceMer = function (niveau) {
+    if (!reglages.sons && niveau > 0) niveau = 0;
+    if (!mer) {
+      if (!niveau || !contexte()) return;
+      const n = ac.sampleRate * 2, b = ac.createBuffer(1, n, ac.sampleRate), d = b.getChannelData(0); for (let k = 0; k < n; k++) d[k] = Math.random() * 2 - 1;
+      const src = ac.createBufferSource(); src.buffer = b; src.loop = true;
+      const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 520; f.Q.value = 0.4;
+      const houle = ac.createGain(); houle.gain.value = 0.5; const lfo = ac.createOscillator(), lg = ac.createGain(); lfo.frequency.value = 0.11; lg.gain.value = 0.45; lfo.connect(lg); lg.connect(houle.gain);
+      const g = ac.createGain(); g.gain.value = 0; src.connect(f); f.connect(houle); houle.connect(g); g.connect(maitre); src.start(); lfo.start();
+      mer = { g };
+    }
+    mer.g.gain.setTargetAtTime(Math.max(0, Math.min(1, niveau)) * 0.16, ac.currentTime, 0.8);
+    if (niveau > 0.45 && ac.currentTime > tMouette) { tMouette = ac.currentTime + 9 + Math.random() * 14; const t = ac.currentTime + 0.1; for (let k = 0; k < 2 + Math.floor(Math.random() * 2); k++) { const o = ac.createOscillator(), gg = ac.createGain(), t0 = t + k * 0.32; o.type = 'sine'; o.frequency.setValueAtTime(2100, t0); o.frequency.exponentialRampToValueAtTime(1250, t0 + 0.22); gg.gain.setValueAtTime(0, t0); gg.gain.linearRampToValueAtTime(0.012 * niveau, t0 + 0.03); gg.gain.exponentialRampToValueAtTime(0.0004, t0 + 0.26); o.connect(gg); gg.connect(maitre); o.start(t0); o.stop(t0 + 0.3); } }
+  };
+  // voix des unités : courtes répliques en français dites par la voix du Mac (sélection et ordres), jamais plus d'une à la fois
+  const REPLIQUES = {
+    villageois: ['Oui ?', 'Je vous écoute.', 'Que faut-il faire ?'], soldat: ['Prêt !', 'À vos ordres.', 'Oui, chef ?'], navire: ['Navire paré !', 'Équipage prêt.'],
+    ordre: ['Tout de suite.', 'J’y vais.', 'Compris !', 'On y va !'], recolter: ['Au travail !', 'Je m’en occupe.', 'Bien compris.'], construire: ['Je construis !', 'Au chantier !'],
+    attaque: ['À l’attaque !', 'Pour la gloire !', 'Chargez !'], marin: ['Cap paré !', 'On largue les amarres !'], entrer: ['À l’abri !', 'On embarque !']
+  };
+  let tVoix = 0, voixFr = null;
+  PM.voix = function (genre, aigu) {
+    if (!reglages.voix || !reglages.sons || !G.speechSynthesis || !REPLIQUES[genre]) return;
+    const now = Date.now(); if (now < tVoix) return; tVoix = now + 1400;
+    try {
+      const S = G.speechSynthesis; if (!voixFr) { const l = S.getVoices(); voixFr = l.find(v => /^fr(-|_)FR/i.test(v.lang) && /Thomas|Amélie|Audrey|Daniel/i.test(v.name)) || l.find(v => /^fr/i.test(v.lang)) || null; }
+      const l = REPLIQUES[genre], d = new G.SpeechSynthesisUtterance(l[Math.floor(Math.random() * l.length)]);
+      d.lang = 'fr-FR'; if (voixFr) d.voice = voixFr; d.rate = 1.12; d.pitch = aigu ? 1.35 : 0.9 + Math.random() * 0.2; d.volume = Math.min(1, reglages.volume * 0.9);
+      S.cancel(); S.speak(d);
+    } catch (e) { /* voix indisponible */ }
+  };
   PM.reglagesSon = () => Object.assign({}, reglages);
-  PM.changerSon = function (k, v) { reglages[k] = v; garder(); if (maitre && k === 'volume') maitre.gain.value = v; if (k === 'musique') PM.musique(v); };
+  PM.changerSon = function (k, v) { reglages[k] = v; garder(); if (maitre && k === 'volume') maitre.gain.value = v; if (k === 'musique') PM.musique(v); if (k === 'sons' && !v) PM.ambianceMer(0); };
 })(typeof window !== 'undefined' ? window : globalThis);

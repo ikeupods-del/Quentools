@@ -163,6 +163,7 @@ const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? '✓ ' : '�
   await ev(() => UI.ACT.accueil()); await p.click('[data-act=bataille]'); await p.click('[data-act=b-epoque][data-v=antique]'); await p.click('[data-act=b-pantheon][data-v=grecs]'); await p.click('[data-act=b-dieu][data-v=zeus]');
   await p.click('[data-act=b-carte][data-v=riviere]'); await p.click('[data-act=b-lancer]'); await p.click('[data-act=b-commencer]');
   ok(await ev(() => UI.ecran === 'bataille' && !!UI.bat.B && !UI.bat.pause), 'bataille lancée');
+  ok(await ev(() => { PM.voix('villageois'); PM.ambianceMer(0.6); PM.ambianceMer(0); return typeof PM.voix === 'function'; }), 'voix des unités et bruit de la mer');
   await p.waitForFunction(() => UI.bat.vue.pret && UI.bat.vue.unitesPretes);
   ok(await p.isVisible('#batRes') && await p.isVisible('#batCarte') && await p.isVisible('#batOrdres'), 'barre des ressources, mini-carte et grille d’ordres');
   await ev(() => { UI.bat.B.joueurs[1].ia = false; });

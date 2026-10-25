@@ -157,7 +157,8 @@
   function boucle(ts) {
     requestAnimationFrame(boucle);
     const dt = Math.min(100, ts - (S.der || ts)); S.der = ts;
-    if (UI.ecran !== 'bataille' || !S.B || !S.vue || UI.modalOuvert()) { const a = $('#batAide'); if (a) a.classList.add('cache'); if (UI.ecran !== 'bataille' || !S.B || !S.vue) return; }
+    if (UI.ecran !== 'bataille' || !S.B || !S.vue || UI.modalOuvert()) { const a = $('#batAide'); if (a) a.classList.add('cache'); if (UI.ecran !== 'bataille' || !S.B || !S.vue) { if (S.merOn !== false && PM.ambianceMer) { PM.ambianceMer(0); S.merOn = false; } return; } }
+    S.merOn = true;
     const B = S.B;
     if (!S.pause && !UI.modalOuvert() && !B.fin) { BT.avancer(B, dt / 1000); S.tAuto = (S.tAuto || 0) + dt; if (S.tAuto > 60000) { S.tAuto = 0; enregistrer(B, 'auto'); } }
     if (!S.mode || S.mode.type !== 'mur') S.vue.fantomeMur = null;
@@ -169,6 +170,8 @@
     v.dessiner(dt);
     S.tHud = (S.tHud || 0) + dt; if (S.tHud > 120) { S.tHud = 0; majHud(); }
     S.tCarte = (S.tCarte || 0) + dt; if (S.tCarte > 250) { S.tCarte = 0; miniCarte(); }
+    // bruit de la mer selon la part d'eau autour du point visé
+    S.tMer = (S.tMer || 0) + dt; if (S.tMer > 500 && PM.ambianceMer) { S.tMer = 0; let n = 0; if (B.aEau) { const c = v.cam, r = Math.max(20, c.d * 0.55); for (let k = 0; k < 24; k++) { const a = k / 24 * 6.28, d = r * (0.3 + (k % 3) * 0.35), x = c.x + Math.cos(a) * d, z = c.z + Math.sin(a) * d, i = Math.floor(x / BT.CEL), q = Math.floor(z / BT.CEL); if (i >= 0 && q >= 0 && i < B.n && q < B.n && B.eau[q * B.n + i]) n++; } } PM.ambianceMer(n / 24 * Math.min(1, 160 / v.cam.d)); }
     if (B.fin && !S.fini) { S.fini = true; setTimeout(finDePartie, 1200); }
   }
   function defilement(dt) {
@@ -240,7 +243,7 @@
     });
     cv.addEventListener('pointerup', e => {
       const p = pos(e), b = bas; bas = null; $('#batCadre').classList.add('cache'); if (!b || b.milieu || !S.B) { S.glisse = false; return; }
-      if (S.glisse) { S.glisse = false; const l = S.vue.unitesDans(b.x, b.y, p.x, p.y); if (l.length) { const mil = l.filter(u => u.cle !== 'villageois'); choisir((mil.length && mil.length < l.length && !e.shiftKey ? l : l).map(u => u.id), e.shiftKey); son('clic'); } else if (!e.shiftKey) choisir([]); return; }
+      if (S.glisse) { S.glisse = false; const l = S.vue.unitesDans(b.x, b.y, p.x, p.y); if (l.length) { parler(l); const mil = l.filter(u => u.cle !== 'villageois'); choisir((mil.length && mil.length < l.length && !e.shiftKey ? l : l).map(u => u.id), e.shiftKey); son('clic'); } else if (!e.shiftKey) choisir([]); return; }
       clicGauche(p, e.shiftKey, e.detail >= 2);
     });
     cv.addEventListener('wheel', e => {
@@ -252,7 +255,7 @@
   }
   function choisir(ids, ajouter) {
     if (ajouter) { const s = new Set(S.sel); for (const i of ids) { if (s.has(i)) s.delete(i); else s.add(i); } S.sel = [...s]; } else S.sel = ids.slice();
-    S.page = 'eco'; S.mode = null; majCurseur(); majHud(true);
+    S.page = 'eco'; S.mode = null; majCurseur(); majHud(true); aideSouris(S.souris, S.vue && S.souris ? S.vue.entiteA(S.souris.x, S.souris.y) : null);
   }
   // ce que fera un clic sur cette entité avec les unités choisies (étiquette près de la souris, clic gauche ou droit)
   function actionPour(en, pt) {
@@ -286,12 +289,19 @@
     if (en.sorte === 'u' && en.j === B.joueur) {
       if (double) { const l = B.unites.filter(u => !u.mort && u.j === B.joueur && u.cle === en.cle && S.vue.surEcran(u)).map(u => u.id); choisir(l, false); }
       else choisir([en.id], shift);
+      parler([en]);
     } else if (en.sorte === 'b' && en.j === B.joueur && double) choisir(B.bats.filter(b => !b.mort && b.j === B.joueur && b.cle === en.cle && b.fini).map(b => b.id), false);
     else choisir([en.id], shift && en.sorte === 'u' && en.j === B.joueur);
     son('clic');
   }
   function unitesChoisies() { const B = S.B; return S.sel.map(i => B.parId.get(i)).filter(u => u && u.sorte === 'u' && u.j === B.joueur && !u.mort && !u.dans); }
   function selBatiment() { const B = S.B; if (!B || S.sel.length !== 1) return null; const b = B.parId.get(S.sel[0]); return b && b.sorte === 'b' ? b : null; }
+  // voix : réplique de l'unité choisie ou de celle qui reçoit l'ordre (pas pour les créatures)
+  function parler(us, genreOrdre) {
+    const u = us.find(x => x.s.cat !== 'mythe'); if (!u || !PM.voix) return;
+    const g = genreOrdre ? (genreOrdre === 'ordre' && u.s.naval ? 'marin' : genreOrdre) : u.s.naval ? 'navire' : u.cle === 'villageois' ? 'villageois' : 'soldat';
+    PM.voix(g, u.cle === 'villageois' && u.id % 2 === 1);
+  }
   function clicDroit(p, shift) {
     const B = S.B, en = S.vue.entiteA(p.x, p.y), pt = S.vue.pointSol(p.x, p.y), us = unitesChoisies();
     const b = selBatiment();
@@ -299,6 +309,7 @@
     if (!us.length || (!pt && !en)) return;
     const x = en ? en.x : pt.x, z = en ? en.z : pt.z, t = BT.ordreContexte(B, B.joueur, us.map(u => u.id), x, z, en ? en.id : 0, false);
     if (t === 'treve') { refusTreve(); return; }
+    parler(us, t === 'attaquer' || t === 'attaque' ? 'attaque' : t === 'recolter' ? 'recolter' : t === 'construire' ? 'construire' : t === 'entrer' ? 'entrer' : 'ordre');
     if (t === 'entrer') { message(en && en.sorte === 'u' ? 'Embarquement : les unités rejoignent le navire.' : 'Les unités s’abritent dans le bâtiment.'); }
     else if (t === 'debarquer') message('Le navire gagne le rivage pour débarquer.');
     S.vue.marqueOrdre(x, z, t === 'attaquer'); son(t === 'attaquer' ? 'coup' : 'ordre'); void shift;

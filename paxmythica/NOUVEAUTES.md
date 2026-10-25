@@ -1,5 +1,11 @@
 # Nouveautés de Pax Mythica
 
+## 1.9.0
+- **Les unités parlent** : quand tu les choisis ou leur donnes un ordre, elles répondent en français avec la voix du Mac (« Oui ? », « Au travail ! », « À l’attaque ! », « Cap paré ! »). Case « Voix des unités » dans les réglages pour les faire taire.
+- **Bruit de la mer** : le souffle des vagues monte quand la caméra survole l’eau, avec quelques mouettes.
+- **Passagers visibles** : les soldats embarqués se tiennent debout sur le pont du navire de transport.
+- **Ruines plus discrètes** : un bâtiment détruit laisse un éboulis de pierres et de poutres qui s’enfonce puis disparaît, au lieu de grandes plaques claires.
+
 ## 1.8.0
 - **Clics plus simples** : avec des unités choisies, un clic gauche (ou droit) sur un arbre, des baies, une mine, un chantier, un ennemi ou un navire de transport leur donne l’ordre ; une étiquette près de la souris dit ce qu’elles vont faire (« Couper du bois », « Attaquer », « Embarquer »…). Arbres, baies, mines et animaux sont plus faciles à viser.
 - **Bug corrigé** : les échafaudages des chantiers étaient démesurés ; ils ont retrouvé leur taille.
