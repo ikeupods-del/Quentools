@@ -19,7 +19,7 @@
   // ---------- création de la bataille ----------
   ACT.bataille = () => {
     const d = lireP('pm:bataille', {});
-    S.cre = Object.assign({ etape: 0, epoque: 'antique', pantheon: null, dieu: null, carte: 'plaine', taille: 'petite', adversaires: 1, difficulte: 1, equipes: false }, d, { etape: 0, pantheon: null, dieu: null });
+    S.cre = Object.assign({ etape: 0, epoque: 'antique', pantheon: null, dieu: null, carte: 'plaine', taille: 'petite', adversaires: 1, difficulte: 1, equipes: false, duree: 'normale' }, d, { etape: 0, pantheon: null, dieu: null });
     PM.appliquerEpoque(S.cre.epoque); creation(); UI.montrer('creation');
   };
   ACT['b-epoque'] = e => { S.cre.epoque = e.dataset.v; PM.appliquerEpoque(e.dataset.v); S.cre.etape = 1; creation(); };
@@ -47,6 +47,7 @@
         <div class="champ"><label>Adversaires</label>${opt('adversaires', [[1, '1'], [2, '2'], [3, '3']])}</div>
         ${c.adversaires === 3 ? `<div class="champ"><label>Camps</label>${opt('equipes', [['0', 'Chacun pour soi'], ['1', '2 contre 2']])}</div>` : ''}
         <div class="champ"><label>Ordinateur</label>${opt('difficulte', R.DIFFICULTES.map((d, i) => [i, d.nom]))}</div>
+        <div class="champ"><label>Durée</label>${opt('duree', Object.entries(R.DUREES).map(([k, d]) => [k, d.nom]))}<p class="sous" style="margin:6px 0 0">${esc((R.DUREES[c.duree] || R.DUREES.normale).desc)}</p></div>
         <p class="sous">${esc(PM.EPOQUES[c.epoque].nom)} · ${esc(P.nom)} · ${esc(P.majeurs.find(d => d.id === c.dieu).nom)}. Récolte, bâtis, passe les âges et détruis le centre-ville et les villageois ennemis.</p>
         <div class="actions-bas"><button class="btn" data-act="b-retour">← Retour</button><button class="btn or grand" data-act="b-lancer">⚔️ Lancer la bataille</button></div></div>`;
     }
@@ -54,19 +55,70 @@
       <div class="actions-bas" style="justify-content:flex-start;margin-top:22px"><button class="btn" data-act="accueil">Menu principal</button></div>`;
   }
   ACT['b-lancer'] = () => {
-    const c = S.cre; ecrireP('pm:bataille', { epoque: c.epoque, carte: c.carte, taille: c.taille, adversaires: c.adversaires, difficulte: c.difficulte, equipes: c.equipes });
+    const c = S.cre; ecrireP('pm:bataille', { epoque: c.epoque, carte: c.carte, taille: c.taille, adversaires: c.adversaires, difficulte: c.difficulte, equipes: c.equipes, duree: c.duree });
     const autres = Object.keys(PM.PANTHEONS).filter(p => p !== c.pantheon).sort(() => Math.random() - 0.5), nb = c.adversaires + 1;
     const joueurs = [{ pantheon: c.pantheon, dieu: c.dieu, nom: PM.NOMS_PEUPLES[c.pantheon][0], couleur: PM.COULEURS[0], equipe: 0 }];
     for (let i = 1; i < nb; i++) { const p = autres[(i - 1) % autres.length], P = PM.PANTHEONS[p]; joueurs.push({ pantheon: p, dieu: P.majeurs[Math.floor(Math.random() * 3)].id, nom: PM.NOMS_PEUPLES[p][1 + Math.floor(Math.random() * 2)], couleur: PM.COULEURS[[2, 1, 4][i - 1]], ia: true, difficulte: c.difficulte, equipe: c.equipes ? (i === 2 ? 0 : 1) : i }); }
     if (nb === 2) c.taille = c.taille || 'petite'; else if (c.taille === 'petite' && nb > 2) c.taille = 'moyenne';
-    const B = BT.nouvelle({ epoque: c.epoque, carte: c.carte, taille: c.taille, graine: 1 + Math.floor(Math.random() * 999999), joueur: 0, joueurs });
+    const B = BT.nouvelle({ epoque: c.epoque, carte: c.carte, taille: c.taille, graine: 1 + Math.floor(Math.random() * 999999), joueur: 0, joueurs, duree: R.DUREES[c.duree] ? c.duree : 'normale' });
     B.pack = R.CARTES[c.carte].pack;
     demarrer(B);
   };
 
+  // ---------- campagne ----------
+  const missionDe = B => B && B.mission ? R.CAMPAGNE.find(m => m.id === B.mission.id) : null;
+  ACT.campagne = () => {
+    const fait = lireP('pm:campagne', []);
+    $('#creationContenu').innerHTML = `<h1>Campagne</h1><p class="sous">Six missions, de la fondation d’une cité grecque jusqu’à l’ascenseur spatial. Chaque victoire ouvre la mission suivante.</p>
+      <div class="cartes">${R.CAMPAGNE.map((m, i) => { const ouvert = i === 0 || fait.includes(R.CAMPAGNE[i - 1].id), fini = fait.includes(m.id);
+        return `<button class="carte-choix ${fini ? 'choisie' : ''}" data-act="b-mission" data-v="${m.id}" ${ouvert ? '' : 'disabled'}><div class="em">${ouvert ? (fini ? '🏆' : PM.EPOQUES[m.epoque].emoji) : '🔒'}</div><h3>${i + 1}. ${esc(m.titre)}</h3>
+          <p>${esc(PM.EPOQUES[m.epoque].nom)} · ${esc(PM.PANTHEONS[m.joueur.pantheon].nom)} · ${esc(R.CARTES[m.carte].nom)}${m.duree === 'longue' ? ' · partie longue' : ''}</p><p>${ouvert ? esc(m.recit) : 'Gagne la mission précédente pour l’ouvrir.'}</p></button>`; }).join('')}</div>
+      <div class="actions-bas" style="justify-content:flex-start;margin-top:22px"><button class="btn" data-act="accueil">Menu principal</button></div>`;
+    UI.montrer('creation');
+  };
+  ACT['b-mission'] = e => {
+    const def = R.CAMPAGNE.find(m => m.id === (e.dataset ? e.dataset.v : e)); if (!def) return;
+    UI.fermerModal(); PM.appliquerEpoque(def.epoque);
+    const B = BT.nouvelleMission(def); B.pack = R.CARTES[def.carte].pack; demarrer(B, { mission: def });
+  };
+
+  // ---------- enregistrements : une sauvegarde automatique et trois emplacements ----------
+  const LISTE = 'pm:bat:liste';
+  const resume = B => { const J = B.joueurs[B.joueur]; return { nom: J.nom, pantheon: J.pantheon, epoque: B.epoque, carte: B.typeCarte, temps: Math.floor(B.temps), date: Date.now(), mission: B.mission ? B.mission.id : null }; };
+  function enregistrer(B, cle) {
+    if (!B || B.fin) return false;
+    try { localStorage.setItem('pm:bat:' + cle, JSON.stringify(BT.sauver(B))); const l = lireP(LISTE, {}); l[cle] = resume(B); ecrireP(LISTE, l); return true; } catch (e) { return false; }
+  }
+  function oublier(cle) { try { localStorage.removeItem('pm:bat:' + cle); } catch (e) { /* sans stockage */ } const l = lireP(LISTE, {}); delete l[cle]; ecrireP(LISTE, l); }
+  const descSauve = m => { const P = PM.PANTHEONS[m.pantheon], mi = m.mission && R.CAMPAGNE.find(x => x.id === m.mission), d = new Date(m.date);
+    return `${P ? P.emoji : ''} ${m.nom} · ${mi ? 'mission « ' + mi.titre + ' »' : (PM.EPOQUES[m.epoque] || {}).nom + ' · ' + (R.CARTES[m.carte] || {}).nom} · ${Math.floor(m.temps / 60)} min · ${d.toLocaleDateString('fr-FR')} ${d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`; };
+  function charger(cle) {
+    let o = null; try { o = JSON.parse(localStorage.getItem('pm:bat:' + cle)); } catch (e) { o = null; }
+    if (!o || o.version !== 2 || !o.opts) { UI.toast('Cette sauvegarde est introuvable ou trop ancienne.', 'ko'); oublier(cle); return; }
+    PM.appliquerEpoque(o.opts.epoque);
+    const B = BT.charger(o); B.pack = R.CARTES[B.typeCarte].pack; demarrer(B, { charge: true });
+  }
+  ACT['b-continuer'] = () => charger('auto');
+  ACT['b-charger'] = e => { UI.fermerModal(); charger(e.dataset.v); };
+  ACT['b-charger-menu'] = () => {
+    const l = lireP(LISTE, {}), enJeu = UI.ecran === 'bataille' && S.B; UI.fermerModal();
+    const cles = ['auto', '1', '2', '3'].filter(k => l[k]);
+    UI.ouvrirModal(`<h2>📂 Charger une bataille</h2>${cles.length ? `<div class="rts-emplacements">${cles.map(k => `<button class="btn" data-act="b-charger" data-v="${k}"><b>${k === 'auto' ? 'Automatique' : 'Emplacement ' + k}</b><span>${esc(descSauve(l[k]))}</span></button>`).join('')}</div>` : '<p class="recit">Aucune bataille enregistrée.</p>'}
+      <div class="actions-bas"><button class="btn" data-act="${enJeu ? 'b-pause' : 'fermer'}">← Retour</button></div>`, !enJeu);
+  };
+  ACT['b-sauver-menu'] = () => {
+    const l = lireP(LISTE, {}); UI.fermerModal(); S.pause = true;
+    UI.ouvrirModal(`<h2>💾 Enregistrer la bataille</h2><p class="recit">La bataille s’enregistre aussi toute seule chaque minute (« Continuer la bataille » au menu principal).</p>
+      <div class="rts-emplacements">${['1', '2', '3'].map(k => `<button class="btn" data-act="b-sauver" data-v="${k}"><b>Emplacement ${k}</b><span>${l[k] ? esc(descSauve(l[k])) + ' — sera remplacé' : 'vide'}</span></button>`).join('')}</div>
+      <div class="actions-bas"><button class="btn" data-act="b-pause">← Retour</button></div>`);
+  };
+  ACT['b-sauver'] = e => { const r = enregistrer(S.B, e.dataset.v); UI.fermerModal(); menuPause(); UI.toast(r ? 'Bataille enregistrée.' : 'Impossible d’enregistrer : le stockage est plein.', r ? 'ok' : 'ko'); };
+  ACT['b-pause'] = () => { UI.fermerModal(); menuPause(); };
+  UI.batSauvegardes = () => lireP(LISTE, {});
+
   // ---------- démarrage ----------
-  function demarrer(B) {
-    S.B = B; S.sel = []; S.groupes = {}; S.mode = null; S.page = 'eco'; S.pause = false; S.alerte = -99; S.fini = false; S.sigPouvoirs = S.sigSel = S.sigGrille = ''; S.lieuAlerte = null;
+  function demarrer(B, o = {}) {
+    S.B = B; S.tAuto = 0; S.sel = []; S.groupes = {}; S.mode = null; S.page = 'eco'; S.pause = false; S.alerte = -99; S.fini = false; S.sigPouvoirs = S.sigSel = S.sigGrille = ''; S.lieuAlerte = null;
     UI.montrer('bataille'); if (UI.reglerVitesse) UI.reglerVitesse(0, true);
     if (!S.vue) {
       if (!PM.vue3dPossible || !PM.vue3dPossible()) { UI.toast('La vue 3D n’est pas disponible sur cet ordinateur : le mode Bataille en a besoin.', 'ko'); UI.accueil(); return; }
@@ -75,17 +127,29 @@
     S.vue.lierBataille(B); S.vue.cadrer(); S.vue.stabiliser();
     construireHud(); fondCarte(); majHud(true);
     if (!S.boucle) { S.boucle = true; requestAnimationFrame(boucle); }
-    const J = B.joueurs[B.joueur], P = PM.PANTHEONS[J.pantheon];
-    S.pause = true;
+    const J = B.joueurs[B.joueur], P = PM.PANTHEONS[J.pantheon], def = o.mission || missionDe(B), mn = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    S.pause = true; son('guerre'); if (PM.musique) PM.musique();
+    if (o.charge) {
+      UI.ouvrirModal(`<h2>${P.emoji} ${esc(J.nom)}</h2><p class="recit">Bataille reprise à ${mn(B.temps)}${def ? ` — mission « ${esc(def.titre)} »` : ''}. ${esc(PM.AGES[J.age].nom)}.</p>
+        <div class="actions-bas"><button class="btn or grand" data-act="b-commencer">Reprendre</button></div>`);
+      return;
+    }
+    if (def) {
+      UI.ouvrirModal(`<h2>📜 ${esc(def.titre)}</h2><p class="recit">${esc(def.recit)}</p><h3>Objectifs</h3>
+        <ul class="aide">${B.mission.objectifs.map(x => `<li>${esc(x.texte)}</li>`).join('')}</ul>
+        <p class="sous">${P.emoji} ${esc(J.nom)} (${esc(P.nom)}) contre ${B.joueurs.slice(1).map(x => `<span class="pastille" style="background:${esc(x.couleur)}"></span> ${esc(x.nom)}`).join(', ')}. Clic droit pour agir, <kbd>Échap</kbd> pour la pause et l’aide.</p>
+        <div class="actions-bas"><button class="btn" data-act="campagne">← Campagne</button><button class="btn or grand" data-act="b-commencer">Commencer la mission</button></div>`);
+      return;
+    }
     UI.ouvrirModal(`<h2>${P.emoji} ${esc(J.nom)} — ${esc(R.CARTES[B.typeCarte].nom)}</h2>
       <p class="recit">${esc(PM.majeur ? PM.majeur(J).nom : P.majeurs[0].nom)} veille sur toi. Tes adversaires : ${B.joueurs.slice(1).map(x => `<span class="pastille" style="background:${esc(x.couleur)}"></span> ${esc(x.nom)} (${esc(PM.PANTHEONS[x.pantheon].nom)})`).join(', ')}.</p>
       <ul class="aide"><li><b>Clic gauche</b> (ou glisser un cadre) pour choisir des unités, <b>clic droit</b> (ou ctrl-clic) pour agir : marcher, récolter, construire, attaquer.</li>
       <li>Tes <b>villageois</b> récoltent la nourriture (baies, chasse, fermes), le bois et l’or, et bâtissent : choisis un villageois puis un bâtiment dans la grille en bas à droite.</li>
       <li>Les <b>maisons</b> donnent de la population. Le <b>${esc(R.nomBat('temple').toLowerCase())}</b> forme les créatures ; passe les <b>âges</b> au ${esc(R.nomBat('centre').toLowerCase())} pour choisir un dieu mineur.</li>
       <li>${esc((R.CULTURE[J.pantheon] || {}).desc || '')}</li>
+      ${B.treve ? `<li>🕊️ <b>Partie ${esc(R.DUREES[B.duree].nom.toLowerCase())}</b> : trêve de ${Math.round(B.treve / 60)} minutes, personne ne peut attaquer avant. Population jusqu’à ${B.popMax}.</li>` : ''}
       <li>Raccourcis : <kbd>H</kbd> ${esc(R.nomBat('centre').toLowerCase())}, <kbd>.</kbd> villageois inactif, <kbd>⌘</kbd>+<kbd>1</kbd>…<kbd>9</kbd> groupes, <kbd>Échap</kbd> pause, deux doigts pour se déplacer, pincer pour zoomer.</li></ul>
       <div class="actions-bas"><button class="btn or grand" data-act="b-commencer">À l’assaut !</button></div>`);
-    son('guerre'); if (PM.musique) PM.musique();
   }
   ACT['b-commencer'] = () => { UI.fermerModal(); S.pause = false; };
 
@@ -95,7 +159,8 @@
     const dt = Math.min(100, ts - (S.der || ts)); S.der = ts;
     if (UI.ecran !== 'bataille' || !S.B || !S.vue) return;
     const B = S.B;
-    if (!S.pause && !UI.modalOuvert() && !B.fin) BT.avancer(B, dt / 1000);
+    if (!S.pause && !UI.modalOuvert() && !B.fin) { BT.avancer(B, dt / 1000); S.tAuto = (S.tAuto || 0) + dt; if (S.tAuto > 60000) { S.tAuto = 0; enregistrer(B, 'auto'); } }
+    if (!S.mode || S.mode.type !== 'mur') S.vue.fantomeMur = null;
     defilement(dt);
     const ev = B.evts.splice(0); B.evtsVue = (B.evtsVue || []).concat(ev); evenementsJeu(ev);
     S.sel = S.sel.filter(id => { const e = B.parId.get(id); return e && !e.mort && (e.sorte !== 'r' || e.qte > 0); });
@@ -128,7 +193,9 @@
       else if (e.type === 'age') { const A = PM.AGES[e.age].nom, g = BT.mineurDe(B.joueurs[e.j], e.mineur); if (e.j === ji) { message(`${A} ! ${g ? g.nom + ' t’offre ' + PM.UNITES[g.unite].nom.toLowerCase() + ' et un pouvoir.' : ''}`, 'ok'); son('age'); } else message(`${B.joueurs[e.j].nom} entre dans l’${A.charAt(0).toLowerCase() + A.slice(1)}.`); }
       else if (e.type === 'pouvoir') { son('pouvoir'); if (e.j !== ji) message(`${B.joueurs[e.j].nom} : ${e.nom} !`, 'ko', e.x, e.z); }
       else if (e.type === 'vaincu') { message(e.j === ji ? 'Ton peuple est vaincu.' : `${B.joueurs[e.j].nom} est vaincu !`, e.j === ji ? 'ko' : 'ok'); son('conquete'); }
-      else if (e.type === 'impact' && (e.sorte === 'meteore' || e.sorte === 'eclair')) { /* son du pouvoir déjà joué */ }
+      else if (e.type === 'treve') { message('🕊️ Fin de la trêve : les armées peuvent attaquer !', 'ko'); son('guerre'); }
+      else if (e.type === 'vague' && BT.ennemis(B, ji, e.j)) { message(`⚔️ ${e.n} assaillants de ${B.joueurs[e.j].nom} marchent sur ta cité !`, 'ko', e.x, e.z); S.lieuAlerte = { x: e.x, z: e.z, t: B.temps }; son('guerre'); }
+      else if (e.type === 'objectif') { message('✅ Objectif atteint : ' + e.texte, 'ok'); son('age'); }
     }
     // alerte : on est attaqué
     const a = J.dernAttaque; if (a && a.t > S.alerte + 20 && B.temps - a.t < 1) { S.alerte = a.t; S.lieuAlerte = a; message('⚔️ Tu es attaqué ! (Espace pour y aller)', 'ko', a.x, a.z); son('guerre'); }
@@ -205,6 +272,7 @@
     if (!us.length && b && b.j === B.joueur && b.d.forme) { if (pt) { BT.ralliement(B, B.joueur, b.id, en ? en.x : pt.x, en ? en.z : pt.z, en && en.sorte === 'r' ? en.id : 0); S.vue.marqueOrdre(pt.x, pt.z, false); son('clic'); } return; }
     if (!us.length || (!pt && !en)) return;
     const x = en ? en.x : pt.x, z = en ? en.z : pt.z, t = BT.ordreContexte(B, B.joueur, us.map(u => u.id), x, z, en ? en.id : 0, false);
+    if (t === 'treve') { refusTreve(); return; }
     S.vue.marqueOrdre(x, z, t === 'attaquer'); son(t === 'attaquer' ? 'coup' : 'ordre'); void shift;
   }
   function clicMode(p, shift) {
@@ -213,21 +281,37 @@
       const ids = unitesChoisies().filter(u => u.cle === 'villageois').map(u => u.id), r = BT.poser(B, B.joueur, M.cle, pt.x, pt.z, ids);
       if (!r.ok) { message(r.raison, 'ko'); son('refus'); return; }
       son('ok'); S.vue.marqueOrdre(r.bat.x, r.bat.z, false); if (!shift) { S.mode = null; S.vue.fantome = null; }
+    } else if (M.type === 'mur') {
+      if (!M.debut) { M.debut = { x: pt.x, z: pt.z }; son('clic'); majFantome(p); return; }
+      const ids = unitesChoisies().filter(u => u.cle === 'villageois').map(u => u.id), r = BT.poserMur(B, B.joueur, M.debut.x, M.debut.z, pt.x, pt.z, ids);
+      if (!r.ok) { message(r.raison, 'ko'); son('refus'); return; }
+      son('ok'); message(`${R.nomBat('mur')} : ${r.n} tronçon${r.n > 1 ? 's' : ''} à bâtir.`, 'ok');
+      if (shift) M.debut = { x: pt.x, z: pt.z }; else { S.mode = null; S.vue.fantome = null; S.vue.fantomeMur = null; }
     } else if (M.type === 'pouvoir') {
       const r = BT.pouvoir(B, B.joueur, M.idx, pt.x, pt.z); if (!r.ok) { message(r.raison, 'ko'); son('refus'); return; }
       S.mode = null; S.vue.cercleVise = null;
     } else if (M.type === 'attaque') {
       const en = S.vue.entiteA(p.x, p.y), us = unitesChoisies();
+      if (B.treve && B.temps < B.treve) { refusTreve(); S.mode = null; majCurseur(); return; }
       if (en && en.sorte !== 'r' && BT.ennemis(B, B.joueur, en.j)) BT.ordreContexte(B, B.joueur, us.map(u => u.id), en.x, en.z, en.id, true);
       else BT.ordreContexte(B, B.joueur, us.map(u => u.id), pt.x, pt.z, 0, true);
       S.vue.marqueOrdre(pt.x, pt.z, true); S.mode = null;
     } else if (M.type === 'ralliement') { const b = selBatiment(), en = S.vue.entiteA(p.x, p.y); if (b) BT.ralliement(B, B.joueur, b.id, pt.x, pt.z, en && en.sorte === 'r' ? en.id : 0); S.vue.marqueOrdre(pt.x, pt.z, false); S.mode = null; }
     majCurseur(); majHud(true);
   }
+  function refusTreve() { const r = Math.ceil(S.B.treve - S.B.temps); message(`🕊️ Trêve : aucune attaque avant ${Math.floor(r / 60)}:${String(r % 60).padStart(2, '0')}.`, 'ko'); son('refus'); }
   function majFantome(p) {
     const v = S.vue, M = S.mode; v.fantome = null; v.cercleVise = null; if (!M || !p) return;
     const pt = v.pointSol(p.x, p.y); if (!pt) return;
-    if (M.type === 'poser') { const x = (Math.floor(pt.x / BT.CEL) + 0.5) * BT.CEL, z = (Math.floor(pt.z / BT.CEL) + 0.5) * BT.CEL; v.fantome = { cle: M.cle, x, z, ok: BT.peutPoser(S.B, S.B.joueur, M.cle, x, z).ok }; }
+    if (M.type === 'poser') {
+      const x = (Math.floor(pt.x / BT.CEL) + 0.5) * BT.CEL, z = (Math.floor(pt.z / BT.CEL) + 0.5) * BT.CEL, B = S.B; v.fantome = { cle: M.cle, x, z, ok: BT.peutPoser(B, B.joueur, M.cle, x, z).ok };
+      // une porte prend l'orientation du mur qu'elle remplace
+      if (M.cle === 'porte') { const g = B.parId.get(B.occ[Math.floor(z / BT.CEL) * B.n + Math.floor(x / BT.CEL)]); if (g && g.cle === 'mur') v.fantome.dir = g.dir; }
+    } else if (M.type === 'mur') {
+      const B = S.B, cx = Math.floor(pt.x / BT.CEL) * BT.CEL + 1, cz = Math.floor(pt.z / BT.CEL) * BT.CEL + 1;
+      if (!M.debut) v.fantome = { cle: 'mur', x: cx, z: cz, ok: BT.peutPoser(B, B.joueur, 'mur', cx, cz).ok };
+      else { const l = BT.casesMur(B, B.joueur, M.debut.x, M.debut.z, pt.x, pt.z); l.dir = Math.atan2(pt.x - M.debut.x, pt.z - M.debut.z); v.fantomeMur = l; }
+    }
     else if (M.type === 'pouvoir') { const d = R.POUVOIRS[S.B.joueurs[S.B.joueur].pouvoirs[M.idx].id]; v.cercleVise = { x: pt.x, z: pt.z, r: d.rayon || 4 }; }
   }
   function majCurseur(en) {
@@ -245,7 +329,7 @@
     if (UI.modalOuvert()) { if (e.key === 'Escape' && S.pause && $('#modalBoite [data-act=b-reprendre]')) ACT['b-reprendre'](); return; }
     const k = e.key, B = S.B;
     if (k.startsWith('Arrow')) { S.touches.add(k); e.preventDefault(); return; }
-    if (k === 'Escape') { if (S.mode) { S.mode = null; S.vue.fantome = null; S.vue.cercleVise = null; majCurseur(); } else if (S.sel.length) choisir([]); else menuPause(); return; }
+    if (k === 'Escape') { if (S.mode) { S.mode = null; S.vue.fantome = null; S.vue.fantomeMur = null; S.vue.cercleVise = null; majCurseur(); } else if (S.sel.length) choisir([]); else menuPause(); return; }
     if (k === 'F10' || k === 'p' && e.metaKey) { e.preventDefault(); menuPause(); return; }
     const chiffre = /^[1-9]$/.test(k) ? k : null;
     if (chiffre && (e.metaKey || e.ctrlKey)) { e.preventDefault(); S.groupes[chiffre] = S.sel.slice(); message(`Groupe ${chiffre} : ${S.sel.length} unité(s).`); return; }
@@ -268,9 +352,9 @@
   // ---------- interface : barre, pouvoirs, panneau, grille ----------
   function construireHud() {
     $('#batHud').innerHTML = `
-      <header class="rts-haut"><div class="rts-res" id="batRes"></div><div class="rts-age" id="batAge"></div><div class="rts-droite"><span id="batHorloge"></span>
+      <header class="rts-haut"><div class="rts-res" id="batRes"></div><div class="rts-age" id="batAge"></div><div class="rts-droite"><span id="batTreve" class="rts-treve cache"></span><span id="batHorloge"></span>
         <button class="btn petit" data-act="b-vitesse" id="batVitesse" title="Vitesse du jeu">×1</button><button class="btn petit" data-act="b-menu" title="Pause et menu (Échap)">⏸ Menu</button></div></header>
-      <div class="rts-pouvoirs" id="batPouvoirs"></div>
+      <div class="rts-pouvoirs" id="batPouvoirs"></div><div class="rts-objectifs cache" id="batObj"></div>
       <button class="rts-inactifs cache" id="batInactifs" data-act="b-inactif" title="Villageois inactif (touche .)"></button>
       <footer class="rts-bas"><div class="rts-carte"><canvas id="batCarte" width="200" height="200"></canvas></div><div class="rts-sel" id="batSel"></div><div class="rts-ordres" id="batOrdres"></div></footer>`;
     const cv = $('#batCarte'); let tient = 0;
@@ -290,7 +374,14 @@
     $('#batRes').innerHTML = RES.map(r => `<span class="rts-r" title="${esc(r === 'faveur' ? PM.mot('faveur') : r)}">${PM.ICONES[r]} <b>${fmt(J.res[r])}</b>${r !== 'faveur' || J.pantheon === 'grecs' ? `<small>${taches[r]}</small>` : ''}</span>`).join('') +
       `<span class="rts-r ${J.pop >= J.popMax ? 'plein' : ''}" title="Population">👥 <b>${J.pop}/${J.popMax}</b></span>`;
     const A = J.ageEnCours; $('#batAge').innerHTML = `<b>${esc(PM.AGES[J.age].nom)}</b>${A ? `<span class="rts-prog"><i style="width:${Math.round(A.t / A.temps * 100)}%"></i></span><small>${esc(PM.AGES[A.age].court)} — ${Math.ceil(A.temps - A.t)} s</small>` : ''}`;
-    const t = Math.floor(B.temps); $('#batHorloge').textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+    const t = Math.floor(B.temps), mn = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`; $('#batHorloge').textContent = mn(t);
+    const tv = $('#batTreve'), enTreve = B.treve && B.temps < B.treve; tv.classList.toggle('cache', !enTreve); if (enTreve) { tv.textContent = `🕊️ Trêve ${mn(Math.ceil(B.treve - B.temps))}`; tv.title = 'Personne ne peut attaquer pendant la trêve'; }
+    const M = B.mission, ob = $('#batObj'); ob.classList.toggle('cache', !M);
+    if (M) {
+      const v = M.vagues.find(x => !x.fait), lignes = M.objectifs.map(o => { let plus = ''; if (!o.fait && o.type === 'survivre') plus = ` (${mn(Math.max(0, o.duree - B.temps))})`; else if (!o.fait && o.type === 'merveille' && o.progres) plus = ` (${Math.round(o.progres * 100)} %)`; return `<li class="${o.fait ? 'fait' : ''}">${o.fait ? '✅' : '⬜'} ${esc(o.texte)}${plus}</li>`; });
+      const html = `<b>📜 ${esc((missionDe(B) || {}).titre || 'Mission')}</b><ul>${lignes.join('')}</ul>${v ? `<small>⚔️ Prochain assaut dans ${mn(Math.max(0, v.t - B.temps))}</small>` : ''}`;
+      if (html !== S.sigObj) { S.sigObj = html; ob.innerHTML = html; }
+    }
     const sigP = J.pouvoirs.map(p => p.id + p.utilise).join() + (S.mode && S.mode.type === 'pouvoir' ? S.mode.idx : '');
     if (sigP !== S.sigPouvoirs) { S.sigPouvoirs = sigP; $('#batPouvoirs').innerHTML = J.pouvoirs.map((p, i) => { const P = PM.POUVOIRS[p.id] || { nom: p.id, emoji: '✨' }; return `<button class="rts-pouvoir ${S.mode && S.mode.type === 'pouvoir' && S.mode.idx === i ? 'actif' : ''}" data-act="b-pouvoir" data-v="${i}" ${p.utilise ? 'disabled' : ''} title="${esc(P.nom)} — ${esc(R.descPouvoir(p.id))}${p.utilise ? ' (déjà utilisé)' : ''}">${P.emoji}</button>`; }).join(''); }
     const ina = inactifs().length, bi = $('#batInactifs'); bi.classList.toggle('cache', !ina); bi.textContent = `🧑‍🌾 ${ina} inactif${ina > 1 ? 's' : ''}`;
@@ -354,7 +445,12 @@
     $('#batOrdres').innerHTML = cases.map((c, i) => c ? `<button class="rts-cmd ${c.ko ? 'ko' : ''} ${c.verrou ? 'verrou' : ''}" data-act="${c.act}" ${c.v ? `data-v="${esc(c.v)}"` : ''} data-i="${i}" title="${esc(c.titre)}">${c.em}<kbd>${GRILLE[i].toUpperCase()}</kbd></button>` : `<span class="rts-cmd vide"></span>`).join('');
   }
   ACT['b-page'] = e => { S.page = e.dataset.v; S.sigGrille = ''; grille(); };
-  ACT['b-construire'] = e => { const B = S.B, r = BT.peutPoser(B, B.joueur, e.dataset.v, -1e3, -1e3); if (!r.ok && r.raison !== 'La place est prise.') { message(r.raison, 'ko'); son('refus'); return; } S.mode = { type: 'poser', cle: e.dataset.v }; majCurseur(); majFantome(S.souris); };
+  ACT['b-construire'] = e => {
+    const B = S.B, r = BT.peutPoser(B, B.joueur, e.dataset.v, -1e3, -1e3); if (!r.ok && r.raison !== 'La place est prise.' && !/rivage|eau|place/i.test(r.raison)) { message(r.raison, 'ko'); son('refus'); return; }
+    if (e.dataset.v === 'mur') { S.mode = { type: 'mur' }; message('Clique le début du mur puis sa fin (Maj pour continuer le tracé).'); }
+    else { S.mode = { type: 'poser', cle: e.dataset.v }; if (e.dataset.v === 'port') message('Le port se pose sur le rivage, le ponton vers l’eau.'); else if (e.dataset.v === 'porte') message('Pose la porte sur un de tes murs : tes unités et tes alliés passent, pas l’ennemi.'); }
+    majCurseur(); majFantome(S.souris);
+  };
   ACT['b-former'] = e => { const b = selBatiment(); if (!b) return; const r = BT.former(S.B, S.B.joueur, b.id, e.dataset.v); if (!r.ok) { message(r.raison, 'ko'); son('refus'); } else son('clic'); S.sigSel = ''; majHud(true); };
   ACT['b-stop'] = () => { BT.arreter(S.B, S.B.joueur, S.sel); };
   ACT['b-attaque'] = () => { S.mode = { type: 'attaque' }; majCurseur(); };
@@ -410,14 +506,23 @@
       <li><b>Glisser</b> : choisir au cadre ; <b>double-clic</b> : toutes les unités du même genre ; <b>Maj</b> : ajouter.</li>
       <li><kbd>H</kbd> centre-ville · <kbd>.</kbd> villageois inactif · <kbd>Espace</kbd> dernière alerte · <kbd>⌘</kbd>+<kbd>1</kbd>…<kbd>9</kbd> créer un groupe, <kbd>1</kbd>…<kbd>9</kbd> le rappeler · <kbd>Suppr</kbd> supprimer · lettres de la grille (<kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd>…) · flèches ou bord de l’écran pour se déplacer.</li>
       <li>Contres : infanterie > cavalerie > archers > infanterie ; les héros battent les créatures, les créatures écrasent les humains ; les engins de siège abattent les bâtiments.</li></ul>
-      <div class="actions-bas"><button class="btn" data-act="b-quitter">Quitter la bataille</button><button class="btn" data-act="b-rejouer">Recommencer</button><button class="btn or" data-act="b-reprendre">Reprendre</button></div>`);
+      ${S.B.mission ? `<h3>Objectifs</h3><ul class="aide">${S.B.mission.objectifs.map(o => `<li>${o.fait ? '✅' : '⬜'} ${esc(o.texte)}</li>`).join('')}</ul>` : ''}
+      <div class="actions-bas"><button class="btn" data-act="b-quitter">Quitter</button><button class="btn" data-act="b-rejouer">Recommencer</button><button class="btn" data-act="b-charger-menu">📂 Charger</button><button class="btn" data-act="b-sauver-menu">💾 Enregistrer</button><button class="btn or" data-act="b-reprendre">Reprendre</button></div>`);
   }
   ACT['b-reprendre'] = () => { UI.fermerModal(); S.pause = false; };
-  ACT['b-quitter'] = () => { UI.fermerModal(); S.B = null; S.pause = false; UI.accueil(); };
-  ACT['b-rejouer'] = () => { UI.fermerModal(); ACT.bataille(); };
+  ACT['b-quitter'] = () => { UI.fermerModal(); if (S.B && !S.B.fin) enregistrer(S.B, 'auto'); S.B = null; S.pause = false; UI.accueil(); };
+  ACT['b-rejouer'] = () => { const def = missionDe(S.B); UI.fermerModal(); if (def) ACT['b-mission'](def.id); else ACT.bataille(); };
   function finDePartie() {
-    const B = S.B; if (!B) return; const J = B.joueurs[B.joueur], gagne = B.fin && B.fin.gagnant === J.equipe;
-    son(gagne ? 'victoire' : 'refus');
+    const B = S.B; if (!B) return; const J = B.joueurs[B.joueur], gagne = B.fin && B.fin.gagnant === J.equipe, def = missionDe(B);
+    son(gagne ? 'victoire' : 'refus'); oublier('auto');
+    if (def) {
+      const i = R.CAMPAGNE.indexOf(def), suite = gagne && R.CAMPAGNE[i + 1];
+      if (gagne) { const f = lireP('pm:campagne', []); if (!f.includes(def.id)) { f.push(def.id); ecrireP('pm:campagne', f); } }
+      UI.ouvrirModal(`<h2>${gagne ? '🏆 Mission accomplie !' : '💀 Mission échouée'}</h2><p class="recit">${gagne ? esc(def.fin) : 'Ton peuple est tombé. Reprends la mission : les dieux t’offrent une revanche.'} (${Math.floor(B.fin.temps / 60)} min)</p>
+        <ul class="aide">${B.mission.objectifs.map(o => `<li>${o.fait ? '✅' : '❌'} ${esc(o.texte)}</li>`).join('')}</ul>
+        <div class="actions-bas"><button class="btn" data-act="campagne">Campagne</button>${gagne ? '' : `<button class="btn or" data-act="b-mission" data-v="${def.id}">Réessayer</button>`}${suite ? `<button class="btn or grand" data-act="b-mission" data-v="${suite.id}">Mission suivante : ${esc(suite.titre)}</button>` : gagne ? '<button class="btn or grand" data-act="campagne">🏆 Campagne terminée</button>' : ''}</div>`, true);
+      return;
+    }
     UI.ouvrirModal(`<h2>${gagne ? '🏆 Victoire !' : '💀 Défaite'}</h2><p class="recit">${gagne ? (B.fin.raison === 'merveille' ? 'Ta merveille a tenu : les dieux te couronnent.' : 'Tes ennemis sont vaincus. Ton nom traversera les âges.') : 'Ton peuple est tombé. Les dieux t’offriront une revanche.'} (${Math.floor(B.fin.temps / 60)} min)</p>
       <table class="rts-bilan"><tr><th></th><th>Âge</th><th>Unités formées</th><th>Ennemis abattus</th><th>Pertes</th><th>Récolte</th><th>Bâtiments</th></tr>
       ${B.joueurs.map(x => `<tr><td><span class="pastille" style="background:${esc(x.couleur)}"></span> ${esc(x.nom)}</td><td>${esc(PM.AGES[x.age].court)}</td><td>${x.stats.formees}</td><td>${x.stats.tues}</td><td>${x.stats.pertes}</td><td>${Math.round(x.stats.recolte)}</td><td>${x.stats.construits}</td></tr>`).join('')}</table>

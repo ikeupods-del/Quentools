@@ -42,36 +42,105 @@
       : [[pignon(w + 0.3, d + 0.4, h, x, y, z), st.toit]];
   const porte = (x, y, z, w = 1.4, h = 2.2) => [Bx(w, h, 0.15, x, y, z), 0x4a3020];
   const fenetres = (xs, y, z) => xs.map(x => [Bx(0.6, 0.8, 0.12, x, y, z), 0x2a3038]);
+  // parties aux couleurs du joueur (bannières, boucliers, voiles) : dessinées à part, teintées par joueur
+  const EQ = 0x00ff02;
+  const banniere = (x, y, z, h = 2.6, l = 0.9) => [[Cy(0.06, 0.07, h + 0.5, 5, x, y, z), 0x4a3a28], [Bx(l + 0.2, 0.08, 0.08, x + l / 2, y + h + 0.2, z), 0x4a3a28], [Bx(l, h * 0.6, 0.05, x + l / 2, y + h * 0.42, z), EQ], [Co(0.09, 0.25, 5, x, y + h + 0.5, z), 0xd8b060]];
+  const etendardMur = (x, y, z, h = 1.6, l = 0.8) => [[Bx(l, h, 0.05, x, y - h, z), EQ], [Bx(l + 0.1, 0.1, 0.12, x, y, z), 0x4a3a28]];
+  const brasero = (x, y, z) => [[Cy(0.16, 0.1, 0.9, 8, x, y, z), 0x3e3630], [Cy(0.3, 0.18, 0.24, 10, x, y + 0.9, z), 0x2e2620]];
+  const crenaux = (w, d, y, c, h = 0.6, p = 1) => { const l = []; for (let x = -w / 2 + p / 2; x <= w / 2 - p / 2 + 0.01; x += p * 2) l.push([Bx(p * 0.8, h, 0.45, x, y, d / 2 - 0.22), c], [Bx(p * 0.8, h, 0.45, x, y, -d / 2 + 0.22), c]); for (let z = -d / 2 + p * 1.5; z <= d / 2 - p * 1.5 + 0.01; z += p * 2) l.push([Bx(0.45, h, p * 0.8, w / 2 - 0.22, y, z), c], [Bx(0.45, h, p * 0.8, -w / 2 + 0.22, y, z), c]); return l; };
+  const marches = (w, n, x, y, z, c) => { const l = []; for (let k = 0; k < n; k++) l.push([Bx(w, 0.18, 0.45, x, y + k * 0.18, z - k * 0.45), c]); return l; };
+  const avecFeux = (parts, feux) => { parts.feux = feux; return parts; };
+  const bois = st => st.bois, pierreDe = st => st.plat && st.mur === 0xbdb8ae ? 0x9a9690 : 0xa8a294;
   const CONSTR = {
-    grenier: st => [[Bx(6.4, 0.4, 6.4), st.socle], [Cy(2.3, 2.5, 3.4, 16, -0.6, 0.4, -0.4), st.mur], ...(st.plat ? [[Cy(2.5, 2.5, 0.4, 16, -0.6, 3.8, -0.4), st.toit], [Sp(0.9, -0.6, 4.3, -0.4), st.accent]] : [[Co(2.9, 2.2, 16, -0.6, 3.8, -0.4), st.toit]]),
-      [Bx(2.2, 2.0, 2.4, 2.0, 0.4, 1.4), st.bois], ...toit(st, 2.2, 2.4, 0.9, 2.0, 2.4, 1.4), porte(-0.6, 0.4, 1.95, 1.0, 1.8), ...[[1.2, 2.9], [2.0, 3.1], [2.8, 2.9]].map(([x, z]) => [Sp(0.42, x, 0.75, z), 0xd8c8a0])],
-    entrepot: st => [[Bx(6.6, 0.3, 6.0), st.socle], ...[[-2.7, -2.3], [2.7, -2.3], [-2.7, 2.3], [2.7, 2.3]].map(([x, z]) => [Cy(0.16, 0.18, 3.0, 6, x, 0.3, z), st.bois]), ...toit(st, 6.0, 5.2, 1.5, 0, 3.3, 0),
-      ...[0, 1, 2, 3, 4].map(k => [new THREE.CylinderGeometry(0.32, 0.32, 3.2, 7).rotateZ(Math.PI / 2).translate(-1.0, 0.62 + Math.floor(k / 3) * 0.55, -1.2 + (k % 3) * 0.66 + Math.floor(k / 3) * 0.33), 0x8a5c34]),
-      ...[[1.6, -0.6], [2.3, 0.3], [1.6, 0.9]].map(([x, z]) => [Bx(0.7, 0.6, 0.7, x, 0.3, z), 0xe5c24a]), [Bx(0.7, 0.6, 0.7, 2.3, 0.9, -0.3), 0xe5c24a]],
-    caserne: st => [[Bx(11, 0.5, 8.4, 0, 0, -1.4), st.socle], [Bx(10, 4.2, 6.4, 0, 0.5, -2.0), st.mur], ...toit(st, 10, 6.4, 2.6, 0, 4.7, -2.0), porte(0, 0.5, 1.25, 1.8, 2.6), ...fenetres([-3.4, -1.8, 1.8, 3.4], 2.4, 1.25),
-      ...[-3.5, -1.2, 1.2, 3.5].map(x => [Cy(0.12, 0.14, 1.8, 6, x, 0.5, 3.6), st.bois]), ...[-3.5, 1.2].map(x => [Bx(2.6, 0.14, 0.14, x + 1.15, 1.9, 3.6), st.bois]),
-      [Bx(2.4, 1.6, 0.2, 4.4, 0.5, 1.9), st.bois], ...[0, 1, 2, 3, 4].map(k => [Cy(0.03, 0.03, 2.6, 4, 3.5 + k * 0.45, 0.5, 2.05), 0x9aa4ad])],
-    archerie: st => [[Bx(11, 0.4, 10), st.socle], [Bx(6.6, 3.6, 4.6, -2.0, 0.4, -2.6), st.mur], ...toit(st, 6.6, 4.6, 2.0, -2.0, 4.0, -2.6), porte(-2.0, 0.4, -0.25, 1.4, 2.2),
-      ...[-3.4, 0, 3.4].flatMap(x => [[Cy(0.9, 0.9, 0.16, 18).rotateX(Math.PI / 2).translate(x, 1.5, 3.8), 0xf4efe0], [Cy(0.6, 0.6, 0.18, 18).rotateX(Math.PI / 2).translate(x, 1.5, 3.8), 0xb02a20], [Cy(0.28, 0.28, 0.2, 14).rotateX(Math.PI / 2).translate(x, 1.5, 3.8), 0xf2d27a], [Cy(0.08, 0.1, 1.5, 5, x, 0.4, 3.95), st.bois]]),
-      [Bx(1.6, 1.2, 0.2, 3.2, 0.4, -1.5), st.bois]],
-    ecurie: st => [[Bx(11.4, 0.35, 10), st.socle], [Bx(11, 3.0, 4.4, 0, 0.35, -2.6), st.bois], ...toit(st, 11, 4.6, 1.8, 0, 3.35, -2.6), ...[-4.4, -2.2, 0, 2.2, 4.4].map(x => [Bx(1.6, 2.0, 0.12, x, 0.35, -0.35), 0x3a2a1c]),
-      ...[-5.2, -2.6, 0, 2.6, 5.2].map(x => [Cy(0.1, 0.12, 1.3, 5, x, 0.35, 4.6), st.bois]), [Bx(10.6, 0.12, 0.12, 0, 1.0, 4.6), st.bois], [Bx(10.6, 0.12, 0.12, 0, 1.5, 4.6), st.bois],
-      ...[[-3.5, 2.0], [-2.2, 2.4], [3.4, 1.8]].map(([x, z]) => [new THREE.CylinderGeometry(0.62, 0.62, 1.2, 10).rotateZ(Math.PI / 2).translate(x, 0.97, z), 0xd8c070]), [Bx(1.6, 0.6, 0.7, 1.0, 0.35, 1.6), 0x6a4a30]],
+    // grenier : silo rond et toit conique, annexe, échelle, sacs et jarres
+    grenier: st => avecFeux([[Bx(6.6, 0.45, 6.6), st.socle], [Cy(2.4, 2.6, 3.6, 18, -0.7, 0.45, -0.5), st.mur], [Cy(2.48, 2.48, 0.22, 18, -0.7, 2.2, -0.5), bois(st)], [Cy(2.5, 2.5, 0.22, 18, -0.7, 3.95, -0.5), bois(st)],
+      ...(st.plat ? [[Cy(2.6, 2.6, 0.4, 18, -0.7, 4.05, -0.5), st.toit], [Sp(1.0, -0.7, 4.6, -0.5), st.accent]] : [[Co(3.1, 2.6, 18, -0.7, 4.05, -0.5), st.toit], [Co(0.5, 0.6, 8, -0.7, 6.5, -0.5), st.accent]]),
+      [Bx(2.4, 2.2, 2.6, 2.0, 0.45, 1.5), st.mur], ...toit(st, 2.4, 2.6, 1.0, 2.0, 2.65, 1.5), porte(-0.7, 0.45, 1.95, 1.0, 1.9), porte(2.0, 0.45, 2.83, 0.9, 1.6),
+      ...[0, 1, 2, 3, 4].map(k => [Bx(0.6, 0.05, 0.05, 1.4, 0.8 + k * 0.6, 1.0), bois(st)]), [Bx(0.05, 3.2, 0.05, 1.12, 0.45, 1.0), bois(st)], [Bx(0.05, 3.2, 0.05, 1.68, 0.45, 1.0), bois(st)],
+      ...[[1.2, 3.0], [1.9, 3.2], [2.7, 3.0], [3.0, 2.4]].map(([x, z]) => [Sp(0.42, x, 0.8, z), 0xd8c8a0]), ...[[-3.0, 2.4], [-2.4, 2.8]].map(([x, z]) => [Cy(0.25, 0.32, 0.8, 9, x, 0.45, z), 0xb0603a]),
+      ...banniere(-3.2, 0.45, -2.9, 2.6, 0.8)], []),
+    // entrepôt : hangar de poutres, piles de rondins, caisses d'or, charrette
+    entrepot: st => avecFeux([[Bx(6.8, 0.35, 6.4), st.socle], ...[[-2.8, -2.4], [2.8, -2.4], [-2.8, 2.4], [2.8, 2.4], [0, -2.4], [0, 2.4]].map(([x, z]) => [Cy(0.17, 0.19, 3.1, 6, x, 0.35, z), bois(st)]),
+      [Bx(6.0, 0.2, 0.25, 0, 3.3, 2.4), bois(st)], [Bx(6.0, 0.2, 0.25, 0, 3.3, -2.4), bois(st)], ...toit(st, 6.2, 5.4, 1.6, 0, 3.45, 0), [Bx(6.0, 1.8, 0.12, 0, 0.35, -2.5), bois(st)],
+      ...[0, 1, 2, 3, 4, 5].map(k => [new THREE.CylinderGeometry(0.32, 0.32, 3.2, 8).rotateZ(Math.PI / 2).translate(-1.0, 0.67 + Math.floor(k / 3) * 0.56, -1.4 + (k % 3) * 0.66 + Math.floor(k / 3) * 0.33), 0x8a5c34]),
+      ...[[1.6, -0.6], [2.3, 0.3], [1.6, 0.9], [2.3, 1.4]].map(([x, z]) => [Bx(0.7, 0.6, 0.7, x, 0.35, z), 0xe5c24a]), [Bx(0.7, 0.6, 0.7, 2.0, 0.95, 0.4), 0xe5c24a],
+      [Bx(1.6, 0.45, 1.0, 3.6, 0.7, 2.9), bois(st)], ...[-0.6, 0.6].map(z => [new THREE.CylinderGeometry(0.45, 0.45, 0.12, 12).rotateX(Math.PI / 2).translate(3.6, 0.45, 2.9 + z), 0x5a3a22]),
+      [new THREE.CylinderGeometry(0.03, 0.03, 0.9, 4).rotateZ(0.6).translate(-2.4, 0.9, 2.9), 0x5a3a22], [Bx(0.3, 0.2, 0.05, -2.15, 1.3, 2.9), 0x9aa4ad],
+      ...banniere(3.1, 0.35, -2.9, 2.4, 0.7)], []),
+    // caserne : grande salle, portique à colonnes, marches, cour d'entraînement (mannequins, râtelier, boucliers aux couleurs du joueur), braseros
+    caserne: st => avecFeux([[Bx(11.2, 0.5, 9.0, 0, 0, -1.2), st.socle], [Bx(10, 4.4, 6.0, 0, 0.5, -2.4), st.mur], ...toit(st, 10, 6.0, 2.6, 0, 4.9, -2.4),
+      [Bx(10.4, 0.35, 6.4, 0, 4.6, -2.4), st.accent], ...[-4, -2, 2, 4].map(x => [Cy(0.28, 0.32, 3.6, 10, x, 0.5, 1.0), st.accent]), [Bx(9.6, 0.5, 1.4, 0, 4.1, 0.9), st.accent], [Bx(9.6, 0.12, 2.2, 0, 4.6, 0.6), st.toit],
+      porte(0, 0.5, 0.62, 2.0, 2.8), ...fenetres([-3.4, -1.8, 1.8, 3.4], 2.6, 0.62), ...marches(3.2, 2, 0, 0.0, 1.9, st.socle),
+      ...[-4.2, -2.6].flatMap(x => [[Cy(0.1, 0.12, 1.6, 6, x, 0.5, 3.4), bois(st)], [Bx(0.9, 0.1, 0.1, x, 1.75, 3.4), bois(st)], [Sp(0.22, x, 2.25, 3.4), 0xd8c8a0], [Cy(0.38, 0.38, 0.08, 14).rotateX(Math.PI / 2).translate(x, 1.4, 3.6), EQ]]),
+      [Bx(2.4, 1.6, 0.2, 3.6, 0.5, 3.2), bois(st)], ...[0, 1, 2, 3, 4].map(k => [Cy(0.03, 0.03, 2.6, 4, 2.7 + k * 0.45, 0.5, 3.35), 0x9aa4ad]), ...[0, 1, 2].map(k => [Cy(0.4, 0.4, 0.08, 14).rotateX(Math.PI / 2).translate(2.8 + k * 0.9, 1.4, 3.05), EQ]),
+      ...brasero(-1.6, 0.5, 2.3), ...brasero(1.6, 0.5, 2.3), ...etendardMur(-4.6, 4.1, 1.62, 2.2, 0.9), ...etendardMur(4.6, 4.1, 1.62, 2.2, 0.9)], [[-1.6, 1.75, 2.3], [1.6, 1.75, 2.3]]),
+    // champ de tir : pavillon, galerie couverte, cibles, bottes de paille, carquois
+    archerie: st => avecFeux([[Bx(11.2, 0.4, 10.2), st.socle], [Bx(6.6, 3.8, 4.4, -2.0, 0.4, -2.8), st.mur], ...toit(st, 6.6, 4.4, 2.0, -2.0, 4.2, -2.8), porte(-2.0, 0.4, -0.55, 1.4, 2.2), ...fenetres([-4.2, 0.2], 2.2, -0.55),
+      ...[1.6, 3.4, 5.2].map(x => [Cy(0.12, 0.14, 3.0, 6, x, 0.4, -0.8), bois(st)]), [Bx(4.4, 0.18, 2.8, 3.4, 3.4, -2.2), st.toit], [Bx(4.2, 0.9, 0.12, 3.4, 0.4, -3.6), bois(st)],
+      ...[-3.4, 0, 3.4].flatMap(x => [[Cy(0.95, 0.95, 0.16, 20).rotateX(Math.PI / 2).translate(x, 1.5, 4.0), 0xf4efe0], [Cy(0.64, 0.64, 0.18, 20).rotateX(Math.PI / 2).translate(x, 1.5, 4.0), 0xb02a20], [Cy(0.3, 0.3, 0.2, 14).rotateX(Math.PI / 2).translate(x, 1.5, 4.0), 0xf2d27a], [Cy(0.08, 0.1, 1.5, 5, x, 0.4, 4.15), bois(st)], [Cy(0.06, 0.08, 1.4, 5, x + 0.5, 0.4, 4.4).rotateX(0.3), bois(st)]]),
+      ...[[-4.8, 1.6], [4.8, 1.6]].map(([x, z]) => [new THREE.CylinderGeometry(0.6, 0.6, 1.2, 10).rotateZ(Math.PI / 2).translate(x, 1.0, z), 0xd8c070]), ...[0, 1, 2].map(k => [Cy(0.14, 0.12, 0.7, 6, 2.4 + k * 0.4, 0.4, -1.4), 0x6a4a30]),
+      ...banniere(-5.0, 0.4, -0.6, 2.6, 0.8), ...banniere(5.0, 0.4, 4.4, 2.0, 0.6)], []),
+    // écurie : longue étable, grenier à foin, stalles, abreuvoir, enclos
+    ecurie: st => avecFeux([[Bx(11.6, 0.35, 10.2), st.socle], [Bx(11, 3.2, 4.4, 0, 0.35, -2.8), bois(st) === st.mur ? 0x8a5c34 : st.mur], ...toit(st, 11, 4.6, 2.0, 0, 3.55, -2.8), [Bx(3.0, 1.4, 0.1, 0, 2.3, -0.55), 0x3a2a1c],
+      ...[-4.4, -2.2, 0, 2.2, 4.4].map(x => [Bx(1.6, 2.0, 0.12, x, 0.35, -0.55), 0x3a2a1c]), ...[-5.3, -3.3, -1.1, 1.1, 3.3, 5.3].map(x => [Bx(0.18, 2.6, 0.2, x, 0.35, -0.5), bois(st)]),
+      ...[-5.2, -2.6, 0, 2.6, 5.2].map(x => [Cy(0.1, 0.12, 1.3, 5, x, 0.35, 4.6), bois(st)]), [Bx(10.6, 0.12, 0.12, 0, 1.0, 4.6), bois(st)], [Bx(10.6, 0.12, 0.12, 0, 1.5, 4.6), bois(st)],
+      ...[-5.2, 5.2].flatMap(x => [[Bx(0.12, 0.12, 4.4, x, 1.0, 2.4), bois(st)], [Bx(0.12, 0.12, 4.4, x, 1.5, 2.4), bois(st)]]),
+      ...[[-3.5, 2.0], [-2.2, 2.4], [3.4, 1.8], [-2.9, 2.2]].map(([x, z], k) => [new THREE.CylinderGeometry(0.62, 0.62, 1.2, 10).rotateZ(Math.PI / 2).translate(x, 0.97 + (k === 3 ? 1.2 : 0), z), 0xd8c070]), [Bx(1.8, 0.6, 0.7, 1.0, 0.35, 1.6), 0x6a4a30], [Bx(1.6, 0.1, 0.5, 1.0, 0.9, 1.6), 0x4a7aa0],
+      ...banniere(-5.6, 0.35, -0.2, 2.6, 0.8)], []),
+    // forteresse : enceinte crénelée, quatre tours, donjon, porte, bannières et braseros
+    forteresse: st => avecFeux([[Bx(15.6, 0.5, 15.6), st.socle], ...[[0, -7, 15, 1.4], [0, 7, 15, 1.4], [-7, 0, 1.4, 15], [7, 0, 1.4, 15]].map(([x, z, w, d]) => [Bx(w, 5, d, x, 0.5, z), st.mur]),
+      ...crenaux(15.2, 15.2, 5.5, st.mur, 0.7, 1.1),
+      ...[[-7, -7], [7, -7], [-7, 7], [7, 7]].flatMap(([x, z]) => [[Cy(1.9, 2.1, 8, 14, x, 0.5, z), st.mur], [Cy(2.25, 2.25, 0.5, 14, x, 8.5, z), st.accent], st.plat ? [Cy(1.6, 1.6, 0.8, 14, x, 9.0, z), st.accent] : [Co(2.6, 3.4, 14, x, 9.0, z), st.toit], ...[0, 1, 2, 3].map(k => [Bx(0.35, 0.9, 0.12, x + Math.cos(k * 1.57) * 2.0, 4.5, z + Math.sin(k * 1.57) * 2.0), 0x2a2420])]),
+      [Bx(6.4, 12, 6.4, 0, 0.5, -1), st.mur], ...crenaux(6.8, 6.8, 12.5, st.mur, 0.7, 0.85).map(([g, c]) => [g.translate(0, 0, -1), c]), ...(st.plat ? [[Bx(6.6, 0.6, 6.6, 0, 12.5, -1), st.accent]] : [[Co(4.4, 4.2, 4, 0, 12.9, -1, Math.PI / 4), st.toit]]),
+      ...fenetres([-1.6, 0, 1.6], 7.5, 2.25), ...fenetres([-1.6, 1.6], 4.5, 2.25), porte(0, 0.5, 7.75, 3, 3.6), [Bx(4.2, 1.2, 1.8, 0, 4.1, 7.3), st.mur],
+      ...etendardMur(-1.4, 11.5, 2.27, 3.2, 1.1), ...etendardMur(1.4, 11.5, 2.27, 3.2, 1.1), ...etendardMur(-3.2, 5.3, 7.75, 2.4, 1.0), ...etendardMur(3.2, 5.3, 7.75, 2.4, 1.0),
+      ...brasero(-2.6, 0.5, 9.0), ...brasero(2.6, 0.5, 9.0), ...banniere(0, 15.5, -1, 2.4, 1.2).map(([g, c]) => [g, c])], [[-2.6, 1.75, 9.0], [2.6, 1.75, 9.0]]),
+    // tour de guet : pierre crénelée (ou bois chez les Nordiques), meurtrières, toit, bannière
+    tour: st => st === STYLES.nordiques
+      ? avecFeux([...[[-1.6, -1.6], [1.6, -1.6], [-1.6, 1.6], [1.6, 1.6]].map(([x, z]) => [Cy(0.24, 0.28, 7, 7, x, 0, z), bois(st)]), ...[2.2, 4.6].flatMap(y => [[Bx(3.6, 0.16, 0.16, 0, y, 1.6), bois(st)], [Bx(3.6, 0.16, 0.16, 0, y, -1.6), bois(st)], [Bx(0.16, 0.16, 3.6, 1.6, y, 0), bois(st)], [Bx(0.16, 0.16, 3.6, -1.6, y, 0), bois(st)]]),
+          [Bx(4.4, 0.3, 4.4, 0, 6.6), bois(st)], ...[[0, 2.1, 4.4, 0.12], [0, -2.1, 4.4, 0.12], [2.1, 0, 0.12, 4.4], [-2.1, 0, 0.12, 4.4]].map(([x, z, w, d]) => [Bx(w, 1.0, d, x, 6.9, z), bois(st)]), ...[[-2, -2], [2, -2], [-2, 2], [2, 2]].map(([x, z]) => [Cy(0.12, 0.12, 2.4, 5, x, 6.9, z), bois(st)]), [Co(3.4, 2.4, 4, 0, 9.2, 0, Math.PI / 4), st.toit], ...etendardMur(0, 7.8, 2.2, 1.6, 0.8), ...brasero(1.4, 6.9, 1.4)], [[1.4, 8.15, 1.4]])
+      : avecFeux([[Bx(4.4, 0.4, 4.4), st.socle], st.plat ? [new THREE.CylinderGeometry(1.6, 2.1, 8, 4).rotateY(Math.PI / 4).translate(0, 4.4, 0), st.mur] : st === STYLES.medieval || st === STYLES.atlantes ? [Cy(1.7, 1.9, 8, 14, 0, 0.4, 0), st.mur] : [Bx(3.4, 8, 3.4, 0, 0.4, 0), st.mur],
+          [Bx(4.0, 0.5, 4.0, 0, 8.4, 0), st.accent], ...crenaux(4.0, 4.0, 8.9, st.mur, 0.6, 0.62), ...[3.2, 5.6].flatMap(y => [0, 1, 2, 3].map(k => [Bx(0.2, 0.8, 0.12, Math.cos(k * 1.57) * 1.75, y, Math.sin(k * 1.57) * 1.75).rotateY(k % 2 ? Math.PI / 2 : 0), 0x2a2420])),
+          ...(st.plat ? [] : [[Co(2.6, 3.0, st === STYLES.medieval ? 14 : 4, 0, 9.5, 0, Math.PI / 4), st.toit]]), porte(0, 0.4, 1.76, 1.0, 1.8), ...etendardMur(0, 7.8, 1.78, 2.0, 0.9)], [])
+    ,
+    // port : quai et entrepôt côté terre (−z), ponton sur pilotis et grue côté eau (+z)
+    port: st => avecFeux([[Bx(10, 0.7, 4.6, 0, -0.2, -2.7), st.socle], [Bx(5.2, 3.2, 3.4, -2.2, 0.5, -3.0), st.mur], ...toit(st, 5.2, 3.4, 1.6, -2.2, 3.7, -3.0), porte(-2.2, 0.5, -1.25, 1.6, 2.2),
+      [Bx(4.4, 0.25, 7.0, 2.4, 0.25, 1.4), bois(st)], [Bx(8.6, 0.25, 1.8, -0.6, 0.25, -0.2), bois(st)], ...[-0.8, 1.6, 4.0].flatMap(z => [0.4, 4.4].map(x => [Cy(0.16, 0.18, 3.4, 6, x, -3.0, z), 0x5a3a22])),
+      ...[-0.8, 1.6, 4.0].map(z => [Cy(0.12, 0.14, 0.7, 6, 4.5, 0.5, z), 0x3a2a1c]), [Cy(0.16, 0.18, 4.5, 6, 0.7, 0.5, 3.8), bois(st)], [Bx(0.18, 0.18, 3.0, 0.7, 4.9, 2.6), bois(st)], [Bx(0.04, 1.6, 0.04, 0.7, 3.3, 1.3), 0x8a7a5a], [Bx(0.7, 0.6, 0.7, 0.7, 2.7, 1.3), 0xb08a5a],
+      ...[[2.6, -0.4], [3.4, -0.3], [3.0, 0.5]].map(([x, z]) => [Bx(0.8, 0.7, 0.8, x, 0.5, z), 0x8a6a40]), [Cy(0.34, 0.34, 0.9, 10, 1.8, 0.5, -0.3), 0x7a5230], ...banniere(4.2, 0.5, 4.8, 2.6, 0.9), ...brasero(-4.4, 0.5, -0.8)], [[-4.4, 1.75, -0.8]]),
+    // mur (tronçon de 2 m le long de z) : pierre crénelée, palissade nordique, béton moderne, champ de force du futur
+    mur: st => st === STYLES.nordiques ? [...[-0.75, -0.25, 0.25, 0.75].flatMap(z => [[Cy(0.27, 0.29, 3.3, 7, 0, 0, z), bois(st)], [Co(0.28, 0.6, 7, 0, 3.3, z), bois(st)]]), [Bx(0.3, 0.25, 2.1, 0.3, 2.2, 0), 0x6a4a30], [Bx(0.3, 0.25, 2.1, 0.3, 0.8, 0), 0x6a4a30]]
+      : st === STYLES.futur ? [[Bx(1.2, 0.4, 2.1), st.socle], [Bx(0.12, 3.0, 2.04, 0, 0.4, 0), st.accent], [Bx(0.5, 0.25, 2.1, 0, 3.4, 0), st.mur]]
+        : st === STYLES.moderne ? [[Bx(1.6, 0.5, 2.06), st.socle], [Bx(0.7, 3.0, 2.06, 0, 0.5, 0), st.mur], [Bx(0.75, 0.12, 2.08, 0, 2.2, 0), 0xd8b040]]
+          : [[Bx(1.6, 0.4, 2.1), st.socle], [Bx(1.3, 3.1, 2.08, 0, 0.3, 0), st.mur], [Bx(1.6, 0.25, 2.1, 0, 3.4, 0), st.accent], [Bx(0.35, 0.6, 0.7, 0.62, 3.65, -0.5), st.mur], [Bx(0.35, 0.6, 0.7, 0.62, 3.65, 0.6), st.mur], [Bx(0.35, 0.6, 0.7, -0.62, 3.65, -0.5), st.mur], [Bx(0.35, 0.6, 0.7, -0.62, 3.65, 0.6), st.mur]],
+    // pilier aux angles et aux bouts des murs
+    mur_pilier: st => st === STYLES.nordiques ? [[Cy(0.42, 0.46, 4.2, 8), bois(st)], [Co(0.46, 0.8, 8, 0, 4.2, 0), bois(st)]]
+      : st === STYLES.futur ? [[Cy(0.45, 0.55, 3.8, 10), st.mur], [Sp(0.4, 0, 4.1, 0), st.accent]]
+        : st === STYLES.moderne ? [[Bx(1.8, 3.6, 1.8), st.mur], [Bx(1.9, 0.3, 1.9, 0, 3.6), 0x8a8e94]]
+          : [[Bx(2.2, 4.4, 2.2), st.mur], [Bx(2.4, 0.3, 2.4, 0, 4.4), st.accent], ...[[-0.8, -0.8], [0.8, -0.8], [-0.8, 0.8], [0.8, 0.8]].map(([x, z]) => [Bx(0.5, 0.6, 0.5, x, 4.7, z), st.mur])],
+    // porte : deux tours, linteau et battants ouverts (palissade chez les Nordiques, barrière moderne, arche d'énergie au futur)
+    porte: st => st === STYLES.futur ? [[Bx(1.4, 0.4, 6), st.socle], ...[-2.4, 2.4].map(x => [Cy(0.6, 0.8, 5, 10, x, 0.4, 0), st.mur]), [new THREE.TorusGeometry(2.4, 0.22, 8, 24, Math.PI).translate(0, 4.6, 0), st.accent], ...[-2.4, 2.4].map(x => [Bx(0.1, 4.4, 0.1, x * 0.8, 0.4, 0), st.accent])]
+      : st === STYLES.moderne ? [[Bx(1.6, 0.4, 6), st.socle], [Bx(1.8, 2.6, 1.6, -2.2, 0.4, 0), st.mur], [Bx(2.0, 0.25, 1.8, -2.2, 3.0, 0), 0x8a8e94], [Bx(0.18, 0.18, 4.0, 0.3, 1.2, 0.2).rotateX(-0.9), 0xd84030], [Bx(0.7, 3.0, 0.7, 2.6, 0.4, 0), st.mur]]
+        : st === STYLES.nordiques ? [...[-2.6, -2.0, 2.0, 2.6].flatMap(x => [[Cy(0.32, 0.34, 4.6, 8, x, 0, 0), bois(st)], [Co(0.34, 0.7, 8, x, 4.6, 0), bois(st)]]), [Bx(5.6, 0.5, 0.6, 0, 3.8, 0), 0x6a4a30], ...[-1, 1].map(x => [Bx(0.18, 3.4, 1.7, x * 1.75, 0, 0.9 * x).rotateY(0), 0x7a5230]), ...etendardMur(-2.3, 3.8, 0.4, 1.6, 0.7), ...etendardMur(2.3, 3.8, 0.4, 1.6, 0.7)]
+          : [[Bx(6.2, 0.4, 2.4), st.socle], ...[-2.4, 2.4].flatMap(x => [[Bx(1.7, 5.6, 2.4, x, 0.4, 0), st.mur], [Bx(1.9, 0.3, 2.6, x, 6.0, 0), st.accent], [Bx(0.45, 0.6, 0.5, x - 0.55, 6.3, 0.8), st.mur], [Bx(0.45, 0.6, 0.5, x + 0.55, 6.3, 0.8), st.mur], [Bx(0.45, 0.6, 0.5, x - 0.55, 6.3, -0.8), st.mur], [Bx(0.45, 0.6, 0.5, x + 0.55, 6.3, -0.8), st.mur]]),
+            [Bx(3.2, 1.4, 2.2, 0, 4.2, 0), st.mur], [Bx(3.4, 0.25, 2.4, 0, 5.6, 0), st.accent], ...[-1, 1].map(x => [Bx(1.4, 3.6, 0.14, x * 1.4, 0.4, 1.35).rotateY(0), 0x4a3020]), ...etendardMur(-2.4, 5.4, 1.23, 2.6, 1.0), ...etendardMur(2.4, 5.4, 1.23, 2.6, 1.0)],
     // centre-ville de l'Antiquité, un par peuple
-    centre_grecs: st => [[Bx(13, 0.5, 13), st.socle], [Bx(12, 0.4, 12, 0, 0.5), 0xe6dfcf], [Bx(8, 5, 6.5, 0, 0.9, -1.2), st.mur], ...[-3.6, -1.2, 1.2, 3.6].map(x => [Cy(0.34, 0.38, 4.6, 12, x, 0.9, 2.6), 0xf6f1e4]),
-      [Bx(9, 0.5, 2.2, 0, 5.5, 2.4), 0xf1ece0], [Bx(9.2, 0.6, 9.2, 0, 5.9, -0.2), 0xd8d0bf], [pignon(9.2, 9.4, 2.2, 0, 6.5, -0.2, true), st.toit], [Cy(1.6, 1.9, 3.2, 12, 0, 8.6, -0.2), st.mur], [Co(2.3, 2.4, 12, 0, 11.8, -0.2), st.toit],
-      porte(0, 0.9, 2.08, 1.6, 2.8), ...[-4.8, 4.8].flatMap(x => [[Bx(1.4, 1.2, 1.4, x, 0.9, 5), 0xd8d0bf], [Cy(0.5, 0.6, 0.8, 10, x, 2.1, 5), 0x9a7a55]])],
-    centre_egyptiens: st => [[Bx(13, 0.5, 13), st.socle], [Bx(10, 5.5, 8, 0, 0.5, -1.5), st.mur], [Bx(10.6, 0.5, 8.6, 0, 6, -1.5), 0xc9a86a], ...[-3.4, 3.4].flatMap(x => [[new THREE.CylinderGeometry(1.3, 2.0, 8.5, 4).rotateY(Math.PI / 4).translate(x, 4.75, 3.2), st.mur], [Bx(2.6, 0.4, 2.6, x, 9, 3.2), 0xc9a86a]]),
-      porte(0, 0.5, 3.2, 2.2, 4), [Bx(3.6, 2.4, 3.6, 0, 6.5, -2), st.mur], [new THREE.CylinderGeometry(0.15, 0.6, 6.5, 4).rotateY(Math.PI / 4).translate(5.6, 3.75, 5.4), 0xcdb27a], [Co(0.3, 0.6, 4, 5.6, 7, 5.4, Math.PI / 4), 0xf2d27a], [new THREE.CylinderGeometry(0.15, 0.6, 6.5, 4).rotateY(Math.PI / 4).translate(-5.6, 3.75, 5.4), 0xcdb27a], [Co(0.3, 0.6, 4, -5.6, 7, 5.4, Math.PI / 4), 0xf2d27a]],
-    centre_nordiques: st => [[Bx(13, 0.5, 13), st.socle], [Bx(12, 3.6, 6.4, 0, 0.5, -1), st.mur], [pignon(12.4, 7.2, 5, 0, 4.1, -1), st.toit], [Bx(5, 3, 4, 0, 0.5, 3.5), st.mur], [pignon(4, 5.2, 2.6, 0, 3.5, 3.5, true), st.toit], porte(0, 0.5, 5.55, 1.6, 2.4),
-      ...[-5.8, 5.8].map(x => [Co(0.35, 1.8, 4, x, 8.2, -1), 0xc9a24a]), ...[[-5.5, 4.5], [5.5, 4.5]].map(([x, z]) => [Cy(0.3, 0.35, 5, 7, x, 0.5, z), st.bois]), [Cy(0.25, 0.3, 1.6, 6, 3, 7.5, -1), 0x5a5048]],
-    centre_atlantes: st => [[Cy(6.6, 6.9, 0.6, 24), st.socle], [Cy(5.2, 5.4, 4.6, 20, 0, 0.6), st.mur], ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => [Cy(0.32, 0.34, 4.6, 10, Math.cos(i * 0.628) * 6, 0.6, Math.sin(i * 0.628) * 6), 0xffffff]),
-      [new THREE.TorusGeometry(6, 0.35, 6, 30).rotateX(Math.PI / 2).translate(0, 5.3, 0), st.mur], [new THREE.SphereGeometry(5.3, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 5.2, 0), st.toit], [Cy(0.6, 0.8, 2, 10, 0, 10.3), st.mur], [Co(0.8, 1.6, 10, 0, 12.3), 0xf2d27a], porte(0, 0.6, 5.3, 1.8, 3)],
-    forteresse: st => [[Bx(15.6, 0.5, 15.6), st.socle], ...[[0, -7, 15, 1.4], [0, 7, 15, 1.4], [-7, 0, 1.4, 15], [7, 0, 1.4, 15]].map(([x, z, w, d]) => [Bx(w, 5, d, x, 0.5, z), st.mur]),
-      ...[[-7, -7], [7, -7], [-7, 7], [7, 7]].flatMap(([x, z]) => [[Cy(1.9, 2.1, 8, 12, x, 0.5, z), st.mur], st.plat ? [Cy(2.2, 2.2, 0.6, 12, x, 8.5, z), st.accent] : [Co(2.5, 3, 12, x, 8.5, z), st.toit]]),
-      [Bx(6, 11, 6, 0, 0.5, -1), st.mur], ...(st.plat ? [[Bx(6.6, 0.6, 6.6, 0, 11.5, -1), st.accent]] : [[Co(4.6, 4, 4, 0, 11.5, -1, Math.PI / 4), st.toit]]), porte(0, 0.5, 7.75, 3, 3.6),
-      ...[-5, -2.5, 2.5, 5].map(x => [Bx(1, 0.8, 1.5, x, 5.5, 7), st.mur])]
+    centre_grecs: st => avecFeux([[Bx(13.4, 0.5, 13.4), st.socle], [Bx(12, 0.4, 12, 0, 0.5), 0xe6dfcf], ...marches(6, 3, 0, 0, 6.4, 0xd8d0bf), [Bx(8, 5, 6.5, 0, 0.9, -1.2), st.mur], ...[-3.6, -1.2, 1.2, 3.6].map(x => [Cy(0.34, 0.38, 4.6, 12, x, 0.9, 2.6), 0xf6f1e4]),
+      [Bx(9, 0.5, 2.2, 0, 5.5, 2.4), 0xf1ece0], [Bx(9.2, 0.6, 9.2, 0, 5.9, -0.2), 0xd8d0bf], [pignon(9.2, 9.4, 2.2, 0, 6.5, -0.2, true), st.toit], [Cy(1.6, 1.9, 3.2, 12, 0, 8.6, -0.2), st.mur], [Co(2.3, 2.4, 12, 0, 11.8, -0.2), st.toit], [Co(0.25, 0.8, 6, 0, 14.2, -0.2), 0xf2d27a],
+      porte(0, 0.9, 2.08, 1.6, 2.8), ...fenetres([-2.6, 2.6], 3.0, 2.08), ...[-4.8, 4.8].flatMap(x => [[Bx(1.4, 1.2, 1.4, x, 0.9, 5), 0xd8d0bf], [Cy(0.5, 0.6, 0.8, 10, x, 2.1, 5), 0x9a7a55]]), ...brasero(-2.4, 0.9, 4.4), ...brasero(2.4, 0.9, 4.4),
+      ...etendardMur(-3.6, 5.4, 2.95, 2.4, 0.8), ...etendardMur(3.6, 5.4, 2.95, 2.4, 0.8), ...banniere(-5.8, 0.9, -5.2, 3.4, 1.0), ...banniere(5.0, 0.9, -5.2, 3.4, 1.0)], [[-2.4, 2.15, 4.4], [2.4, 2.15, 4.4]]),
+    centre_egyptiens: st => avecFeux([[Bx(13.4, 0.5, 13.4), st.socle], [Bx(10, 5.5, 8, 0, 0.5, -1.5), st.mur], [Bx(10.6, 0.5, 8.6, 0, 6, -1.5), 0xc9a86a], ...[-3.4, 3.4].flatMap(x => [[new THREE.CylinderGeometry(1.3, 2.0, 8.5, 4).rotateY(Math.PI / 4).translate(x, 4.75, 3.2), st.mur], [Bx(2.6, 0.4, 2.6, x, 9, 3.2), 0xc9a86a], [Bx(1.6, 3.0, 0.06, x, 4.6, 4.55), EQ]]),
+      porte(0, 0.5, 3.2, 2.2, 4), [Bx(3.6, 2.4, 3.6, 0, 6.5, -2), st.mur], ...marches(4, 2, 0, 0.0, 5.6, 0xc9a86a), [new THREE.CylinderGeometry(0.15, 0.6, 6.5, 4).rotateY(Math.PI / 4).translate(5.6, 3.75, 5.4), 0xcdb27a], [Co(0.3, 0.6, 4, 5.6, 7, 5.4, Math.PI / 4), 0xf2d27a], [new THREE.CylinderGeometry(0.15, 0.6, 6.5, 4).rotateY(Math.PI / 4).translate(-5.6, 3.75, 5.4), 0xcdb27a], [Co(0.3, 0.6, 4, -5.6, 7, 5.4, Math.PI / 4), 0xf2d27a],
+      ...[-1.2, 1.2].map(x => [Cy(0.35, 0.4, 4.6, 10, x, 0.5, 2.7), 0xe0c88a]), ...brasero(-2.0, 0.5, 4.8), ...brasero(2.0, 0.5, 4.8)], [[-2.0, 1.75, 4.8], [2.0, 1.75, 4.8]]),
+    centre_nordiques: st => avecFeux([[Bx(13.4, 0.5, 13.4), st.socle], [Bx(12, 3.6, 6.4, 0, 0.5, -1), st.mur], [pignon(12.4, 7.2, 5, 0, 4.1, -1), st.toit], [Bx(5, 3, 4, 0, 0.5, 3.5), st.mur], [pignon(4, 5.2, 2.6, 0, 3.5, 3.5, true), st.toit], porte(0, 0.5, 5.55, 1.6, 2.4),
+      ...[-5.8, 5.8].map(x => [Co(0.35, 1.8, 4, x, 8.2, -1), 0xc9a24a]), ...[[-5.5, 4.5], [5.5, 4.5]].map(([x, z]) => [Cy(0.3, 0.35, 5, 7, x, 0.5, z), st.bois]), [Cy(0.25, 0.3, 1.6, 6, 3, 7.5, -1), 0x5a5048],
+      ...[-4.5, -2.5, 2.5, 4.5].map(x => [Cy(0.55, 0.55, 0.1, 14).rotateX(Math.PI / 2).translate(x, 2.2, 2.25), EQ]), ...[0, 1, 2, 3].map(k => [Bx(0.7, 0.05, 0.05, -1.8, 0.9 + k * 0.5, 5.45), 0x8a5c34]), ...brasero(-1.8, 0.5, 6.2), ...brasero(1.8, 0.5, 6.2), ...banniere(5.5, 5.5, 4.5, 2.2, 0.8)], [[-1.8, 1.75, 6.2], [1.8, 1.75, 6.2]]),
+    centre_atlantes: st => avecFeux([[Cy(6.7, 7.0, 0.6, 28), st.socle], [Cy(5.2, 5.4, 4.6, 24, 0, 0.6), st.mur], ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(i => [Cy(0.32, 0.34, 4.6, 10, Math.cos(i * 0.5236) * 6, 0.6, Math.sin(i * 0.5236) * 6), 0xffffff]),
+      [new THREE.TorusGeometry(6, 0.35, 6, 36).rotateX(Math.PI / 2).translate(0, 5.3, 0), st.mur], [new THREE.SphereGeometry(5.3, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 5.2, 0), st.toit], [Cy(0.6, 0.8, 2, 10, 0, 10.3), st.mur], [Co(0.8, 1.6, 10, 0, 12.3), 0xf2d27a], porte(0, 0.6, 5.3, 1.8, 3),
+      ...[-1.6, 1.6].map(x => [Bx(1.0, 2.6, 0.06, x, 2.2, 5.45), EQ]), ...brasero(-3.0, 0.6, 6.2), ...brasero(3.0, 0.6, 6.2), [Cy(1.2, 1.4, 0.5, 16, 0, 0.6, 8.0), 0xeef6f5], [Cy(1.0, 1.0, 0.2, 16, 0, 1.0, 8.0), 0x4a9ac0]], [[-3.0, 1.85, 6.2], [3.0, 1.85, 6.2]])
   };
+  // gravats d'un bâtiment détruit, échafaudage d'un chantier
+  const GRAVATS = (() => { const r = PM.aleatoire(91), l = []; for (let k = 0; k < 22; k++) { const a = r() * 6.28, d = Math.sqrt(r()) * 0.46, t = 0.06 + r() * 0.12; l.push([new THREE.BoxGeometry(t * 2, t, t * 1.5).rotateY(r() * 3).rotateX(r() * 0.6).translate(Math.cos(a) * d, t * 0.4, Math.sin(a) * d), r() < 0.3 ? 0x6a4a30 : 0x8a8478]); } return l; })();
 
   class VueBataille extends PM.Vue3D {
     constructor(canvas, calque) {
@@ -234,27 +303,59 @@
 
     // ---------- géométries des bâtiments ----------
     style(J) { return STYLES[this.B.epoque === 'antique' ? J.pantheon : this.B.epoque] || STYLES.grecs; }
+    styleCle(J) { return this.B.epoque === 'antique' ? J.pantheon : this.B.epoque; }
     geoBat(b) {
-      const B = this.B, J = B.joueurs[b.j], ep = B.epoque, P = J.pantheon, st = this.style(J);
+      const B = this.B, J = B.joueurs[b.j], ep = B.epoque, P = J.pantheon, st = this.style(J), sk = this.styleCle(J);
       let nom;
-      if (CONSTR[b.cle]) nom = 'rts_' + b.cle + '_' + (ep === 'antique' ? P : ep);
+      if (b.cle === 'tour' && (ep === 'moderne' || ep === 'futur')) nom = ep === 'moderne' ? 'bunker' : 'tour_futur2';
+      else if (CONSTR[b.cle]) nom = 'rts_' + b.cle + '_' + sk;
       else if (b.cle === 'centre' && ep === 'antique') nom = 'rts_centre_' + P;
       else if (b.cle === 'centre') nom = 'centre_' + ep;
       else if (b.cle === 'maison') { const l = ep === 'antique' ? O.MAISONS[P] || ['maison_grecs'] : O.MAISONS[ep] || ['maison_' + ep]; nom = l[b.id % l.length]; if (!this.M[nom]) nom = 'maison_grecs'; }
       else if (b.cle === 'temple') nom = ep === 'antique' ? 'temple_' + P : O.TEMPLE_EPOQUE[ep] || 'temple_grecs';
       else if (b.cle === 'merveille') nom = 'merveille_' + (ep === 'antique' ? 'antique' : ep);
-      else if (b.cle === 'tour') nom = ep === 'moderne' ? 'bunker' : ep === 'futur' ? 'tour_futur2' : 'tourelle';
       else if (b.cle === 'ferme') nom = 'champ';
       let e = this.geoBats[nom];
       if (!e) {
-        const gen = CONSTR[b.cle] || (nom.startsWith('rts_centre_') && CONSTR['centre_' + P]), geo = gen ? O.fusion(gen(st)) : this.M[nom];
+        const gen = nom.startsWith('rts_centre_') ? CONSTR['centre_' + P] : nom.startsWith('rts_') ? CONSTR[b.cle] : null;
+        let geo, geoEq = null, feux = [];
+        if (gen) { const parts = gen(st); feux = parts.feux || []; geo = O.fusion(parts.filter(q => q[1] !== EQ)); const eq = parts.filter(q => q[1] === EQ).map(q => q[0]); if (eq.length) geoEq = fusionner(eq); }
+        else geo = this.M[nom];
         geo.computeBoundingBox(); const bb = geo.boundingBox, w = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z), h = bb.max.y - bb.min.y;
         const T = R.BATIMENTS[b.cle].taille;
-        let k = b.cle === 'ferme' ? 1 : T * (b.cle === 'maison' ? 0.86 : b.cle === 'tour' ? 1.25 : 0.98) / w; k = Math.min(k, (b.cle === 'merveille' ? 70 : 42) / h);
-        e = this.geoBats[nom] = { nom, geo, k, h: h * k, ferme: b.cle === 'ferme' };
+        let k = b.cle === 'ferme' || b.cle === 'port' ? 1 : T * (b.cle === 'maison' ? 0.86 : b.cle === 'tour' ? 1.3 : 0.98) / w; k = Math.min(k, (b.cle === 'merveille' ? 70 : 42) / h);
+        e = this.geoBats[nom] = { nom, geo, geoEq, feux, k, h: h * k, ferme: b.cle === 'ferme', sk, cle: b.cle };
+        if (geoEq) geoEq.partage = true;
       }
       return e;
     }
+    geoPilier(sk, st) { const n = 'pilier_' + sk; return this.geoBats[n] || (this.geoBats[n] = { nom: n, geo: O.fusion(CONSTR.mur_pilier(st)) }); }
+    // échafaudage d'un chantier : poteaux et lisses autour de l'emprise (une géométrie par taille)
+    geoEchafaudage(w, h) {
+      const n = 'echaf_' + Math.round(w) + '_' + Math.round(h); if (this.geoBats[n]) return this.geoBats[n];
+      const l = [], ny = Math.max(2, Math.round(h / 2.2)), c = w / 2 + 0.4;
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) l.push(new THREE.CylinderGeometry(0.07, 0.07, h + 0.6, 4).translate(sx * c, h / 2 + 0.3, sz * c));
+      for (let k = -1; k <= 1; k += 1) { if (!k) continue; for (const sx of [-1, 1]) l.push(new THREE.CylinderGeometry(0.06, 0.06, h, 4).translate(sx * c, h / 2, k * c * 0.3), new THREE.CylinderGeometry(0.06, 0.06, h, 4).translate(k * c * 0.3, h / 2, sx * c)); }
+      for (let y = 1; y <= ny; y++) { const yy = y * h / ny; for (const s of [-1, 1]) { l.push(new THREE.BoxGeometry(c * 2, 0.08, 0.08).translate(0, yy, s * c), new THREE.BoxGeometry(0.08, 0.08, c * 2).translate(s * c, yy, 0), new THREE.BoxGeometry(c * 2, 0.06, 0.5).translate(0, yy - 0.05, s * (c - 0.25))); } }
+      for (const s of [-1, 1]) l.push(new THREE.BoxGeometry(0.06, 0.06, Math.hypot(c * 2, h)).rotateX(Math.atan2(h, c * 2)).translate(s * c, h / 2, 0));
+      const g = fusionner(l); g.partage = true; return (this.geoBats[n] = g);
+    }
+    // orientation d'un port : le ponton regarde l'eau
+    dirPort(b) {
+      this.dirsPort = this.dirsPort || new Map(); if (this.dirsPort.has(b.id)) return this.dirsPort.get(b.id);
+      const B = this.B, n = B.n, cx = Math.floor(b.x / BT.CEL), cz = Math.floor(b.z / BT.CEL); let wx = 0, wz = 0;
+      for (let k = cz - 5; k <= cz + 5; k++) for (let i = cx - 5; i <= cx + 5; i++) if (i >= 0 && k >= 0 && i < n && k < n && BT.hauteur(B, i * BT.CEL + 1, k * BT.CEL + 1) < -0.3) { wx += i - cx; wz += k - cz; }
+      const a = Math.atan2(wx, wz); this.dirsPort.set(b.id, a); return a;
+    }
+    // modèle photographique (accessoires, bateaux) découpé en parties instanciables, ramené à « taille » (longueur la plus grande)
+    partiesGLB(nom, taille, flottant) {
+      const c = 'glb:' + nom + ':' + taille; this.cacheGLB = this.cacheGLB || {}; if (this.cacheGLB[c]) return this.cacheGLB[c];
+      const sc = this.glb && this.glb[nom]; if (!sc) return null; sc.updateMatrixWorld(true);
+      const bo = new THREE.Box3().setFromObject(sc), dim = bo.getSize(new THREE.Vector3()), long = dim.x > dim.z, k = taille / Math.max(dim.x, dim.z, 0.01), l = [];
+      sc.traverse(o => { if (!o.isMesh) return; const g = o.geometry.clone().applyMatrix4(o.matrixWorld).translate(-(bo.min.x + bo.max.x) / 2, flottant ? 0 : -bo.min.y, -(bo.min.z + bo.max.z) / 2); g.morphAttributes = {}; if (long) g.rotateY(-Math.PI / 2); g.scale(k, k, k); g.partage = true; l.push({ geo: g, mat: o.material }); });
+      return (this.cacheGLB[c] = { parts: l, hauteur: dim.y * k });
+    }
+    poserGLB(cle, parts, mat4, couleur) { parts.forEach((q, i) => { const p = this.meshGeo(cle + ':' + i, q.geo, q.mat); if (p) this.ajouterInst(p, mat4, couleur); }); }
 
     // ---------- réserves d'instances (une par modèle), remplies à chaque image ----------
     pool(cle, creer, cap0) {
@@ -366,6 +467,13 @@
       let n = 0; for (const r of this.minesListe) { if (r.qte <= 0) continue; const k = 0.55 + 0.45 * r.qte / r.qteMax, f = this.brouillardEn(r.x, r.z); ob.position.set(r.x, this.sol(r.x, r.z) - 0.2, r.z); ob.rotation.set(0, r.dir, 0); ob.scale.setScalar(k); ob.updateMatrix();
         const c = f === 2 ? 1 : f ? 0.45 : 0.05; this.mMinesRoc.setMatrixAt(n, ob.matrix); this.mMinesRoc.setColorAt(n, C1.setScalar(c)); this.mMinesOr.setMatrixAt(n, ob.matrix); this.mMinesOr.setColorAt(n, C1.setScalar(c)); n++; }
       for (const m of [this.mMinesRoc, this.mMinesOr]) { m.count = n; m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; }
+      // bancs de poissons : ronds qui s'élargissent et poissons qui sautent
+      const pr = this.meshGeo('anneauFin', GEO.anneauFin, MAT_ANNEAU, false);
+      for (const r of B.res) {
+        if (!r.eau || r.qte <= 0) continue; const f = this.brouillardEn(r.x, r.z); if (!f) continue;
+        for (let k = 0; k < 2; k++) { const ph = (t * 0.35 + r.id * 0.17 + k * 0.5) % 1; ob.position.set(r.x, 0.06, r.z); ob.rotation.set(0, 0, 0); ob.scale.setScalar(0.6 + ph * 2.6); ob.updateMatrix(); this.ajouterInst(pr, ob.matrix, C1.setScalar((1 - ph) * (f === 2 ? 0.55 : 0.25))); }
+        if (f === 2 && Math.random() < (this.dt || 16) / 1000 * 0.5) for (let k = 0; k < 8; k++) this.particules.emettre(r.x + (Math.random() - 0.5) * 2, 0.1, r.z + (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 1.2, 1.5 + Math.random() * 1.5, (Math.random() - 0.5) * 1.2, 0.7, 0.7, 0.9, 0.95, 1, 5);
+      }
       // bêtes : vivantes (repos, marche) ou abattues (couchées sur le flanc)
       if (!this.unitesPretes) return;
       for (const r of B.res) {
@@ -378,39 +486,74 @@
       void t;
     }
     majBatiments() {
-      const B = this.B, ob = new THREE.Object3D(), t = B.temps;
-      const coul = new THREE.Color();
+      const B = this.B, ob = new THREE.Object3D(), t = B.temps, cam = this.cam, rnd = Math.random, dts = (this.dt || 16) / 1000;
+      const coul = new THREE.Color(), v = new THREE.Vector3(), q = new THREE.Quaternion(), un = new THREE.Vector3(1, 1, 1);
+      const mur = (j, cx, cz) => { const g = B.parId.get(B.occ[cz * B.n + cx]); return !!g && (g.cle === 'mur' || g.cle === 'porte' || g.cle === 'tour') && g.j === j && !g.mort; };
       for (const b of B.bats) {
         const f = this.brouillardEn(b.x, b.z); if (b.j !== this.ji && !BT.ennemis(B, this.ji, b.j) ? false : (b.j !== this.ji && !f)) continue;
         const e = this.geoBat(b), p = this.meshGeo('b:' + e.nom, e.geo, e.ferme ? this.matChamp() : this.matBat()); if (!p) continue;
-        let y = this.sol(b.x, b.z) - (e.ferme ? 0.02 : 0.25), sy = 1, rx = 0, rz = 0;
+        const yaw = b.cle === 'mur' || b.cle === 'porte' ? (b.dir || 0) : b.cle === 'port' ? this.dirPort(b) : 0;
+        let y = b.cle === 'port' ? 0.5 : this.sol(b.x, b.z) - (e.ferme ? 0.02 : 0.25), sy = 1, rx = 0, rz = 0;
         if (!b.fini) sy = 0.12 + 0.88 * b.prog;
         if (b.mort) { const k = Math.min(1, (t - b.mort) / 3.5); y -= k * e.h * 0.9; rx = Math.sin(b.id) * 0.12 * k; rz = Math.cos(b.id) * 0.12 * k; }
         const k = e.k, fx = e.ferme ? R.BATIMENTS.ferme.taille / 8 : k, fz = e.ferme ? R.BATIMENTS.ferme.taille / 5 : k;
-        ob.position.set(b.x, y, b.z); ob.rotation.set(rx, 0, rz); ob.scale.set(fx, (e.ferme ? 1 : k) * sy, fz); ob.updateMatrix();
-        const lum = (f === 2 || b.j === this.ji ? 1 : 0.5) * (b.fini ? 1 : 0.9);
+        ob.position.set(b.x, y, b.z); ob.rotation.set(rx, yaw, rz, 'YXZ'); ob.scale.set(fx, (e.ferme ? 1 : k) * sy, fz); ob.updateMatrix();
+        const vu = f === 2 || b.j === this.ji, lum = (vu ? 1 : 0.5) * (b.fini ? 1 : 0.9);
         coul.setScalar(lum); if (!b.fini) coul.setRGB(lum * 1.05, lum * 0.98, lum * 0.88);
         this.ajouterInst(p, ob.matrix, coul);
-        // fondation de chantier, drapeau aux couleurs du joueur
-        if (!b.fini && !b.mort && !e.ferme) { const pf = this.meshGeo('fondation', GEO.fondation, this.mat({ color: 0x8a6a48, roughness: 0.95 })); ob.position.set(b.x, this.sol(b.x, b.z) - 0.05, b.z); ob.rotation.set(0, 0, 0); ob.scale.set(b.demiE * 2, 1, b.demiE * 2); ob.updateMatrix(); this.ajouterInst(pf, ob.matrix, coul.setScalar(lum)); }
-        if (b.fini && !b.mort && b.cle !== 'ferme' && b.cle !== 'maison') {
+        const proche = Math.hypot(b.x - cam.x, b.z - cam.z) < cam.d * 1.3 + 30;
+        // bannières et boucliers aux couleurs du joueur
+        if (e.geoEq && b.fini && !b.mort) { const pe = this.meshGeo('eq:' + e.nom, e.geoEq, this.matEquipe()); this.ajouterInst(pe, ob.matrix, coul.set(B.joueurs[b.j].couleur).multiplyScalar(vu ? 1 : 0.5)); }
+        // piliers aux bouts et aux angles des murs
+        if (b.cle === 'mur' && !b.mort) {
+          const cx = Math.floor(b.x / BT.CEL), cz = Math.floor(b.z / BT.CEL), vs = []; for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if ((dx || dz) && mur(b.j, cx + dx, cz + dz)) vs.push([dx, dz]);
+          const droit = vs.length === 2 && vs[0][0] === -vs[1][0] && vs[0][1] === -vs[1][1];
+          if (!droit || b.id % 6 === 0) { const gp = this.geoPilier(e.sk, this.style(B.joueurs[b.j])), pp = this.meshGeo('b:' + gp.nom, gp.geo, this.matBat()); ob.position.set(b.x, this.sol(b.x, b.z) - 0.25, b.z); ob.rotation.set(0, yaw, 0); ob.scale.set(k, k * sy, k); ob.updateMatrix(); this.ajouterInst(pp, ob.matrix, coul.setScalar(lum)); }
+        }
+        // chantier : fondation et échafaudage
+        if (!b.fini && !b.mort && !e.ferme) {
+          const pf = this.meshGeo('fondation', GEO.fondation, this.mat({ color: 0x8a6a48, roughness: 0.95 })); ob.position.set(b.x, this.sol(b.x, b.z) - 0.05, b.z); ob.rotation.set(0, 0, 0); ob.scale.set(b.demiE * 2, 1, b.demiE * 2); ob.updateMatrix(); this.ajouterInst(pf, ob.matrix, coul.setScalar(lum));
+          if (b.cle !== 'mur' && b.taille >= 6) { const ge = this.geoEchafaudage(b.demiE * 2, Math.max(3, e.h * 0.85)), pe = this.meshGeo('echaf:' + Math.round(b.demiE * 2) + ':' + Math.round(Math.max(3, e.h * 0.85)), ge, this.mat({ color: 0x9a7a52, roughness: 0.9 })); ob.position.set(b.x, this.sol(b.x, b.z) - 0.1, b.z); ob.updateMatrix(); this.ajouterInst(pe, ob.matrix, coul.setScalar(lum)); }
+          if (proche && vu && rnd() < dts * 2) this.particules.emettre(b.x + (rnd() - 0.5) * b.demiE * 2, this.sol(b.x, b.z) + 0.3, b.z + (rnd() - 0.5) * b.demiE * 2, 0, 0.6, 0, 1.4, 2, 0.6, 0.55, 0.45, -0.1);
+        }
+        if (!b.fini || b.mort || !vu) continue;
+        // drapeau des bâtiments sans bannière propre
+        if (!e.geoEq && b.cle !== 'ferme' && b.cle !== 'maison' && b.cle !== 'mur') {
           const pd = this.meshGeo('drapeau', this.M.drapeau, this.mat({ vertexColors: true, roughness: 0.8 })), dx = b.demiE * 0.85, dz = b.demiE * 0.85;
           ob.position.set(b.x + dx, this.sol(b.x + dx, b.z + dz) - 0.2, b.z + dz); ob.rotation.set(0, Math.sin(this.temps / 900 + b.id) * 0.3, 0); ob.scale.setScalar(b.taille >= 12 ? 0.55 : 0.4); ob.updateMatrix();
-          this.ajouterInst(pd, ob.matrix, coul.set(B.joueurs[b.j].couleur).multiplyScalar(f === 2 || b.j === this.ji ? 1 : 0.5));
+          this.ajouterInst(pd, ob.matrix, coul.set(B.joueurs[b.j].couleur));
         }
+        // tonneaux, caisses et jarres autour des bâtiments du travail
+        const acc = ACCESSOIRES[b.cle]; if (acc && proche && this.glb) acc.forEach(([nom, ax, az, tl], i) => { const pg = this.partiesGLB(nom, tl); if (!pg) return; const r = b.demiE + 0.6, x = b.x + ax * r, z = b.z + az * r; ob.position.set(x, this.sol(x, z) - 0.05, z); ob.rotation.set(0, b.id + i, 0); ob.scale.setScalar(1); ob.updateMatrix(); this.poserGLB('acc:' + nom, pg.parts, ob.matrix, coul.setScalar(1)); });
+        if (!proche) continue;
+        // braseros allumés, fumée des cheminées, feu et fumée quand le bâtiment est abîmé
+        q.setFromEuler(new THREE.Euler(0, yaw, 0));
+        for (const fp of e.feux || []) { if (rnd() > dts * 14) continue; v.set(fp[0] * k, fp[1] * k, fp[2] * k).applyQuaternion(q); this.feux.emettre(b.x + v.x + (rnd() - 0.5) * 0.15, y + v.y, b.z + v.z + (rnd() - 0.5) * 0.15, (rnd() - 0.5) * 0.3, 1.2 + rnd() * 0.8, (rnd() - 0.5) * 0.3, 0.45, 0.55, 1, 0.55, 0.18, -0.6); }
+        if (b.cle === 'maison' && b.id % 3 === 0 && rnd() < dts * 1.4) this.particules.emettre(b.x + 0.6 * k, y + e.h * 0.95, b.z - 0.6 * k, 0.2, 0.9, 0.05, 3.2, 1.8, 0.72, 0.72, 0.74, -0.05);
+        const abime = 1 - b.pv / b.pvMax;
+        if (abime > 0.4 && rnd() < dts * (abime * 10)) { const x = b.x + (rnd() - 0.5) * b.demiE * 1.4, z = b.z + (rnd() - 0.5) * b.demiE * 1.4, yy = y + e.h * (0.5 + rnd() * 0.45); this.particules.emettre(x, yy, z, 0.3, 1.4, 0.1, 3.5, 3.2, 0.22, 0.2, 0.19, -0.08); if (abime > 0.6) this.feux.emettre(x, yy, z, 0, 1.6, 0, 0.6, 1.6, 1, 0.45, 0.12, -0.8); }
       }
+      // gravats des bâtiments détruits (restent 40 secondes)
+      const pg = this.meshGeo('gravats', this.geoGravats || (this.geoGravats = O.fusion(GRAVATS)), this.matBat());
+      this.gravats = (this.gravats || []).filter(g => t - g.t0 < 45);
+      for (const g of this.gravats) { const enf = Math.max(0, t - g.t0 - 38) * 0.15; ob.position.set(g.x, this.sol(g.x, g.z) - 0.1 - enf, g.z); ob.rotation.set(0, g.x, 0); ob.scale.set(g.taille * 1.1, Math.min(2.5, g.taille * 0.3), g.taille * 1.1); ob.updateMatrix(); this.ajouterInst(pg, ob.matrix, coul.setScalar(this.brouillardEn(g.x, g.z) === 2 ? 0.85 : 0.4)); }
       // point de ralliement du bâtiment choisi
-      if (this.ralliement) { const r = this.ralliement, pd = this.meshGeo('drapeau', this.M.drapeau, this.mat({ vertexColors: true, roughness: 0.8 })); ob.position.set(r.x, this.sol(r.x, r.z), r.z); ob.rotation.set(0, 0, 0); ob.scale.setScalar(0.32); ob.updateMatrix(); this.ajouterInst(pd, ob.matrix, coul.set(B.joueurs[this.ji].couleur)); }
-      // fantôme du bâtiment à poser
+      if (this.ralliement) { const r = this.ralliement, pd = this.meshGeo('drapeau', this.M.drapeau, this.mat({ vertexColors: true, roughness: 0.8 })); ob.position.set(r.x, Math.max(0, this.sol(r.x, r.z)), r.z); ob.rotation.set(0, 0, 0); ob.scale.setScalar(0.32); ob.updateMatrix(); this.ajouterInst(pd, ob.matrix, coul.set(B.joueurs[this.ji].couleur)); }
+      // fantôme du bâtiment à poser, ou du mur à tracer
       const F = this.fantome;
       if (F) {
         const e = this.geoBat({ cle: F.cle, j: this.ji, id: 0 });
         if (!this.mFantome || this.mFantome.userData.nom !== e.nom) { if (this.mFantome) this.rts.remove(this.mFantome); this.mFantome = new THREE.Mesh(e.geo, new THREE.MeshStandardMaterial({ color: 0x66ff88, transparent: true, opacity: 0.5, depthWrite: false, emissive: 0x113311 })); this.mFantome.userData.nom = e.nom; this.rts.add(this.mFantome); }
         const m = this.mFantome; m.visible = true; m.material.color.set(F.ok ? 0x66ff88 : 0xff5544); m.material.emissive.set(F.ok ? 0x113311 : 0x331111);
-        m.position.set(F.x, this.sol(F.x, F.z) - (e.ferme ? 0 : 0.2), F.z); m.rotation.set(0, 0, 0);
+        m.position.set(F.x, F.cle === 'port' ? 0.5 : this.sol(F.x, F.z) - (e.ferme ? 0 : 0.2), F.z); m.rotation.set(0, F.cle === 'port' ? this.dirPort({ id: -Math.round(F.x * 1000 + F.z), x: F.x, z: F.z }) : F.dir || 0, 0);
         if (e.ferme) m.scale.set(R.BATIMENTS.ferme.taille / 8, 1, R.BATIMENTS.ferme.taille / 5); else m.scale.setScalar(e.k);
       } else if (this.mFantome) this.mFantome.visible = false;
+      if (this.fantomeMur && this.fantomeMur.length) {
+        const e = this.geoBat({ cle: 'mur', j: this.ji, id: 0 }), pf = this.meshGeo('fantomeMur', e.geo, MAT_FANTOME, false), dir = this.fantomeMur.dir || 0;
+        for (const c of this.fantomeMur) { ob.position.set(c.x, this.sol(c.x, c.z) - 0.2, c.z); ob.rotation.set(0, dir, 0); ob.scale.setScalar(e.k); ob.updateMatrix(); this.ajouterInst(pf, ob.matrix, coul.set(c.ok === true ? 0x66ff88 : c.ok === 'deja' ? 0x88aaff : 0xff5544)); }
+      }
     }
+    matEquipe() { return this.mats.equipe || (this.mats.equipe = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.75, side: THREE.DoubleSide })); }
     matChamp() { return this.matBat(); }
     majUnites() {
       const B = this.B, ob = new THREE.Object3D(), coul = new THREE.Color(); if (!this.unitesPretes) return;
@@ -419,6 +562,7 @@
         const ennemi = u.j !== this.ji && BT.ennemis(B, this.ji, u.j);
         if (ennemi && this.brouillardEn(u.x, u.z) !== 2 && !u.mort) continue;
         if (u.mort && ennemi && this.brouillardEn(u.x, u.z) === 0) continue;
+        if (u.s.naval) { this.dessinerBateau(u, ennemi, ob, coul, anneaux); continue; }
         const nom = this.modele(u); let p = this.meshFoule(nom); if (!p) p = this.meshFoule(this.modele({ j: u.j, cle: 'inf', id: 0 })); if (!p) continue;
         const s = this.echelleUnite(u, nom); let y = this.sol(u.x, u.z), chute = 0;
         if (u.mort) { const k = Math.min(1, (B.temps - u.mort) / 0.6); chute = k * Math.PI / 2 * 0.95; if (B.temps - u.mort > 3) y -= (B.temps - u.mort - 3) * 0.5; }
@@ -444,7 +588,22 @@
       const tm = this.temps; this.marques = (this.marques || []).filter(m => tm - m.t0 < 600);
       for (const m of this.marques) { const k = (tm - m.t0) / 600; anneaux.push([m.x, m.z, 1.6 * (1 - k) + 0.3, m.attaque ? 0xff5040 : 0x7dff8a, 1 - k]); }
       const pr = this.meshGeo('anneau', GEO.anneau, MAT_ANNEAU, false), pf = this.meshGeo('anneauFin', GEO.anneauFin, MAT_ANNEAU, false), pc = this.meshGeo('carre', GEO.carre, MAT_ANNEAU, false);
-      for (const [x, z, r, c, al] of anneaux) { ob.position.set(x, this.sol(x, z) + 0.12, z); ob.rotation.set(0, 0, 0); ob.scale.set(Math.abs(r), 1, Math.abs(r)); ob.updateMatrix(); this.ajouterInst(r < 0 ? pc : r > 5 ? pf : pr, ob.matrix, coul.set(c).multiplyScalar(al)); }
+      for (const [x, z, r, c, al] of anneaux) { ob.position.set(x, Math.max(0, this.sol(x, z)) + 0.12, z); ob.rotation.set(0, 0, 0); ob.scale.set(Math.abs(r), 1, Math.abs(r)); ob.updateMatrix(); this.ajouterInst(r < 0 ? pc : r > 5 ? pf : pr, ob.matrix, coul.set(c).multiplyScalar(al)); }
+    }
+    // bateaux : modèle de l'époque posé sur l'eau, qui tangue, coque teintée et pavillon du joueur, sillage
+    dessinerBateau(u, ennemi, ob, coul, anneaux) {
+      const B = this.B, ep = B.epoque, t = this.temps / 1000, grand = u.cle === 'navire';
+      const nom = grand ? (O.NAVIRES[ep] || O.NAVIRES.antique)[0] : ep === 'moderne' || ep === 'futur' ? 'navire-vedette' : 'navire-barque';
+      const pg = this.partiesGLB(nom, grand ? 11 : 4.6, true); if (!pg) return;
+      let y = Math.sin(t * 1.3 + u.id) * 0.08, chute = 0; const roulis = Math.sin(t * 0.9 + u.id * 2) * 0.04;
+      if (u.mort) { const k = Math.min(1, (B.temps - u.mort) / 4); y -= k * 3.5; chute = k * 0.5; }
+      ob.position.set(u.x, y, u.z); ob.rotation.set(chute, u.dir, roulis, 'YXZ'); ob.scale.setScalar(1); ob.updateMatrix();
+      coul.set(B.joueurs[u.j].couleur).lerp(C2.setRGB(1, 1, 1), 0.65);
+      this.poserGLB('nav:' + nom, pg.parts, ob.matrix, coul);
+      const pd = this.meshGeo('drapeau', this.M.drapeau, this.mat({ vertexColors: true, roughness: 0.8 }));
+      ob.position.set(u.x, y + pg.hauteur * 0.6, u.z); ob.rotation.set(0, u.dir + Math.PI / 2, 0); ob.scale.setScalar(grand ? 0.42 : 0.22); ob.updateMatrix(); this.ajouterInst(pd, ob.matrix, coul.set(B.joueurs[u.j].couleur));
+      if (u.anim === 'marche' && !u.mort && Math.random() < 0.6) { const d = grand ? 5 : 2, bx = u.x - Math.sin(u.dir) * d, bz = u.z - Math.cos(u.dir) * d; this.particules.emettre(bx + (Math.random() - 0.5), 0.1, bz + (Math.random() - 0.5), (Math.random() - 0.5) * 0.6, 0.15, (Math.random() - 0.5) * 0.6, 1.6, 1.6, 0.92, 0.95, 0.97, 0); }
+      if (!u.mort && (this.sel.has(u.id) || this.survol === u.id)) anneaux.push([u.x, u.z, u.s.rayon * 1.5 + 0.4, ennemi ? 0xff4433 : u.j === this.ji ? 0x7dff8a : 0x6fb6ff, this.survol === u.id && !this.sel.has(u.id) ? 0.5 : 1]);
     }
     majProjectiles() {
       const B = this.B, ob = new THREE.Object3D(), coul = new THREE.Color(), q = new THREE.Vector3();
@@ -473,7 +632,7 @@
           else if (e.sorte === 'meteore') { this.meteores = this.meteores || []; this.meteores.push({ x: e.x, z: e.z, t: 0 }); }
           else if (e.sorte === 'zone') { const c = COULEUR_POUVOIR[e.pouvoir] || [1, 0.7, 0.3]; for (let k = 0; k < 22; k++) F.emettre(e.x + (rnd() - 0.5) * 2, y0 + 0.3, e.z + (rnd() - 0.5) * 2, (rnd() - 0.5) * 4, 1 + rnd() * 4, (rnd() - 0.5) * 4, 0.9, 1.4, c[0], c[1], c[2], 2); for (let k = 0; k < 12; k++) P.emettre(e.x, y0 + 0.3, e.z, (rnd() - 0.5) * 4, rnd() * 2.5, (rnd() - 0.5) * 4, 1.8, 3.5, 0.5, 0.45, 0.4, -0.2); }
           else { const gros = e.sorte === 'obus' || e.sorte === 'plasma'; for (let k = 0; k < (gros ? 30 : 16); k++) P.emettre(e.x, y0 + 0.3, e.z, (rnd() - 0.5) * 5, rnd() * 4, (rnd() - 0.5) * 5, 1.4 + rnd(), gros ? 4 : 2.6, 0.55, 0.48, 0.4, -0.4); for (let k = 0; k < (gros ? 18 : 6); k++) F.emettre(e.x, y0 + 0.4, e.z, (rnd() - 0.5) * 7, rnd() * 5, (rnd() - 0.5) * 7, 0.4, 1, 1, 0.6, 0.25, 6); }
-        } else if (e.type === 'ruine') { for (let k = 0; k < 70; k++) P.emettre(e.x + (rnd() - 0.5) * e.taille, y0 + rnd() * 3, e.z + (rnd() - 0.5) * e.taille, (rnd() - 0.5) * 3, 0.5 + rnd() * 2.5, (rnd() - 0.5) * 3, 2.5 + rnd() * 2, 5 + rnd() * 4, 0.5, 0.46, 0.42, -0.1); for (let k = 0; k < 30; k++) F.emettre(e.x + (rnd() - 0.5) * e.taille, y0 + rnd() * 4, e.z + (rnd() - 0.5) * e.taille, 0, 1 + rnd() * 2, 0, 1 + rnd(), 2.2, 1, 0.5, 0.15, -0.5); }
+        } else if (e.type === 'ruine') { (this.gravats = this.gravats || []).push({ x: e.x, z: e.z, taille: e.taille, t0: B.temps }); for (let k = 0; k < 70; k++) P.emettre(e.x + (rnd() - 0.5) * e.taille, y0 + rnd() * 3, e.z + (rnd() - 0.5) * e.taille, (rnd() - 0.5) * 3, 0.5 + rnd() * 2.5, (rnd() - 0.5) * 3, 2.5 + rnd() * 2, 5 + rnd() * 4, 0.5, 0.46, 0.42, -0.1); for (let k = 0; k < 30; k++) F.emettre(e.x + (rnd() - 0.5) * e.taille, y0 + rnd() * 4, e.z + (rnd() - 0.5) * e.taille, 0, 1 + rnd() * 2, 0, 1 + rnd(), 2.2, 1, 0.5, 0.15, -0.5); }
         else if (e.type === 'mort') { for (let k = 0; k < 6; k++) P.emettre(e.x, y0 + 0.2, e.z, (rnd() - 0.5) * 1.5, rnd(), (rnd() - 0.5) * 1.5, 0.9, 1.6, 0.55, 0.5, 0.42, -0.3); }
         else if (e.type === 'apparition') { for (let k = 0; k < 40; k++) { const a = rnd() * 6.28, r = rnd() * 2.5; F.emettre(e.x + Math.cos(a) * r, y0 + rnd() * 0.5, e.z + Math.sin(a) * r, 0, 2 + rnd() * 4, 0, 1.2, 1.3, 0.7, 0.85, 1, 0); } }
         else if (e.type === 'construit' && e.cle !== 'ferme') { for (let k = 0; k < 14; k++) { const a = rnd() * 6.28; P.emettre(e.x + Math.cos(a) * 4, y0 + 0.2, e.z + Math.sin(a) * 4, Math.cos(a) * 1.2, 0.5 + rnd() * 0.6, Math.sin(a) * 1.2, 0.9, 2, 0.55, 0.5, 0.42, -0.2); } }
@@ -525,7 +684,7 @@
       return l;
     }
     surEcran(u) { const e = this.versEcran(u.x, u.z, 1), w = this.cv.clientWidth, h = this.cv.clientHeight; return e.devant && e.x > 0 && e.y > 0 && e.x < w && e.y < h; }
-    versEcran(x, z, h) { const v = new THREE.Vector3(x, (h || 0) + this.sol(x, z), z).project(this.camera), w = this.cv.clientWidth, H = this.cv.clientHeight; return { x: (v.x + 1) / 2 * w, y: (1 - v.y) / 2 * H, devant: v.z < 1 }; }
+    versEcran(x, z, h) { const v = new THREE.Vector3(x, (h || 0) + Math.max(0, this.sol(x, z)), z).project(this.camera), w = this.cv.clientWidth, H = this.cv.clientHeight; return { x: (v.x + 1) / 2 * w, y: (1 - v.y) / 2 * H, devant: v.z < 1 }; }
 
     // ---------- barres de vie, chantiers, files de formation (2D par-dessus) ----------
     etiquettes(dpr) {
@@ -572,6 +731,10 @@
     balle: new THREE.BoxGeometry(0.05, 0.05, 1.6), laser: new THREE.BoxGeometry(0.09, 0.09, 2.6)
   };
   for (const k in GEO) GEO[k].partage = true;
+  const MAT_FANTOME = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45, depthWrite: false });
+  // accessoires posés autour des bâtiments : [modèle, côté x, côté z (en demi-emprises), taille]
+  const ACCESSOIRES = { grenier: [['jarre', 0.9, 0.7, 0.6], ['panier', -0.9, 0.9, 0.7]], entrepot: [['tonneaux', -1, 0.6, 2.0], ['caisse', 0.95, -0.8, 0.9]], caserne: [['tonneau', -1.02, 0.9, 0.8], ['caisse', 1.02, -0.6, 0.9]],
+    centre: [['tonneaux', 1.05, 0.95, 2.0], ['jarre', -1.05, 0.95, 0.6], ['caisse', -1.0, -0.9, 0.9]], port: [['tonneau', -0.9, -0.95, 0.8], ['caisse', -0.5, -1.0, 0.9]], archerie: [['tonneau', 1.0, -0.9, 0.8]], ecurie: [['panier', -1.0, 1.0, 0.7]], maison: [['jarre', 0.95, 0.9, 0.55]], temple: [['jarre', 1.0, 1.0, 0.6], ['jarre', -1.0, 1.0, 0.6]] };
   const MAT_ANNEAU = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 });
   const MAT_LASER = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
   const MAT_BALLE = new THREE.MeshBasicMaterial({ color: 0xffe9a0, toneMapped: false });

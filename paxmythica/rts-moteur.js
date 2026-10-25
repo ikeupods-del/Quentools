@@ -414,8 +414,9 @@
     const r = BT.peutPoser(B, j, cle, x, z); if (!r.ok) return r;
     const J = B.joueurs[j]; payer(J, BT.coutBat(B, j, cle));
     // une porte remplace les tronçons de mur sur lesquels on la pose
-    if (d.porte) { const n = B.n, cx = Math.floor(x / CEL), cz = Math.floor(z / CEL); for (let k = cz - 1; k <= cz + 1; k++) for (let i = cx - 1; i <= cx + 1; i++) { const g = B.parId.get(B.occ[k * n + i]); if (g && g.cle === 'mur' && g.j === j) retirer(B, g); } }
-    const b = ajouterBat(B, j, cle, x, z, false); b.payé = BT.coutBat(B, j, cle);
+    let dirP = null;
+    if (d.porte) { const n = B.n, cx = Math.floor(x / CEL), cz = Math.floor(z / CEL); for (let k = cz - 1; k <= cz + 1; k++) for (let i = cx - 1; i <= cx + 1; i++) { const g = B.parId.get(B.occ[k * n + i]); if (g && g.cle === 'mur' && g.j === j) { dirP = g.dir; retirer(B, g); } } }
+    const b = ajouterBat(B, j, cle, x, z, false); b.payé = BT.coutBat(B, j, cle); if (dirP != null) b.dir = dirP;
     // les unités sur l'emprise s'écartent
     for (const u of B.unites) if (!u.mort && Math.abs(u.x - x) < b.demiE + u.s.rayon && Math.abs(u.z - z) < b.demiE + u.s.rayon && !d.passable) ecarter(B, u, b);
     for (const i of ids || []) { const u = B.parId.get(i); if (u && u.cle === 'villageois' && u.j === j) poserOrdre(B, u, { type: 'construire', cible: b.id }); }

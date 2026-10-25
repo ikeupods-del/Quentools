@@ -128,17 +128,20 @@ function autotest() {
           fs.writeFileSync(path.join(dir, nom), img.toJPEG(80)); res.captures.push({ nom, msParImage: Math.round(ms.ms * 10) / 10, luminosite: Math.round(lum), etat: ms, erreurs: await win.webContents.executeJavaScript('(window.__erreurs || []).splice(0)') });
         }
         // mode Bataille : l'ordinateur joue les deux camps 10 minutes, puis vue de la ville ou du combat le plus dense
-        const batailles = [['antique', 'grecs', 'plaine', 'ville'], ['antique', 'egyptiens', 'oasis', 'combat'], ['medieval', 'nordiques', 'toundra', 'ville'], ['industriel', 'atlantes', 'riviere', 'combat'], ['futur', 'grecs', 'lac', 'ville']];
+        const batailles = [['antique', 'grecs', 'plaine', 'ville'], ['antique', 'egyptiens', 'oasis', 'combat'], ['medieval', 'nordiques', 'toundra', 'ville'], ['industriel', 'atlantes', 'riviere', 'combat'], ['futur', 'grecs', 'lac', 'ville'], ['antique', 'atlantes', 'mediterranee', 'port'], ['medieval', 'nordiques', 'plaine', 'mission']];
         for (const [e, pe, ca, cadre] of batailles) {
           const ms = await win.webContents.executeJavaScript(`(async () => {
-            const B = PM.Bataille.nouvelle({ epoque: ${JSON.stringify(e)}, carte: ${JSON.stringify(ca)}, taille: 'petite', graine: 31, joueur: 0, joueurs: [{ pantheon: ${JSON.stringify(pe)}, ia: true, difficulte: 2 }, { pantheon: ${JSON.stringify(pe === 'nordiques' ? 'grecs' : 'nordiques')}, ia: true, difficulte: 2 }] });
+            const mi = ${JSON.stringify(cadre)} === 'mission' ? PM.RTS.CAMPAGNE.find(m => m.id === 'siege') : null; if (mi) PM.appliquerEpoque(mi.epoque);
+            const B = mi ? PM.Bataille.nouvelleMission(mi) : PM.Bataille.nouvelle({ epoque: ${JSON.stringify(e)}, carte: ${JSON.stringify(ca)}, taille: 'petite', graine: 31, joueur: 0, joueurs: [{ pantheon: ${JSON.stringify(pe)}, ia: true, difficulte: 2 }, { pantheon: ${JSON.stringify(pe === 'nordiques' ? 'grecs' : 'nordiques')}, ia: true, difficulte: 2 }] });
             B.pack = PM.RTS.CARTES[${JSON.stringify(ca)}].pack; UI.demarrerBataille(B); UI.fermerModal(); UI.bat.pause = false;
             const v = UI.bat.vue; await v.chargement; await new Promise(ok => { const t = setInterval(() => { if (v.unitesPretes) { clearInterval(t); ok(); } }, 100); });
-            const t0 = performance.now(); for (let k = 0; k < 20 * 60 * 10 && !B.fin; k++) PM.Bataille.pas(B); const simulation = performance.now() - t0;
+            const t0 = performance.now(); for (let k = 0; k < 20 * 60 * (mi ? 2 : 10) && !B.fin; k++) PM.Bataille.pas(B); const simulation = performance.now() - t0;
             let x = 0, z = 0;
             if (${JSON.stringify(cadre)} === 'combat') { B.toutVoir = true; let bn = -1; for (const u of B.unites) { if (u.mort || u.cle === 'villageois') continue; let k = 0; for (const w of B.unites) if (!w.mort && w.j !== u.j && Math.hypot(w.x - u.x, w.z - u.z) < 20) k++; if (k > bn) { bn = k; x = u.x; z = u.z; } } }
+            if (${JSON.stringify(cadre)} === 'port') { B.toutVoir = true; const po = B.bats.find(b => b.cle === 'port' && !b.mort); if (po) { x = po.x; z = po.z; } }
+            if (mi) { B.toutVoir = true; const c = B.bats.find(b => b.j === 1 && b.cle === 'centre'); if (c) { x = c.x; z = c.z; } }
             if (!x) { const c = B.bats.find(b => b.j === 0 && b.cle === 'centre') || B.bats.find(b => b.j === 0) || { x: B.cote / 2, z: B.cote / 2 }; x = c.x; z = c.z; }
-            v.vise.d = ${JSON.stringify(cadre)} === 'ville' ? 58 : 44; v.centrerXZ(x, z + 6); v.stabiliser();
+            v.vise.d = ${JSON.stringify(cadre)} === 'mission' ? 90 : ${JSON.stringify(cadre)} === 'ville' || ${JSON.stringify(cadre)} === 'port' ? 58 : 44; v.centrerXZ(x, z + 6); v.stabiliser();
             await new Promise(r => setTimeout(r, 3000));
             const t = performance.now(); let n = 0; await new Promise(ok => { const f = () => { if (++n < 40) requestAnimationFrame(f); else ok(); }; requestAnimationFrame(f); });
             const R = v.renderer.info.render; return { ms: (performance.now() - t) / 40, simulationMs: Math.round(simulation), appels: R.calls, triangles: R.triangles, unites: B.unites.filter(u => !u.mort).length, joueurs: B.joueurs.map(J => J.pantheon + ' âge ' + J.age + ' pop ' + J.pop) }; })()`);

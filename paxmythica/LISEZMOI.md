@@ -13,9 +13,13 @@ Jeu de stratégie pour Mac façon *Age of Mythology* : batailles en temps réel 
 ## Jouer
 
 ### Bataille (temps réel, comme Age of Mythology)
-- **Menu → ⚔️ Bataille** : époque, peuple, dieu majeur, carte (plaines, rivière et gués, oasis, lac, toundra, forêt d’automne), taille, 1 à 3 adversaires de l’ordinateur (facile, normal, difficile), chacun pour soi ou 2 contre 2.
+- **Menu → ⚔️ Bataille** : époque, peuple, dieu majeur, carte (plaines, rivière et gués, oasis, lac, toundra, forêt d’automne, mer intérieure), taille (jusqu’à immense), 1 à 3 adversaires de l’ordinateur (facile, normal, difficile), chacun pour soi ou 2 contre 2, **durée** : normale, longue (trêve de 8 minutes, 250 de population, ressources abondantes) ou épique (trêve de 15 minutes, 300 de population).
+- **📜 Campagne** (menu principal) : six missions à la suite — fonder Mégara, repousser les pillards du Nord par vagues, chasser les envahisseurs du Nil, gagner la mer intérieure, prendre un château fortifié, bâtir l’ascenseur spatial. Objectifs affichés en haut à droite ; chaque victoire ouvre la mission suivante.
+- **Enregistrer** : Échap → 💾 Enregistrer (trois emplacements) ; la bataille s’enregistre aussi toute seule chaque minute et en quittant (« Continuer la bataille » au menu principal, « 📂 Charger une bataille »).
+- **Murs et portes** (âge classique) : choisis Mur puis clique le début et la fin du tracé (Maj pour continuer) ; la porte se pose sur un mur et laisse passer tes unités et tes alliés, pas l’ennemi.
+- **Mer** : le port se pose sur le rivage ; il forme des bateaux de pêche (bancs de poissons au large) et des navires de guerre qui tirent sur les navires et les bâtiments proches de l’eau.
 - **Commandes** : clic gauche ou cadre pour choisir, **clic droit** (ou ctrl-clic sur le pavé tactile) pour agir — marcher, récolter, construire, réparer, prier (Grecs), attaquer, point de ralliement d’un bâtiment. Double-clic : toutes les unités du même genre à l’écran ; Maj : ajouter. Deux doigts ou flèches ou bord de l’écran pour se déplacer, pincer ou molette pour zoomer, mini-carte pour aller loin.
-- **Économie** : les villageois récoltent la nourriture (baies, chasse, fermes), le bois et l’or, et les rapportent au centre-ville, au grenier ou à l’entrepôt. Les maisons donnent la population (150 au plus). La faveur : prière au temple (Grecs), temples (Égyptiens), combats (Nordiques), centres-villes (Atlantes).
+- **Économie** : les villageois récoltent la nourriture (baies, chasse, fermes), le bois et l’or, et les rapportent au centre-ville, au grenier ou à l’entrepôt. Les maisons donnent la population (150 au plus, davantage en partie longue). La faveur : prière au temple (Grecs), temples (Égyptiens), combats (Nordiques), centres-villes (Atlantes).
 - **Âges** : au centre-ville, choisis un dieu mineur ; il débloque une créature (formée au temple) et un pouvoir divin à usage unique (colonne des pouvoirs en haut à gauche). Chaque âge ouvre de nouveaux bâtiments et unités.
 - **Victoire** : un peuple est vaincu quand il n’a plus ni centre-ville ni villageois (ou plus rien du tout). Une merveille achevée et gardée 3 minutes donne aussi la victoire.
 - **Raccourcis** : <kbd>H</kbd> centre-ville, <kbd>.</kbd> villageois inactif, <kbd>Espace</kbd> dernière alerte, <kbd>⌘</kbd>+<kbd>1</kbd>…<kbd>9</kbd> créer un groupe et <kbd>1</kbd>…<kbd>9</kbd> le rappeler, lettres de la grille d’ordres (<kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd> <kbd>R</kbd> <kbd>T</kbd> / <kbd>A</kbd>… / <kbd>Z</kbd>…), <kbd>Suppr</kbd> supprimer, <kbd>Échap</kbd> annuler puis pause.
@@ -32,8 +36,8 @@ Jeu de stratégie pour Mac façon *Age of Mythology* : batailles en temps réel 
 
 ## Limites
 
-- Une bataille ne s’enregistre pas encore : elle se joue d’une traite (pause possible).
-- Pas encore de murs, de bateaux ni de garnison dans les bâtiments en mode Bataille.
+- Mode Bataille : pas encore de garnison dans les bâtiments ni de transport de troupes par bateau (les navires restent sur l’eau, les armées à pied sur la terre).
+- Une bataille enregistrée se reprend avec la même version du jeu ou une plus récente (les anciennes sauvegardes incompatibles sont écartées).
 
 - L’oracle demande le modèle d’IA partagé avec QuentMovie (~2,5 Go, téléchargé une fois dans `~/Movies/QuentMovie/modeles`).
 - Les sauvegardes restent dans l’application (stockage local) : exporter en fichier pour les garder ailleurs.
@@ -41,7 +45,7 @@ Jeu de stratégie pour Mac façon *Age of Mythology* : batailles en temps réel 
 
 ## Pour le développement
 
-- Mode Bataille : `rts-donnees.js` (unités, bâtiments, âges, pouvoirs en temps réel, cartes), `rts-moteur.js` (simulation au 1/20 s : carte, chemins A*, récolte, construction, combats, brouillard, ordinateur, victoire), `rts-vue.js` (vue 3D, sous-classe de la vue 3D), `rts-interface.js` (création, barre, mini-carte, sélection, grille d’ordres) ; essai `node tests/bataille.js` (`BATAILLE_LONG=1` : toutes les cartes et époques).
+- Mode Bataille : `rts-donnees.js` (unités, bâtiments, âges, pouvoirs en temps réel, cartes), `rts-moteur.js` (simulation au 1/20 s : carte, chemins A*, récolte, construction, combats, brouillard, ordinateur, victoire), `rts-vue.js` (vue 3D, sous-classe de la vue 3D), `rts-interface.js` (création, campagne, enregistrements, barre, objectifs, mini-carte, sélection, grille d’ordres, tracé des murs) ; missions dans `R.CAMPAGNE` (rts-donnees.js, une mission = une entrée : objectifs, vagues, départ, muraille) ; enregistrement `BT.sauver` / `BT.charger` (la carte se recrée depuis sa graine) ; essai `node tests/bataille.js` (`BATAILLE_LONG=1` : toutes les cartes et époques).
 - Fichiers : `donnees.js` (panthéons, dieux, unités, pouvoirs, événements), `epoques.js` (les cinq époques), `vue3d.js` (vue 3D, three.js r180 assemblé dans `vendor/three-pax.min.js`), `ressources3d.js` (chargement des textures, ciels et modèles), `packs-graphiques.js` (packs et qualités, un pack = une entrée), `carte.js` (génération du monde), `moteur.js` (règles), `alliances.js`, `ia-nations.js` (peuples de l’ordinateur), `oracle.js` (décrets), `rendu.js` (carte), `son.js`, `interface.js`, `main.js` / `preload.js` (Electron).
 - Copies générées (ne pas modifier) : `ia-locale.js`, `ia-worker.js`, `maj.js` → `node tools/synchro-ia-locale.js`.
 - Essais : `node tests/moteur.js` et `node tests/interface.js` (Chromium).

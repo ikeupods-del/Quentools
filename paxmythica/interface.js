@@ -59,8 +59,12 @@
   function accueil() {
     montrer('accueil'); UI.j = null; UI.editeur = null; reglerVitesse(0, true);
     const auto = lire('pm:auto', null), parties = lire('pm:parties', []);
+    const batListe = lire('pm:bat:liste', {}) || {}, batAuto = batListe.auto;
     $('#menuAccueil').innerHTML = `
       <button class="btn or grand" data-act="bataille">⚔️ Bataille</button>
+      ${batAuto ? `<button class="btn" data-act="b-continuer">Continuer la bataille — ${esc(batAuto.nom)} (${Math.floor(batAuto.temps / 60)} min)</button>` : ''}
+      <button class="btn" data-act="campagne">📜 Campagne</button>
+      ${Object.keys(batListe).some(k => k !== 'auto') ? '<button class="btn" data-act="b-charger-menu">📂 Charger une bataille</button>' : ''}
       ${auto ? `<button class="btn" data-act="continuer">Continuer la conquête — ${esc(auto.nation)} (${esc(PM.date(auto.mois))})</button>` : ''}
       <button class="btn" data-act="rapide">Conquête du monde (grande carte)</button>
       <button class="btn" data-act="perso">Partie personnalisée</button>

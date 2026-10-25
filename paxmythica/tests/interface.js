@@ -192,6 +192,8 @@ const ok = (c, m) => { n++; if (!c) { ko++; console.log('✗ ' + m); } };
   for (let k = 0; k < 10; k++) await ev(() => UI.bat.vue.dessiner(16));
   await p.keyboard.press('Escape'); await p.keyboard.press('Escape');
   ok(await ev(() => UI.bat.pause && UI.modalOuvert()), 'menu de pause');
+  await p.click('#modalBoite [data-act=b-sauver-menu]'); await p.click('#modalBoite [data-act=b-sauver][data-v="1"]');
+  ok(await ev(() => !!localStorage.getItem('pm:bat:1') && UI.modalOuvert()), 'bataille enregistrée (emplacement 1)');
   await p.click('#modalBoite [data-act=b-reprendre]');
   await ev(() => { const B = UI.bat.B; B.joueurs[0].ia = true; B.joueurs[1].ia = true; B.joueurs[0].difficulte = 2; B.joueurs[1].difficulte = 0; for (let k = 0; k < 20 * 60 * 40 && !B.fin; k++) PM.Bataille.pas(B); });
   ok(await ev(() => !!UI.bat.B.fin), 'la bataille se termine');
@@ -199,6 +201,53 @@ const ok = (c, m) => { n++; if (!c) { ko++; console.log('✗ ' + m); } };
   ok(await p.isVisible('#modalBoite .rts-bilan'), 'bilan de fin de bataille');
   await p.click('#modalBoite [data-act=b-quitter]');
   ok(await ev(() => UI.ecran === 'accueil'), 'retour au menu');
+
+  // menu : chargement d'une bataille enregistrée, tracé d'un mur en deux clics, sauvegarde automatique en quittant
+  ok(await p.isVisible('[data-act=campagne]') && await p.isVisible('[data-act=b-charger-menu]'), 'menu : campagne et chargement');
+  await p.click('[data-act=b-charger-menu]'); await p.click('#modalBoite [data-act=b-charger][data-v="1"]');
+  ok(await ev(() => UI.ecran === 'bataille' && !!UI.bat.B && UI.bat.B.temps > 30 && !UI.bat.B.fin), 'bataille rechargée');
+  await p.click('#modalBoite [data-act=b-commencer]');
+  const murs = await ev(() => { const B = UI.bat.B, J = B.joueurs[0], v = UI.bat.vue; J.age = Math.max(1, J.age); J.res.bois += 800; J.res.or += 800; B.joueurs[1].ia = false;
+    UI.bat.sel = B.unites.filter(u => !u.mort && u.j === 0 && u.cle === 'villageois').slice(0, 3).map(u => u.id); const c = B.bats.find(b => b.j === 0 && b.cle === 'centre');
+    v.vise.d = 80; v.centrerXZ(c.x, c.z); v.stabiliser(); UI.ACT['b-construire']({ dataset: { v: 'mur' } });
+    for (let dz = 14; dz < 40; dz += 2) { const l = PM.Bataille.casesMur(B, 0, c.x - 14, c.z + dz, c.x + 14, c.z + dz); if (l.filter(x => x.ok === true).length > 10) { const a = v.versEcran(c.x - 14, c.z + dz, 0), b = v.versEcran(c.x + 14, c.z + dz, 0); if (a.y > 60 && b.y < 600 && a.y < 600) return { a, b, n: B.bats.filter(x => x.cle === 'mur').length }; } }
+    return null; });
+  ok(murs, 'place pour un mur');
+  if (murs) {
+    await p.mouse.click(murs.a.x, murs.a.y); await p.mouse.move(murs.b.x, murs.b.y, { steps: 4 }); await p.waitForTimeout(150);
+    ok(await ev(() => (UI.bat.vue.fantomeMur || []).length > 8), 'aperçu du mur pendant le tracé');
+    await p.mouse.click(murs.b.x, murs.b.y);
+    ok(await ev(n => UI.bat.B.bats.filter(x => x.cle === 'mur').length > n + 8 && !UI.bat.mode, murs.n), 'mur tracé');
+    ok(await ev(() => UI.bat.B.unites.filter(u => u.ordre && u.ordre.type === 'construire').length >= 1), 'villageois envoyés bâtir le mur');
+  }
+  await ev(() => UI.ACT['b-menu']()); await p.click('#modalBoite [data-act=b-quitter]');
+  ok(await p.isVisible('[data-act=b-continuer]'), 'continuer la bataille (sauvegarde automatique)');
+
+  // campagne : six missions, la première ouverte, objectifs à l'écran, victoire qui ouvre la suivante
+  await p.click('[data-act=campagne]');
+  ok(await p.locator('#creationContenu [data-act=b-mission]').count() === 6, 'campagne : six missions');
+  ok(await p.isDisabled('[data-act=b-mission][data-v=pillards]') && !(await p.isDisabled('[data-act=b-mission][data-v=fondation]')), 'missions suivantes verrouillées');
+  await p.click('[data-act=b-mission][data-v=fondation]');
+  ok(await ev(() => UI.bat.B.mission && UI.bat.B.mission.id === 'fondation' && UI.modalOuvert()), 'mission lancée avec son récit');
+  await p.click('#modalBoite [data-act=b-commencer]'); await p.waitForTimeout(300);
+  ok(await p.isVisible('#batObj') && (await p.textContent('#batObj')).includes('15 villageois'), 'objectifs affichés');
+  await ev(() => { const B = UI.bat.B; B.joueurs[0].ia = true; B.joueurs[0].difficulte = 2; for (let k = 0; k < 20 * 60 * 25 && !B.fin; k++) PM.Bataille.pas(B); });
+  ok(await ev(() => UI.bat.B.fin && UI.bat.B.fin.raison === 'mission'), 'mission accomplie');
+  await p.waitForSelector('#modalBoite [data-act=b-mission][data-v=pillards]', { timeout: 15000 }).catch(() => null);
+  ok(await ev(() => JSON.parse(localStorage.getItem('pm:campagne') || '[]').includes('fondation')), 'progression de la campagne gardée');
+  await p.click('#modalBoite [data-act=b-mission][data-v=pillards]');
+  ok(await ev(() => UI.bat.B.mission.id === 'pillards' && UI.bat.B.mission.vagues.length === 3), 'mission suivante ouverte');
+  await p.click('#modalBoite [data-act=b-commencer]'); await p.waitForTimeout(300);
+  ok((await p.textContent('#batObj')).includes('Prochain assaut'), 'annonce du prochain assaut');
+  await ev(() => UI.ACT['b-menu']()); await p.click('#modalBoite [data-act=b-quitter]');
+
+  // partie longue : trêve affichée, attaque refusée pendant la trêve
+  await p.click('[data-act=bataille]'); await p.click('[data-act=b-epoque][data-v=antique]'); await p.click('[data-act=b-pantheon][data-v=grecs]'); await p.click('[data-act=b-dieu][data-v=zeus]');
+  await p.click('[data-act=b-option][data-k=duree][data-v=longue]'); await p.click('[data-act=b-carte][data-v=mediterranee]'); await p.click('[data-act=b-lancer]'); await p.click('#modalBoite [data-act=b-commencer]'); await p.waitForTimeout(300);
+  ok(await ev(() => UI.bat.B.treve === 480 && UI.bat.B.popMax === 250), 'partie longue créée');
+  ok(await p.isVisible('#batTreve') && (await p.textContent('#batTreve')).includes('Trêve'), 'trêve affichée');
+  ok(await ev(() => { const B = UI.bat.B, u = B.unites.find(x => x.j === 0), c = B.bats.find(b => b.j === 1); return PM.Bataille.ordreContexte(B, 0, [u.id], c.x, c.z, c.id, false) === 'treve'; }), 'attaque refusée pendant la trêve');
+  await ev(() => UI.ACT['b-menu']()); await p.click('#modalBoite [data-act=b-quitter]');
 
   ok(!erreurs.length, 'aucune erreur dans la page : ' + erreurs.slice(0, 3).join(' | '));
   await b.close();

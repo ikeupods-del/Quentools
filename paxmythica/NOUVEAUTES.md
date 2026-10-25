@@ -1,5 +1,14 @@
 # Nouveautés de Pax Mythica
 
+## 1.6.0
+- **Campagne** de six missions dans le mode Bataille : fonder Mégara, repousser les pillards du Nord qui attaquent par vagues, chasser deux envahisseurs du Nil, gagner la mer intérieure, prendre un château entouré de murailles, bâtir l’ascenseur spatial et le défendre. Récit, objectifs à l’écran et mission suivante ouverte à chaque victoire.
+- **Partie longue** et **partie épique** : trêve de 8 ou 15 minutes pour bâtir en paix, 250 ou 300 de population, ressources bien plus abondantes, merveille à garder plus longtemps.
+- **Enregistrer la bataille** : trois emplacements, sauvegarde automatique chaque minute et en quittant, « Continuer la bataille » au menu principal.
+- **Murs et portes** : trace un mur en deux clics, pose une porte dessus ; tes unités passent, l’ennemi doit l’abattre. Piliers aux angles, créneaux, et une enceinte complète autour du château de la campagne.
+- **Mer et navires** : nouvelle carte « Mer intérieure », port sur le rivage, bateaux de pêche et bancs de poissons, navires de guerre qui se battent sur l’eau et bombardent les côtes ; l’ordinateur arme aussi sa flotte.
+- **Bâtiments plus beaux** : nouveaux modèles pour le grenier, l’entrepôt, la caserne, le champ de tir, l’écurie, la forteresse, les tours et chaque centre-ville ; bannières aux couleurs du joueur, braseros allumés, échafaudages et poussière pendant la construction, fumée des cheminées, feu et fumée quand un bâtiment est abîmé, gravats après sa chute, tonneaux et caisses autour des bâtiments.
+- Nouvelle taille de carte « immense ».
+
 ## 1.5.0
 - Nouveau mode **Bataille** en temps réel, comme dans Age of Mythology : tu diriges toi-même chaque villageois et chaque soldat sur une carte de bataille.
 - Les villageois coupent les arbres (qui tombent un à un), cueillent les baies, chassent les moutons et les vaches, cultivent les fermes, extraient l’or et prient au temple pour la faveur.

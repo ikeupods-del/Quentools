@@ -199,6 +199,17 @@ table.peuples input[type=text] { width: 100%; }
 .rts-droite { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 #batHorloge { font-variant-numeric: tabular-nums; color: var(--doux); min-width: 48px; text-align: right; }
 .rts-pouvoirs { position: absolute; top: 54px; left: 12px; display: flex; flex-direction: column; gap: 8px; }
+.rts-treve { padding: 3px 10px; border-radius: 7px; border: 1px solid rgba(160,210,255,.5); background: rgba(40,80,120,.55); color: #dff0ff; font-variant-numeric: tabular-nums; font-size: 13px; }
+.rts-objectifs { position: absolute; top: 54px; right: 12px; max-width: 300px; padding: 10px 12px; border: 1px solid var(--bord2); border-radius: 10px; background: rgba(20,15,10,.78); font-size: 13px; pointer-events: none; }
+.rts-objectifs b { color: var(--or2); }
+.rts-objectifs ul { list-style: none; margin: 6px 0 4px; padding: 0; }
+.rts-objectifs li { margin: 3px 0; }
+.rts-objectifs li.fait { color: var(--doux); text-decoration: line-through; }
+.rts-objectifs small { color: #ffb29a; }
+.rts-emplacements { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.rts-emplacements .btn { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; }
+.rts-emplacements .btn span { color: var(--doux); font-size: 12px; }
+.carte-choix[disabled] { opacity: .45; cursor: not-allowed; transform: none; }
 .rts-pouvoir { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--or); background: radial-gradient(circle at 35% 30%, #5a4426, #1e160d); font-size: 24px; box-shadow: 0 0 12px rgba(243,217,153,.35), 0 3px 8px rgba(0,0,0,.6); }
 .rts-pouvoir:hover:not(:disabled) { box-shadow: 0 0 18px rgba(243,217,153,.8); transform: scale(1.06); }
 .rts-pouvoir.actif { border-color: #fff; box-shadow: 0 0 22px #f3d999; }
