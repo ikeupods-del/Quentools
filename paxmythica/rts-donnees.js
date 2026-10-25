@@ -122,6 +122,21 @@
     benediction: { type: 'bonus', cle: 'attaque', valeur: 0.3, duree: 40 }
   };
 
+  // description d'un pouvoir en temps réel (montrée sur les boutons et au choix des dieux)
+  R.descPouvoir = id => {
+    const d = R.POUVOIRS[id]; if (!d) return '';
+    const res = r => Object.entries(r).map(([k, v]) => `+${v} ${PM.ICONES[k] || k}`).join(' ');
+    const u = d.unite && PM.UNITES[d.unite];
+    return { eclair: 'Frappe l’ennemi le plus proche du point visé : une unité foudroyée, un bâtiment très abîmé.',
+      zone: `Pendant ${d.duree} s, ${d.impacts} frappes dans un cercle de ${d.rayon} m${d.degB ? ' (unités et bâtiments)' : ' (unités)'}.`,
+      invoquer: `${d.nombre} ${u ? u.nom.toLowerCase() : 'unités'} apparaissent au point visé.`, soin: `Soigne tes unités et tes bâtiments dans un cercle de ${d.rayon} m.`,
+      ressources: `Ressources immédiates : ${d.r ? res(d.r) : ''}.`, bonus: d.cle === 'attaque' ? `Tes unités frappent ${Math.round(d.valeur * 100)} % plus fort pendant ${d.duree} s.` : `La récolte de nourriture double pendant ${d.duree} s.`,
+      bouclier: `Tes bâtiments dans un cercle de ${d.rayon} m deviennent invulnérables ${d.duree} s.`, paralysie: `Les ennemis dans un cercle de ${d.rayon} m sont figés ${d.duree} s.`,
+      ralenti: `Les ennemis dans un cercle de ${d.rayon} m sont ralentis ${d.duree} s.`, conversion: `Jusqu’à ${d.nombre} ennemis proches du point visé passent dans ton camp.`,
+      vision: `Toute la carte est révélée pendant ${d.duree} s.`, age: 'Achève tout de suite le passage d’âge en cours (sinon +300 de chaque ressource).',
+      vortex: 'Toute ton armée est transportée au point visé.' }[d.type] || '';
+  };
+
   // cartes : nom, pack graphique conseillé, réglages de la génération
   R.CARTES = {
     plaine: { nom: 'Plaines de Grèce', emoji: '🌿', pack: 'olympe', foret: 0.5, desert: 0, collines: 0.4, eau: 'aucune' },

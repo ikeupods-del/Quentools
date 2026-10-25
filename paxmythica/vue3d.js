@@ -74,6 +74,8 @@
 
   // déforme légèrement une géométrie (feuillages plus naturels), avant fusion
   const jit = (g, graine, k = 0.12) => { const p = g.attributes.position, rnd = PM.aleatoire(graine), vu = new Map(); for (let i = 0; i < p.count; i++) { const cle = p.getX(i).toFixed(3) + ',' + p.getY(i).toFixed(3) + ',' + p.getZ(i).toFixed(3); let d = vu.get(cle); if (!d) { d = [(rnd() - 0.5) * k * 2, (rnd() - 0.5) * k, (rnd() - 0.5) * k * 2]; vu.set(cle, d); } p.setXYZ(i, p.getX(i) * (1 + d[0]), p.getY(i) + d[1], p.getZ(i) * (1 + d[2])); } g.computeVertexNormals(); return g; };
+  // texture du brouillard par défaut (tout visible)
+  function tableauVis() { const t = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1, THREE.RGBAFormat); t.needsUpdate = true; return t; }
   // ---------- modèles (géométries fusionnées, couleurs neutres, teintées par instance) ----------
   function modeles() {
     const pierre = 0xece4d2, tuile = 0xb9573c, bois = 0x9a6a40, sombre = 0x6a4a30, sable = 0xdcc08a, chaume = 0xb79a5a, verre = 0x7fb8d8, acier = 0x9aa4ad, beton = 0xbdb8ae, neon = 0x6ff3ff;
@@ -415,7 +417,7 @@ float hS(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453)
 float nS(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(hS(i), hS(i + vec2(1, 0)), f.x), mix(hS(i + vec2(0, 1)), hS(i + vec2(1, 1)), f.x), f.y); }`;
   function materiauSol(U) {
     const m = new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0 });
-    m.customProgramCacheKey = () => 'sol-v4';
+    m.customProgramCacheKey = () => 'sol-v5';
     m.onBeforeCompile = sh => {
       Object.assign(sh.uniforms, U);
       sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nvarying vec3 vSolM; varying vec3 vSolN;')
@@ -423,8 +425,10 @@ float nS(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
       sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
 varying vec3 vSolM; varying vec3 vSolN;
 uniform highp sampler2DArray tSolC, tSolN, tSolR;
-uniform sampler2D tPoids, tPeuples, tBords, tPalette, tRoutes;
-uniform vec2 uTaille; uniform float uT, uSel, uSurvol, uCible, uNeigeNiveau, uNeigePartout, uNuages, uPret, uTeinte;
+uniform sampler2D tPoids, tPeuples, tBords, tPalette, tRoutes, tVis;
+uniform vec2 uTaille; uniform float uT, uSel, uSurvol, uCible, uNeigeNiveau, uNeigePartout, uNuages, uPret, uTeinte, uVisOn;
+// brouillard de guerre (mode Bataille) : 0 inconnu (presque noir), 0,55 déjà vu (assombri, désaturé), 1 visible
+vec3 brouillard(vec3 c, vec2 uv) { if (uVisOn < 0.5) return c; float v = texture2D(tVis, uv).r; float k = v < 0.55 ? mix(0.04, 0.42, v / 0.55) : mix(0.42, 1.0, (v - 0.55) / 0.45); return mix(vec3(dot(c, vec3(0.3, 0.55, 0.15))), c, smoothstep(0.4, 0.9, v)) * k; }
 uniform float uEch[${SOLS.length}];
 ${GLSL_BRUIT}
 vec4 peuple(vec2 p) { return texture2D(tPeuples, clamp(p / uTaille, 0.0, 1.0)); }
@@ -499,6 +503,7 @@ if (alt > -0.5) {
 }
 if (pr - 1.0 == uSel && uSel >= 0.0) c = mix(c, vec3(1.0, 0.92, 0.6), 0.18 + 0.06 * sin(uT * 3.0));
 if (pr - 1.0 == uSurvol && uSurvol >= 0.0) c = mix(c, uCible > 0.5 ? vec3(1.0, 0.35, 0.25) : vec3(1.0, 0.95, 0.75), 0.2);
+c = brouillard(c, uvc);
 diffuseColor.rgb = c;`)
       .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = clamp(solRug, 0.08, 1.0);')
       .replace('#include <normal_fragment_maps>', 'normal = normalize((viewMatrix * vec4(solNor, 0.0)).xyz);')
@@ -610,7 +615,7 @@ transformed.z += (cos(uT * 1.4 + baseI.z * 0.11) * 0.45 + cos(uT * 3.7 + baseI.x
 void main() { vec4 m = modelMatrix * vec4(position, 1.0); vMonde = m.xyz; vec4 mvPosition = viewMatrix * m; gl_Position = projectionMatrix * mvPosition;
 #include <fog_vertex>
 }`,
-      fragmentShader: `uniform float uT, uCielI, uPret; uniform sampler2D uProf, tVagues, tCiel; uniform vec2 uTaille; uniform vec3 uSoleil, uSoleilC, uCreux, uBas, uCielMoy; varying vec3 vMonde;
+      fragmentShader: `uniform float uT, uCielI, uPret, uVisOn; uniform sampler2D uProf, tVagues, tCiel, tVis; uniform vec2 uTaille; uniform vec3 uSoleil, uSoleilC, uCreux, uBas, uCielMoy; varying vec3 vMonde;
 #include <common>
 #include <fog_pars_fragment>
 ${GLSL_BRUIT}
@@ -640,6 +645,7 @@ void main() {
   float ecume = bord * smoothstep(0.5, 0.9, nS(p * 0.6 + vec2(t * 0.5, -t * 0.3)) * 0.55 + vag * 0.6) * (1.0 - riv * 0.9);
   c = mix(c, vec3(0.9, 0.93, 0.92) * (uCielMoy * 0.9 + uSoleilC * 0.25), clamp(ecume, 0.0, 1.0) * 0.75);
   float a = mix(mix(0.42, 0.8, riv), 0.97, smoothstep(0.0, 0.2, d)); a = max(a, max(fres * (1.0 - riv * 0.5), ecume * 0.9));
+  if (uVisOn > 0.5) { float vv = texture2D(tVis, clamp(vMonde.xz / uTaille, 0.0, 1.0)).r; c *= vv < 0.55 ? mix(0.04, 0.42, vv / 0.55) : mix(0.42, 1.0, (vv - 0.55) / 0.45); }
   gl_FragColor = vec4(c, a);
 #include <tonemapping_fragment>
 #include <colorspace_fragment>
@@ -772,7 +778,7 @@ void main() {
       this.cam = { x: 0, z: 0, d: 600, lacet: 0 }; this.vise = { x: 0, z: 0, d: 600, lacet: 0 };
       this.temps = 0; this.boites = []; this.mats = {}; this.M = modeles(); this.ray = new THREE.Raycaster();
       // valeurs partagées par les nuanciers
-      this.U = { uT: { value: 0 }, uSatF: { value: 1 }, uNeigeF: { value: 0 }, uSoleil: { value: this.dirSoleil.clone() }, uSoleilC: { value: new THREE.Color(1, 0.95, 0.85) }, uPret: { value: 0 } };
+      this.U = { tVis: { value: tableauVis() }, uVisOn: { value: 0 }, uT: { value: 0 }, uSatF: { value: 1 }, uNeigeF: { value: 0 }, uSoleil: { value: this.dirSoleil.clone() }, uSoleilC: { value: new THREE.Color(1, 0.95, 0.85) }, uPret: { value: 0 } };
       this.uMat = { uT: this.U.uT, uPret: this.U.uPret, uNuit: { value: 0 }, uFutur: { value: 0 }, uModerne: { value: 0 }, uFam: { value: TABLE_FAMILLES() },
         tBatC: { value: tableauUni(BATS.map(() => [200, 196, 186]), 4, true) }, tBatN: { value: tableauUni(BATS.map(() => [128, 128, 255]), 4) }, tBatR: { value: tableauUni(BATS.map(() => [200, 128, 255]), 4) } };
       this.idPack = PM.packGraphique ? PM.packGraphique() : 'olympe'; this.idQualite = PM.qualite ? PM.qualite() : 'haute';
@@ -1038,7 +1044,8 @@ void main() {
         tSolC: { value: st ? st.C : tableauUni(TEINTES_SOLS, 4, true) }, tSolN: { value: st ? st.N : tableauUni(SOLS.map(() => [128, 128, 255]), 4) }, tSolR: { value: st ? st.R : tableauUni(SOLS.map(() => [230, 128, 255]), 4) },
         tPoids: { value: this.texPoids }, tPeuples: { value: this.texPeuples }, tBords: { value: this.texBords }, tPalette: { value: this.texPalette }, tRoutes: { value: this.texRoutes },
         uTaille: { value: new THREE.Vector2(C.w, C.h) }, uT: this.U.uT, uPret: this.U.uPret, uSel: { value: -1 }, uSurvol: { value: -1 }, uCible: { value: 0 },
-        uNeigeNiveau: { value: 70 }, uNeigePartout: { value: 0 }, uNuages: { value: 0.5 }, uTeinte: { value: 0 }, uEch: { value: ECH_SOLS.slice() }
+        uNeigeNiveau: { value: 70 }, uNeigePartout: { value: 0 }, uNuages: { value: 0.5 }, uTeinte: { value: 0 }, uEch: { value: ECH_SOLS.slice() },
+        tVis: this.U.tVis, uVisOn: this.U.uVisOn
       };
       const mesh = this.solMesh = new THREE.Mesh(g, materiauSol(u)); mesh.userData.uniformes = u; mesh.receiveShadow = true; mesh.castShadow = true;
       this.monde.add(mesh);
@@ -1056,7 +1063,7 @@ void main() {
       const U = {
         uT: this.U.uT, uProf: { value: prof }, uTaille: { value: new THREE.Vector2(C.w, C.h) }, uSoleil: this.U.uSoleil, uSoleilC: this.U.uSoleilC, uPret: { value: 0 },
         tVagues: { value: this.texVagues || (this.texVagues = reliefEau(256)) }, tCiel: { value: null }, uCielI: { value: 1 }, uCielMoy: { value: new THREE.Color(0.5, 0.6, 0.7) },
-        uCreux: { value: new THREE.Vector3(0.02, 0.09, 0.16) }, uBas: { value: new THREE.Vector3(0.1, 0.45, 0.45) }
+        uCreux: { value: new THREE.Vector3(0.02, 0.09, 0.16) }, uBas: { value: new THREE.Vector3(0.1, 0.45, 0.45) }, tVis: this.U.tVis, uVisOn: this.U.uVisOn
       };
       const geo = new THREE.PlaneGeometry(C.w * 10, C.h * 10, 1, 1).rotateX(-Math.PI / 2);
       this.eau = new THREE.Mesh(geo, materiauEau(U)); this.eau.position.set(C.w / 2, 0, C.h / 2); this.eau.renderOrder = 2; this.monde.add(this.eau);
@@ -1225,12 +1232,15 @@ void main() {
       }
       this.listeHerbe = l;
       // touffes toujours tournées vers la caméra (vues de côté, jamais en étoile)
-      const mat = this.mats.herbe || (this.mats.herbe = (() => { const m = new THREE.MeshStandardMaterial({ map: this.texF.herbe, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.9 }); m.customProgramCacheKey = () => 'herbe-face';
-        m.onBeforeCompile = sh => { sh.uniforms.uT = this.U.uT; sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uT;').replace('#include <beginnormal_vertex>', 'vec3 objectNormal = vec3(0.0, 1.0, 0.0);')
-          .replace('#include <begin_vertex>', 'vec3 dr = normalize(vec3(viewMatrix[0][0], 0.0, viewMatrix[2][0]) + vec3(1e-4, 0.0, 0.0));\nvec3 transformed = dr * position.x + vec3(0.0, position.y, 0.0);\n' + GLSL_VENT(0.16)); }; return m; })());
+      const mat = this.matHerbe();
       const m = new THREE.InstancedMesh(this.geoArbres().herbe, mat, Math.max(1, l.length)), o = new THREE.Object3D();
       l.forEach((a, i) => { o.position.set(a[0], this.sol(a[0], a[1]) - 0.05, a[1]); o.rotation.set(0, 0, 0); o.scale.set(a[2], a[2] * (0.8 + a[3] * 0.5), a[2]); o.updateMatrix(); m.setMatrixAt(i, o.matrix); m.setColorAt(i, new THREE.Color(1, 1, 1)); });
       m.count = l.length; m.receiveShadow = true; m.castShadow = false; this.herbe = m; this.monde.add(m); this.colorerHerbe();
+    }
+    matHerbe() {
+      return this.mats.herbe || (this.mats.herbe = (() => { const m = new THREE.MeshStandardMaterial({ map: this.texF.herbe, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.9 }); m.customProgramCacheKey = () => 'herbe-face';
+        m.onBeforeCompile = sh => { sh.uniforms.uT = this.U.uT; sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uT;').replace('#include <beginnormal_vertex>', 'vec3 objectNormal = vec3(0.0, 1.0, 0.0);')
+          .replace('#include <begin_vertex>', 'vec3 dr = normalize(vec3(viewMatrix[0][0], 0.0, viewMatrix[2][0]) + vec3(1e-4, 0.0, 0.0));\nvec3 transformed = dr * position.x + vec3(0.0, position.y, 0.0);\n' + GLSL_VENT(0.16)); }; return m; })());
     }
     colorerHerbe() {
       if (!this.herbe) return; const c = new THREE.Color(), H = this.pack.herbe, ref = col(0x6a9a3c);
@@ -1714,4 +1724,6 @@ vColor *= mix(vec3(1.0), instanceColor, max(step(98.0, matiere), step(2.97, colo
     }
   }
   PM.Vue3D = Vue3D; PM.figurines3D = figurines; // figurines exposées pour les essais
+  // outils partagés avec la vue du mode Bataille (rts-vue.js)
+  PM.vue3dOutils = { fusion, MAT, DISTRIB, MAISONS, TEMPLE_EPOQUE, NAVIRES, SANS_MATIERE };
 })(typeof window !== 'undefined' ? window : globalThis);

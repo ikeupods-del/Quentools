@@ -44,6 +44,15 @@
   <div id="toasts"></div>
 </section>
 
+<!-- bataille en temps réel (façon Age of Mythology) -->
+<section id="bataille" class="ecran">
+  <canvas id="bat3d"></canvas>
+  <canvas id="batEt"></canvas>
+  <div id="batCadre" class="rts-cadre cache"></div>
+  <div id="batHud" class="rts-hud"></div>
+  <div id="batToasts" class="rts-toasts"></div>
+</section>
+
 <div id="bandeauMaj" class="bandeau-maj cache"></div>
 <div id="modal" class="modal cache"><div class="modal-boite" id="modalBoite"></div></div>
 <input type="file" id="fichierImport" accept=".json,application/json" hidden>
@@ -52,6 +61,8 @@
 <script src="epoques.js"></script>
 <script src="carte.js"></script>
 <script src="moteur.js"></script>
+<script src="rts-donnees.js"></script>
+<script src="rts-moteur.js"></script>
 <script src="alliances.js"></script>
 <script src="ia-nations.js"></script>
 <script src="oracle.js"></script>
@@ -60,7 +71,9 @@
 <script src="packs-graphiques.js"></script>
 <script src="rendu.js"></script>
 <script src="vue3d.js"></script>
+<script src="rts-vue.js"></script>
 <script src="son.js"></script>
 <script src="interface.js"></script>
+<script src="rts-interface.js"></script>
 </body>
 </html>

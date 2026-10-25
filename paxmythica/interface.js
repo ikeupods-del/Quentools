@@ -60,8 +60,9 @@
     montrer('accueil'); UI.j = null; UI.editeur = null; reglerVitesse(0, true);
     const auto = lire('pm:auto', null), parties = lire('pm:parties', []);
     $('#menuAccueil').innerHTML = `
-      ${auto ? `<button class="btn or grand" data-act="continuer">Continuer — ${esc(auto.nation)} (${esc(PM.date(auto.mois))})</button>` : ''}
-      <button class="btn ${auto ? '' : 'or grand'}" data-act="rapide">Nouvelle partie</button>
+      <button class="btn or grand" data-act="bataille">⚔️ Bataille</button>
+      ${auto ? `<button class="btn" data-act="continuer">Continuer la conquête — ${esc(auto.nation)} (${esc(PM.date(auto.mois))})</button>` : ''}
+      <button class="btn" data-act="rapide">Conquête du monde (grande carte)</button>
       <button class="btn" data-act="perso">Partie personnalisée</button>
       <button class="btn" data-act="scenarios">Scénarios</button>
       ${parties.length ? '<button class="btn" data-act="charger">Charger une partie</button>' : ''}
@@ -860,6 +861,6 @@
   // démarrage
   if (G.paxMaj) { G.paxMaj.surChangement(e => { majTexte(e); bandeauMaj(e); }); G.paxMaj.etat().then(e => { if (e && e.version) $('#versionApp').textContent = 'Version ' + e.version; bandeauMaj(e); }).catch(() => {}); }
   if (G.paxIA) G.paxIA.etat().then(e => { UI.oracle.installee = !!(e && e.installee); }).catch(() => {});
-  UI.ACT = ACT; UI.rafraichir = rafraichir; UI.selectionnerProvince = selectionnerProvince; UI.lancerPartie = lancerPartie; UI.unMois = unMois; UI.accueil = accueil; UI.ouvrirEditeur = ouvrirEditeur; UI.verifierAttente = verifierAttente; UI.fermerModal = fermerModal;
+  UI.ACT = ACT; UI.rafraichir = rafraichir; UI.selectionnerProvince = selectionnerProvince; UI.lancerPartie = lancerPartie; UI.unMois = unMois; UI.accueil = accueil; UI.ouvrirEditeur = ouvrirEditeur; UI.verifierAttente = verifierAttente; UI.fermerModal = fermerModal; UI.ouvrirModal = ouvrirModal; UI.toast = toast; UI.montrer = montrer; UI.modalOuvert = modalOuvert;
   accueil();
 })(window);
