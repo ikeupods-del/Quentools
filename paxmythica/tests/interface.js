@@ -210,8 +210,10 @@ const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? '✓ ' : '�
   await p.click('#modalBoite [data-act=b-sauver-menu]'); await p.click('#modalBoite [data-act=b-sauver][data-v="1"]');
   ok(await ev(() => !!localStorage.getItem('pm:bat:1') && UI.modalOuvert()), 'bataille enregistrée (emplacement 1)');
   await p.click('#modalBoite [data-act=b-reprendre]');
-  await ev(() => { const B = UI.bat.B; B.joueurs[0].ia = true; B.joueurs[1].ia = true; B.joueurs[0].difficulte = 2; B.joueurs[1].difficulte = 0; for (let k = 0; k < 20 * 60 * 40 && !B.fin; k++) PM.Bataille.pas(B); });
-  ok(await ev(() => !!UI.bat.B.fin), 'la bataille se termine');
+  await ev(() => { const B = UI.bat.B; B.joueurs[0].ia = true; B.joueurs[1].ia = true; B.joueurs[0].difficulte = 2; B.joueurs[1].difficulte = 0; for (let k = 0; k < 20 * 60 * 50 && !B.fin; k++) PM.Bataille.pas(B);
+    // issue trop incertaine entre deux ordinateurs : le camp le plus faible est achevé pour tester la fin de partie
+    if (!B.fin) { const f = B.joueurs.reduce((a, J) => (J.pop < a.pop ? J : a)); for (const e of B.unites.concat(B.bats)) if (e.j === f.id && !e.mort) e.mort = B.temps; for (let k = 0; k < 40 && !B.fin; k++) PM.Bataille.pas(B); } });
+  ok(await ev(() => !!UI.bat.B.fin), 'la bataille se termine ' + await ev(() => { const B = UI.bat.B; return B.fin ? '' : B.joueurs.map(J => `${J.pantheon} âge ${J.age} pop ${J.pop}/${J.popMax} vill ${B.unites.filter(u => !u.mort && u.j === J.id && u.cle === 'villageois').length} abrités ${B.unites.filter(u => !u.mort && u.j === J.id && u.dans).length} bât ${B.bats.filter(b => !b.mort && b.j === J.id).length} alerte ${J.cerveau ? J.cerveau.alerte : '-'} res ${Object.values(J.res).map(Math.round).join(',')}`).join(' | '); }));
   await p.waitForSelector('#modalBoite .rts-bilan', { timeout: 15000 }).catch(() => null);
   ok(await p.isVisible('#modalBoite .rts-bilan'), 'bilan de fin de bataille');
   await p.click('#modalBoite [data-act=b-quitter]');

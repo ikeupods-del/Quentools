@@ -1002,8 +1002,9 @@
       if (J.vaincu) continue;
       const bats = B.bats.filter(b => !b.mort && b.j === J.id && b.cle !== 'ferme'), vill = B.unites.some(u => !u.mort && u.j === J.id && u.cle === 'villageois');
       const centre = bats.some(b => b.cle === 'centre');
-      // vaincu : plus de centre-ville ni de villageois pour en rebâtir un (le peuple se rend)
-      if ((!bats.length && !vill) || (!centre && !vill)) { J.vaincu = true; for (const u of B.unites) if (u.j === J.id && !u.mort) mourir(B, u, null); for (const b of B.bats) if (b.j === J.id && !b.mort) mourir(B, b, null); B.evts.push({ type: 'vaincu', j: J.id }); }
+      // vaincu : plus de centre-ville ni de villageois pour en rebâtir un, ou plus personne et rien pour former un villageois (le peuple se rend)
+      const personne = !B.unites.some(u => !u.mort && u.j === J.id), demuni = personne && centre && J.res.nourriture < 50 && !bats.some(b => b.file.length || b.d.marche) && !J.ageEnCours && !B.effets.some(f => f.j === J.id);
+      if ((!bats.length && !vill) || (!centre && !vill) || demuni) { J.vaincu = true; for (const u of B.unites) if (u.j === J.id && !u.mort) mourir(B, u, null); for (const b of B.bats) if (b.j === J.id && !b.mort) mourir(B, b, null); B.evts.push({ type: 'vaincu', j: J.id }); }
       const m = B.bats.find(b => !b.mort && b.j === J.id && b.cle === 'merveille' && b.fini);
       if (m) { m.garde = (m.garde || 0) + 1; if (m.garde >= (B.gardeMerveille || R.GARDE_MERVEILLE) && !B.fin) B.fin = { gagnant: J.equipe, raison: 'merveille', temps: B.temps }; }
     }
@@ -1110,7 +1111,9 @@
     const libresMil = mil.filter(u => !u.ordre || u.ordre.auto || u.ordre.type === 'deplacer');
     if (menace) { for (const u of libresMil) if (!u.ordre || u.ordre.type !== 'attaquer') poserOrdre(B, u, { type: 'deplacer', x: menace.x, z: menace.z, attaque: true }); C.attaque = false; }
     // attaque par vagues : seuil croissant, cible = bâtiment ennemi le plus proche
-    const popMil = mil.reduce((s, u) => s + u.s.pop, 0), seuil = D.attaque + C.vague * 6 + J.age * 2;
+    // un ennemi sans soldats se laisse achever avec une petite armée
+    const sansDefense = B.joueurs.some(x => !x.vaincu && ennemis(B, j, x.id) && !B.unites.some(u => !u.mort && u.j === x.id && u.cle !== 'villageois'));
+    const popMil = mil.reduce((s, u) => s + u.s.pop, 0), seuil = sansDefense ? Math.min(8, D.attaque) : D.attaque + C.vague * 6 + J.age * 2;
     // cibles : bâtiments ennemis, sinon les dernières unités (on achève les fuyards)
     const ciblesEnnemies = () => { const l = B.bats.filter(b => !b.mort && ennemis(B, j, b.j)); return (l.length ? l : B.unites.filter(u => !u.mort && ennemis(B, j, u.j))).sort((a, b) => d2(a.x, a.z, bx, bz) - d2(b.x, b.z, bx, bz)); };
     if (!menace && !J.passif && !treve(B) && popMil >= seuil && B.temps >= C.prochaineAttaque) {
