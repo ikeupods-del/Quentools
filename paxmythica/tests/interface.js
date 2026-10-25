@@ -35,6 +35,9 @@ const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? '✓ ' : '�
   // province : construire, développer, recruter
   const cap = await ev(() => { UI.vue().centrerSur(UI.j.etat.nations[UI.j.etat.joueur].capitale, 1.6); UI.vue().stabiliser(); const E = UI.j.etat, c = UI.j.carte.provinces[E.nations[E.joueur].capitale]; return UI.vue().versEcran(c.lx, c.ly); });
   await p.mouse.click(cap.x, cap.y);
+  // la vue 3D peut finir de se charger juste après : on attend et on reclique une fois
+  const capChoisie = () => ev(() => !!UI.sel && UI.sel.type === 'province' && UI.sel.id === UI.j.etat.nations[UI.j.etat.joueur].capitale);
+  if (!await capChoisie()) { await p.waitForTimeout(1500); const c2 = await ev(() => { UI.vue().centrerSur(UI.j.etat.nations[UI.j.etat.joueur].capitale, 1.6); UI.vue().stabiliser(); const E = UI.j.etat, c = UI.j.carte.provinces[E.nations[E.joueur].capitale]; return UI.vue().versEcran(c.lx, c.ly); }); await p.mouse.click(c2.x, c2.y); await p.waitForTimeout(300); }
   ok(await ev(() => UI.sel && UI.sel.type === 'province' && UI.sel.id === UI.j.etat.nations[UI.j.etat.joueur].capitale), 'clic sur la capitale');
   ok(await p.isVisible('#gauche >> text=Bâtiments'), 'panneau de la capitale');
   const bois = await ev(() => UI.j.etat.nations[UI.j.etat.joueur].res.bois);
