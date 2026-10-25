@@ -179,7 +179,9 @@ const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? '✓ ' : '�
   ok(await ev(() => UI.bat.sel.every(i => UI.bat.B.parId.get(i).ordre.type === 'recolter')), 'clic droit sur les baies : récolte');
   // clic gauche sur un arbre avec des villageois choisis : ordre de couper du bois, étiquette d'action au survol
   const arbreG = await ev(() => { const B = UI.bat.B, v = UI.bat.vue; for (const r of B.res) if (r.sous === 'arbre' && v.brouillardEn(r.x, r.z) === 2) { const e = v.versEcran(r.x, r.z, 0.5); if (e.y > 80 && e.y < 560 && e.x > 100 && e.x < 1300) return e; } });
+  const cueilleurs = await ev(() => UI.bat.sel.slice());
   if (arbreG) {
+    await ev(c => { const B = UI.bat.B; UI.bat.sel = B.unites.filter(u => u.j === 0 && u.cle === 'villageois' && !c.includes(u.id)).slice(0, 2).map(u => u.id); }, cueilleurs);
     await p.mouse.move(arbreG.x - 15, arbreG.y - 15); await p.mouse.move(arbreG.x, arbreG.y, { steps: 3 }); await p.waitForTimeout(250); await p.mouse.move(arbreG.x + 1, arbreG.y); await p.waitForTimeout(150);
     ok(await ev(() => { const a = document.querySelector('#batAide'); return !!a && !a.classList.contains('cache') && a.textContent.includes('bois'); }), 'étiquette « Couper du bois » au survol');
     await p.mouse.click(arbreG.x, arbreG.y);
