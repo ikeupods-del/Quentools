@@ -177,6 +177,14 @@ const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? '✓ ' : '�
   const baie = await ev(() => { const B = UI.bat.B, v = UI.bat.vue, r = B.res.find(r => r.sous === 'baies' && v.brouillardEn(r.x, r.z) === 2); return v.versEcran(r.x, r.z, 0.4); });
   await p.mouse.click(baie.x, baie.y, { button: 'right' });
   ok(await ev(() => UI.bat.sel.every(i => UI.bat.B.parId.get(i).ordre.type === 'recolter')), 'clic droit sur les baies : récolte');
+  // clic gauche sur un arbre avec des villageois choisis : ordre de couper du bois, étiquette d'action au survol
+  const arbreG = await ev(() => { const B = UI.bat.B, v = UI.bat.vue; for (const r of B.res) if (r.sous === 'arbre' && v.brouillardEn(r.x, r.z) === 2) { const e = v.versEcran(r.x, r.z, 0.5); if (e.y > 80 && e.y < 560 && e.x > 100 && e.x < 1300) return e; } });
+  if (arbreG) {
+    await p.mouse.move(arbreG.x - 15, arbreG.y - 15); await p.mouse.move(arbreG.x, arbreG.y, { steps: 3 }); await p.waitForTimeout(250); await p.mouse.move(arbreG.x + 1, arbreG.y); await p.waitForTimeout(150);
+    ok(await ev(() => { const a = document.querySelector('#batAide'); return !!a && !a.classList.contains('cache') && a.textContent.includes('bois'); }), 'étiquette « Couper du bois » au survol');
+    await p.mouse.click(arbreG.x, arbreG.y);
+    ok(await ev(() => UI.bat.sel.length >= 1 && UI.bat.sel.every(i => { const u = UI.bat.B.parId.get(i); return u.ordre && u.ordre.type === 'recolter' && (UI.bat.B.parId.get(u.ordre.cible) || {}).sous === 'arbre'; })), 'clic gauche sur un arbre : les villageois coupent du bois');
+  }
   await p.keyboard.press('h'); await p.waitForTimeout(150); await p.keyboard.press('q');
   ok(await ev(() => UI.bat.B.bats.find(b => b.j === 0 && b.cle === 'centre').file.length === 1), 'villageois en formation (touche de la grille)');
   await ev(() => { const B = UI.bat.B; for (let k = 0; k < 20 * 40; k++) PM.Bataille.pas(B); });
@@ -232,7 +240,7 @@ const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? '✓ ' : '�
 
   // campagne : six missions, la première ouverte, objectifs à l'écran, victoire qui ouvre la suivante
   await p.click('[data-act=campagne]');
-  ok(await p.locator('#creationContenu [data-act=b-mission]').count() === 6, 'campagne : six missions');
+  ok(await p.locator('#creationContenu [data-act=b-mission]').count() === 10, 'campagne : dix missions');
   ok(await p.isDisabled('[data-act=b-mission][data-v=pillards]') && !(await p.isDisabled('[data-act=b-mission][data-v=fondation]')), 'missions suivantes verrouillées');
   await p.click('[data-act=b-mission][data-v=fondation]');
   ok(await ev(() => UI.bat.B.mission && UI.bat.B.mission.id === 'fondation' && UI.modalOuvert()), 'mission lancée avec son récit');

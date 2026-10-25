@@ -1,5 +1,15 @@
 # Nouveautés de Pax Mythica
 
+## 1.8.0
+- **Clics plus simples** : avec des unités choisies, un clic gauche (ou droit) sur un arbre, des baies, une mine, un chantier, un ennemi ou un navire de transport leur donne l’ordre ; une étiquette près de la souris dit ce qu’elles vont faire (« Couper du bois », « Attaquer », « Embarquer »…). Arbres, baies, mines et animaux sont plus faciles à viser.
+- **Bug corrigé** : les échafaudages des chantiers étaient démesurés ; ils ont retrouvé leur taille.
+- **Centres-villes redessinés** au Moyen Âge (donjon et ses tours), à l’ère industrielle (hôtel de ville et son beffroi), à l’époque moderne (quartier général) et au futur (dôme du Nexus), à la taille de la bataille.
+- **Nouvelle musique d’ambiance**, apaisante : accords lents, harpe et flûte.
+- **Nouvelle carte « Archipel »** : chaque peuple sur son île, des îlots riches en or au milieu ; il faut traverser la mer pour attaquer.
+- **L’ordinateur débarque** : il arme des navires de transport, embarque son armée, choisit une plage hors de portée de tes tours, débarque et attaque, escorté par ses navires de guerre.
+- **Marché** : échange ton bois ou ta nourriture contre de l’or (ou l’inverse) ; chaque vente fait baisser le cours, qui remonte avec le temps. L’ordinateur s’en sert quand son or s’épuise.
+- **Campagne de dix missions** : quatre nouvelles — « Les îles d’Égée » (débarquement), « La nuit des loups » (tenir 12 minutes derrière tes tours), « La course du rail » (ère industrielle) et « Tempête sur l’archipel » (bataille navale avec un allié).
+
 ## 1.7.0
 - **Navire de transport** (au port) : clic droit sur le navire avec tes soldats ou tes villageois, ils montent à bord (10 places) ; clic droit sur la terre avec le navire, il traverse et débarque tout le monde sur l’autre rive. Le navire vient chercher ses passagers au bord de l’eau ; s’il coule, ils périssent avec lui.
 - **Garnison** : tes villageois, ton infanterie, tes archers et tes héros s’abritent dans le centre-ville, les tours et la forteresse (clic droit dessus, ou bouton 🛡️). Ils y guérissent, chaque soldat abrité ajoute une flèche aux tirs du bâtiment, et ils ressortent vivants si le bâtiment tombe.

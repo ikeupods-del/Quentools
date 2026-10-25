@@ -64,6 +64,10 @@
     let axe = 0, ecartMax = -1;
     for (let k = 0; k < 72; k++) { const t = k / 72 * Math.PI, ux = Math.cos(t), uz = Math.sin(t); const e = Math.min(...departs.map(([x, z]) => Math.abs((x - cote / 2) * ux + (z - cote / 2) * uz))); if (e > ecartMax) { ecartMax = e; axe = t; } }
     const mares = [];
+    // archipel : une île par peuple, quelques îlots riches en or au milieu
+    const iles = T.eau === 'iles' ? departs.map(([x, z]) => [x, z, Math.max(nb > 2 ? 46 : 52, cote * (nb > 2 ? 0.17 : 0.22))]) : [];
+    if (T.eau === 'iles') for (let k = 0, t = 0; k < 2 + Math.floor(nb / 2) && t < 300; t++) { const a = rnd() * 6.28, r = rnd() * cote * 0.2, x = cote / 2 + Math.cos(a) * r, z = cote / 2 + Math.sin(a) * r, ri = 13 + rnd() * 6; if (iles.every(([ix, iz, ir]) => Math.hypot(ix - x, iz - z) > ir + ri + 22)) { iles.push([x, z, ri, true]); k++; } }
+    B.ilots = iles.filter(i => i[3]);
     if (T.eau === 'oasis') for (let k = 0, t = 0; k < 4 && t < 200; t++) { const x = cote * (0.15 + rnd() * 0.7), z = cote * (0.15 + rnd() * 0.7); if (departs.every(d => d2(d[0], d[1], x, z) > 50 * 50) && mares.every(m => d2(m[0], m[1], x, z) > 40 * 40)) { mares.push([x, z, 7 + rnd() * 5]); k++; } }
     const gues = [0.2, 0.5, 0.8].map(t => t + (rnd() - 0.5) * 0.08);
     // profondeur de l'eau (0 sur la rive, sans marche) ; plat : les berges s'aplanissent autour de l'eau
@@ -79,6 +83,7 @@
         return pr * (1 - g) + Math.min(pr, 0.85) * g;
       }
       if (T.eau === 'mer') { const r = Math.hypot(x - cote / 2, z - cote / 2) / (cote * 0.25) + (nz(x / 26, z / 26) - 0.5) * 0.45; plat = 1 - lisse(1, 1.35, r); return r < 1 ? Math.min(7, (1 - r) * 14) : 0; }
+      if (T.eau === 'iles') { let m = 9; for (const [ix, iz, ir] of iles) m = Math.min(m, Math.hypot(x - ix, z - iz) / ir); m += (nz(x / 22, z / 22) - 0.5) * 0.3; plat = lisse(0.72, 1, m); return m > 1 ? Math.min(7, (m - 1) * 14) : 0; }
       if (T.eau === 'oasis') { let p = 0; for (const [mx, mz, mr] of mares) { const r = Math.hypot(x - mx, z - mz) / mr + (nz(x / 9, z / 9) - 0.5) * 0.4; plat = Math.max(plat, 1 - lisse(1, 1.6, r)); if (r < 1) p = Math.max(p, (1 - r) * 4.5); } return p; }
       return 0;
     };
@@ -87,7 +92,7 @@
       const x = i * CEL, z = k * CEL, o2 = k * gx + i;
       let h = 1.3 + Math.max(0, nz(x / 70, z / 70) - 0.42) * coll * 1.6 + nz(x / 18 + 3, z / 18) * 0.9;
       for (const [dx, dz] of departs) { const t = Math.min(1, Math.hypot(x - dx, z - dz) / 40); const l = t * t * (3 - 2 * t); h = 1.6 * (1 - l) + h * l; }
-      const bord = Math.min(x, z, cote - x, cote - z); if (bord < 14) h += (14 - bord) * 0.35; // la carte se relève sur ses bords
+      const bord = Math.min(x, z, cote - x, cote - z); if (bord < 14 && T.eau !== 'iles') h += (14 - bord) * 0.35; // la carte se relève sur ses bords (sauf en pleine mer)
       let p = profondeur(x, z); const dd = Math.min(...departs.map(([dx, dz]) => Math.hypot(x - dx, z - dz))); if (dd < 42) p *= Math.max(0, (dd - 32) / 10);
       if (plat > 0) h = h + (Math.min(h, 1.1) - h) * plat;
       if (p > 0) h -= p * 1.4;
@@ -108,6 +113,13 @@
     const eau = B.eau = new Uint8Array(n * n); let nEau = 0;
     for (let cz = 1; cz < n - 1; cz++) for (let cx = 1; cx < n - 1; cx++) if (hC(cx, cz) < -0.9) { eau[cz * n + cx] = 1; nEau++; }
     B.aEau = nEau > 120; B.blocTerrain = bloc.slice();
+    // îles : chaque morceau de terre d'un seul tenant reçoit un numéro (traverser l'eau demande un bateau)
+    const ile = B.ile = new Int16Array(n * n); let nIles = 0;
+    for (let o0 = 0; o0 < n * n; o0++) {
+      if (bloc[o0] === EAU || ile[o0]) continue; nIles++; const pile = [o0]; ile[o0] = nIles;
+      while (pile.length) { const o3 = pile.pop(), cx = o3 % n, cz = (o3 - cx) / n; for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const x2 = cx + dx, z2 = cz + dz; if (x2 < 0 || z2 < 0 || x2 >= n || z2 >= n) continue; const o4 = z2 * n + x2; if (bloc[o4] !== EAU && !ile[o4]) { ile[o4] = nIles; pile.push(o4); } } }
+    }
+    B.nIles = nIles;
     // forêts : massifs (loin des villes), un bois près de chaque départ
     const arbre = (x, z) => { if (profondeur(x, z) > 0 || profondeur(x + 3, z) > 0 || profondeur(x - 3, z) > 0 || profondeur(x, z + 3) > 0 || profondeur(x, z - 3) > 0) return null; const cx = Math.floor(x / CEL), cz = Math.floor(z / CEL); if (cx < 1 || cz < 1 || cx >= n - 1 || cz >= n - 1 || bloc[cz * n + cx] !== LIBRE) return null; return ajouterRes(B, 'arbre', cx * CEL + 1 + (rnd() - 0.5) * 0.6, cz * CEL + 1 + (rnd() - 0.5) * 0.6); };
     const seuil = 0.66 - T.foret * 0.18;
@@ -137,8 +149,11 @@
       poserGroupe('mine', dx + Math.cos(ao) * 22, dz + Math.sin(ao) * 22, 1, 2);
       poserGroupe('mine', dx + Math.cos(ac + Math.PI * 0.85) * 44, dz + Math.sin(ac + Math.PI * 0.85) * 44, 1, 4);
       poserGroupe('vache', dx + Math.cos(ac + 2.6) * 46, dz + Math.sin(ac + 2.6) * 46, 5, 4);
+      // archipel : de l'or en plus sur chaque île (on ne peut pas aller le disputer à pied)
+      if (T.eau === 'iles') { poserGroupe('mine', dx + Math.cos(ao + 2) * 30, dz + Math.sin(ao + 2) * 30, 1, 4); poserGroupe('mine', dx + Math.cos(ao - 2.2) * 34, dz + Math.sin(ao - 2.2) * 34, 1, 4); }
     });
     for (let k = 0, t = 0; k < 3 + nb && t < 400; t++) { const x = cote * (0.2 + rnd() * 0.6), z = cote * (0.2 + rnd() * 0.6); if (loin(x, z, 60)) { ajouterRes(B, 'mine', x, z); k++; } }
+    for (const [ix, iz] of B.ilots) { poserGroupe('mine', ix, iz, 2, 5); poserGroupe('baies', ix + 6, iz - 4, 5, 3); }
     for (let k = 0, t = 0; k < 2 + nb; t++) { if (t > 400) break; const x = cote * (0.15 + rnd() * 0.7), z = cote * (0.15 + rnd() * 0.7); if (loin(x, z, 55)) { poserGroupe(rnd() < 0.5 ? 'baies' : 'vache', x, z, 6, 4); k++; } }
     // bancs de poissons en eau libre
     if (B.aEau) {
@@ -192,6 +207,14 @@
     return true;
   }
   BT.ligneLibre = vue;
+  // numéro de l'île d'un point (la case de terre la plus proche s'il est sur l'eau ou un bâtiment)
+  function ileDe(B, x, z) {
+    if (!B.ile) return 1; const n = B.n, cx = Math.floor(x / CEL), cz = Math.floor(z / CEL);
+    for (let r = 0; r < 8; r++) for (let k = cz - r; k <= cz + r; k++) for (let i = cx - r; i <= cx + r; i++) { if (i < 0 || k < 0 || i >= n || k >= n || Math.max(Math.abs(i - cx), Math.abs(k - cz)) !== r) continue; const v = B.ile[k * n + i]; if (v) return v; }
+    return 0;
+  }
+  BT.ileDe = ileDe;
+  BT.memeIle = (B, a, b) => !B.ile || B.nIles < 2 || ileDe(B, a.x, a.z) === ileDe(B, b.x, b.z);
   function caseLibreProche(B, cx, cz, vx, vz, rmax = 14) {
     if (marchable(B, cx, cz)) return [cx, cz];
     let best = null, bd = 1e9;
@@ -348,7 +371,7 @@
       // après l'alerte, chacun reprend son travail
       if (u.avant && x == null && !u.ordre) { const o = u.avant; u.avant = null; const c2 = o.cible ? B.parId.get(o.cible) : null; if (!o.cible || (c2 && vivant(c2))) poserOrdre(B, u, o); } else u.avant = null;
     }
-    if (sortis.length) { B.contenus.set(e.id, l.filter(u => u.dans === e.id)); B.evts.push({ type: 'sortie', id: e.id, n: sortis.length, j: e.j, x: e.x, z: e.z }); if (x != null) deplacerGroupe(B, sortis, x, z, false); }
+    if (sortis.length) { B.contenus.set(e.id, l.filter(u => u.dans === e.id)); B.evts.push({ type: 'sortie', id: e.id, n: sortis.length, j: e.j, x: e.x, z: e.z }); if (x != null) deplacerGroupe(B, sortis, x, z, !!B.joueurs[e.j].ia); }
     return sortis.length;
   }
   BT.ejecter = ejecter;
@@ -522,6 +545,19 @@
     return { ok: true, n: poses.length, bats: poses };
   };
   function ecarter(B, u, b) { const t = b.demiE + u.s.rayon + 0.4, dx = u.x - b.x, dz = u.z - b.z; if (Math.abs(dx) > Math.abs(dz)) u.x = b.x + Math.sign(dx || 1) * t; else u.z = b.z + Math.sign(dz || 1) * t; }
+  // marché : vendre 100 de bois ou de nourriture contre de l'or, ou en acheter ; le cours baisse à chaque vente et remonte avec le temps
+  const coursDe = J => J.cours || (J.cours = { bois: R.MARCHE.cours, nourriture: R.MARCHE.cours });
+  BT.cours = (B, j) => coursDe(B.joueurs[j]);
+  BT.prixEchange = (B, j, sens) => { const [de, vers] = sens.split('>'), c = coursDe(B.joueurs[j]), M = R.MARCHE; return de === 'or' ? { donne: Math.round(M.lot * c[vers] * 1.3), recoit: M.lot } : { donne: M.lot, recoit: Math.round(M.lot * c[de]) }; };
+  BT.echanger = function (B, j, sens) {
+    const J = B.joueurs[j], [de, vers] = sens.split('>'), M = R.MARCHE;
+    if (!['bois>or', 'nourriture>or', 'or>bois', 'or>nourriture'].includes(sens)) return { ok: false, raison: 'Échange inconnu.' };
+    if (!B.bats.some(b => !b.mort && b.fini && b.j === j && b.d.marche)) return { ok: false, raison: `Il faut un ${R.nomBat('marche').toLowerCase()}.` };
+    const p = BT.prixEchange(B, j, sens); if (J.res[de] < p.donne) return { ok: false, raison: 'Pas assez de ressources.' };
+    J.res[de] -= p.donne; J.res[vers] += p.recoit; const c = coursDe(J), r = de === 'or' ? vers : de;
+    c[r] = Math.max(M.minimum, Math.min(2, c[r] + (de === 'or' ? M.baisse : -M.baisse)));
+    return { ok: true, donne: p.donne, recoit: p.recoit };
+  };
   BT.peutFormer = function (B, b, cle) {
     const J = B.joueurs[b.j]; if (!b.fini) return { ok: false, raison: 'Bâtiment en construction.' };
     const s = BT.stats(B, b.j, cle); if (!s) return { ok: false, raison: 'Unité inconnue.' };
@@ -940,6 +976,7 @@
       if (J.bonus.soin) for (const u of B.unites) if (!u.mort && u.j === J.id && u.pv < u.pvMax && B.tick % 20 === 0) { let pres = false; autour(B, u.x, u.z, 18, e => { if (e.sorte === 'b' && e.j === J.id) pres = true; }); if (pres) u.pv = Math.min(u.pvMax, u.pv + u.pvMax * 0.02); }
     }
     if (B.tick % 10 === 0) majBrouillard(B);
+    if (B.tick % 20 === 0) for (const J of B.joueurs) if (J.cours) for (const r of ['bois', 'nourriture']) { const c = J.cours[r], m = R.MARCHE.cours; J.cours[r] = c < m ? Math.min(m, c + R.MARCHE.remontee) : Math.max(m, c - R.MARCHE.remontee); }
     if (B.treve > 0 && !B.treveFinie && B.temps >= B.treve) { B.treveFinie = true; B.evts.push({ type: 'treve' }); }
     if (B.mission && B.tick % 20 === 0) vagues(B);
     if (B.tick % 20 === 0) { for (const J of B.joueurs) if (J.ia && !J.vaincu) { J.cerveau.t -= 1; if (J.cerveau.t <= 0) { J.cerveau.t = R.DIFFICULTES[J.difficulte].pense; ia(B, J); } } verifierFin(B); }
@@ -1019,13 +1056,17 @@
     if (centre && centre.fini && centre.file.length < 2 && vill.length + centre.file.length < cible && J.res.nourriture >= 50 && (J.pop < J.popMax)) BT.former(B, j, centre.id, 'villageois');
     // maisons
     if (J.popMax < (B.popMax || R.POP_MAX) && J.popMax - J.pop <= 3 + J.age * 3 && enCours.filter(b => b.cle === 'maison').length < (J.age >= 2 ? 2 : 1) && J.res.bois >= 50) { const p = trouverPlace(B, J, 'maison', bx, bz, 14, 30 + J.nbMaisons * 2); if (p) construire('maison', p[0], p[1], 1); }
+    // or épuisé : un marché pour échanger le bois et la nourriture en trop
+    const sansOr = !ressourceProche(B, bx, bz, 'or', 110, j, 'mine');
+    if (J.age >= 1 && sansOr && !nb('marche') && J.res.bois >= 150 && !enCours.some(b => b.cle === 'marche')) { const p = trouverPlace(B, J, 'marche', bx, bz, 16, 40); if (p) construire('marche', p[0], p[1], 2); }
+    if (nb('marche')) { for (const r of ['bois', 'nourriture']) if (J.res.or < 400 && J.res[r] > (r === 'bois' ? 700 : 1400)) BT.echanger(B, j, r + '>or'); if (J.res.or > 2500 && J.res.nourriture < 200) BT.echanger(B, j, 'or>nourriture'); }
     // bâtiments à poser
     const plan = [[0, 'caserne', 9], [0, 'temple', 13], [1, 'archerie', 0], [1, 'ecurie', 0], [1, 'tour', 0], [2, 'forteresse', 0], [2, 'tour', 0], [3, 'merveille', 0]];
     if (!enCours.some(b => b.cle !== 'maison' && b.cle !== 'ferme')) for (const [a, cle, v] of plan) {
       if (J.age < a || vill.length < v) continue;
       const voulu = plan.filter(p => p[1] === cle && p[0] <= J.age).length; if (nb(cle) >= voulu) continue;
       if (cle === 'merveille' && J.difficulte < 2 && B.rnd() < 0.7) continue;
-      if (!assez(J, BT.coutBat(B, j, cle))) break;
+      if (!assez(J, BT.coutBat(B, j, cle))) { if (J.res.or < (BT.coutBat(B, j, cle).or || 0) && sansOr) continue; break; }
       const p = trouverPlace(B, J, cle, bx, bz, cle === 'tour' ? 24 : 18, cle === 'tour' ? 36 : 40); if (p) construire(cle, p[0], p[1], cle === 'merveille' ? 6 : 3);
       break;
     }
@@ -1059,8 +1100,10 @@
     for (const b of bats) {
       if (!b.fini || !b.d.forme || b.cle === 'centre' || b.cle === 'port' || b.file.length >= 2) continue;
       const l = BT.formables(B, b).filter(cle => BT.peutFormer(B, b, cle).ok); if (!l.length) continue;
-      const cle = l[Math.floor(B.rnd() * l.length)], s = BT.stats(B, j, cle);
-      if (Object.keys(s.cout).every(r => surplus(r) >= s.cout[r]) || J.res.nourriture > 1200) BT.former(B, j, b.id, cle);
+      // au hasard parmi ce qu'on peut payer (sans or, des archers plutôt que rien)
+      const payable = l.filter(k => { const c = BT.stats(B, j, k).cout; return Object.keys(c).every(r => surplus(r) >= c[r]); });
+      const cle = (payable.length ? payable : l)[Math.floor(B.rnd() * (payable.length || l.length))], s = BT.stats(B, j, cle);
+      if (Object.keys(s.cout).every(r => surplus(r) >= s.cout[r]) || (J.res.nourriture > 1200 && assez(J, s.cout))) BT.former(B, j, b.id, cle);
     }
     // défense : ennemis près de la base
     let menace = null; autour(B, bx, bz, 40, e => { if (e.sorte === 'u' && ennemis(B, j, e.j) && !menace) menace = e; });
@@ -1072,9 +1115,19 @@
     const ciblesEnnemies = () => { const l = B.bats.filter(b => !b.mort && ennemis(B, j, b.j)); return (l.length ? l : B.unites.filter(u => !u.mort && ennemis(B, j, u.j))).sort((a, b) => d2(a.x, a.z, bx, bz) - d2(b.x, b.z, bx, bz)); };
     if (!menace && !J.passif && !treve(B) && popMil >= seuil && B.temps >= C.prochaineAttaque) {
       const cibles = ciblesEnnemies();
-      if (cibles.length) { const c = cibles[0], ids = mil.map(u => u.id); BT.ordreContexte(B, j, ids, c.x, c.z, null, true); C.attaque = true; C.vague++; C.cibleAttaque = c.id; C.prochaineAttaque = B.temps + 60; }
+      if (cibles.length) {
+        const c = cibles[0];
+        // ennemi sur une autre île : la vague embarque sur les navires de transport
+        if (!BT.memeIle(B, base, c)) { if (!C.debarq) { C.debarq = { cible: c.id, x: c.x, z: c.z, t0: B.temps, etape: 'charger' }; C.vague++; } C.prochaineAttaque = B.temps + 60; }
+        else { const ids = mil.map(u => u.id); BT.ordreContexte(B, j, ids, c.x, c.z, null, true); C.attaque = true; C.vague++; C.cibleAttaque = c.id; C.prochaineAttaque = B.temps + 60; }
+      }
     }
-    if (C.attaque) { const c = B.parId.get(C.cibleAttaque); if (!c || c.mort) { const cibles = ciblesEnnemies(); if (cibles.length) { C.cibleAttaque = cibles[0].id; BT.ordreContexte(B, j, mil.filter(u => !u.ordre).map(u => u.id), cibles[0].x, cibles[0].z, null, true); } else C.attaque = false; } else BT.ordreContexte(B, j, mil.filter(u => !u.ordre).map(u => u.id), c.x, c.z, null, true); }
+    if (C.attaque) {
+      // seules les troupes déjà sur l'île de la cible reçoivent l'ordre de marcher
+      const aPied = c => mil.filter(u => !u.ordre && BT.memeIle(B, u, c)).map(u => u.id);
+      const c = B.parId.get(C.cibleAttaque); if (!c || c.mort) { const cibles = ciblesEnnemies(); if (cibles.length) { C.cibleAttaque = cibles[0].id; BT.ordreContexte(B, j, aPied(cibles[0]), cibles[0].x, cibles[0].z, null, true); } else C.attaque = false; } else BT.ordreContexte(B, j, aPied(c), c.x, c.z, null, true);
+    }
+    iaDebarquement(B, J, mil, flotte, bats);
     iaFlotte(B, J, bats, flotte, vill, bx, bz, surplus);
     // pouvoirs : sur un groupe d'ennemis, ou tout de suite pour l'économie
     if (!treve(B)) J.pouvoirs.forEach((p, i) => {
@@ -1090,6 +1143,46 @@
       else if (d.type === 'bouclier') { if (menace) BT.pouvoir(B, j, i, bx, bz); }
     });
   }
+  // plage de débarquement : terre de l'île visée, au bord de l'eau, hors de portée des tours et des centres ennemis
+  function plage(B, j, x, z) {
+    const ile = ileDe(B, x, z), def = B.bats.filter(b => !b.mort && b.d.att && ennemis(B, j, b.j));
+    let best = null, bd = 1e12;
+    for (let r = 16; r <= 90; r += 6) for (let k = 0; k < 28; k++) {
+      const a = k / 28 * Math.PI * 2, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r, cx = Math.floor(px / CEL), cz = Math.floor(pz / CEL);
+      if (cx < 2 || cz < 2 || cx >= B.n - 2 || cz >= B.n - 2 || B.ile[cz * B.n + cx] !== ile) continue;
+      if (def.some(b => Math.hypot(b.x - px, b.z - pz) < (b.d.portee || 20) + 6)) continue;
+      let eau = false; for (let dz = -7; dz <= 7 && !eau; dz++) for (let dx = -7; dx <= 7; dx++) { const o = (cz + dz) * B.n + cx + dx; if (o >= 0 && o < B.eau.length && B.eau[o]) { eau = true; break; } }
+      if (!eau) continue; const dd = r * r; if (dd < bd) { bd = dd; best = [px, pz]; }
+    }
+    return best;
+  }
+  BT.plage = plage;
+  // débarquement : les soldats montent dans les transports au port, traversent, descendent près de la cible
+  function iaDebarquement(B, J, mil, flotte, bats) {
+    const C = J.cerveau, D = C.debarq, j = J.id; if (!D) return;
+    const trs = flotte.filter(u => u.cle === 'transport'), port = bats.find(b => b.cle === 'port' && b.fini);
+    const fin = () => { C.debarq = null; if (port) for (const t of trs) if (!contenu(B, t).length && !t.ordre) { contexte(B, t); const c = caseLibreProche(B, Math.floor(port.x / CEL), Math.floor(port.z / CEL), Math.floor(t.x / CEL), Math.floor(t.z / CEL), 20); contexte(B, null); if (c) poserOrdre(B, t, { type: 'deplacer', x: c[0] * CEL + 1, z: c[1] * CEL + 1 }); } };
+    if (B.temps - D.t0 > 300 || !port) { for (const t of trs) if (contenu(B, t).length) poserOrdre(B, t, { type: 'debarquer', x: D.x, z: D.z }); fin(); return; }
+    const c = B.parId.get(D.cible); if (c && !c.mort) { D.x = c.x; D.z = c.z; }
+    if (D.etape === 'charger') {
+      if (!trs.length) return;
+      const chez = mil.filter(u => !u.dans && !u.s.naval && BT.memeIle(B, u, port)).sort((a, b) => d2(a.x, a.z, port.x, port.z) - d2(b.x, b.z, port.x, port.z));
+      let k = 0; for (const t of trs) { let place = BT.place(B, t); const ids = []; while (k < chez.length && place >= chez[k].s.pop) { place -= chez[k].s.pop; ids.push(chez[k++].id); } if (ids.length) BT.garnison(B, j, ids, t.id); }
+      D.etape = 'embarque'; D.t1 = B.temps; return;
+    }
+    if (D.etape === 'embarque') {
+      const attendus = mil.filter(u => !u.dans && u.ordre && u.ordre.type === 'entrer').length;
+      if (attendus && B.temps - D.t1 < 70) return;
+      const charges = trs.filter(t => contenu(B, t).length); if (!charges.length) { fin(); return; }
+      const lieu = D.lieu = plage(B, j, D.x, D.z) || [D.x, D.z];
+      for (const t of charges) poserOrdre(B, t, { type: 'debarquer', x: lieu[0], z: lieu[1] });
+      D.etape = 'traverse'; D.t2 = B.temps; return;
+    }
+    if (D.etape === 'traverse') {
+      if (trs.some(t => contenu(B, t).length) && B.temps - D.t2 < 160) return;
+      C.attaque = true; C.cibleAttaque = D.cible; fin();
+    }
+  }
   // ordinateur sur l'eau : un port près de la base, des bateaux de pêche, des navires qui gardent la côte et chassent la flotte ennemie
   function iaFlotte(B, J, bats, flotte, vill, bx, bz, surplus) {
     if (!B.aEau) return; const j = J.id, C = J.cerveau;
@@ -1100,10 +1193,15 @@
       return;
     }
     if (!port.fini) return;
-    const peche = flotte.filter(u => u.cle === 'peche'), navires = flotte.filter(u => u.cle === 'navire');
+    const peche = flotte.filter(u => u.cle === 'peche'), navires = flotte.filter(u => u.cle === 'navire'), trs = flotte.filter(u => u.cle === 'transport');
     const poissons = B.res.some(r => r.eau && r.qte > 0);
+    if (C.tOutreMer == null || B.temps > C.tOutreMer) { C.tOutreMer = B.temps + 30; C.outreMer = B.bats.some(b => !b.mort && b.cle === 'centre' && ennemis(B, j, b.j) && !BT.memeIle(B, port, b)); }
+    const enFile = port.file.filter(f => f.cle === 'transport').length;
     if (port.file.length < 2) {
-      if (poissons && peche.length < 3 + J.age * 2 && J.res.bois >= 50 && J.pop < J.popMax) BT.former(B, j, port.id, 'peche');
+      const coutNav = BT.stats(B, j, 'navire').cout, navOk = Object.entries(coutNav).every(([r, v]) => surplus(r) >= v);
+      if (C.outreMer && trs.length + enFile < Math.min(3, 1 + J.age) && J.res.bois >= 100 && J.pop < J.popMax) BT.former(B, j, port.id, 'transport');
+      else if (C.outreMer && peche.length >= 3 && navires.length < 2 + J.age && navOk && J.pop < J.popMax) BT.former(B, j, port.id, 'navire');
+      else if (poissons && peche.length < 3 + J.age * 2 && J.res.bois >= 50 && J.pop < J.popMax) BT.former(B, j, port.id, 'peche');
       else if (navires.length < 2 + J.age * 2 && Object.entries(BT.stats(B, j, 'navire').cout).every(([r, v]) => surplus(r) >= v)) BT.former(B, j, port.id, 'navire');
     }
     for (const u of peche) if (!u.ordre) { const r = ressourceProche(B, u.x, u.z, 'nourriture', 120, j, 'poisson'); if (r) poserOrdre(B, u, { type: 'recolter', cible: r.id }); }
@@ -1113,6 +1211,8 @@
       if (u.ordre && u.ordre.type === 'attaquer') continue;
       let best = null, bd = 70 * 70; for (const e of B.unites) { if (e.mort || !e.s.naval || !ennemis(B, j, e.j)) continue; const dd = d2(e.x, e.z, u.x, u.z); if (dd < bd) { bd = dd; best = e; } }
       if (best) { poserOrdre(B, u, { type: 'attaquer', cible: best.id }); continue; }
+      // escorte : les navires de guerre couvrent la plage du débarquement
+      if (C.debarq && C.debarq.lieu && !u.ordre && Math.hypot(u.x - C.debarq.lieu[0], u.z - C.debarq.lieu[1]) > 25) { deplacerGroupe(B, [u], C.debarq.lieu[0], C.debarq.lieu[1], true); continue; }
       if (C.attaque && !u.ordre) { const pe = B.bats.find(b => !b.mort && b.cle === 'port' && ennemis(B, j, b.j)); if (pe) poserOrdre(B, u, { type: 'attaquer', cible: pe.id }); }
     }
   }
@@ -1183,6 +1283,7 @@
       else if (o.type === 'navires') ok = mes.filter(u => u.cle === 'navire').length >= o.n;
       else if (o.type === 'survivre') ok = B.temps >= o.duree && bats.some(b => b.cle === 'centre');
       else if (o.type === 'detruireBat') ok = !B.bats.some(b => !b.mort && b.j === o.j && b.cle === o.cle);
+      else if (o.type === 'debarquer') { const iles = new Set(B.bats.filter(b => !b.mort && b.cle === 'centre' && ennemis(B, ji, b.j)).map(b => ileDe(B, b.x, b.z))); ok = mes.filter(u => !recolteur(u) && !u.s.naval && !u.dans && iles.has(ileDe(B, u.x, u.z))).length >= o.n; }
       else if (o.type === 'vaincre') ok = B.joueurs.every(x => !ennemis(B, ji, x.id) || x.vaincu);
       else if (o.type === 'merveille') { const m = bats.find(b => b.cle === 'merveille' && b.fini); o.progres = m ? Math.min(1, (m.garde || 0) / (B.gardeMerveille || R.GARDE_MERVEILLE)) : 0; ok = o.progres >= 1; }
       if (ok) { o.fait = true; B.evts.push({ type: 'objectif', texte: o.texte }); }

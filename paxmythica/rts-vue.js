@@ -137,7 +137,29 @@
       ...[-4.5, -2.5, 2.5, 4.5].map(x => [Cy(0.55, 0.55, 0.1, 14).rotateX(Math.PI / 2).translate(x, 2.2, 2.25), EQ]), ...[0, 1, 2, 3].map(k => [Bx(0.7, 0.05, 0.05, -1.8, 0.9 + k * 0.5, 5.45), 0x8a5c34]), ...brasero(-1.8, 0.5, 6.2), ...brasero(1.8, 0.5, 6.2), ...banniere(5.5, 5.5, 4.5, 2.2, 0.8)], [[-1.8, 1.75, 6.2], [1.8, 1.75, 6.2]]),
     centre_atlantes: st => avecFeux([[Cy(6.7, 7.0, 0.6, 28), st.socle], [Cy(5.2, 5.4, 4.6, 24, 0, 0.6), st.mur], ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(i => [Cy(0.32, 0.34, 4.6, 10, Math.cos(i * 0.5236) * 6, 0.6, Math.sin(i * 0.5236) * 6), 0xffffff]),
       [new THREE.TorusGeometry(6, 0.35, 6, 36).rotateX(Math.PI / 2).translate(0, 5.3, 0), st.mur], [new THREE.SphereGeometry(5.3, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 5.2, 0), st.toit], [Cy(0.6, 0.8, 2, 10, 0, 10.3), st.mur], [Co(0.8, 1.6, 10, 0, 12.3), 0xf2d27a], porte(0, 0.6, 5.3, 1.8, 3),
-      ...[-1.6, 1.6].map(x => [Bx(1.0, 2.6, 0.06, x, 2.2, 5.45), EQ]), ...brasero(-3.0, 0.6, 6.2), ...brasero(3.0, 0.6, 6.2), [Cy(1.2, 1.4, 0.5, 16, 0, 0.6, 8.0), 0xeef6f5], [Cy(1.0, 1.0, 0.2, 16, 0, 1.0, 8.0), 0x4a9ac0]], [[-3.0, 1.85, 6.2], [3.0, 1.85, 6.2]])
+      ...[-1.6, 1.6].map(x => [Bx(1.0, 2.6, 0.06, x, 2.2, 5.45), EQ]), ...brasero(-3.0, 0.6, 6.2), ...brasero(3.0, 0.6, 6.2), [Cy(1.2, 1.4, 0.5, 16, 0, 0.6, 8.0), 0xeef6f5], [Cy(1.0, 1.0, 0.2, 16, 0, 1.0, 8.0), 0x4a9ac0]], [[-3.0, 1.85, 6.2], [3.0, 1.85, 6.2]]),
+    // marché : étals couverts aux couleurs du joueur, balance au centre, caisses et jarres
+    marche: st => avecFeux([[Bx(9.6, 0.35, 9.6), st.socle], ...[[-2.7, -2.5], [2.7, -2.5], [-2.7, 2.5], [2.7, 2.5]].flatMap(([x, z]) => [
+      ...[-1.2, 1.2].flatMap(dx => [-0.9, 0.9].map(dz => [Cy(0.08, 0.08, 2.5, 5, x + dx, 0.35, z + dz), bois(st)])), [new THREE.BoxGeometry(2.9, 0.1, 2.3).rotateX(z > 0 ? 0.22 : -0.22).translate(x, 2.85, z), EQ],
+      [Bx(2.5, 0.85, 0.9, x, 0.35, z + (z > 0 ? 0.6 : -0.6)), bois(st)], [Sp(0.3, x - 0.6, 1.35, z + (z > 0 ? 0.6 : -0.6)), 0xd8a040], [Sp(0.28, x + 0.3, 1.33, z + (z > 0 ? 0.6 : -0.6)), 0x9ac04a]]),
+      [Cy(0.12, 0.14, 2.6, 6, 0, 0.35, 0), 0x5a4a3a], [Bx(2.0, 0.08, 0.08, 0, 2.9, 0), 0x5a4a3a], [Cy(0.4, 0.32, 0.1, 12, -0.95, 2.1, 0), 0xc9a24a], [Cy(0.4, 0.32, 0.1, 12, 0.95, 2.1, 0), 0xc9a24a],
+      ...[[-4.2, 0.4], [4.2, -0.3], [0.4, 4.3], [-0.5, -4.2]].map(([x, z], i) => i % 2 ? [Bx(0.8, 0.8, 0.8, x, 0.35, z), 0x9a7a52] : [Cy(0.3, 0.38, 0.85, 9, x, 0.35, z), 0xb0603a]), ...brasero(-1.6, 0.35, 0), ...brasero(1.6, 0.35, 0)], [[-1.6, 1.6, 0], [1.6, 1.6, 0]]),
+    // centre-ville des autres époques, à l'échelle de la bataille (pas plus haut qu'un donjon)
+    centre_medieval: st => avecFeux([[Bx(13.4, 0.5, 13.4), st.socle], [Bx(7, 7, 7, 0, 0.5, -0.5), st.mur], ...crenaux(7, 7, 7.5, st.mur, 0.7, 0.9).map(([g, c]) => [g.translate(0, 0, -0.5), c]),
+      ...[[-4.6, -4.6], [4.6, -4.6], [-4.6, 3.6], [4.6, 3.6]].flatMap(([x, z]) => [[Cy(1.3, 1.4, 8.5, 12, x, 0.5, z), st.accent], [Co(1.7, 2.8, 12, x, 9, z), st.toit]]),
+      ...[[-4.6, 0], [4.6, 0]].map(([x, z]) => [Bx(0.9, 4.2, 6.6, x, 0.5, z - 0.5), st.mur]), [Bx(8.4, 4.2, 0.9, 0, 0.5, 3.6), st.mur], porte(0, 0.5, 4.1, 2.0, 3.0), ...fenetres([-2, 2], 4.6, 3.05),
+      ...etendardMur(-1.8, 7.0, 3.05, 2.2, 0.8), ...etendardMur(1.8, 7.0, 3.05, 2.2, 0.8), ...banniere(0, 8.2, -0.5, 3.0, 1.1), ...brasero(-2.4, 0.5, 5.4), ...brasero(2.4, 0.5, 5.4)], [[-2.4, 1.75, 5.4], [2.4, 1.75, 5.4]]),
+    centre_industriel: st => avecFeux([[Bx(13.4, 0.4, 13.4), st.socle], [Bx(11, 5, 6.5, 0, 0.4, -1.5), st.mur], ...toit(st, 11, 6.5, 2.6, 0, 5.4, -1.5), [Bx(11.2, 0.3, 6.7, 0, 5.1, -1.5), st.accent],
+      [Bx(2.8, 10, 2.8, 0, 0.4, 2.2), st.mur], [Bx(3.0, 0.3, 3.0, 0, 10.4, 2.2), st.accent], [Co(2.2, 2.6, 4, 0, 10.7, 2.2, Math.PI / 4), st.toit], [Cy(0.9, 0.9, 0.12, 20).rotateX(Math.PI / 2).translate(0, 8.4, 3.65), st.accent],
+      ...[-4, -2, 2, 4].map(x => [Bx(0.9, 1.6, 0.12, x, 2.2, 1.8), 0x2a3038]), porte(0, 0.4, 3.65, 1.6, 2.6), ...marches(4, 2, 0, 0, 4.6, st.socle), ...[-4.2, 4.2].map(x => [Bx(0.8, 2.6, 0.8, x, 7.2, -2.6), 0x6a4a3a]),
+      ...banniere(-5.8, 0.4, 4.6, 3.2, 1.0), ...banniere(5.0, 0.4, 4.6, 3.2, 1.0), [Cy(0.25, 0.3, 3.2, 8, -3.6, 0.4, 5.2), 0x3e3e44], [Cy(0.25, 0.3, 3.2, 8, 3.6, 0.4, 5.2), 0x3e3e44]], [[-3.6, 3.7, 5.2], [3.6, 3.7, 5.2]]),
+    centre_moderne: st => avecFeux([[Bx(13.4, 0.35, 13.4), 0x8e8a84], [Bx(10.5, 4.4, 7.5, 0, 0.35, -1.5), st.mur], ...[1.4, 3.2].map(y => [Bx(10.6, 0.9, 7.6, 0, y, -1.5), 0x3a4a58]),
+      [Bx(7, 3.4, 5, 0, 4.75, -2.2), 0x7fa6c0], [Bx(7.3, 0.3, 5.3, 0, 8.15, -2.2), st.toit], [Cy(1.6, 1.6, 0.12, 24, 1.4, 8.45, -2.2), 0xe8e4d8], [Cy(0.12, 0.15, 5, 6, -2.6, 8.45, -3.6), 0x9aa0a6], [Sp(0.25, -2.6, 13.5, -3.6), 0xff4433],
+      [Bx(4.4, 0.25, 2.4, 0, 3.0, 3.0), st.toit], ...[-1.9, 1.9].map(x => [Cy(0.12, 0.12, 2.7, 6, x, 0.35, 4.0), 0x9aa0a6]), [Bx(2.4, 2.6, 0.1, 0, 0.35, 2.3), 0x2a3a48],
+      ...[-5.6, -4.4, 4.4, 5.6].flatMap(x => banniere(x, 0.35, 5.6, 4.2, 0.9)), [Bx(1.2, 0.5, 6, -5.8, 0.35, -1.5), 0x5a8a4a], [Bx(1.2, 0.5, 6, 5.8, 0.35, -1.5), 0x5a8a4a]], []),
+    centre_futur: st => avecFeux([[Cy(6.7, 7.0, 0.5, 32), st.socle], [Cy(5.4, 6.0, 3.4, 32, 0, 0.5), st.mur], [new THREE.TorusGeometry(6.1, 0.22, 8, 40).rotateX(Math.PI / 2).translate(0, 3.0, 0), st.accent],
+      [new THREE.SphereGeometry(4.6, 28, 12, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 3.9, 0), 0xcfe6f2], [Cy(0.35, 0.9, 7, 10, 0, 6.5, 0), st.mur], [new THREE.TorusGeometry(1.6, 0.16, 8, 24).rotateX(Math.PI / 2).translate(0, 10.6, 0), st.accent], [Sp(0.45, 0, 13.8, 0), st.accent],
+      ...[0, 1, 2, 3].map(i => [Bx(0.5, 2.6, 0.06, Math.cos(i * 1.571 + 0.785) * 6.05, 0.9, Math.sin(i * 1.571 + 0.785) * 6.05).rotateY(0), EQ]), [Bx(2.4, 2.4, 0.2, 0, 0.5, 5.9), 0x203040], ...marches(3, 2, 0, 0, 6.6, st.socle)], [])
   };
   // gravats d'un bâtiment détruit, échafaudage d'un chantier
   const GRAVATS = (() => { const r = PM.aleatoire(91), l = []; for (let k = 0; k < 22; k++) { const a = r() * 6.28, d = Math.sqrt(r()) * 0.46, t = 0.06 + r() * 0.12; l.push([new THREE.BoxGeometry(t * 2, t, t * 1.5).rotateY(r() * 3).rotateX(r() * 0.6).translate(Math.cos(a) * d, t * 0.4, Math.sin(a) * d), r() < 0.3 ? 0x6a4a30 : 0x8a8478]); } return l; })();
@@ -309,15 +331,14 @@
       let nom;
       if (b.cle === 'tour' && (ep === 'moderne' || ep === 'futur')) nom = ep === 'moderne' ? 'bunker' : 'tour_futur2';
       else if (CONSTR[b.cle]) nom = 'rts_' + b.cle + '_' + sk;
-      else if (b.cle === 'centre' && ep === 'antique') nom = 'rts_centre_' + P;
-      else if (b.cle === 'centre') nom = 'centre_' + ep;
+      else if (b.cle === 'centre') nom = 'rts_centre_' + sk;
       else if (b.cle === 'maison') { const l = ep === 'antique' ? O.MAISONS[P] || ['maison_grecs'] : O.MAISONS[ep] || ['maison_' + ep]; nom = l[b.id % l.length]; if (!this.M[nom]) nom = 'maison_grecs'; }
       else if (b.cle === 'temple') nom = ep === 'antique' ? 'temple_' + P : O.TEMPLE_EPOQUE[ep] || 'temple_grecs';
       else if (b.cle === 'merveille') nom = 'merveille_' + (ep === 'antique' ? 'antique' : ep);
       else if (b.cle === 'ferme') nom = 'champ';
       let e = this.geoBats[nom];
       if (!e) {
-        const gen = nom.startsWith('rts_centre_') ? CONSTR['centre_' + P] : nom.startsWith('rts_') ? CONSTR[b.cle] : null;
+        const gen = nom.startsWith('rts_centre_') ? CONSTR['centre_' + sk] || CONSTR.centre_grecs : nom.startsWith('rts_') ? CONSTR[b.cle] : null;
         let geo, geoEq = null, feux = [];
         if (gen) { const parts = gen(st); feux = parts.feux || []; geo = O.fusion(parts.filter(q => q[1] !== EQ)); const eq = parts.filter(q => q[1] === EQ).map(q => q[0]); if (eq.length) geoEq = fusionner(eq); }
         else geo = this.M[nom];
@@ -513,7 +534,7 @@
         // chantier : fondation et échafaudage
         if (!b.fini && !b.mort && !e.ferme) {
           const pf = this.meshGeo('fondation', GEO.fondation, this.mat({ color: 0x8a6a48, roughness: 0.95 })); ob.position.set(b.x, this.sol(b.x, b.z) - 0.05, b.z); ob.rotation.set(0, 0, 0); ob.scale.set(b.demiE * 2, 1, b.demiE * 2); ob.updateMatrix(); this.ajouterInst(pf, ob.matrix, coul.setScalar(lum));
-          if (b.cle !== 'mur' && b.taille >= 6) { const ge = this.geoEchafaudage(b.demiE * 2, Math.max(3, e.h * 0.85)), pe = this.meshGeo('echaf:' + Math.round(b.demiE * 2) + ':' + Math.round(Math.max(3, e.h * 0.85)), ge, this.mat({ color: 0x9a7a52, roughness: 0.9 })); ob.position.set(b.x, this.sol(b.x, b.z) - 0.1, b.z); ob.updateMatrix(); this.ajouterInst(pe, ob.matrix, coul.setScalar(lum)); }
+          if (b.cle !== 'mur' && b.taille >= 6) { const he = Math.max(3, Math.min(7, e.h * 0.7)), ge = this.geoEchafaudage(b.demiE * 2, he), pe = this.meshGeo('echaf:' + Math.round(b.demiE * 2) + ':' + Math.round(he), ge, this.mat({ color: 0x9a7a52, roughness: 0.9 })); ob.position.set(b.x, this.sol(b.x, b.z) - 0.1, b.z); ob.rotation.set(0, 0, 0); ob.scale.setScalar(1); ob.updateMatrix(); this.ajouterInst(pe, ob.matrix, coul.setScalar(lum)); }
           if (proche && vu && rnd() < dts * 2) this.particules.emettre(b.x + (rnd() - 0.5) * b.demiE * 2, this.sol(b.x, b.z) + 0.3, b.z + (rnd() - 0.5) * b.demiE * 2, 0, 0.6, 0, 1.4, 2, 0.6, 0.55, 0.45, -0.1);
         }
         if (!b.fini || b.mort || !vu) continue;
@@ -670,14 +691,14 @@
       for (const u of B.unites) {
         if (u.mort || u.dans) continue; if (u.j !== this.ji && BT.ennemis(B, this.ji, u.j) && this.brouillardEn(u.x, u.z) !== 2) continue;
         const hh = (u.s.cat === 'mythe' ? 2.4 : u.cle === 'cav' ? 1.6 : 1) * ECHELLE_HUMAINS, e = this.versEcran(u.x, u.z, hh); if (!e.devant) continue;
-        const r = (16 + u.s.rayon * 10) * Math.min(1.6, 70 / this.cam.d), d = Math.hypot(e.x - sx, e.y - sy); if (d < r && d < bd) { bd = d; best = u; }
+        const r = (20 + u.s.rayon * 12) * Math.min(1.6, 70 / this.cam.d), d = Math.hypot(e.x - sx, e.y - sy); if (d < r && d < bd) { bd = d; best = u; }
       }
-      for (const r of B.res) if (r.animal && r.qte > 0 && this.brouillardEn(r.x, r.z)) { const e = this.versEcran(r.x, r.z, 0.6), d = Math.hypot(e.x - sx, e.y - sy); if (d < 14 && d < bd) { bd = d; best = r; } }
+      for (const r of B.res) if (r.animal && r.qte > 0 && this.brouillardEn(r.x, r.z)) { const e = this.versEcran(r.x, r.z, 0.6), d = Math.hypot(e.x - sx, e.y - sy); if (d < 22 * Math.min(1.6, 70 / this.cam.d) + 6 && d < bd) { bd = d; best = r; } }
       if (best) return best;
       const p = this.pointSol(sx, sy); if (!p) return null;
       for (const b of B.bats) if (!b.mort && Math.abs(p.x - b.x) <= b.demiE + 0.6 && Math.abs(p.z - b.z) <= b.demiE + 0.6 && (b.j === this.ji || this.brouillardEn(b.x, b.z))) return b;
       let rb = null, rd = 1e9;
-      for (const r of B.res) { if (r.qte <= 0 || r.animal) continue; const d = Math.hypot(r.x - p.x, r.z - p.z), lim = r.sous === 'mine' ? 3.4 : r.sous === 'arbre' ? 1.6 : 1.4; if (d < lim && d < rd && this.brouillardEn(r.x, r.z)) { rd = d; rb = r; } }
+      for (const r of B.res) { if (r.qte <= 0 || r.animal) continue; const d = Math.hypot(r.x - p.x, r.z - p.z), lim = r.sous === 'mine' ? 4.4 : r.sous === 'arbre' ? 2.4 : r.eau ? 3.5 : 2.2; if (d < lim && d < rd && this.brouillardEn(r.x, r.z)) { rd = d; rb = r; } }
       return rb;
     }
     unitesDans(x0, y0, x1, y1) {

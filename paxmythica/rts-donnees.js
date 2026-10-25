@@ -52,27 +52,30 @@
     forteresse: { taille: 16, pv: 4000, cout: { bois: 300, or: 300 }, temps: 70, age: 2, forme: ['heros', 'siege'], vue: 24, att: 9, portee: 22, cadence: 2, fleches: 3, garnison: 15, emoji: '🏰' },
     merveille: { taille: 22, pv: 8000, cout: { nourriture: 1000, bois: 1000, or: 1000, faveur: 100 }, temps: 240, age: 3, vue: 20, emoji: '🗼' },
     // port : posé au bord de l'eau (une partie dans l'eau), forme les bateaux, reçoit le poisson
+    marche: { taille: 10, pv: 1500, cout: { bois: 150 }, temps: 35, age: 1, vue: 14, marche: true, emoji: '⚖️' },
     port: { taille: 10, pv: 1800, cout: { bois: 150 }, temps: 40, age: 0, forme: ['peche', 'transport', 'navire'], depot: ['nourriture'], vue: 22, port: true, emoji: '⚓' },
     // murs : un tronçon par case de 2 m, posés en ligne ; porte : laisse passer ses unités et celles des alliés
     mur: { taille: 2, pv: 700, cout: { bois: 4, or: 2 }, temps: 3, age: 1, vue: 6, mur: true, emoji: '🧱' },
     porte: { taille: 6, pv: 1600, cout: { bois: 40, or: 25 }, temps: 18, age: 1, vue: 8, porte: true, emoji: '🚪' }
   };
   // ordre de la grille de construction : économie puis armée
-  R.CONSTRUIRE = [['maison', 'grenier', 'entrepot', 'ferme', 'temple', 'port'], ['caserne', 'archerie', 'ecurie', 'tour', 'forteresse', 'mur', 'porte', 'centre', 'merveille']];
+  R.CONSTRUIRE = [['maison', 'grenier', 'entrepot', 'ferme', 'temple', 'port', 'marche'], ['caserne', 'archerie', 'ecurie', 'tour', 'forteresse', 'mur', 'porte', 'centre', 'merveille']];
   // durée de garde d'une merveille achevée avant la victoire (s)
   R.GARDE_MERVEILLE = 180;
 
   // noms des bâtiments selon l'époque
   R.NOMS_BAT = {
-    antique: { centre: 'Centre-ville', maison: 'Maison', grenier: 'Grenier', entrepot: 'Entrepôt', ferme: 'Ferme', caserne: 'Caserne', temple: 'Temple', archerie: 'Champ de tir', ecurie: 'Écurie', tour: 'Tour de guet', forteresse: 'Forteresse', merveille: 'Merveille', port: 'Port', mur: 'Mur', porte: 'Porte fortifiée' },
-    medieval: { centre: 'Donjon', maison: 'Chaumière', grenier: 'Moulin', entrepot: 'Camp de bûcherons', ferme: 'Champ', caserne: 'Caserne', temple: 'Cathédrale', archerie: 'Lices des archers', ecurie: 'Écurie', tour: 'Tour', forteresse: 'Château fort', merveille: 'Cathédrale de légende', port: 'Port', mur: 'Muraille', porte: 'Porte du château' },
-    industriel: { centre: 'Hôtel de ville', maison: 'Maison ouvrière', grenier: 'Silo', entrepot: 'Dépôt', ferme: 'Ferme', caserne: 'Caserne', temple: 'Académie des sciences', archerie: 'Stand de tir', ecurie: 'Haras', tour: 'Redoute', forteresse: 'Arsenal', merveille: 'Exposition universelle', port: 'Docks', mur: 'Mur d’enceinte', porte: 'Porte blindée' },
-    moderne: { centre: 'Quartier général', maison: 'Immeuble', grenier: 'Coopérative', entrepot: 'Dépôt logistique', ferme: 'Exploitation', caserne: 'Caserne', temple: 'Centre de recherche', archerie: 'Base de missiles', ecurie: 'Garage blindé', tour: 'Bunker', forteresse: 'Usine d’armement', merveille: 'Gratte-ciel', port: 'Base navale', mur: 'Mur de béton', porte: 'Poste de contrôle' },
-    futur: { centre: 'Nexus', maison: 'Habitat', grenier: 'Hydroponie', entrepot: 'Extracteur', ferme: 'Serre', caserne: 'Clonerie', temple: 'Sanctuaire quantique', archerie: 'Batterie laser', ecurie: 'Hangar', tour: 'Tourelle', forteresse: 'Forge orbitale', merveille: 'Ascenseur spatial', port: 'Spatioport marin', mur: 'Champ de force', porte: 'Porte énergétique' }
+    antique: { marche: 'Marché', centre: 'Centre-ville', maison: 'Maison', grenier: 'Grenier', entrepot: 'Entrepôt', ferme: 'Ferme', caserne: 'Caserne', temple: 'Temple', archerie: 'Champ de tir', ecurie: 'Écurie', tour: 'Tour de guet', forteresse: 'Forteresse', merveille: 'Merveille', port: 'Port', mur: 'Mur', porte: 'Porte fortifiée' },
+    medieval: { marche: 'Halle aux marchands', centre: 'Donjon', maison: 'Chaumière', grenier: 'Moulin', entrepot: 'Camp de bûcherons', ferme: 'Champ', caserne: 'Caserne', temple: 'Cathédrale', archerie: 'Lices des archers', ecurie: 'Écurie', tour: 'Tour', forteresse: 'Château fort', merveille: 'Cathédrale de légende', port: 'Port', mur: 'Muraille', porte: 'Porte du château' },
+    industriel: { marche: 'Bourse du commerce', centre: 'Hôtel de ville', maison: 'Maison ouvrière', grenier: 'Silo', entrepot: 'Dépôt', ferme: 'Ferme', caserne: 'Caserne', temple: 'Académie des sciences', archerie: 'Stand de tir', ecurie: 'Haras', tour: 'Redoute', forteresse: 'Arsenal', merveille: 'Exposition universelle', port: 'Docks', mur: 'Mur d’enceinte', porte: 'Porte blindée' },
+    moderne: { marche: 'Bourse', centre: 'Quartier général', maison: 'Immeuble', grenier: 'Coopérative', entrepot: 'Dépôt logistique', ferme: 'Exploitation', caserne: 'Caserne', temple: 'Centre de recherche', archerie: 'Base de missiles', ecurie: 'Garage blindé', tour: 'Bunker', forteresse: 'Usine d’armement', merveille: 'Gratte-ciel', port: 'Base navale', mur: 'Mur de béton', porte: 'Poste de contrôle' },
+    futur: { marche: 'Plateforme d’échange', centre: 'Nexus', maison: 'Habitat', grenier: 'Hydroponie', entrepot: 'Extracteur', ferme: 'Serre', caserne: 'Clonerie', temple: 'Sanctuaire quantique', archerie: 'Batterie laser', ecurie: 'Hangar', tour: 'Tourelle', forteresse: 'Forge orbitale', merveille: 'Ascenseur spatial', port: 'Spatioport marin', mur: 'Champ de force', porte: 'Porte énergétique' }
   };
   R.NOMS_VILLAGEOIS = { antique: 'Villageois', medieval: 'Paysans', industriel: 'Ouvriers', moderne: 'Ouvriers', futur: 'Techniciens' };
   R.NOMS_BATEAUX = { antique: ['Bateau de pêche', 'Trière', 'Navire de transport'], medieval: ['Barque de pêche', 'Nef de guerre', 'Cogue de transport'], industriel: ['Chalutier', 'Frégate', 'Vapeur de transport'], moderne: ['Chalutier', 'Destroyer', 'Barge de débarquement'], futur: ['Drone de pêche', 'Croiseur', 'Transporteur'] };
 
+  // marché : 100 d'une ressource contre de l'or (ou l'inverse) ; chaque échange fait baisser le cours, qui remonte avec le temps
+  R.MARCHE = { lot: 100, cours: 0.8, baisse: 0.04, minimum: 0.3, remontee: 0.004 };
   // âges : coût et durée du passage (s) ; le dieu mineur se choisit au début du passage
   R.AGES = [null, { cout: { nourriture: 400 }, temps: 45 }, { cout: { nourriture: 800, or: 500 }, temps: 55 }, { cout: { nourriture: 1000, or: 1000 }, temps: 65 }];
 
@@ -156,6 +159,7 @@
     oasis: { nom: 'Oasis du désert', emoji: '🏜️', pack: 'olympe', foret: 0.25, desert: 1, collines: 0.3, eau: 'oasis' },
     lac: { nom: 'Lac sacré', emoji: '💧', pack: 'realiste', foret: 0.5, desert: 0, collines: 0.35, eau: 'lac' },
     mediterranee: { nom: 'Mer intérieure', emoji: '⛵', pack: 'olympe', foret: 0.45, desert: 0.15, collines: 0.35, eau: 'mer' },
+    iles: { nom: 'Archipel', emoji: '🏝️', pack: 'olympe', foret: 0.5, desert: 0.1, collines: 0.3, eau: 'iles' },
     toundra: { nom: 'Toundra nordique', emoji: '❄️', pack: 'hiver', foret: 0.65, desert: 0, collines: 0.6, eau: 'aucune' },
     automne: { nom: 'Forêt d’automne', emoji: '🍂', pack: 'automne', foret: 0.8, desert: 0, collines: 0.5, eau: 'aucune' }
   };
@@ -212,12 +216,36 @@
       recit: 'La mer qui baigne Poséidonia est convoitée par la flotte de Jarl Eirik. Bâtis un port, arme des navires et coule sa flotte avant de débarquer.',
       fin: 'La mer intérieure est atlante. Les marchands reviennent, escortés par tes navires.',
       objectifs: [{ type: 'construire', cle: 'port', n: 1, texte: 'Bâtir un port' }, { type: 'navires', n: 5, texte: 'Armer 5 navires de guerre' }, { type: 'detruireBat', j: 1, cle: 'port', texte: 'Détruire le port ennemi' }, { type: 'vaincre', texte: 'Vaincre Jarl Eirik' }] },
+    { id: 'iles', titre: 'Les îles d’Égée', epoque: 'antique', carte: 'iles', taille: 'moyenne',
+      joueur: { pantheon: 'grecs', dieu: 'poseidon', nom: 'Ithaque' }, adversaires: [{ pantheon: 'egyptiens', dieu: 'isis', difficulte: 1, nom: 'Flotte de Memphis' }],
+      depart: { res: { nourriture: 300, bois: 600, or: 200 } },
+      recit: 'Une flotte égyptienne s’est installée sur l’île voisine et rançonne les pêcheurs d’Ithaque. Bâtis un port, arme des navires de transport et porte la guerre sur son rivage. Quand l’or de l’île s’épuise, le marché l’échange contre ton bois.',
+      fin: 'Le drapeau d’Ithaque flotte sur les deux îles. Les pêcheurs reprennent la mer.',
+      objectifs: [{ type: 'construire', cle: 'port', n: 1, texte: 'Bâtir un port' }, { type: 'debarquer', n: 8, texte: 'Débarquer 8 soldats sur l’île ennemie' }, { type: 'detruireBat', j: 1, cle: 'centre', texte: 'Raser le centre-ville égyptien' }] },
     { id: 'siege', titre: 'Le siège du château', epoque: 'medieval', carte: 'toundra', taille: 'moyenne',
       joueur: { pantheon: 'nordiques', dieu: 'odin', nom: 'Jarls de Norvège' }, adversaires: [{ pantheon: 'grecs', difficulte: 1, passif: true, nom: 'Duché fortifié', muraille: 26 }],
       depart: { age: 2, ageEnnemi: 2, res: { nourriture: 1500, bois: 1500, or: 1500, faveur: 60 }, unites: [[0, 'inf', 10], [0, 'siege', 3], [0, 'cav', 4]] },
       recit: 'Le duc s’est enfermé derrière ses murailles et ses tours. Tes béliers et tes trébuchets sont prêts : ouvre une brèche et prends le donjon.',
       fin: 'Le donjon est tombé. Le duché paie désormais tribut aux jarls.',
       objectifs: [{ type: 'detruireBat', j: 1, cle: 'centre', texte: 'Prendre le donjon du duc' }] },
+    { id: 'loups', titre: 'La nuit des loups', epoque: 'medieval', carte: 'automne', taille: 'petite',
+      joueur: { pantheon: 'atlantes', dieu: 'kronos', nom: 'Comté de Valmont' }, adversaires: [{ pantheon: 'nordiques', dieu: 'odin', difficulte: 1, passif: true, nom: 'Horde des Loups' }],
+      depart: { age: 1, res: { nourriture: 800, bois: 900, or: 500 }, unites: [[0, 'inf', 4], [0, 'archer', 4]] },
+      vagues: [{ t: 180, j: 1, unites: [['inf', 5]] }, { t: 300, j: 1, unites: [['inf', 6], ['archer', 3]] }, { t: 420, j: 1, unites: [['inf', 7], ['cav', 3]] }, { t: 540, j: 1, unites: [['inf', 8], ['archer', 4], ['cav', 3]] }, { t: 660, j: 1, unites: [['inf', 10], ['cav', 5], ['siege', 2]] }],
+      recit: 'La Horde des Loups descend des forêts à chaque tombée de la nuit. Élève des tours, sonne la cloche pour abriter tes paysans (chaque soldat abrité tire une flèche de plus) et tiens jusqu’à l’aube.',
+      fin: 'L’aube se lève sur Valmont. La Horde a reflué vers ses forêts et tes murs tiennent toujours.',
+      objectifs: [{ type: 'construire', cle: 'tour', n: 3, texte: 'Bâtir 3 tours' }, { type: 'survivre', duree: 720, texte: 'Tenir 12 minutes' }] },
+    { id: 'vapeur', titre: 'La course du rail', epoque: 'industriel', carte: 'riviere', taille: 'moyenne',
+      joueur: { pantheon: 'egyptiens', dieu: 'ra', nom: 'Compagnie du Nil' }, adversaires: [{ pantheon: 'grecs', difficulte: 1, nom: 'Consortium d’Athènes', equipe: 1 }, { pantheon: 'nordiques', difficulte: 1, nom: 'Aciéries du Nord', equipe: 1 }],
+      recit: 'Deux grandes compagnies se disputent la vallée et ses gisements. Fais tourner ton économie, ouvre une bourse du commerce, entre dans la dernière ère et chasse tes rivaux de la vallée.',
+      fin: 'Le rail de la Compagnie du Nil traverse toute la vallée. Tes rivaux ont vendu leurs parts.',
+      objectifs: [{ type: 'construire', cle: 'marche', n: 1, texte: 'Ouvrir une bourse du commerce' }, { type: 'age', age: 3, texte: 'Entrer dans la dernière ère' }, { type: 'vaincre', texte: 'Vaincre les deux compagnies' }] },
+    { id: 'archipel', titre: 'Tempête sur l’archipel', epoque: 'moderne', carte: 'iles', taille: 'grande',
+      joueur: { pantheon: 'atlantes', dieu: 'gaia', nom: 'République des Îles' }, adversaires: [{ pantheon: 'nordiques', difficulte: 2, nom: 'Ligue boréale', equipe: 1 }, { pantheon: 'grecs', difficulte: 1, nom: 'Alliés du Sud', equipe: 0 }],
+      depart: { res: { nourriture: 500, bois: 800, or: 400 } },
+      recit: 'La Ligue boréale veut fermer les routes maritimes. Tes Alliés du Sud tiennent l’île voisine : arme une flotte, coule ses navires, détruis son port puis débarque pour en finir.',
+      fin: 'Les routes maritimes sont libres. La République des Îles et ses alliés fêtent la victoire.',
+      objectifs: [{ type: 'navires', n: 6, texte: 'Armer 6 navires de guerre' }, { type: 'detruireBat', j: 1, cle: 'port', texte: 'Détruire le port de la Ligue' }, { type: 'vaincre', texte: 'Vaincre la Ligue boréale' }] },
     { id: 'ascension', titre: 'L’ascension', epoque: 'futur', carte: 'lac', taille: 'moyenne', duree: 'longue',
       joueur: { pantheon: 'grecs', dieu: 'zeus', nom: 'Concorde d’Hélios' }, adversaires: [{ pantheon: 'egyptiens', difficulte: 2, nom: 'Dynastie rouge', equipe: 1 }, { pantheon: 'nordiques', difficulte: 1, nom: 'Hégémonie boréale', equipe: 1 }],
       recit: 'Le dernier défi : élever l’ascenseur spatial, la merveille qui unira les peuples, et la défendre pendant que deux puissances tentent de l’abattre. Une trêve de 8 minutes te laisse le temps de bâtir.',

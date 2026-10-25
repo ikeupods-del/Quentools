@@ -1,7 +1,7 @@
 {
   "name": "pax-mythica",
   "productName": "Pax Mythica",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Jeu de stratégie mythologique : panthéons, dieux, créatures et décrets libres",
   "main": "main.js",
   "private": true,

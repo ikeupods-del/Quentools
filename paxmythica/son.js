@@ -1,6 +1,6 @@
 /* Pax Mythica — sons et musique fabriqués par le navigateur (Web Audio), aucun fichier son :
    clic, tambour de guerre, choc de bataille, tonnerre des dieux, fanfare d'âge, cor de conquête, bruitages des batailles en temps réel
-   (épées, flèches, haches, marteaux, tirs, explosions), et une lyre d'ambiance (gamme dorienne). */
+   (épées, flèches, haches, marteaux, tirs, explosions), et une musique d'ambiance apaisante (accords lents en ré majeur, harpe, flûte). */
 'use strict';
 (function (G) {
   const PM = G.PM = G.PM || {};
@@ -55,25 +55,44 @@
     const c = contexte(); if (!c) return; if (c.state === 'suspended') c.resume();
     try { SONS[nom](c.currentTime + 0.01); } catch (e) { /* son ignoré */ }
   };
-  // lyre d'ambiance : notes pincées tirées d'une gamme dorienne, en phrases lentes
-  const GAMME = [0, 2, 3, 5, 7, 9, 10, 12, 14, 15];
+  // musique d'ambiance apaisante : nappes d'accords majeurs lents, harpe éparse, petite flûte, le tout dans une grande réverbération
+  // suite d'accords en ré majeur (I – vi – IV – V puis I – IV – vi – IV), une mesure de 8 s par accord
+  const D3 = 146.83, demi = n => D3 * Math.pow(2, n / 12);
+  const ACCORDS = [[0, 4, 7], [-3, 0, 4], [-7, -3, 0], [-5, -1, 2], [0, 4, 7], [-7, -3, 0], [-3, 0, 4], [-7, -3, 0]];
+  const PENTA = [0, 2, 4, 7, 9, 12, 14, 16];
+  let mesure = 0, reverb = null;
+  function salle() {
+    if (reverb) return reverb;
+    const n = Math.floor(ac.sampleRate * 3.2), b = ac.createBuffer(2, n, ac.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let k = 0; k < n; k++) d[k] = (Math.random() * 2 - 1) * Math.pow(1 - k / n, 3); }
+    reverb = ac.createConvolver(); reverb.buffer = b; const g = ac.createGain(); g.gain.value = 0.55; reverb.connect(g); g.connect(musiqueGain);
+    return reverb;
+  }
+  // une voix douce : attaque et extinction lentes, filtre qui adoucit, envoi dans la salle
+  function voix(f, t0, attaque, duree, vol, type = 'sine', vibrato = 0) {
+    const o = ac.createOscillator(), g = ac.createGain(), fi = ac.createBiquadFilter(); o.type = type; o.frequency.value = f;
+    fi.type = 'lowpass'; fi.frequency.value = type === 'sine' ? 2400 : 1500;
+    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(vol, t0 + attaque); g.gain.exponentialRampToValueAtTime(0.0005, t0 + duree);
+    if (vibrato) { const l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = 4.6; lg.gain.value = f * vibrato; l.connect(lg); lg.connect(o.frequency); l.start(t0); l.stop(t0 + duree + 0.1); }
+    o.connect(fi); fi.connect(g); g.connect(musiqueGain); g.connect(salle()); o.start(t0); o.stop(t0 + duree + 0.1);
+  }
   function phrase() {
     if (!ac || !reglages.musique) return;
-    const t = ac.currentTime + 0.05, base = 146.8, longueur = 4 + Math.floor(Math.random() * 4);
-    let pos = Math.floor(Math.random() * 5);
-    for (let i = 0; i < longueur; i++) {
-      pos = Math.max(0, Math.min(GAMME.length - 1, pos + Math.round((Math.random() - 0.5) * 3)));
-      const f = base * Math.pow(2, GAMME[pos] / 12), tt = t + i * (0.42 + Math.random() * 0.2);
-      note(f, tt, 2.2, 'triangle', 0.12, musiqueGain); note(f * 2, tt, 1.2, 'sine', 0.03, musiqueGain);
-    }
-    note(base / 2, t, 4, 'sine', 0.08, musiqueGain);
+    const t = ac.currentTime + 0.1, a = ACCORDS[mesure % ACCORDS.length]; mesure++;
+    // nappe : les trois notes de l'accord (deux voix légèrement désaccordées) et la basse une octave en dessous
+    for (const n of a) for (const d of [-0.003, 0.003]) voix(demi(n) * (1 + d), t, 2.6, 9.5, 0.022);
+    voix(demi(a[0] - 12), t, 2, 9, 0.035);
+    // harpe : quelques notes de l'accord, une octave plus haut, espacées
+    for (let k = 0; k < 5; k++) { if (Math.random() < 0.35) continue; const n = a[Math.floor(Math.random() * 3)] + 12 + (Math.random() < 0.3 ? 12 : 0); voix(demi(n), t + 0.6 + k * 1.45 + Math.random() * 0.2, 0.015, 3.2, 0.03, 'triangle'); }
+    // flûte : une petite phrase pentatonique une mesure sur deux
+    if (mesure % 2 === 0 && Math.random() < 0.8) { let p = 2 + Math.floor(Math.random() * 3); for (let k = 0; k < 3 + Math.floor(Math.random() * 2); k++) { p = Math.max(0, Math.min(PENTA.length - 1, p + (Math.random() < 0.5 ? -1 : 1))); voix(demi(PENTA[p] + 12), t + 1.5 + k * 1.6, 0.35, 2.2, 0.018, 'sine', 0.006); } }
   }
   PM.musique = function (oui) {
     if (oui != null) { reglages.musique = !!oui; garder(); }
     clearInterval(minuterie); minuterie = null;
     if (!reglages.musique) return;
     if (!contexte()) return; if (ac.state === 'suspended') ac.resume();
-    phrase(); minuterie = setInterval(phrase, 5200);
+    phrase(); minuterie = setInterval(phrase, 8000);
   };
   PM.reglagesSon = () => Object.assign({}, reglages);
   PM.changerSon = function (k, v) { reglages[k] = v; garder(); if (maitre && k === 'volume') maitre.gain.value = v; if (k === 'musique') PM.musique(v); };

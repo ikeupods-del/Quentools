@@ -69,8 +69,8 @@
   const missionDe = B => B && B.mission ? R.CAMPAGNE.find(m => m.id === B.mission.id) : null;
   ACT.campagne = () => {
     const fait = lireP('pm:campagne', []);
-    $('#creationContenu').innerHTML = `<h1>Campagne</h1><p class="sous">Six missions, de la fondation d’une cité grecque jusqu’à l’ascenseur spatial. Chaque victoire ouvre la mission suivante.</p>
-      <div class="cartes">${R.CAMPAGNE.map((m, i) => { const ouvert = i === 0 || fait.includes(R.CAMPAGNE[i - 1].id), fini = fait.includes(m.id);
+    $('#creationContenu').innerHTML = `<h1>Campagne</h1><p class="sous">Dix missions, de la fondation d’une cité grecque jusqu’à l’ascenseur spatial. Chaque victoire ouvre la mission suivante.</p>
+      <div class="cartes">${R.CAMPAGNE.map((m, i) => { const fini = fait.includes(m.id), ouvert = i === 0 || fini || fait.includes(R.CAMPAGNE[i - 1].id);
         return `<button class="carte-choix ${fini ? 'choisie' : ''}" data-act="b-mission" data-v="${m.id}" ${ouvert ? '' : 'disabled'}><div class="em">${ouvert ? (fini ? '🏆' : PM.EPOQUES[m.epoque].emoji) : '🔒'}</div><h3>${i + 1}. ${esc(m.titre)}</h3>
           <p>${esc(PM.EPOQUES[m.epoque].nom)} · ${esc(PM.PANTHEONS[m.joueur.pantheon].nom)} · ${esc(R.CARTES[m.carte].nom)}${m.duree === 'longue' ? ' · partie longue' : ''}</p><p>${ouvert ? esc(m.recit) : 'Gagne la mission précédente pour l’ouvrir.'}</p></button>`; }).join('')}</div>
       <div class="actions-bas" style="justify-content:flex-start;margin-top:22px"><button class="btn" data-act="accueil">Menu principal</button></div>`;
@@ -143,7 +143,7 @@
     }
     UI.ouvrirModal(`<h2>${P.emoji} ${esc(J.nom)} — ${esc(R.CARTES[B.typeCarte].nom)}</h2>
       <p class="recit">${esc(PM.majeur ? PM.majeur(J).nom : P.majeurs[0].nom)} veille sur toi. Tes adversaires : ${B.joueurs.slice(1).map(x => `<span class="pastille" style="background:${esc(x.couleur)}"></span> ${esc(x.nom)} (${esc(PM.PANTHEONS[x.pantheon].nom)})`).join(', ')}.</p>
-      <ul class="aide"><li><b>Clic gauche</b> (ou glisser un cadre) pour choisir des unités, <b>clic droit</b> (ou ctrl-clic) pour agir : marcher, récolter, construire, attaquer.</li>
+      <ul class="aide"><li><b>Clic gauche</b> (ou glisser un cadre) pour choisir des unités. Ensuite, un <b>clic gauche ou droit</b> sur un arbre, des baies, une mine, un chantier ou un ennemi leur donne l’ordre (l’étiquette près de la souris dit ce qu’ils feront) ; <b>clic droit</b> (ou ctrl-clic) sur le sol pour marcher.</li>
       <li>Tes <b>villageois</b> récoltent la nourriture (baies, chasse, fermes), le bois et l’or, et bâtissent : choisis un villageois puis un bâtiment dans la grille en bas à droite.</li>
       <li>Les <b>maisons</b> donnent de la population. Le <b>${esc(R.nomBat('temple').toLowerCase())}</b> forme les créatures ; passe les <b>âges</b> au ${esc(R.nomBat('centre').toLowerCase())} pour choisir un dieu mineur.</li>
       <li>${esc((R.CULTURE[J.pantheon] || {}).desc || '')}</li>
@@ -157,7 +157,7 @@
   function boucle(ts) {
     requestAnimationFrame(boucle);
     const dt = Math.min(100, ts - (S.der || ts)); S.der = ts;
-    if (UI.ecran !== 'bataille' || !S.B || !S.vue) return;
+    if (UI.ecran !== 'bataille' || !S.B || !S.vue || UI.modalOuvert()) { const a = $('#batAide'); if (a) a.classList.add('cache'); if (UI.ecran !== 'bataille' || !S.B || !S.vue) return; }
     const B = S.B;
     if (!S.pause && !UI.modalOuvert() && !B.fin) { BT.avancer(B, dt / 1000); S.tAuto = (S.tAuto || 0) + dt; if (S.tAuto > 60000) { S.tAuto = 0; enregistrer(B, 'auto'); } }
     if (!S.mode || S.mode.type !== 'mur') S.vue.fantomeMur = null;
@@ -222,7 +222,7 @@
     let bas = null;
     cv.addEventListener('contextmenu', e => e.preventDefault());
     cv.addEventListener('pointerenter', () => { S.dansCanvas = true; });
-    cv.addEventListener('pointerleave', () => { S.dansCanvas = false; });
+    cv.addEventListener('pointerleave', () => { S.dansCanvas = false; aideSouris(null); });
     cv.addEventListener('pointerdown', e => {
       const p = pos(e); if (!S.B) return; cv.setPointerCapture(e.pointerId);
       const droit = e.button === 2 || (e.button === 0 && e.ctrlKey);
@@ -235,7 +235,7 @@
       const p = pos(e); S.souris = p; if (!S.B) return;
       if (bas && bas.milieu) { S.vue.deplacer(p.x - bas.x, p.y - bas.y); bas.x = p.x; bas.y = p.y; return; }
       if (bas && Math.abs(p.x - bas.x) + Math.abs(p.y - bas.y) > 6) { S.glisse = true; const c = $('#batCadre'); c.classList.remove('cache'); Object.assign(c.style, { left: Math.min(p.x, bas.x) + 'px', top: Math.min(p.y, bas.y) + 'px', width: Math.abs(p.x - bas.x) + 'px', height: Math.abs(p.y - bas.y) + 'px' }); }
-      if (!S.tSurvol || performance.now() - S.tSurvol > 60) { S.tSurvol = performance.now(); const en = S.vue.entiteA(p.x, p.y); S.survol = en ? en.id : 0; majCurseur(en); }
+      if (!S.tSurvol || performance.now() - S.tSurvol > 60) { S.tSurvol = performance.now(); const en = S.vue.entiteA(p.x, p.y); S.survol = en ? en.id : 0; majCurseur(en); aideSouris(p, en); }
       majFantome(p);
     });
     cv.addEventListener('pointerup', e => {
@@ -254,8 +254,34 @@
     if (ajouter) { const s = new Set(S.sel); for (const i of ids) { if (s.has(i)) s.delete(i); else s.add(i); } S.sel = [...s]; } else S.sel = ids.slice();
     S.page = 'eco'; S.mode = null; majCurseur(); majHud(true);
   }
+  // ce que fera un clic sur cette entité avec les unités choisies (étiquette près de la souris, clic gauche ou droit)
+  function actionPour(en, pt) {
+    const B = S.B, us = unitesChoisies(); if (!us.length) return null; const J = B.joueurs[B.joueur];
+    const vill = us.some(u => u.cle === 'villageois'), mil = us.some(u => u.cle !== 'villageois' && !u.s.naval), peche = us.some(u => u.cle === 'peche');
+    if (!en) { if (pt && us.some(u => u.s.capacite && BT.contenu(B, u).length) && BT.hauteur(B, pt.x, pt.z) > 0) return '⚓ Débarquer ici'; return null; }
+    if (en.sorte === 'r') { if (en.eau) return peche ? '🎣 Pêcher' : null; if (!vill) return null; return { arbre: '🪓 Couper du bois', baies: '🫐 Cueillir des baies', mine: '⛏️ Extraire l’or', mouton: '🍖 Chasser', vache: '🍖 Chasser' }[en.sous] || '🧺 Récolter'; }
+    if (en.j !== B.joueur && BT.ennemis(B, B.joueur, en.j)) return us.some(u => u.s.att) ? '⚔️ Attaquer' : null;
+    if (en.j !== B.joueur) return null;
+    if (en.sorte === 'u' && en.s.capacite && us.some(u => !u.s.naval && u !== en)) return '⛴️ Embarquer';
+    if (en.sorte === 'b') {
+      if (vill && (!en.fini || en.pv < en.pvMax)) return en.fini ? '🔨 Réparer' : '🔨 Construire';
+      if (vill && en.cle === 'ferme') return en.occupant ? null : '🌾 Cultiver';
+      if (vill && en.cle === 'temple' && J.pantheon === 'grecs') return '🙏 Prier';
+      if (mil && !vill && BT.capacite(en) && us.every(u => BT.peutEntrer(u, en))) return '🛡️ S’abriter';
+      if (vill && en.d.depot && us.some(u => u.porte && u.porte.n > 0)) return '📦 Déposer';
+      if (peche && en.d.port && us.some(u => u.porte && u.porte.n > 0)) return '📦 Déposer le poisson';
+    }
+    return null;
+  }
+  function aideSouris(p, en) {
+    let d = $('#batAide'); if (!d) { d = document.createElement('div'); d.id = 'batAide'; d.className = 'rts-aide'; document.body.appendChild(d); }
+    const t = p && !S.mode && UI.ecran === 'bataille' ? actionPour(en, S.vue.pointSol(p.x, p.y)) : null;
+    d.classList.toggle('cache', !t); if (!t) return; d.textContent = t; d.style.left = (p.cx + 16) + 'px'; d.style.top = (p.cy + 14) + 'px';
+  }
   function clicGauche(p, shift, double) {
     const B = S.B, en = S.vue.entiteA(p.x, p.y);
+    // unités choisies : un clic gauche sur une ressource, un chantier ou un ennemi donne l'ordre, comme le clic droit
+    if (!shift && !double && actionPour(en, S.vue.pointSol(p.x, p.y))) { clicDroit(p, false); return; }
     if (!en) { if (!shift) choisir([]); return; }
     if (en.sorte === 'u' && en.j === B.joueur) {
       if (double) { const l = B.unites.filter(u => !u.mort && u.j === B.joueur && u.cle === en.cle && S.vue.surEcran(u)).map(u => u.id); choisir(l, false); }
@@ -419,7 +445,7 @@
         if (!e.fini) det = `<p>Construction : ${Math.round(e.prog * 100)} %${e.j === B.joueur ? ' — envoie des villageois (clic droit) pour aller plus vite.' : ''}</p>`;
         else if (e.j === B.joueur) {
           const A = J.ageEnCours;
-          det = (e.d.depot ? `<p>Dépôt : ${e.d.depot.map(r => PM.ICONES[r]).join(' ')}</p>` : '') + (e.d.pop ? `<p>👥 +${e.d.pop} population</p>` : '') + (e.cle === 'ferme' ? `<p>${e.occupant ? 'Un villageois cultive.' : 'Libre : envoie un villageois.'}</p>` : '') +
+          det = (e.d.marche ? `<p>Cours : 100 ${PM.ICONES.bois} = ${BT.prixEchange(B, B.joueur, 'bois>or').recoit} ${PM.ICONES.or} · 100 ${PM.ICONES.nourriture} = ${BT.prixEchange(B, B.joueur, 'nourriture>or').recoit} ${PM.ICONES.or}</p><p><small>Chaque vente fait baisser le cours, qui remonte avec le temps.</small></p>` : '') + (e.d.depot ? `<p>Dépôt : ${e.d.depot.map(r => PM.ICONES[r]).join(' ')}</p>` : '') + (e.d.pop ? `<p>👥 +${e.d.pop} population</p>` : '') + (e.cle === 'ferme' ? `<p>${e.occupant ? 'Un villageois cultive.' : 'Libre : envoie un villageois.'}</p>` : '') +
             (e.cle === 'centre' && A && A.centre === e.id ? `<p>Passage à l’${esc(PM.AGES[A.age].nom.toLowerCase())} : <span class="rts-prog large"><i style="width:${A.t / A.temps * 100}%"></i></span></p>` : '') +
             (e.file.length ? `<div class="rts-file">${e.file.map((f, i) => `<button class="rts-mini" data-act="b-annuler" data-v="${i}" title="Annuler (rembourse)">${R.emojiUnite(J.pantheon, f.cle)}${i === 0 ? `<i style="width:${Math.min(100, f.t / BT.stats(B, e.j, f.cle).temps * 100)}%"></i>` : ''}</button>`).join('')}</div>${e.attentePop ? '<p class="rouge">Population pleine : bâtis des maisons.</p>' : ''}` : '');
         }
@@ -451,6 +477,7 @@
         BT.formables(B, b).forEach((cle, i) => { if (i > 8) return; const s = BT.stats(B, B.joueur, cle), r = BT.peutFormer(B, b, cle); cases[i] = { act: 'b-former', v: cle, em: R.emojiUnite(J.pantheon, cle), titre: `${R.nomUnite(J.pantheon, cle)} — ${coutTxt(s.cout)} · ${s.temps} s${!r.ok ? ' (' + r.raison + ')' : ''}`, ko: !r.ok, verrou: (s.age || 0) > J.age }; });
         if (b.cle === 'centre' && J.age < 3) { const a = J.age + 1, r = BT.peutAvancer(B, B.joueur); cases[9] = { act: 'b-age', em: '🏛️', titre: `${PM.AGES[a].nom} — ${coutTxt(R.AGES[a].cout)}${!r.ok ? ' (' + r.raison + ')' : ''}`, ko: !r.ok }; }
         if (b.d.forme) cases[10] = { act: 'b-ralliement', em: '🚩', titre: 'Point de ralliement (ou clic droit)' };
+        if (b.d.marche) [['bois>or', '🪵➜🪙'], ['nourriture>or', '🌾➜🪙'], ['or>bois', '🪙➜🪵'], ['or>nourriture', '🪙➜🌾']].forEach(([v, em], i) => { const [de, vers] = v.split('>'), px = BT.prixEchange(B, B.joueur, v); cases[i] = { act: 'b-echange', v, em, titre: `${de === 'or' ? 'Acheter' : 'Vendre'} : ${px.donne} ${PM.ICONES[de]} ➜ ${px.recoit} ${PM.ICONES[vers]}`, ko: J.res[de] < px.donne }; });
         if (b.d.garnison) { const n = BT.contenu(B, b).length; if (n) cases[11] = { act: 'b-liberer', em: '🚪', titre: `Faire sortir la garnison (${n})` }; }
         if (b.cle === 'centre') { const dedans = B.bats.some(x => !x.mort && x.j === B.joueur && BT.contenu(B, x).some(u => u.cle === 'villageois')); cases[12] = { act: 'b-cloche', em: '🔔', titre: dedans ? 'Fin de l’alerte : les villageois ressortent' : 'Sonner la cloche : les villageois proches s’abritent (chaque abrité tire une flèche)' }; }
       }
@@ -470,6 +497,7 @@
   ACT['b-stop'] = () => { BT.arreter(S.B, S.B.joueur, S.sel); };
   ACT['b-attaque'] = () => { S.mode = { type: 'attaque' }; majCurseur(); };
   ACT['b-ralliement'] = () => { S.mode = { type: 'ralliement' }; majCurseur(); };
+  ACT['b-echange'] = e => { const r = BT.echanger(S.B, S.B.joueur, e.dataset.v); if (!r.ok) { message(r.raison, 'ko'); son('refus'); } else son('clic'); S.sigGrille = ''; majHud(true); };
   ACT['b-garnison'] = () => { S.mode = { type: 'garnison' }; majCurseur(); message('Clique l’abri : tour, forteresse, centre-ville ou navire de transport.'); };
   ACT['b-liberer'] = () => { const b = selBatiment(); if (!b) return; const r = BT.liberer(S.B, S.B.joueur, b.id); if (!r.ok) { message(r.raison, 'ko'); son('refus'); } else son('ordre'); S.sigGrille = S.sigSel = ''; majHud(true); };
   ACT['b-debarquer'] = () => { const B = S.B; let n = 0, raison = ''; for (const u of unitesChoisies().filter(u => u.s.capacite)) { const r = BT.liberer(B, B.joueur, u.id); if (r.ok) n += r.n; else raison = r.raison; } if (!n) { message(raison || 'Personne à bord.', 'ko'); son('refus'); } else { message(`${n} passager${n > 1 ? 's' : ''} débarqué${n > 1 ? 's' : ''}.`, 'ok'); son('ordre'); } S.sigGrille = S.sigSel = ''; majHud(true); };
@@ -521,7 +549,7 @@
   function menuPause() {
     if (!S.B || UI.modalOuvert()) return; S.pause = true;
     UI.ouvrirModal(`<h2>Pause</h2><p class="recit">${esc(PM.AGES[S.B.joueurs[S.B.joueur].age].nom)} · ${Math.floor(S.B.temps / 60)} min de bataille.</p>
-      <ul class="aide"><li><b>Clic droit</b> : agir (marcher, récolter, bâtir, attaquer, ralliement d’un bâtiment). <b>Ctrl-clic</b> fait de même sur le pavé tactile.</li>
+      <ul class="aide"><li><b>Clic droit</b> : agir (marcher, récolter, bâtir, attaquer, ralliement d’un bâtiment). <b>Ctrl-clic</b> fait de même sur le pavé tactile. Avec des unités choisies, le <b>clic gauche</b> sur une ressource, un chantier ou un ennemi donne aussi l’ordre.</li>
       <li><b>Glisser</b> : choisir au cadre ; <b>double-clic</b> : toutes les unités du même genre ; <b>Maj</b> : ajouter.</li>
       <li><kbd>H</kbd> centre-ville · <kbd>.</kbd> villageois inactif · <kbd>Espace</kbd> dernière alerte · <kbd>⌘</kbd>+<kbd>1</kbd>…<kbd>9</kbd> créer un groupe, <kbd>1</kbd>…<kbd>9</kbd> le rappeler · <kbd>Suppr</kbd> supprimer · lettres de la grille (<kbd>Q</kbd> <kbd>W</kbd> <kbd>E</kbd>…) · flèches ou bord de l’écran pour se déplacer.</li>
       <li>Contres : infanterie > cavalerie > archers > infanterie ; les héros battent les créatures, les créatures écrasent les humains ; les engins de siège abattent les bâtiments.</li></ul>

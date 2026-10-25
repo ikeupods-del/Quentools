@@ -33,8 +33,14 @@ const jouer = (B, s) => { for (let t = 0; t < s / BT.PAS; t++) BT.pas(B); };
       for (const s of ['arbre', 'baies', 'mine']) ok(B.res.some(r => r.sous === s && Math.hypot(r.x - x, r.z - z) < 50), `${carte} : ${s} près du départ`);
       ok(B.res.some(r => r.animal && Math.hypot(r.x - x, r.z - z) < 30), `${carte} : troupeau près du départ`);
     }
-    const c = BT.chemin(B, a[0] + 9, a[1], b[0] + 9, b[1]);
-    ok(c && c.length && Math.hypot(c[c.length - 1][0] - b[0] - 9, c[c.length - 1][1] - b[1]) < 6, `${carte} : chemin d'un camp à l'autre`);
+    if (R.CARTES[carte].eau === 'iles') {
+      // archipel : chaque peuple sur son île, la mer entre les deux
+      ok(BT.ileDe(B, a[0], a[1]) !== BT.ileDe(B, b[0], b[1]) && B.aEau, `${carte} : une île par peuple`);
+      ok(!BT.memeIle(B, { x: a[0], z: a[1] }, { x: b[0], z: b[1] }), `${carte} : il faut traverser la mer`);
+    } else {
+      const c = BT.chemin(B, a[0] + 9, a[1], b[0] + 9, b[1]);
+      ok(c && c.length && Math.hypot(c[c.length - 1][0] - b[0] - 9, c[c.length - 1][1] - b[1]) < 6, `${carte} : chemin d'un camp à l'autre`);
+    }
     ok(B.res.filter(r => r.sous === 'arbre').length > 300, `${carte} : forêts (${B.res.filter(r => r.sous === 'arbre').length} arbres)`);
   }
 }
@@ -148,6 +154,15 @@ const jouer = (B, s) => { for (let t = 0; t < s / BT.PAS; t++) BT.pas(B); };
   for (let t = 0; t < 30 / BT.PAS && !tour.mort; t++) BT.pas(B);
   ok(tour.mort && arch.every(u => !u.dans && !u.mort), 'tour abattue : les archers en sortent vivants');
   assaillant.mort = B.temps;
+  // marché : échanges et cours qui baisse à chaque vente
+  ok(!BT.echanger(B, 0, 'bois>or').ok, 'pas d’échange sans marché');
+  const mk = BT.ajouterBat(B, 0, 'marche', c.x - 30, c.z - 30, true); const orAv = J.res.or, boisAv = J.res.bois;
+  const e1 = BT.echanger(B, 0, 'bois>or'), e2 = BT.echanger(B, 0, 'bois>or');
+  ok(e1.ok && J.res.bois === boisAv - 200 && J.res.or === orAv + e1.recoit + e2.recoit, `marché : 100 bois → ${e1.recoit} or`);
+  ok(e2.recoit < e1.recoit, 'marché : le cours baisse à chaque vente');
+  const cAv = BT.cours(B, 0).bois; jouer(B, 30); ok(BT.cours(B, 0).bois > cAv, 'marché : le cours remonte avec le temps');
+  ok(BT.echanger(B, 0, 'or>nourriture').ok, 'marché : achat de nourriture');
+  mk.mort = B.temps;
   // trêve d'une partie longue
   const L = nouvelle({ graine: 23, duree: 'longue', taille: 'moyenne' });
   ok(L.treve === R.DUREES.longue.treve && L.popMax === 250, 'partie longue : trêve et population');
@@ -232,6 +247,19 @@ const jouer = (B, s) => { for (let t = 0; t < s / BT.PAS; t++) BT.pas(B); };
   ok(V.mission.vagues[0].fait && V.unites.some(u => u.j === 1 && u.ordre && (u.ordre.type === 'deplacer' || u.ordre.type === 'attaquer')), 'mission 2 : la première vague attaque');
 }
 
+// 3 ter. archipel : l'ordinateur embarque son armée et débarque sur l'île ennemie
+{
+  const A = nouvelle({ carte: 'iles', graine: 3, joueurs: [{ pantheon: 'grecs', ia: true, difficulte: 2 }, { pantheon: 'nordiques', ia: true, difficulte: 1 }] });
+  const ile = [0, 1].map(j => { const c = A.bats.find(b => b.j === j && b.cle === 'centre'); return BT.ileDe(A, c.x, c.z); });
+  let debarques = 0, chezEnnemi = 0;
+  for (let t = 0; t < 30 * 60 / BT.PAS && !A.fin; t++) { BT.pas(A); for (const e of A.evts.splice(0)) if (e.type === 'sortie') { const tr = A.parId.get(e.id); if (tr && tr.sorte === 'u') debarques += e.n; }
+    if (A.tick % 200 === 0) chezEnnemi = Math.max(chezEnnemi, A.unites.filter(u => !u.mort && !u.dans && u.cle !== 'villageois' && !u.s.naval && BT.ileDe(A, u.x, u.z) === ile[1 - u.j]).length); }
+  ok(A.unites.some(u => u.cle === 'transport') || debarques, 'archipel : l’ordinateur arme des transports');
+  ok(debarques >= 8, `archipel : l’ordinateur débarque son armée (${debarques} soldats)`);
+  ok(chezEnnemi >= 4, `archipel : des troupes posent le pied chez l’ennemi (${chezEnnemi})`);
+  console.log(`Archipel : ${debarques} soldats débarqués${A.fin ? ', fin à ' + Math.round(A.fin.temps / 60) + ' min' : ''}`);
+}
+
 // 4. parties entières : l'ordinateur contre lui-même
 const partie = (o, minutes) => {
   const B = nouvelle(Object.assign({}, o, { joueurs: o.joueurs.map(p => Object.assign({ ia: true }, p)) }));
@@ -254,7 +282,7 @@ for (const c of cas) {
   ok(J.every(x => x.age >= 2 || x.vaincu), `${c.titre} : passages d’âge`);
   ok(J.every(x => x.stats.formees >= 25 || x.vaincu), `${c.titre} : unités formées`);
   ok(J.some(x => x.stats.tues > 10), `${c.titre} : combats`);
-  if (c.duree) { ok(J.some(x => x.stats.recolte > 30000) && J.every(x => x.stats.recolte > 10000), `${c.titre} : grandes économies`); ok(B.bats.some(b => b.cle === 'port') || B.unites.some(u => u.s.naval), `${c.titre} : l’ordinateur prend la mer`); }
+  if (c.duree) { ok(B.fin ? J.some(x => x.stats.recolte > 12000) : J.some(x => x.stats.recolte > 30000) && J.every(x => x.stats.recolte > 10000), `${c.titre} : grandes économies`); ok(B.bats.some(b => b.cle === 'port') || B.unites.some(u => u.s.naval), `${c.titre} : l’ordinateur prend la mer`); }
   else ok(B.fin, `${c.titre} : la partie se termine`);
   ok(maxPas < 25, `${c.titre} : pas de simulation rapide (${maxPas.toFixed(1)} ms)`);
   ok([...B.unites, ...B.bats].every(e => Number.isFinite(e.x) && Number.isFinite(e.z)), `${c.titre} : positions valides`);

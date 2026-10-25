@@ -128,7 +128,7 @@ function autotest() {
           fs.writeFileSync(path.join(dir, nom), img.toJPEG(80)); res.captures.push({ nom, msParImage: Math.round(ms.ms * 10) / 10, luminosite: Math.round(lum), etat: ms, erreurs: await win.webContents.executeJavaScript('(window.__erreurs || []).splice(0)') });
         }
         // mode Bataille : l'ordinateur joue les deux camps 10 minutes, puis vue de la ville ou du combat le plus dense
-        const batailles = [['antique', 'grecs', 'plaine', 'ville'], ['antique', 'egyptiens', 'oasis', 'combat'], ['medieval', 'nordiques', 'toundra', 'ville'], ['industriel', 'atlantes', 'riviere', 'combat'], ['futur', 'grecs', 'lac', 'ville'], ['antique', 'atlantes', 'mediterranee', 'port'], ['medieval', 'nordiques', 'plaine', 'mission']];
+        const batailles = [['antique', 'grecs', 'plaine', 'ville'], ['antique', 'egyptiens', 'oasis', 'combat'], ['medieval', 'nordiques', 'toundra', 'ville'], ['industriel', 'atlantes', 'riviere', 'combat'], ['futur', 'grecs', 'lac', 'ville'], ['antique', 'atlantes', 'mediterranee', 'port'], ['moderne', 'grecs', 'iles', 'port'], ['medieval', 'nordiques', 'plaine', 'mission']];
         for (const [e, pe, ca, cadre] of batailles) {
           const ms = await win.webContents.executeJavaScript(`(async () => {
             const mi = ${JSON.stringify(cadre)} === 'mission' ? PM.RTS.CAMPAGNE.find(m => m.id === 'siege') : null; if (mi) PM.appliquerEpoque(mi.epoque);
