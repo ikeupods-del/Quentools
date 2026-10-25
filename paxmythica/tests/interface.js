@@ -8,7 +8,7 @@ for (const c of ['playwright', path.join(__dirname, '../../wouf/node_modules/pla
 if (!pw) { console.log('Playwright introuvable : essai de l’interface ignoré.'); process.exit(0); }
 const url = 'file://' + path.join(__dirname, '..', 'index.html');
 let ko = 0, n = 0;
-const ok = (c, m) => { n++; if (!c) { ko++; console.log('✗ ' + m); } };
+const ok = (c, m) => { n++; if (process.env.TRACE) console.log((c ? '✓ ' : '✗ ') + m + ' ' + Math.round(process.uptime()) + 's'); else if (!c) console.log('✗ ' + m); if (!c) ko++; };
 
 (async () => {
   const b = await pw.chromium.launch({ args: ['--allow-file-access-from-files'] }); // ressources graphiques lues depuis le disque
