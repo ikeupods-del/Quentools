@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex">
+<!--JEU-DEBUT-->
+<title>Il Prezzo del Silenzio</title>
+<style>
+/* Plein écran façon film d'époque : image sépia, bandes noires, cartons de chapitre. */
+@font-face{font-family:"Cormorant";src:url(fonts/cormorant-normal.woff2) format("woff2");font-weight:300 700;font-display:swap}
+@font-face{font-family:"Cormorant";src:url(fonts/cormorant-italic.woff2) format("woff2");font-style:italic;font-weight:300 700;font-display:swap}
+@font-face{font-family:"Bitter";src:url(fonts/bitter-normal.woff2) format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:"Oswald";src:url(fonts/oswald-normal.woff2) format("woff2");font-weight:200 700;font-display:swap}
+:root{
+  --encre:#15110c;      /* fond, noir de pellicule */
+  --papier:#eee2c8;     /* textes, papier ancien */
+  --citron:#e2bd45;     /* repères et objectifs */
+  --sang:#9b2f22;       /* alerte, danger */
+  --fumee:#9d917b;      /* textes secondaires */
+  --voile:rgba(16,12,8,.78);
+  --titre:"Cormorant",Georgia,"Times New Roman",serif;
+  --texte:"Bitter",Georgia,serif;
+  --etiquette:"Oswald","Arial Narrow",Arial,sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--encre);color:var(--papier);font-family:var(--texte)}
+body{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#scene{position:fixed;inset:0;width:100%;height:100%;display:block;filter:sepia(.2) saturate(.88) contrast(1.06)}
+body.sans-film #scene{filter:none}
+#vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 52%,rgba(10,6,2,.62) 100%)}
+#grain{position:fixed;inset:-50%;pointer-events:none;opacity:.09;mix-blend-mode:overlay;animation:grain .5s steps(4) infinite}
+body.sans-film #grain{display:none}
+@keyframes grain{0%{transform:translate(0,0)}25%{transform:translate(-7%,4%)}50%{transform:translate(5%,-6%)}75%{transform:translate(-3%,-2%)}}
+#bandes i{position:fixed;left:0;right:0;height:11vh;background:#000;transition:transform .7s ease;pointer-events:none;z-index:5}
+#bandes .h{top:0;transform:translateY(-101%)}
+#bandes .b{bottom:0;transform:translateY(101%)}
+body.cinema #bandes .h,body.cinema #bandes .b{transform:none}
+#fondu{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .8s ease;z-index:30}
+#fondu.noir{opacity:1}
+
+/* Interface de jeu */
+#hud{position:fixed;inset:0;pointer-events:none;z-index:6}
+#objectif{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));left:calc(16px + env(safe-area-inset-left,0px));max-width:min(420px,58vw)}
+#objectif .chap{font-family:var(--etiquette);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--citron)}
+#objectif .txt{font-size:clamp(14px,1.6vw,17px);line-height:1.35;text-shadow:0 1px 3px #000,0 0 12px rgba(0,0,0,.7);margin-top:4px}
+#objectif .txt b{color:var(--citron);font-weight:600}
+#minicarte{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:calc(16px + env(safe-area-inset-right,0px));width:150px;height:150px;border-radius:50%;border:2px solid rgba(238,226,200,.55);box-shadow:0 4px 18px rgba(0,0,0,.5)}
+#chrono{position:absolute;top:calc(176px + env(safe-area-inset-top,0px));right:calc(16px + env(safe-area-inset-right,0px));width:150px;text-align:center;font-family:var(--etiquette);font-size:22px;letter-spacing:.06em;text-shadow:0 1px 4px #000}
+#chrono.urgent{color:#ff8a6a}
+#jauges{position:absolute;bottom:calc(22px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px}
+#invite{font-family:var(--etiquette);font-size:15px;letter-spacing:.08em;text-transform:uppercase;padding:8px 16px;background:var(--voile);border:1px solid rgba(226,189,69,.5);border-radius:3px}
+#invite kbd{font-family:inherit;color:var(--citron);margin-right:6px}
+#endurance{width:160px;height:4px;background:rgba(0,0,0,.5);border-radius:2px;overflow:hidden}
+#endurance i{display:block;height:100%;width:100%;background:var(--papier)}
+#soupcon{width:200px;height:6px;background:rgba(0,0,0,.55);border-radius:3px;overflow:hidden;border:1px solid rgba(155,47,34,.6)}
+#soupcon i{display:block;height:100%;width:0;background:var(--sang)}
+#toast{position:absolute;top:24%;left:50%;transform:translateX(-50%);font-family:var(--titre);font-style:italic;font-size:clamp(24px,3.4vw,40px);text-align:center;text-shadow:0 2px 10px #000;opacity:0;transition:opacity .4s;width:min(90vw,700px)}
+#toast.vu{opacity:1}
+#toast.danger{color:#ff9a7e}
+#aide{position:absolute;bottom:calc(84px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);width:min(88vw,520px);text-align:center;font-size:14px;line-height:1.4;color:var(--papier);background:var(--voile);padding:10px 14px;border-radius:3px;opacity:0;transition:opacity .4s}
+#aide.vu{opacity:1}
+#btn-pause{position:absolute;top:calc(176px + env(safe-area-inset-top,0px));left:calc(16px + env(safe-area-inset-left,0px));pointer-events:auto;display:none}
+
+/* Dialogues */
+#dialogue{position:fixed;left:50%;bottom:calc(13vh + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(92vw,760px);z-index:8;cursor:pointer}
+#dialogue .qui{font-family:var(--etiquette);font-size:14px;letter-spacing:.2em;text-transform:uppercase;color:var(--citron);margin-bottom:6px;text-shadow:0 1px 3px #000}
+#dialogue .dit{font-size:clamp(16px,2vw,20px);line-height:1.5;text-shadow:0 1px 3px #000,0 0 14px rgba(0,0,0,.9)}
+#dialogue .dit em{color:var(--fumee)}
+#dialogue .suite{font-family:var(--etiquette);font-size:11px;letter-spacing:.2em;color:var(--fumee);text-transform:uppercase;margin-top:10px;opacity:.8}
+#choix{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+#choix button,.menu-btn{font:inherit;font-size:clamp(15px,1.8vw,18px);text-align:left;color:var(--papier);background:var(--voile);border:1px solid rgba(238,226,200,.3);border-radius:3px;padding:12px 16px;cursor:pointer;pointer-events:auto}
+#choix button:hover,#choix button:focus-visible,.menu-btn:hover,.menu-btn:focus-visible{border-color:var(--citron);color:#fff;outline:none;background:rgba(40,30,16,.9)}
+#choix button span{font-family:var(--etiquette);color:var(--citron);margin-right:10px}
+
+/* Cartons de chapitre et fins */
+#carton{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(12,9,6,.93);padding:24px max(16px,env(safe-area-inset-left,0px));cursor:pointer}
+#carton .boite{max-width:640px;text-align:center}
+#carton .surtitre{font-family:var(--etiquette);font-size:13px;letter-spacing:.32em;text-transform:uppercase;color:var(--citron)}
+#carton h2{font-family:var(--titre);font-style:italic;font-weight:500;font-size:clamp(34px,6vw,64px);line-height:1.05;margin:14px 0 22px;text-wrap:balance}
+#carton .corps{font-size:clamp(15px,1.9vw,18px);line-height:1.65;color:var(--papier);text-align:left}
+#carton .corps p{margin:0 0 12px}
+#carton .corps li{margin:0 0 8px}
+#carton .corps ul{padding-left:20px;margin:0}
+#carton .note{font-size:13px;color:var(--fumee);margin-top:14px;font-style:italic}
+#carton .continuer{font-family:var(--etiquette);font-size:12px;letter-spacing:.25em;text-transform:uppercase;color:var(--fumee);margin-top:26px;opacity:0;transition:opacity .6s}
+#carton .continuer.vu{opacity:1}
+#carton .filet{width:60px;height:1px;background:var(--citron);margin:0 auto 22px}
+
+/* Écran titre */
+#menu{position:fixed;inset:0;z-index:15;display:flex;flex-direction:column;justify-content:flex-end;padding:0 max(16px,env(safe-area-inset-left,0px)) calc(8vh + env(safe-area-inset-bottom,0px));background:linear-gradient(to top,rgba(12,9,6,.92) 0%,rgba(12,9,6,.55) 45%,transparent 75%)}
+#menu .contenu{width:min(1100px,100%);margin:0 auto;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:40px;align-items:end}
+#menu h1{font-family:var(--titre);font-style:italic;font-weight:500;font-size:clamp(46px,8.5vw,112px);line-height:.9;margin:0;letter-spacing:-.01em;text-shadow:0 4px 30px rgba(0,0,0,.6)}
+#menu h1 small{display:block;font-family:var(--etiquette);font-style:normal;font-size:clamp(12px,1.3vw,15px);letter-spacing:.42em;text-transform:uppercase;color:var(--citron);margin-bottom:14px;font-weight:400}
+#menu .accroche{font-size:clamp(15px,1.7vw,18px);line-height:1.55;color:var(--papier);margin:18px 0 0;max-width:46ch}
+#menu .actions{display:flex;flex-direction:column;gap:10px}
+.menu-btn{display:flex;justify-content:space-between;align-items:center;font-family:var(--etiquette);letter-spacing:.14em;text-transform:uppercase;font-size:15px}
+.menu-btn small{font-family:var(--texte);text-transform:none;letter-spacing:0;color:var(--fumee);font-size:13px}
+.menu-btn.principal{border-color:rgba(226,189,69,.7)}
+#panneau{position:fixed;inset:0;z-index:16;background:rgba(12,9,6,.95);display:flex;justify-content:center;overflow-y:auto;padding:calc(40px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-left,0px)) 40px}
+#panneau .boite{width:min(760px,100%)}
+#panneau h2{font-family:var(--titre);font-style:italic;font-weight:500;font-size:clamp(32px,5vw,48px);margin:0 0 20px}
+.chapitres{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.chapitres li{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:14px;align-items:baseline;padding:14px 0;border-top:1px solid rgba(238,226,200,.14)}
+.chapitres .num{font-family:var(--titre);font-style:italic;font-size:30px;color:var(--citron)}
+.chapitres .nom{font-family:var(--etiquette);letter-spacing:.1em;text-transform:uppercase;font-size:15px}
+.chapitres .lieu{color:var(--fumee);font-size:14px;margin-top:3px}
+.chapitres .etat{font-family:var(--etiquette);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--fumee)}
+.chapitres .etat button{font:inherit;color:var(--encre);background:var(--citron);border:0;border-radius:2px;padding:8px 12px;cursor:pointer;letter-spacing:.14em}
+.chapitres li.verrou{opacity:.62}
+.touches{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px}
+.touches h3{font-family:var(--etiquette);letter-spacing:.18em;text-transform:uppercase;font-size:13px;color:var(--citron);margin:0 0 10px;font-weight:400}
+.touches dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 14px;font-size:15px}
+.touches dt{font-family:var(--etiquette);letter-spacing:.06em;color:var(--papier)}
+.touches dd{margin:0;color:var(--fumee)}
+.fermer{margin-top:28px}
+
+/* Commandes tactiles */
+#tactile{position:fixed;inset:0;z-index:7;display:none;pointer-events:none}
+body.tactile #tactile{display:block}
+#stick{position:absolute;width:120px;height:120px;border-radius:50%;border:2px solid rgba(238,226,200,.35);background:rgba(0,0,0,.18);display:none;transform:translate(-50%,-50%)}
+#stick i{position:absolute;left:50%;top:50%;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:rgba(238,226,200,.5)}
+.tbtn{position:absolute;pointer-events:auto;width:70px;height:70px;border-radius:50%;border:2px solid rgba(238,226,200,.45);background:rgba(16,12,8,.55);color:var(--papier);font-family:var(--etiquette);font-size:12px;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;justify-content:center;text-align:center}
+.tbtn.actif{background:rgba(226,189,69,.45)}
+#t-action{right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px));width:84px;height:84px;border-color:rgba(226,189,69,.7)}
+#t-courir{right:calc(122px + env(safe-area-inset-right,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+#t-pause{right:calc(204px + env(safe-area-inset-right,0px));bottom:calc(36px + env(safe-area-inset-bottom,0px));width:50px;height:50px;font-size:16px}
+body.tactile #aide{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
+body.tactile #jauges{bottom:calc(126px + env(safe-area-inset-bottom,0px))}
+
+@media (max-width:720px){
+  #menu .contenu{grid-template-columns:minmax(0,1fr);gap:22px}
+  #minicarte{width:110px;height:110px}
+  #chrono{top:calc(134px + env(safe-area-inset-top,0px));width:110px;font-size:18px}
+  .touches{grid-template-columns:minmax(0,1fr)}
+  #objectif{max-width:calc(100vw - 170px)}
+}
+@media (prefers-reduced-motion:reduce){#grain{animation:none}}
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+<div id="grain" aria-hidden="true"></div>
+<div id="vignette"></div>
+<div id="bandes"><i class="h"></i><i class="b"></i></div>
+
+<div id="hud" hidden>
+  <div id="objectif"><div class="chap" id="obj-chap">Chapitre I</div><div class="txt" id="obj-txt"></div></div>
+  <canvas id="minicarte" width="300" height="300"></canvas>
+  <div id="chrono" hidden></div>
+  <div id="toast"></div>
+  <div id="aide"></div>
+  <div id="jauges">
+    <div id="soupcon" hidden><i></i></div>
+    <div id="invite" hidden></div>
+    <div id="endurance" hidden><i></i></div>
+  </div>
+</div>
+
+<div id="dialogue" hidden>
+  <div class="qui"></div>
+  <div class="dit"></div>
+  <div id="choix"></div>
+  <div class="suite">Continuer — clic, E ou Espace</div>
+</div>
+
+<div id="carton" hidden>
+  <div class="boite">
+    <div class="surtitre"></div>
+    <h2></h2>
+    <div class="filet"></div>
+    <div class="corps"></div>
+    <div class="continuer">Toucher ou appuyer pour continuer</div>
+  </div>
+</div>
+
+<div id="menu">
+  <div class="contenu">
+    <div>
+      <h1><small>Sicile · Calabre · Sardaigne</small>Il Prezzo<br>del Silenzio</h1>
+      <p class="accroche">De 1861 à aujourd’hui : trois terres, une famille. À chaque génération, la même question revient : se taire, ou parler.</p>
+    </div>
+    <div class="actions">
+      <button class="menu-btn principal" id="m-nouvelle">Nouvelle partie <small>Chapitre I</small></button>
+      <button class="menu-btn" id="m-continuer" hidden>Continuer <small id="m-ou"></small></button>
+      <button class="menu-btn" id="m-chapitres">Chapitres <small>7 époques</small></button>
+      <button class="menu-btn" id="m-commandes">Commandes</button>
+      <button class="menu-btn" id="m-son">Son <small id="m-son-etat">activé</small></button>
+    </div>
+  </div>
+</div>
+
+<div id="panneau" hidden><div class="boite"></div></div>
+
+<div id="tactile">
+  <div id="stick"><i></i></div>
+  <button class="tbtn" id="t-action">Agir</button>
+  <button class="tbtn" id="t-courir">Courir</button>
+  <button class="tbtn" id="t-pause" aria-label="Pause">II</button>
+</div>
+
+<div id="fondu"></div>
+
+<script src="vendor/three-r128.min.js"></script>
+<script src="jeu.js"></script>
+<!--JEU-FIN-->
+</body>
+</html>
