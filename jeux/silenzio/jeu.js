@@ -40,7 +40,7 @@ SAUVE.fins = SAUVE.fins || [];
 const tactile = matchMedia('(pointer: coarse)').matches;
 const ESSAI = new URLSearchParams(location.search).has('essai'); // essais automatiques : logique sans dessin
 const QUALITES = {
-  haute: { nom: 'Haute', dof: true, ombre: 4096, ao: true, bloom: true, msaa: 4, dpr: 1.5, herbe: 42000, rayonHerbe: 26, arbres: 1 },
+  haute: { nom: 'Haute', dof: true, ombre: 4096, ao: true, bloom: true, msaa: 4, dpr: 1.75, herbe: 42000, rayonHerbe: 26, arbres: 1 },
   moyenne: { nom: 'Moyenne', dof: true, ombre: 2048, ao: false, bloom: true, msaa: 2, dpr: 1.25, herbe: 16000, rayonHerbe: 20, arbres: 1 },
   basse: { nom: 'Basse', ombre: 1024, ao: false, bloom: false, msaa: 0, dpr: 1, herbe: 0, rayonHerbe: 0, arbres: .6 }
 };
@@ -70,7 +70,7 @@ if (Q.ao) {
 }
 const sansFeuillage = pass => { const r0 = pass.render.bind(pass); pass.render = (...a) => { const vus = SANS_AO.map(m => m.visible); SANS_AO.forEach(m => { m.visible = false; }); r0(...a); SANS_AO.forEach((m, i) => { m.visible = vus[i]; }); }; };
 let passeFlou = null;
-if (Q.dof) { passeFlou = new BokehPass(scene, camera, { focus: 2, aperture: .0022, maxblur: .007 }); passeFlou.enabled = false; sansFeuillage(passeFlou); compo.addPass(passeFlou); }
+if (Q.dof) { passeFlou = new BokehPass(scene, camera, { focus: 2, aperture: .0012, maxblur: .005 }); passeFlou.enabled = false; sansFeuillage(passeFlou); compo.addPass(passeFlou); }
 if (Q.bloom) { passeHalo = new UnrealBloomPass(new T.Vector2(256, 256), .32, .6, .92); compo.addPass(passeHalo); }
 const RAYONS = new ShaderPass({
   uniforms: { tDiffuse: { value: null }, uSoleil: { value: new T.Vector2(.5, .5) }, uForce: { value: 0 }, uSeuil: { value: 1.1 }, uTeinte: { value: new T.Color(1, .85, .6) } },
@@ -83,13 +83,16 @@ const RAYONS = new ShaderPass({
 RAYONS.enabled = false; if (Q.bloom) compo.addPass(RAYONS);
 compo.addPass(new OutputPass());
 const ETALON = new ShaderPass({
-  uniforms: { tDiffuse: { value: null }, uTemps: { value: 0 }, uRes: { value: new T.Vector2(1, 1) }, uVignette: { value: .55 }, uGrain: { value: .05 }, uChaleur: { value: .35 }, uSat: { value: .95 } },
+  uniforms: { tDiffuse: { value: null }, uTemps: { value: 0 }, uRes: { value: new T.Vector2(1, 1) }, uVignette: { value: .55 }, uGrain: { value: .035 }, uNet: { value: .3 }, uChaleur: { value: .35 }, uSat: { value: .95 } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-  fragmentShader: `uniform sampler2D tDiffuse; uniform float uTemps, uVignette, uGrain, uChaleur, uSat; uniform vec2 uRes; varying vec2 vUv;
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uTemps, uVignette, uGrain, uChaleur, uSat, uNet; uniform vec2 uRes; varying vec2 vUv;
     float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
     void main(){
-      vec2 d = vUv - 0.5; float r2 = dot(d, d); vec2 ab = d * r2 * 0.005;
+      vec2 d = vUv - 0.5; float r2 = dot(d, d); vec2 ab = d * r2 * 0.003;
       vec3 c = vec3(texture2D(tDiffuse, vUv + ab).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv - ab).b);
+      // Netteté : rend le détail perdu quand l'image est calculée sous la résolution de l'écran
+      vec2 px = 1.0 / uRes; vec3 v = texture2D(tDiffuse, vUv + vec2(px.x, 0.0)).rgb + texture2D(tDiffuse, vUv - vec2(px.x, 0.0)).rgb + texture2D(tDiffuse, vUv + vec2(0.0, px.y)).rgb + texture2D(tDiffuse, vUv - vec2(0.0, px.y)).rgb;
+      c = max(c + (c * 4.0 - v) * uNet * 0.25 * 4.0 / (1.0 + 4.0 * uNet), vec3(0.0));
       float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
       float k = abs(uChaleur);
       vec3 ombre = mix(vec3(1.0), vec3(0.9, 0.97, 1.07), k);
@@ -940,11 +943,11 @@ function texToile(img, srgb) { const c = document.createElement('canvas'); c.wid
 function majToile(t, data) { const c = t.image; c.getContext('2d').putImageData(new ImageData(data, c.width, c.height), 0, 0); t.needsUpdate = true; }
 /* Peau peinte d'une variante : tout de suite pour les gros plans, en tâche de fond pour les passants */
 function peauPeinte(p, detail) {
-  const res = detail ? 1024 : 512, cle = res + JSON.stringify(p); if (PEINT.has(cle)) return PEINT.get(cle);
+  const res = detail ? 1024 : 512, cle = res + JSON.stringify(p); // visage toujours en pleine définition, bras en 512 pour les passants if (PEINT.has(cle)) return PEINT.get(cle);
   let r;
   if (!PP_IMG) r = { tete: texPP('tete.jpg', true), teteN: texPP('tete-n.jpg'), corps: texPP('corps.jpg', true), oeil: texPP('oeilG.jpg', true) };
   else {
-    const [src, nrm, corps] = PP_IMG[res], relief = p.age || p.barbe > .6 || p.femme || p.enfant;
+    const [src, nrm] = PP_IMG[1024], corps = PP_IMG[res][2], relief = true;
     r = { tete: texToile(src, true), teteN: relief ? texToile(nrm, false) : texPP('tete-n.jpg'), corps: texToile(corps, true), oeil: p.yeux != null ? texToile(PP_IMG.oeil, true) : texPP('oeilG.jpg', true) };
     const faire = () => { const t = VAR.peindreTete(src, PP_IMG.pos, p, relief ? nrm : null); majToile(r.tete, t.couleur); if (relief) majToile(r.teteN, t.normale); majToile(r.corps, VAR.peindreCorps(corps, p)); if (p.yeux != null) majToile(r.oeil, VAR.peindreOeil(PP_IMG.oeil, p.yeux)); };
     if (detail) faire(); else { FILE_PEINT.push(faire); if (FILE_PEINT.length === 1) setTimeout(suitePeinture, 40); }
@@ -1044,8 +1047,8 @@ function habitPP(nom, fam, c, uni = false) {
   const k = 'pph:' + nom + ':' + fam + ':' + c + uni; if (MATS.has(k)) return MATS.get(k);
   const m0 = PP.maillages.find(x => x.nom === nom), plis = uni ? null : texPP(m0.normalMap); let m;
   if (fam && REPET[fam]) { const t = TX[fam], rep = x => { const y = x.clone(); y.repeat.set(REPET[fam] * 2.5, REPET[fam] * 2.5); y.needsUpdate = true; return y; }; m = new T.MeshPhysicalMaterial({ color: c, map: rep(t.map), normalMap: plis, roughnessMap: rep(t.roughnessMap), roughness: 1, sheen: ['velours', 'tricot', 'laine'].includes(fam) ? .9 : .25, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .3) }); }
-  else if (uni) m = new T.MeshPhysicalMaterial({ color: c, roughness: .92, sheen: .35, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .25) });
-  else m = new T.MeshPhysicalMaterial({ color: c, normalMap: plis, roughness: .92, sheen: .35, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .25) });
+  else if (uni) { const t = TX.tissu, rep = x => { const y = x.clone(); y.repeat.set(14, 14); y.needsUpdate = true; return y; }; m = new T.MeshPhysicalMaterial({ color: c, normalMap: rep(t.normalMap), normalScale: new T.Vector2(.5, .5), roughness: .92, sheen: .35, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .25) }); }
+  else m = new T.MeshPhysicalMaterial({ color: new T.Color(c).multiplyScalar(1 / (GRIS_PP[nom] || .4)), map: texPP(m0.map, true), normalMap: plis, roughness: .92, sheen: .35, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .25) });
   MATS.set(k, m); return m;
 }
 const cuirPP = c => { const k = 'ppc:' + c; if (MATS.has(k)) return MATS.get(k); const m = new T.MeshPhysicalMaterial({ color: c, normalMap: texPP('chaussures-n.jpg'), roughness: .5, clearcoat: .25, clearcoatRoughness: .5 }); MATS.set(k, m); return m; };
@@ -2726,8 +2729,8 @@ const GAL = { scene: new T.Scene(), cam: new T.PerspectiveCamera(28, 1, .1, 60),
   const fill = new T.DirectionalLight(0xffd8b0, .5); fill.position.set(-3, 1.5, 2.5); s.add(fill);
   s.add(new T.HemisphereLight(0xfff0e0, 0x1a140e, .35));
 })();
-function ouvrirGalerie() { SON.init(); etat = 'galerie'; UI.menu.hidden = true; fermerPanneau(); $('#galerie').hidden = false; GAL.scene.environment = scene.environment; GAL.scene.environmentIntensity = .45; montrerFamille(GAL.i); }
-function fermerGalerie() { $('#galerie').hidden = true; retourMenu(); }
+function ouvrirGalerie() { SON.init(); rendu.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); etat = 'galerie'; UI.menu.hidden = true; fermerPanneau(); $('#galerie').hidden = false; GAL.scene.environment = scene.environment; GAL.scene.environmentIntensity = .45; montrerFamille(GAL.i); }
+function fermerGalerie() { $('#galerie').hidden = true; rendu.setPixelRatio(Math.min(devicePixelRatio || 1, Q.dpr)); redimensionner(); retourMenu(); }
 function montrerFamille(i) {
   GAL.i = (i + FAMILLES.length) % FAMILLES.length; const f = FAMILLES[GAL.i];
   if (GAL.actuel) GAL.scene.remove(GAL.actuel.g);

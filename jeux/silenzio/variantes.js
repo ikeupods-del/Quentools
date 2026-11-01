@@ -204,6 +204,8 @@ export function peindreTete(src, pos, o = {}, nrm = null) {
   if (nrm) {
     normale = new Uint8ClampedArray(nrm.data);
     const fort = 110;
+    // Grain de peau (pores) sur le visage et le cou, hors cheveux et yeux : évite l'aspect lisse et flou des gros plans
+    for (let py = 0; py < Hh; py++) for (let px = 0; px < W; px++) { const k = py * W + px, o = k * 4; if (!PP[o + 3] || hgt[k]) continue; const y = PP[o + 1], z = PP[o + 2]; if (y > 1.735 || z < -.02) continue; hgt[k] = (bruit2(px, py) - .5) * .05 * (1 - age * .3); }
     for (let py = 1; py < Hh - 1; py++) for (let px = 1; px < W - 1; px++) { const k = py * W + px, dx = hgt[k + 1] - hgt[k - 1], dy = hgt[k + W] - hgt[k - W]; if (!dx && !dy) continue; const i = k * 4; normale[i] -= dx * fort; normale[i + 1] -= dy * fort; }
     if (lis) for (let i = 0; i < normale.length; i += 4) { normale[i] = 128 + (normale[i] - 128) * (1 - lis * .5); normale[i + 1] = 128 + (normale[i + 1] - 128) * (1 - lis * .5); }
   }

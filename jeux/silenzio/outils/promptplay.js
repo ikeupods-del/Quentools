@@ -49,7 +49,10 @@ const image = (ti, nom) => {
   if (ti == null) return null; const im = j.images[j.textures[ti].source]; if (images[ti]) return images[ti];
   const bv = j.bufferViews[im.bufferView], tmp = path.join(dest, '_tmp.png'); fs.writeFileSync(tmp, b.slice(bin + (bv.byteOffset || 0), bin + (bv.byteOffset || 0) + bv.byteLength));
   const f = nom + '.jpg', taille = nom.startsWith('tete') && !nom.endsWith('-n') ? '2048x2048' : '1024x1024';
-  execFileSync('convert', [tmp, '-resize', taille + '>', '-quality', '86', path.join(dest, f)]); fs.unlinkSync(tmp);
+  // Peau et yeux : légère accentuation et compression fine (gros plans) ; tissus : compression standard
+  const fin = /^(tete|corps|oeil)/.test(nom) && !nom.endsWith('-n'), args = [tmp, '-resize', taille + '>'];
+  if (fin) args.push('-unsharp', '0x1.2+0.7+0.01');
+  execFileSync('convert', [...args, '-quality', fin || /^(tete|corps)-n/.test(nom) ? '95' : '88', path.join(dest, f)]); fs.unlinkSync(tmp);
   return (images[ti] = f);
 };
 j.meshes.forEach((m, mi) => {
