@@ -808,7 +808,7 @@ const TETE = null;
 const PP = await (async () => { try { return await (await fetch('modeles/promptplay/perso.json')).json(); } catch (e) { console.warn('Personnage de base indisponible :', e && e.message); return null; } })();
 /* ---------- Corps MakeHuman (CC0) : secours, chargés seulement si le personnage de base manque ---------- */
 /* Second personnage de base au corps complet : « James » (Sketchfab, CC-BY 4.0, voir modeles/james/LICENCE.txt) */
-const JM = await (async () => { try { return await (await fetch('modeles/james/perso.json')).json(); } catch (e) { console.warn('Personnage James indisponible :', e && e.message); return null; } })();
+const JM = null; // « James » (modeles/james/) : chargé quand ses vêtements d'époque seront prêts (corps complet sans tenue)
 const CORPS = PP ? null : await (async () => {
   try {
     const d = await (await fetch('modeles/corps/corps.json')).json();
