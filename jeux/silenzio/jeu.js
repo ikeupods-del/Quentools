@@ -11,7 +11,8 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
-import { fabriquerTextures, texVisage } from './textures.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { fabriquerTextures, texVisage, texDrapeau } from './textures.js';
 
 const $ = s => document.querySelector(s);
 const PI = Math.PI;
@@ -132,6 +133,20 @@ function M(cle) {
     case 'peau': m = new T.MeshPhysicalMaterial({ color: c, roughness: .5, sheen: .3, sheenRoughness: .6, sheenColor: new T.Color(0xff9a7a) }); break;
     case 'visage': { const [, type, hx2] = cle.split(':'), tv = texVisage(type, ANISO); m = new T.MeshPhysicalMaterial({ color: parseInt(hx2, 16), map: tv.map, normalMap: tv.normalMap, normalScale: new T.Vector2(.6, .6), roughnessMap: tv.roughnessMap, roughness: 1, sheen: .3, sheenRoughness: .6, sheenColor: new T.Color(0xff9a7a) }); break; }
     case 'cheveux': m = new T.MeshStandardMaterial({ color: c, map: TX.cheveux.map, normalMap: TX.cheveux.normalMap, roughnessMap: TX.cheveux.roughnessMap, roughness: 1 }); break;
+    case 'scan': { const cible = new T.Color(c), k = new T.Color(Math.min(1.6, cible.r / TETE.moy.r), Math.min(1.6, cible.g / TETE.moy.g), Math.min(1.6, cible.b / TETE.moy.b)); m = new T.MeshPhysicalMaterial({ color: k, map: TETE.map, normalMap: TETE.nm, normalScale: new T.Vector2(.9, .9), roughness: .52, sheen: .25, sheenRoughness: .55, sheenColor: new T.Color(0xff9070) }); break; }
+    case 'barbe': {
+      m = new T.MeshStandardMaterial({ color: c, map: TX.cheveux.map, normalMap: TX.cheveux.normalMap, roughness: .85 });
+      m.onBeforeCompile = sh => {
+        sh.vertexShader = 'varying vec3 vLoc;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vLoc = position;');
+        sh.fragmentShader = 'varying vec3 vLoc;\n' + sh.fragmentShader.replace('void main() {', `void main() {
+          bool garde = (vLoc.y < -0.012 && vLoc.z > -0.035) || (abs(vLoc.x) > 0.062 && vLoc.y < 0.032 && vLoc.z > -0.03 && vLoc.z < 0.06);
+          if (abs(vLoc.x) < 0.024 && vLoc.y > -0.052 && vLoc.y < -0.026 && vLoc.z > 0.08) garde = false;
+          if (vLoc.y < -0.105) garde = false;
+          if (!garde) discard;`);
+      };
+      m.customProgramCacheKey = () => 'barbe'; break;
+    }
+    case 'cils': m = new T.MeshStandardMaterial({ color: 0x120c08, roughness: .9 }); break;
     case 'oeil': m = new T.MeshPhysicalMaterial({ color: 0xf2eee6, roughness: .12, clearcoat: 1, clearcoatRoughness: .05 }); break;
     case 'iris': m = new T.MeshPhysicalMaterial({ color: c, roughness: .1, clearcoat: 1, clearcoatRoughness: .05 }); break;
     case 'fleurs': m = new T.MeshStandardMaterial({ map: TX[hx], alphaTest: .45, side: T.DoubleSide, roughness: .7 }); break;
@@ -245,7 +260,8 @@ const L = {
 const ROUTES = [
   [[54, 50], [30, 44], [5, 24], [-20, -10], [-38, -48], [-52, -66], [-64, -68], [-80, -70]],
   [[30, 44], [70, 10], [105, -28], [121, -40]],
-  [[54, 50], [46, 60], [45, 72], [44, 84]]
+  [[54, 50], [46, 60], [45, 72], [44, 84]],
+  [[-64, -84], [-66.5, -104], [-72, -122], [-76, -134]]
 ];
 const JARDIN = { x0: 30, x1: 130, z0: 72, z1: 144 };
 const dansJardin = (x, z, m = 0) => x > JARDIN.x0 - m && x < JARDIN.x1 + m && z > JARDIN.z0 - m && z < JARDIN.z1 + m;
@@ -311,7 +327,7 @@ function ruban(pts, larg, couleur) {
   const m = new T.Mesh(g, new T.MeshStandardMaterial({ color: couleur, map: TX.sol.map, normalMap: TX.sol.normalMap, normalScale: new T.Vector2(2, 2), roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   m.receiveShadow = true; scene.add(m);
 }
-ruban(ROUTES[0], 4.6, 0xd7c29c); ruban(ROUTES[1], 4, 0xcdb792); ruban(ROUTES[2], 3, 0xc0aa82);
+ruban(ROUTES[0], 4.6, 0xd7c29c); ruban(ROUTES[1], 4, 0xcdb792); ruban(ROUTES[2], 3, 0xc0aa82); ruban(ROUTES[3], 3, 0xc8b08a);
 
 /* ---------- Obstacles ---------- */
 const CERCLES = [], BOITES = [];
@@ -330,9 +346,12 @@ function resoudre(p, r, avecPnj) {
     p.x += ex * b.c + ez * b.s; p.z += -ex * b.s + ez * b.c; choc = true;
   }
   const rr = Math.hypot(p.x, p.z); if (rr > 235) { p.x *= 235 / rr; p.z *= 235 / rr; choc = true; }
-  if (p.z < -128) { p.z = -128; choc = true; }
+  if (p.z < -128 && !surJetee(p.x, p.z)) { p.z = -128; choc = true; }
+  if (p.z < -128 && surJetee(p.x, p.z)) p.x = clamp(p.x, -77.1, -74.9);
   return choc;
 }
+const surJetee = (x, z) => x > -77.3 && x < -74.7 && z < -127 && z > -154;
+const solJ = (x, z) => surJetee(x, z) ? Math.max(H(x, z), .98) : H(x, z);
 function dansBatiment(x, z, y) { for (const b of BOITES) { if (b.haut < 2.2) continue; const dx = x - b.x, dz = z - b.z, lx = dx * b.c - dz * b.s, lz = dx * b.s + dz * b.c; if (Math.abs(lx) < b.hw && Math.abs(lz) < b.hd && y < b.haut + b.y0) return true; } return false; }
 
 /* ---------- Bâtiments ---------- */
@@ -487,7 +506,7 @@ let DRAPEAU = null;
   const MAISONS = [
     [-94, -50, 9, 9, 7], [-84, -50, 8, 9, 8.5], [-72, -50, 9, 9, 7], [-63, -50, 7, 8, 6],
     [-56, -80, 9, 10, 7, PI / 2], [-55, -53, 8, 8, 6, PI / 2], [-104, -50, 8, 10, 6, -PI / 2], [-106, -90, 9, 10, 7, -PI / 2],
-    [-96, -92, 8, 10, 8, PI], [-60, -96, 9, 10, 7, PI], [-88, -38, 9, 8, 6, PI], [-74, -38, 8, 8, 6, PI], [-116, -62, 8, 10, 6, -PI / 2],
+    [-96, -92, 8, 10, 8, PI], [-56.5, -96, 8, 10, 7, PI], [-88, -38, 9, 8, 6, PI], [-74, -38, 8, 8, 6, PI], [-116, -62, 8, 10, 6, -PI / 2],
     [-44, -42, 7, 8, 5.5, -PI / 3, { plat: true }], [-30, -54, 8, 7, 5.5, .2], [-116, -78, 8, 9, 6, -PI / 2], [-56, -108, 8, 8, 6, PI],
     [-100, -108, 8, 8, 6.5, PI], [-84, -110, 9, 8, 6, PI, { plat: true }], [-122, -48, 7, 8, 5, -PI / 2]
   ];
@@ -580,7 +599,7 @@ function foret(liste, geoTronc, matTronc, geoFeuilles, matFeuilles) {
   const tO = tronc([[0, 0, 0, .25, .9, .1, .26, .2], [.25, .9, .1, -.1, 1.6, -.1, .2, .14], [-.1, 1.6, -.1, .8, 2.4, .3, .12, .06], [-.1, 1.6, -.1, -.9, 2.3, -.2, .12, .06], [.25, .9, .1, .3, 2.6, -.6, .1, .05]]);
   const fO = couronne(Q.arbres < 1 ? 60 : 110, 1.4, .9, 1.3, 2.4, .9, 9, [[.6, .1, .2, 1], [-.7, 0, -.1, 1], [0, .5, -.4, .9]]);
   SANS_AO.push(...foret(ol, tO, ecorceO, fO, matFeuilleO).slice(1));
-  for (const [x, z] of [[-60, -96], [-100, -96], [-66, -100], [-102, -100], [112, -30], [140, -30], [140, -58], [98, 26], [86, 30], [92, 30], [22, 62], [22, 70], [-71, -101], [-89, -102]]) { cy.push({ x, y: H(x, z), z, s: .85 + R() * .35, ry: R() * 6 }); CERCLES.push({ x, z, r: .7 }); }
+  for (const [x, z] of [[-100, -96], [-102, -100], [112, -30], [140, -30], [140, -58], [98, 26], [86, 30], [92, 30], [22, 62], [22, 70], [-71, -101], [-89, -102]]) { cy.push({ x, y: H(x, z), z, s: .85 + R() * .35, ry: R() * 6 }); CERCLES.push({ x, z, r: .7 }); }
   const tY = tronc([[0, 0, 0, 0, 1.5, 0, .2, .14]]), fY = couronne(70, .85, 3.4, .85, 4.2, .9, 13);
   SANS_AO.push(...foret(cy, tY, ecorce, fY, matFeuilleY).slice(1));
   // Figuiers de Barbarie : raquettes empilées
@@ -677,7 +696,7 @@ function lanterneMurale(x, z, ry, hh = 3) { const B = mat4(x, H(x, z), z, ry); p
   // Village plus dense : maisons en second rang, ruelles
   for (const [x, z, w, d, h, r = 0, o = {}] of [
     [-128, -64, 8, 9, 6, -PI / 2], [-128, -80, 8, 9, 7, -PI / 2], [-118, -96, 8, 9, 6, PI], [-110, -120, 9, 8, 6.5, PI], [-92, -122, 8, 8, 6, PI, { plat: true }],
-    [-72, -121, 9, 8, 7, PI], [-40, -100, 8, 8, 6, PI / 2], [-36, -74, 8, 8, 6, PI / 2], [-104, -36, 8, 8, 6, 0], [-120, -34, 7, 8, 5.5, 0], [-60, -36, 8, 8, 6, 0, { plat: true }], [-46, -28, 7, 7, 5, .4]
+    [-48, -118, 8, 8, 6, PI], [-40, -100, 8, 8, 6, PI / 2], [-36, -74, 8, 8, 6, PI / 2], [-104, -36, 8, 8, 6, 0], [-120, -34, 7, 8, 5.5, 0], [-60, -36, 8, 8, 6, 0, { plat: true }], [-46, -28, 7, 7, 5, .4]
   ]) maison(x, z, w, d, h, r, o);
   // Linge tendu dans les ruelles derrière la place
   for (const x of [-91, -86, -76, -72]) linge(x, -45.3, x + .4, -42.2, 3.6 + R());
@@ -701,12 +720,76 @@ function lanterneMurale(x, z, ry, hh = 3) { const B = mat4(x, H(x, z), z, ry); p
   for (const [x, z] of [[-89.5, -58.8], [-90.3, -58.6], [80.5, 46]]) poser(new T.SphereGeometry(.3, 10, 8), 'tissu:b8a27a', mat4(x, H(x, z) + .22, z, R() * 3, 0, 0, 1, .75, 1));
 })();
 
+/* ---------- Drapeaux siciliens (Trinacria) qui flottent au vent ---------- */
+const TEX_DRAPEAU = texDrapeau();
+const matDrapeau = new T.MeshStandardMaterial({ map: TEX_DRAPEAU, side: T.DoubleSide, roughness: .85 });
+matDrapeau.onBeforeCompile = sh => { sh.uniforms.uTemps = VENT.uTemps; sh.vertexShader = 'uniform float uTemps;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+  float kd = clamp(uv.x, 0.0, 1.0); transformed.z += sin(position.x * 4.0 - uTemps * 5.0 + position.y * 1.7) * 0.11 * kd + sin(position.x * 9.0 - uTemps * 8.0) * 0.025 * kd; transformed.y -= kd * kd * 0.06;`); };
+matDrapeau.customProgramCacheKey = () => 'drapeau';
+const DRAPEAUX = [];
+function drapeau(x, z, ry, hm = 7, w = 1.8, parent = scene, yb) {
+  const y0 = yb ?? H(x, z), g = new T.Group(); g.position.set(x, y0, z); g.rotation.y = ry; parent.add(g);
+  const mat_ = new T.Mesh(new T.CylinderGeometry(.045, .06, hm, 8), M('fer')); mat_.position.y = hm / 2; mat_.castShadow = true; g.add(mat_);
+  const b = new T.Mesh(new T.SphereGeometry(.08, 10, 8), M('bronze')); b.position.y = hm + .05; g.add(b);
+  const pg = new T.PlaneGeometry(w, w * 2 / 3, 18, 10); pg.translate(w / 2 + .05, 0, 0);
+  const f = new T.Mesh(pg, matDrapeau); f.position.y = hm - w / 3 - .1; f.castShadow = true; g.add(f); DRAPEAUX.push(f); return g;
+}
+function banniere(x, y, z, ry, w = .9, h = 1.5, parent = scene) {
+  const g = new T.PlaneGeometry(w, h, 6, 10); const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) { const u = uv.getX(i), v = uv.getY(i); uv.setXY(i, v, 1 - u); }
+  const m = new T.Mesh(g, new T.MeshStandardMaterial({ map: TEX_DRAPEAU, side: T.DoubleSide, roughness: .85 })); m.position.set(x, y, z); m.rotation.y = ry; m.castShadow = true; parent.add(m);
+  const t = new T.Mesh(new T.CylinderGeometry(.025, .025, w + .2, 6), M('bois:5a4230')); t.rotation.z = PI / 2; t.position.set(0, h / 2 + .03, 0); m.add(t); return m;
+}
+// Toujours présents : la Trinacria sur la tour de la masseria et sur le port
+drapeau(L.masseria.x + 10.5, L.masseria.z - 2, .4, 3.2, 1.9, scene, H(L.masseria.x, L.masseria.z) + 13.6);
+drapeau(-74.4, -137, -.3, 6, 1.6, scene, 1);
+
+/* Petit port de pêche : jetée en bois sur pilotis, barques, casiers */
+const BARQUES = [];
+(() => {
+  for (let z = -133; z >= -153; z -= 2) { piece(mat4(-76, 0, z), 'bois:9a7a58', 2.5, .12, 2.06, 0, .92, 0); for (const sx of [-1.12, 1.12]) poser(new T.CylinderGeometry(.09, .11, 3.2, 8), 'bois:5a4230', mat4(-76 + sx, -.6, z)); }
+  for (const sx of [-1.2, 1.2]) piece(mat4(-76, 0, -143), 'bois:7a5a3a', .08, .08, 20, sx, 1.45, 0, 0, 0, 0, false);
+  for (let z = -134; z >= -152; z -= 3) for (const sx of [-1.2, 1.2]) piece(mat4(-76, 0, z), 'bois:7a5a3a', .08, .55, .08, sx, 1.2, 0, 0, 0, 0, false);
+  for (const [x, z] of [[-74.6, -150], [-77.3, -146]]) { piece(mat4(x, 1, z, R()), 'bois:a07848', .6, .45, .5, 0, .23, 0); }
+  const coques = [['2f5a8a', 'f0ece4'], ['c94a3a', 'f0ece4'], ['3a7a5a', 'e8d27a']];
+  [[-80.5, -141, .15], [-71.5, -146, -.2], [-80, -150, .35]].forEach(([x, z, r], i) => {
+    const g = new T.Group(); g.position.set(x, .3, z); g.rotation.y = r; scene.add(g);
+    const coque = new T.Mesh(new T.SphereGeometry(1, 20, 10, 0, PI * 2, PI / 2, PI / 2), new T.MeshStandardMaterial({ color: parseInt(coques[i][0], 16), map: TX.bois.map, normalMap: TX.bois.normalMap, roughness: .7, side: T.DoubleSide })); coque.scale.set(.85, .55, 2.6); coque.castShadow = true; g.add(coque);
+    const liston = new T.Mesh(new T.TorusGeometry(1, .04, 6, 28), M('bois:' + coques[i][1])); liston.rotation.x = PI / 2; liston.scale.set(.85, 2.6, 1); liston.position.y = .02; g.add(liston);
+    const banc_ = new T.Mesh(new T.BoxGeometry(1.5, .06, .3), M('bois:8a6a48')); banc_.position.set(0, -.08, .3); g.add(banc_);
+    const rame = new T.Mesh(new T.CylinderGeometry(.025, .025, 2.6, 6), M('bois:8a6a48')); rame.rotation.set(0, 0, 1.3); rame.position.set(.6, .05, -.2); g.add(rame);
+    BARQUES.push({ g, ph: R() * 6 });
+  });
+})();
+
+/* Décor de la fête de Santa Lucia (deuxième partie) : guirlandes, bannières, arche de lumières, statue */
+const FESTA = new T.Group(); FESTA.visible = false; scene.add(FESTA);
+(() => {
+  const V = L.village, yv = H(V.x, V.z);
+  const tri = new T.BufferGeometry(); tri.setAttribute('position', new T.Float32BufferAttribute([-.17, 0, 0, .17, 0, 0, 0, -.38, 0], 3)); tri.computeVertexNormals();
+  const geos = { r: [], j: [] };
+  for (const [ax, az, bx, bz] of [[-97, -57.5, -63, -82.5], [-97, -82.5, -63, -57.5], [-97, -70, -63, -70], [-80, -57.5, -80, -83]]) {
+    const L0 = Math.hypot(bx - ax, bz - az), n = Math.floor(L0 / .45), rot = Math.atan2(-(bz - az) / L0, (bx - ax) / L0);
+    for (let i = 0; i <= n; i++) { const t = i / n, x = lerp(ax, bx, t), z = lerp(az, bz, t), y = yv + 6.2 - Math.sin(t * PI) * 1.3; const g = tri.clone(); g.rotateY(rot); g.rotateY((R() - .5) * .3); g.translate(x, y, z); geos[i % 2 ? 'j' : 'r'].push(g); }
+    const corde = new T.Mesh(new T.CylinderGeometry(.01, .01, L0, 4), M('uni:3a3028')); corde.rotation.set(0, rot, PI / 2); corde.position.set((ax + bx) / 2, yv + 5.55, (az + bz) / 2); FESTA.add(corde);
+  }
+  const mr = new T.MeshStandardMaterial({ color: 0xc4161c, side: T.DoubleSide, roughness: .8 }), mj = new T.MeshStandardMaterial({ color: 0xf4c21a, side: T.DoubleSide, roughness: .8 });
+  FESTA.add(new T.Mesh(mergeGeometries(geos.r), mr), new T.Mesh(mergeGeometries(geos.j), mj));
+  for (const [x, z, r] of [[-94, -54.35, PI], [-84, -54.35, PI], [-72, -54.35, PI], [-60.85, -76, -PI / 2], [-60.85, -84, -PI / 2]]) banniere(x, yv + 4.4, z, r, .9, 1.5, FESTA);
+  for (const [x, z, r] of [[-96, -58, -.6], [-64, -58, -2.4], [-96, -83, .6], [-64, -83, 2.4]]) drapeau(x, z, r, 7, 1.8, FESTA, yv);
+  // Arche de lumières (« luminarie ») à l'entrée de la place
+  const pts = []; for (let i = 0; i <= 24; i++) { const a = PI * i / 24; pts.push([Math.cos(a) * 4.2, 4.6 + Math.sin(a) * 2.4]); }
+  for (let i = 0; i < 12; i++) { pts.push([-4.2, i * .4], [4.2, i * .4]); }
+  const ampoules = mergeGeometries(pts.map(([u, v]) => new T.SphereGeometry(.07, 6, 5).translate(0, v, u)));
+  const arche = new T.Mesh(ampoules, M('lumiere')); arche.position.set(-62.5, H(-62.5, -66), -66); FESTA.add(arche);
+  const bois = new T.Mesh(mergeGeometries([new T.BoxGeometry(.12, 4.8, .12).translate(0, 2.4, -4.2), new T.BoxGeometry(.12, 4.8, .12).translate(0, 2.4, 4.2)]), M('bois:e8e0d0')); bois.position.copy(arche.position); FESTA.add(bois);
+})();
+
 /* ---------- Lanternes ---------- */
 const LAMPES = [];
 function lampe(x, y, z, parent) { const l = new T.PointLight(0xffa850, 0, 24, 2); l.position.set(x, y, z); (parent || scene).add(l); LAMPES.push(l); return l; }
-const lampesFixes = [lampe(56.1, H(57, 46) + 4.2, 46.1), lampe(L.village.x + 3, H(L.village.x, L.village.z) + 4, L.village.z + 2), lampe(L.porteCaserne.x + .45, H(-98, -70) + 3.1, L.porteCaserne.z + 1.9)];
+const lampesFixes = [lampe(121, H(121, -37) + 3.2, -36.4), lampe(56.1, H(57, 46) + 4.2, 46.1), lampe(L.village.x + 3, H(L.village.x, L.village.z) + 4, L.village.z + 2), lampe(L.porteCaserne.x + .45, H(-98, -70) + 3.1, L.porteCaserne.z + 1.9)];
 (() => {
-  const p = lampesFixes[1].position; const B = mat4(p.x, p.y - 4, p.z);
+  const p = lampesFixes[2].position; const B = mat4(p.x, p.y - 4, p.z);
   poser(new T.CylinderGeometry(.07, .1, 4, 8), 'fer', B.clone().multiply(mat4(0, 2, 0))); piece(B, 'fer', .5, .05, .05, -.2, 3.75, 0, 0, 0, 0, false);
   for (const l of lampesFixes) { piece(mat4(l.position.x, l.position.y, l.position.z), 'lumiere', .2, .3, .2, 0, -.05, 0, 0, 0, 0, false); piece(mat4(l.position.x, l.position.y, l.position.z), 'fer', .3, .06, .3, 0, .14, 0, 0, 0, 0, false); }
 })();
@@ -714,6 +797,26 @@ construireLots();
 
 /* ---------- Personnages : corps modelés et articulés (hanches, genoux, épaules, coudes) ---------- */
 await etape('Personnages…');
+const TETE = await (async () => {
+  try {
+    const gl = await new GLTFLoader().loadAsync('modeles/tete/LeePerrySmith.glb');
+    const src = gl.scene.getObjectByName('LeePerrySmith') || gl.scene.children.find(o => o.isMesh);
+    const g = src.geometry.clone(), p = g.attributes.position, s = .0532, X0 = .11, Y0 = .5, Z0 = .24;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i); let z = p.getZ(i);
+      for (const ex of [-.72, .5]) { const dx = (x - ex) / .31, dy = (y - 1.8) / .135, d2 = dx * dx + dy * dy; if (d2 < 1 && z > 1.5) z -= (1 - d2) * .4; }
+      p.setXYZ(i, (x + X0) * s, (y + Y0) * s - .087, (z - Z0) * s);
+    }
+    const lim = (-1.7 + Y0) * s - .087, id = g.index.array, garde = [];
+    for (let t = 0; t < id.length; t += 3) if (p.getY(id[t]) > lim && p.getY(id[t + 1]) > lim && p.getY(id[t + 2]) > lim) garde.push(id[t], id[t + 1], id[t + 2]);
+    g.setIndex(garde); g.computeVertexNormals(); g.computeBoundingSphere();
+    const tl = new T.TextureLoader(), map = await tl.loadAsync('modeles/tete/Map-COL.jpg'), nm = await tl.loadAsync('modeles/tete/Infinite-Level_02_Tangent_SmoothUV.jpg');
+    map.colorSpace = T.SRGBColorSpace; map.anisotropy = nm.anisotropy = Math.min(ANISO, 8);
+    const c = document.createElement('canvas'); c.width = c.height = 16; const cx = c.getContext('2d'); cx.drawImage(map.image, 0, 0, 16, 16); const d = cx.getImageData(0, 0, 16, 16).data; const moy = [0, 0, 0]; for (let i = 0; i < d.length; i += 4) for (let k = 0; k < 3; k++) moy[k] += d[i + k] / 255 / 256;
+    const oeil = (sx) => new T.Vector3(((sx < 0 ? -.72 : .5) + X0) * s, (1.8 + Y0) * s - .087, (1.76 - Z0) * s);
+    return { g, map, nm, moy: new T.Color().setRGB(moy[0], moy[1], moy[2], T.SRGBColorSpace), oeil, s, haut: (3.97 + Y0) * s - .087 };
+  } catch (e) { console.warn('Tête scannée indisponible :', e && e.message); return null; }
+})();
 const GH = {
   cuisse: new T.CapsuleGeometry(.078, .34, 4, 12), tibia: new T.CapsuleGeometry(.062, .32, 4, 12), bras: new T.CapsuleGeometry(.054, .21, 4, 10), avb: new T.CapsuleGeometry(.046, .19, 4, 10),
   main: new T.SphereGeometry(.05, 12, 8), crane: new T.SphereGeometry(.105, 24, 18), nez: new T.ConeGeometry(.02, .055, 8), oreille: new T.SphereGeometry(.028, 10, 8), oeil: new T.SphereGeometry(.013, 10, 8),
@@ -780,9 +883,25 @@ function humain(o = {}) {
   if (o.gilet != null) for (let i = 0; i < 4; i++) partie(corps, GH.bouton, 'bronze', 0, 1.06 + i * .08, .143 + i * .006);
   const tete = new T.Group(); tete.position.set(0, 1.74, .01); corps.add(tete);
   const typeVisage = o.robe != null ? 'femme' : o.vieux ? 'vieux' : 'homme';
+  const scan = !!TETE && typeVisage !== 'femme' && (o.taille ?? 1) > .9;
+  const paupieres = [];
+  if (scan) {
+    const tv = new T.Group(); tv.scale.set(1.06 * (o.largeur ?? 1), 1.06 * (o.longueur ?? 1), 1.06); tete.add(tv);
+    partie(tv, TETE.g, 'scan:' + hex(o.peau ?? 0xc69068), 0, 0, 0);
+    for (const sx of [-1, 1]) {
+      const e = TETE.oeil(sx);
+      partie(tv, GH.globe, 'oeil', e.x, e.y, e.z, 1.08, 1.08, 1.08);
+      partie(tv, GH.iris, 'iris:' + hex(o.yeux ?? 0x3a2414), e.x, e.y, e.z + .0094, 1.05, 1.05, .45);
+      const pp = new T.Group(); pp.position.copy(e); tv.add(pp); partie(pp, GH.paupiere, 'scan:' + hex(o.peau ?? 0xc69068), 0, 0, 0, 1.12, 1.12, 1.12); pp.rotation.x = .3; paupieres.push(pp);
+      partie(tv, GH.sourcil, 'cils', e.x, e.y + .0062, e.z + .0108, .55, .6, .6, 0, 0, sx * .06);
+      partie(tv, GH.sourcil, chev, e.x + sx * .002, e.y + .0235, e.z + .0135, 1.1, 1.25, 1.1, 0, sx * -.2, sx * -.1);
+    }
+    if (o.moustache) { const mc = 'cheveux:' + hex(o.moustache === true ? o.cheveux ?? 0x1e1712 : o.moustache); for (const sx of [-1, 1]) partie(tv, GH.moust, mc, sx * .015, -.0185, .1135, 1.1, 1.15, 1, 0, sx * -.4, sx * .32); }
+    if (o.barbe) partie(tv, TETE.g, 'barbe:' + hex(o.barbe), 0, -.001, .002, 1.035, 1.025, 1.05);
+    if (!o.chauve) partie(tv, GH.chevelure, chev, 0, .03, -.01, .93, 1.0, 1.06, -.25);
+  } else {
   partie(tete, GH.tete, 'visage:' + typeVisage + ':' + hex(o.peau ?? 0xc69068), 0, 0, 0);
   partie(tete, GH.oreille, peau, -.091, -.004, -.008, .42, 1.05, .78); partie(tete, GH.oreille, peau, .091, -.004, -.008, .42, 1.05, .78);
-  const paupieres = [];
   for (const sx of [-1, 1]) {
     const e = OEIL(sx);
     partie(tete, GH.globe, 'oeil', e.x, e.y, e.z);
@@ -795,13 +914,15 @@ function humain(o = {}) {
   else partie(tete, GH.chevelure, chev, 0, -.035, -.012, 1.01, .75, 1.01, -1.3);
   if (o.moustache) { const mc = 'cheveux:' + hex(o.moustache === true ? o.cheveux ?? 0x1e1712 : o.moustache), m0 = formeTete(...new T.Vector3(0, -.37, .93).normalize().toArray()); for (const sx of [-1, 1]) partie(tete, GH.moust, mc, sx * .017, m0.y, m0.z + .004, 1, 1, 1, 0, sx * -.35, sx * .3); }
   if (o.barbe) partie(tete, GH.barbe, 'cheveux:' + hex(o.barbe), 0, 0, 0);
+  }
+  const chap = new T.Group(); if (scan) { chap.position.set(0, .04, -.008); chap.scale.setScalar(1.15); } tete.add(chap);
   const ch = o.chapeau, cc = (o.chapeauC != null ? 'tissu:' + hex(o.chapeauC) : 'tissu:3b3530');
-  if (ch === 'coppola') { partie(tete, GH.calotte, cc, 0, .065, .012, 1.06, .42, 1.12, -.12); partie(tete, GH.visiere, cc, 0, .07, .075, 1, 1, 1, .16); }
-  else if (ch === 'paille') { partie(tete, GH.disque, 'tissu:' + hex(o.chapeauC ?? 0xcdb27a), 0, .08, 0, .27, .012, .27); partie(tete, GH.disque, 'tissu:' + hex(o.chapeauC ?? 0xcdb27a), 0, .14, 0, .118, .12, .118); partie(tete, GH.disque, 'tissu:4a3020', 0, .1, 0, .121, .03, .121); }
-  else if (ch === 'feutre') { partie(tete, GH.disque, cc, 0, .08, 0, .17, .012, .17); partie(tete, GH.calotte, cc, 0, .085, 0, 1, .95, 1); partie(tete, GH.disque, 'tissu:151210', 0, .1, 0, .121, .03, .121); }
-  else if (ch === 'lucerna') { partie(tete, GH.demiLune, 'tissu:121318', 0, .08, 0, 1.1, 1, 1, PI / 2, 0); partie(tete, GH.oreille, 'tissu:b03a2e', 0, .19, .03, .8, .8, .5); partie(tete, GH.disque, 'bronze', .05, .14, .03, .03, .01, .03, PI / 2); }
-  else if (ch === 'scialle') { partie(tete, GH.calotte, cc, 0, -.01, -.01, 1.15, 1.25, 1.15, -.25); partie(corps, GH.cape, cc, 0, 0, 0, 1, 1, .8); }
-  else if (ch === 'pretre') { partie(tete, GH.disque, cc, 0, .085, 0, .21, .012, .21); partie(tete, GH.calotte, cc, 0, .09, 0, .85, .7, .85); }
+  if (ch === 'coppola') { partie(chap, GH.calotte, cc, 0, .065, .012, 1.06, .42, 1.12, -.12); partie(chap, GH.visiere, cc, 0, .07, .075, 1, 1, 1, .16); }
+  else if (ch === 'paille') { partie(chap, GH.disque, 'tissu:' + hex(o.chapeauC ?? 0xcdb27a), 0, .08, 0, .27, .012, .27); partie(chap, GH.disque, 'tissu:' + hex(o.chapeauC ?? 0xcdb27a), 0, .14, 0, .118, .12, .118); partie(chap, GH.disque, 'tissu:4a3020', 0, .1, 0, .121, .03, .121); }
+  else if (ch === 'feutre') { partie(chap, GH.disque, cc, 0, .08, 0, .17, .012, .17); partie(chap, GH.calotte, cc, 0, .085, 0, 1, .95, 1); partie(chap, GH.disque, 'tissu:151210', 0, .1, 0, .121, .03, .121); }
+  else if (ch === 'lucerna') { partie(chap, GH.demiLune, 'tissu:121318', 0, .08, 0, 1.1, 1, 1, PI / 2, 0); partie(chap, GH.oreille, 'tissu:b03a2e', 0, .19, .03, .8, .8, .5); partie(chap, GH.disque, 'bronze', .05, .14, .03, .03, .01, .03, PI / 2); }
+  else if (ch === 'scialle') { partie(chap, GH.calotte, cc, 0, -.01, -.01, 1.15, 1.25, 1.15, -.25); partie(corps, GH.cape, cc, 0, 0, 0, 1, 1, .8); }
+  else if (ch === 'pretre') { partie(chap, GH.disque, cc, 0, .085, 0, .21, .012, .21); partie(chap, GH.calotte, cc, 0, .09, 0, .85, .7, .85); }
   const bras = sx => {
     const p = new T.Group(); p.position.set(sx * .205, 1.45, 0); corps.add(p);
     const tc = o.veste != null ? 'tissu:' + hex(o.veste) : chem;
@@ -816,6 +937,7 @@ function humain(o = {}) {
   let lanterne = null;
   if (o.lanterne) { lanterne = new T.Group(); lanterne.position.set(0, -.33, .04); bd.coude.add(lanterne); partie(lanterne, GH.disque, 'lumiere', 0, -.1, 0, .06, .16, .06); partie(lanterne, GH.disque, 'fer', 0, .0, 0, .075, .03, .075); partie(lanterne, GH.disque, 'fer', 0, -.19, 0, .075, .03, .075); }
   if (o.cassette) { const c = new T.Mesh(new T.BoxGeometry(.3, .18, .22), M('bois:5a3a22')); c.position.set(0, -.32, .1); bg.coude.add(c); }
+  corps.scale.set(.92, 1, .95); tete.scale.set(1 / .92, 1, 1 / .95);
   g.scale.setScalar(o.taille ?? 1);
   return { g, corps, tete, torse, jg, jd, bg, bd, ph: R() * 6, amp: 0, lanterne, porte: !!o.lanterne, assis: false, paupieres, cligne: R() * 4, ferme: 0, parle: false, tp: 0 };
 }
@@ -865,6 +987,18 @@ pnj('campiere2', 'Un campiere', { foulard: 0x2a3a5a, veste: 0x3a3a30, pantalon: 
 pnj('ruffo', 'Le brigadier Ruffo', { veste: 0x1d2433, chemise: 0x1d2433, pantalon: 0x1d2433, chapeau: 'lucerna', moustache: 0x5a3a20, cheveux: 0x5a3a20, peau: 0xd9ad88, ceinture: 0xe8e2d0 }, -97, -70, PI / 2, 'scene');
 pnj('gardien1', 'Un campiere', { veste: 0x3f3a2a, pantalon: 0x2e2a24, chapeau: 'coppola', lupara: true }, 122, -34, 0);
 pnj('gardien2', 'Un campiere', { veste: 0x2f3a33, pantalon: 0x2e2a24, chapeau: 'feutre', lupara: true }, 128, -34, 0);
+const TURI2 = { chemise: 0xece6d6, gilet: 0x5a2a22, veste: 0x2c3628, pantalon: 0x2a2620, chapeau: 'coppola', chapeauC: 0x2a2620, cheveux: 0x22180f, moustache: true, foulard: 0x8e1f1a, peau: 0xc08660, largeur: 1.03 };
+pnj('don', 'Don Gaspare', { vieux: true, veste: 0x16161a, gilet: 0x2a2a30, chemise: 0xf0ece4, pantalon: 0x16161a, chapeau: 'feutre', chapeauC: 0x101010, moustache: 0xdcd8d0, barbe: 0xdcd8d0, cheveux: 0xdcd8d0, peau: 0xc89a78, largeur: 1.06, longueur: .98 }, 121, -34, 0, 'scene');
+pnj('nardo2', 'Nardo', { veste: 0x3f4a33, chemise: 0xd9cfb8, pantalon: 0x2e2a24, chapeau: 'coppola', chapeauC: 0x2a2620, moustache: 0x4a3a2a, foulard: 0x8e1f1a, peau: 0xb8805a, largeur: 1.05 }, -89, -74, 0, 'scene');
+pnj('concetta', 'Concetta', { robe: 0x24365a, chemise: 0xe8e0cc, chapeau: 'scialle', chapeauC: 0x4a2a2a, peau: 0xd6a582, cheveux: 0x1a120c }, 70, 46.6, 0, 'scene');
+pnj('saro', 'Saro', { chemise: 0xe0d6bf, pantalon: 0x5a4a38, taille: .62, cheveux: 0x2a1d12 }, 71.2, 47.3, 0, 'scene');
+pnj('carmelo', 'Carmelo', { manches: true, chemise: 0xd8ccb0, gilet: 0x4a3a2a, pantalon: 0x4a3f33, chapeau: 'paille', chapeauC: 0xc8ab70, moustache: true, peau: 0xb07a50, longueur: 1.04 }, 63, 56, -PI / 2, 'scene');
+pnj('vanni', 'Zu Vanni', { vieux: true, manches: true, chemise: 0x5a6a7a, pantalon: 0x3a3a40, chapeau: 'coppola', chapeauC: 0x8a2a22, barbe: 0x9a968c, moustache: 0x9a968c, peau: 0xa86e48, largeur: .97 }, -76, -149, PI, 'scene');
+pnj('marechal', 'Le maréchal', { veste: 0x1a2232, chemise: 0x1a2232, pantalon: 0x1a2232, chapeau: 'lucerna', moustache: 0x7a5a3a, cheveux: 0x7a5a3a, peau: 0xe0b898, ceinture: 0xe8e2d0 }, -84, -66, 0, 'scene');
+function poserPositions1877() {
+  poserPnj('don', -91.5, -73, PI / 2); poserPnj('concetta', 70, 46.6, 0); poserPnj('saro', 71.2, 47.3, -.3); poserPnj('carmelo', 63, 56, -PI / 2); poserPnj('vanni', -76, -149, PI);
+  PNJ.vanni.pos.y = .98;
+}
 const DIRES = [
   'Garibaldi est passé, les impôts sont restés.',
   'Les Piémontais veulent nos fils pour leur armée. Mon neveu s’est caché dans la montagne.',
@@ -881,6 +1015,16 @@ const FIGURANTS = [
   [-62, -66, [[-62, -66], [-40, -40], [-20, -12]]], [-95, -66, null], [44.5, 86.5, null], [58.5, 107.5, null], [93.5, 121.5, [[93.5, 121.5], [93.5, 93.5], [100.5, 93.5]]], [-84, -58, null]
 ];
 FIGURANTS.forEach(([x, z, trajet], i) => { const p = pnj('fig' + i, 'Un habitant', Object.assign({ peau: [0xc08a5e, 0xb07a50, 0xd2a07a][i % 3], moustache: i % 4 === 1 }, HABITS[i % HABITS.length]), x, z, R() * 6); p.trajet = trajet; p.repliques = [DIRES[i % DIRES.length]]; p.figurant = true; });
+/* Statue de Santa Lucia (décor de la fête) */
+(() => {
+  // Statue de Santa Lucia sur son brancard fleuri
+  const vara = new T.Group(); vara.position.set(-73.5, H(-73.5, -81), -81); FESTA.add(vara);
+  const plat = new T.Mesh(new T.BoxGeometry(1.8, .5, 1.4), M('bois:c8a050')); plat.position.y = .9; vara.add(plat);
+  for (const sx of [-1.2, 1.2]) { const b = new T.Mesh(new T.BoxGeometry(.1, .1, 3.2), M('bois:8a6a48')); b.position.set(sx * .6, .7, 0); vara.add(b); }
+  const sainte = humain({ robe: 0x3a5a9a, chemise: 0xf0ece4, chapeau: 'scialle', chapeauC: 0xf0ece4, peau: 0xe8c8a8, taille: 1.05 }); sainte.g.position.y = 1.15; sainte.bd.rotation.x = -.6; sainte.bd.coude.rotation.x = -1; vara.add(sainte.g);
+  const aureole = new T.Mesh(new T.TorusGeometry(.17, .012, 6, 24), M('bronze')); aureole.position.set(0, 1.15 + 1.92, -.06); vara.add(aureole);
+  for (let i = 0; i < 8; i++) { const f = new T.Mesh(new T.SphereGeometry(.12, 8, 6), M(i % 2 ? 'uni:c8281e' : 'uni:f0ece4')); f.position.set(-.7 + (i % 4) * .46, 1.2, i < 4 ? -.55 : .55); vara.add(f); }
+})();
 
 /* ---------- Animaux : hirondelles, poules, chien, chat ---------- */
 const VIE = (() => {
@@ -943,6 +1087,7 @@ function majVie(dt, s) {
   }
   VIE.tronc_.scale.y = 1 + Math.sin(s * 1.6) * .035; VIE.queueC.rotation.y = Math.sin(s * 9) * .5 * Math.max(0, Math.sin(s * .4));
   VIE.queueT.rotation.y = Math.sin(s * 1.3) * .6;
+  for (const b of BARQUES) { b.g.position.y = .3 + Math.sin(s * 1.1 + b.ph) * .05; b.g.rotation.z = Math.sin(s * .9 + b.ph) * .04; }
 }
 
 /* ---------- Le carretto sicilien et sa mule ---------- */
@@ -995,9 +1140,15 @@ function poserCharrette() {
 }
 
 /* ---------- Joueur ---------- */
-const J = { x: 48, z: 52, yaw: PI / 2, v: 0, endu: 1, epuise: false, dansChar: false, courir: false, h: humain(TURI) };
+const J = { x: 48, z: 52, yaw: PI / 2, v: 0, endu: 1, epuise: false, dansChar: false, courir: false, h: humain(TURI), acte: 1 };
 scene.add(J.h.g);
-function placerJoueur(x, z, yaw) { if (J.dansChar) sortirChar(true); J.x = x; J.z = z; J.yaw = yaw; J.v = 0; J.h.g.position.set(x, H(x, z), z); J.h.g.rotation.y = yaw; CAM.yaw = yaw + PI; CAM.pret = false; majHerbe(x, z); }
+function habillerTuri(acte) {
+  if (J.acte === acte) return;
+  const par = J.h.g.parent; if (par) par.remove(J.h.g);
+  J.h = humain(acte === 2 ? TURI2 : TURI); J.acte = acte; scene.add(J.h.g); J.h.g.position.set(J.x, solJ(J.x, J.z), J.z);
+  if (J.dansChar) { J.dansChar = false; }
+}
+function placerJoueur(x, z, yaw) { if (J.dansChar) sortirChar(true); J.x = x; J.z = z; J.yaw = yaw; J.v = 0; J.h.g.position.set(x, solJ(x, z), z); J.h.g.rotation.y = yaw; CAM.yaw = yaw + PI; CAM.pret = false; majHerbe(x, z); }
 function monterChar() { J.dansChar = true; J.h.assis = true; CHAR.g.add(J.h.g); J.h.g.position.set(0, .6, .72); J.h.g.rotation.set(0, 0, 0); CAM.libre = 0; SON.sabot(); }
 function sortirChar(force) {
   if (!force && Math.abs(CHAR.v) > 1.5) { toast('Arrête d’abord le carretto.'); return; }
@@ -1013,7 +1164,7 @@ function majCamera(dt) {
     CINE.t += dt; const avance = Math.min(.22, CINE.t * .025);
     camera.position.copy(CINE.pos).lerp(CINE.cible, avance / Math.max(.5, CINE.pos.distanceTo(CINE.cible)));
     camera.lookAt(CINE.cible); CAM.cible.copy(CINE.cible);
-    const fv = camera.aspect < 1 ? 46 : 30; if (camera.fov !== fv) { camera.fov = fv; camera.updateProjectionMatrix(); }
+    const fv = camera.aspect < 1 ? 40 : 25; if (camera.fov !== fv) { camera.fov = fv; camera.updateProjectionMatrix(); }
     if (passeFlou) { passeFlou.enabled = true; passeFlou.uniforms.focus.value = camera.position.distanceTo(CINE.cible); }
     return;
   }
@@ -1155,6 +1306,7 @@ function chercherInteraction() {
   if (interProche) { UI.invite.hidden = false; UI.invite.innerHTML = tactile ? interProche.lib() : `<kbd>${interProche.touche || 'E'}</kbd>${interProche.lib()}`; } else UI.invite.hidden = true;
 }
 function agir() {
+  if (etat === 'jeu' && PECHE.actif) return ferrer();
   if (etat === 'carton') return fermerCarton();
   if (etat === 'dialogue') return suivant();
   if (etat !== 'jeu' || !interProche) return;
@@ -1217,6 +1369,10 @@ const TXT = {
 <p>Autour de Palerme, dans la plaine qu’on appelle la Conca d’Oro, la « conque d’or », les jardins de citronniers comptent parmi les terres les plus riches d’Europe. Le citron sicilien part par bateaux entiers vers Londres et New York.</p>
 <p>Là où il y a tant de richesse et si peu d’État, des hommes ont compris qu’on pouvait vendre une chose que chacun craint de perdre : la tranquillité.</p>`,
   noteIntro: 'Turi, sa famille et les gens de Santa Lucia sont inventés. Le contexte historique est réel.',
+  acte2: `<p>Turi a trente-cinq ans. Donna Rosa est morte ; c’est lui, désormais, qui loue les jardins de Sant’Anna : le <i>gabellotto</i>. Il porte un costume de velours et tout le monde le salue le premier.</p>
+<p>Il a épousé Concetta. Leur fils, Saro, a sept ans.</p>
+<p>Mais les temps changent. L’État envoie des préfets et des carabiniers du Nord. Et chaque mois, des familles entières embarquent à Palerme sur les bateaux de citrons, vers la Nouvelle-Orléans.</p>
+<p>Aujourd’hui, c’est la Santa Lucia : on mange la <i>cuccìa</i> et le village a sorti ses drapeaux.</p>`,
   histoire: `<ul>
 <li>En 1863, une pièce de théâtre jouée à Palerme, <i>I mafiusi di la Vicaria</i>, rend populaire le mot « mafia ».</li>
 <li>En 1876, Leopoldo Franchetti enquête en Sicile. Dans les jardins d’agrumes autour de Palerme, il décrit une véritable « industrie de la violence » : des gardiens qui organisent eux-mêmes les vols pour vendre ensuite leur protection.</li>
@@ -1225,12 +1381,16 @@ const TXT = {
 </ul>`
 };
 const FINS = {
+  amerique: { titre: 'L’autre rive', texte: `<p>Le vapeur quitte Palerme un matin de décembre, chargé de caisses de citrons et de familles entières. Turi regarde la Conca d’Oro disparaître.</p><p>À la Nouvelle-Orléans, il décharge les fruits de Sicile sur les quais du Mississippi. Il gagne peu, mais il gagne honnêtement. Saro apprend l’anglais plus vite que lui.</p><p>Un soir, un homme l’attend devant sa porte. Il parle sicilien. « Don Gaspare te salue. » La famille, elle aussi, a traversé l’océan.</p>`,
+    histoire: `<ul><li>À partir des années 1870, des milliers de Siciliens partent pour la Nouvelle-Orléans, reliée à Palerme par le commerce des agrumes.</li><li>En 1890, le chef de la police de la ville, David Hennessy, est assassiné. Des Italiens sont accusés ; en 1891, onze d’entre eux sont lynchés par la foule, l’un des pires lynchages de l’histoire des États-Unis.</li><li>Entre 1880 et 1920, environ quatre millions d’Italiens émigrent vers les États-Unis.</li></ul>` },
+  sicile: { titre: 'Le capo', texte: `<p>Turi reste. Nardo est condamné à dix ans de prison ; c’est Turi qui prend sa place auprès de Don Gaspare.</p><p>Concetta ne lui parle plus que pour le nécessaire. Saro grandit dans une maison où l’on baisse la voix quand un étranger passe.</p><p>À la mort de Don Gaspare, c’est à Turi qu’on vient baiser la main.</p>`,
+    histoire: `<ul><li>Les grandes opérations de police des années 1870 démantèlent des bandes, mais les « familles » survivent : elles ont des amis parmi les propriétaires, les élus et les juges.</li><li>En 1893, Emanuele Notarbartolo, ancien maire de Palerme et directeur de la Banque de Sicile, est assassiné. C’est le premier grand crime politique attribué à la mafia ; le principal accusé, un député, sera finalement acquitté.</li></ul>` },
   silence: { titre: 'Le silence', texte: `<p>Donna Rosa a payé. Cette saison-là, plus rien n’a disparu du jardin, et l’eau est revenue dans les rigoles.</p><p>Les hommes de Don Gaspare sont devenus les « gardiens » de Sant’Anna. Une part de chaque récolte est partie vers la masseria sur la colline, et personne à Santa Lucia n’en a jamais parlé.</p><p>Un soir de l’année suivante, Nardo est revenu au baglio. Pas pour l’argent. Pour Turi.</p>` },
   temoin: { titre: 'Le témoin', texte: `<p>Turi a signé. Le brigadier Ruffo a ouvert un dossier, le premier au nom de Don Gaspare.</p><p>Trois semaines plus tard, le canal qui irriguait Sant’Anna a été coupé et les citronniers ont commencé à sécher. Personne n’est venu témoigner aux côtés de Turi. Le dossier a été classé, faute de preuves.</p><p>Mais il existe, quelque part dans un carton à Palerme. Et il porte un nom.</p>` },
   peur: { titre: 'La peur', texte: `<p>Turi n’a pas signé. Le brigadier a refermé son registre sans un mot.</p><p>Sur le chemin du retour, à l’entrée du baglio, une lanterne l’attendait. Nardo souriait.</p><p>Il savait déjà.</p>` }
 };
 const CHAPITRES = [
-  { n: 'I', nom: 'Conca d’Oro', lieu: 'Sicile, 1861 — les jardins de citronniers de Palerme', jouable: true },
+  { n: 'I', nom: 'Conca d’Oro', lieu: 'Sicile, 1861-1877 — les jardins de citronniers, la famille, le grand départ', jouable: true },
   { n: 'II', nom: 'Les mines de Buggerru', lieu: 'Sardaigne, 1904 — une grève de mineurs qui va secouer tout le pays' },
   { n: 'III', nom: 'Le Préfet de fer', lieu: 'Sicile, 1926 — Cesare Mori fait assiéger le village de Gangi' },
   { n: 'IV', nom: 'L’été 1943', lieu: 'Sicile, 1943 — les Alliés débarquent, d’anciens maîtres reviennent' },
@@ -1250,28 +1410,41 @@ const CUEILLETTE = [[2, 5], [4, 7], [6, 4], [7, 8], [9, 6], [10, 3], [12, 7], [1
 let nbCueillis = 0;
 const resteCueillette = () => CUEILLETTE.filter(c => !c.pris);
 
-let ETAPE = null, chrono = null, distRetour = 1, FIGE = false;
+let ETAPE = null, chrono = null, distRetour = 1, FIGE = false, ACTE = 1, JOB = null;
+const PRIX_PASSAGE = 120, LIBRES = ['a2_festa', 'a2_jours'];
+SAUVE.lire = SAUVE.lire ?? 40; SAUVE.sale = SAUVE.sale ?? 0;
+function gagner(n, quoi) { SAUVE.lire += n; sauver(); SON.bien(); toast(`+ ${n} lire — ${quoi}`); majArgent(); }
+function majArgent() { const a = $('#argent'); a.hidden = ACTE !== 2; a.innerHTML = `<b>${SAUVE.lire}</b> lire d’argent propre` + (SAUVE.sale ? ` <span>· ${SAUVE.sale} de la famille</span>` : ''); }
 const fige = () => { FIGE = true; };
 const VOL = { pts: [[66, 69], [65.5, 79.5], [65.5, 100.5], [86.5, 100.5], [86.5, 121.5], [107.5, 121.5], [107.5, 142.5], [112, 160], [125, 185], [140, 205]], i: 1, parti: false, t: 0, pause: 0 };
-const PATROUILLES = [];
+let PATROUILLES = [];
 let soupcon = 0;
 
+const ABSENTS_1877 = ['pippo', 'rosa', 'gardien1', 'gardien2'];
 function visibles(nuit) {
   for (const n of Object.values(PNJ)) {
     if (n.quand === 'scene') continue;
-    n.h.g.visible = n.quand === 'toujours' || (n.quand === 'jour' && !nuit);
+    n.h.g.visible = (n.quand === 'toujours' || (n.quand === 'jour' && !nuit)) && !(ACTE === 2 && ABSENTS_1877.includes(n.id));
   }
 }
+const ACTE2 = ['don', 'concetta', 'saro', 'carmelo', 'vanni', 'nardo2', 'marechal'];
+function monde(acte) {
+  ACTE = acte; FESTA.visible = acte === 2; habillerTuri(acte);
+  for (const id of ACTE2) PNJ[id].h.g.visible = false;
+  if (acte === 2) { for (const id of ['toto', 'nardo', 'campiere1', 'campiere2', 'ruffo', 'pippo', 'rosa']) PNJ[id].h.g.visible = false; scene_(['don', 'concetta', 'saro', 'carmelo', 'vanni'], true); }
+  majArgent();
+}
 function scene_(ids, on) { for (const id of ids) PNJ[id].h.g.visible = on; }
-function poserPnj(id, x, z, rot) { const p = PNJ[id]; p.pos.set(x, H(x, z), z); p.h.g.rotation.y = rot ?? p.h.g.rotation.y; p.regarde = null; p.v = 0; }
-function preparerPatrouilles(on) {
-  for (const p of PATROUILLES) { p.h.g.visible = on; p.cone.visible = on; }
+function poserPnj(id, x, z, rot) { const p = PNJ[id]; p.pos.set(x, solJ(x, z), z); p.h.g.rotation.y = rot ?? p.h.g.rotation.y; p.regarde = null; p.v = 0; }
+function preparerPatrouilles(on, liste) {
+  if (liste) PATROUILLES = liste;
+  for (const p of TOUTES_PATROUILLES) { const v = on && PATROUILLES.includes(p); p.h.g.visible = v; p.cone.visible = v; }
 }
 
 const ETAPES = {
   intro: {
-    setup() { heure(.05); visibles(false); scene_(['toto', 'nardo', 'campiere1', 'campiere2', 'ruffo'], false); preparerPatrouilles(false); poserPnj('rosa', 72, 45.5, 0); poserPnj('pippo', 63, 56, -PI / 2); placerCharrette(66, 51, -PI / 2, 6); placerJoueur(46, 52, PI / 2); CUEILLETTE.forEach(c => { c.pris = false; c.g.visible = true; }); nbCueillis = 0; },
-    debut() { carton('Chapitre I', 'Conca d’Oro<br>Sicile, 1861', TXT.intro, () => aller('pippo'), TXT.noteIntro); SON.theme(); }
+    setup() { monde(1); heure(.05); visibles(false); scene_(['toto', 'nardo', 'campiere1', 'campiere2', 'ruffo'], false); preparerPatrouilles(false); poserPnj('rosa', 72, 45.5, 0); poserPnj('pippo', 63, 56, -PI / 2); placerCharrette(66, 51, -PI / 2, 6); placerJoueur(46, 52, PI / 2); CUEILLETTE.forEach(c => { c.pris = false; c.g.visible = true; }); nbCueillis = 0; },
+    debut() { Object.assign(SAUVE, { lire: 40, sale: 0, part: null, vuConcetta: false }); sauver(); carton('Chapitre I', 'Conca d’Oro<br>Sicile, 1861', TXT.intro, () => aller('pippo'), TXT.noteIntro); SON.theme(); }
   },
   pippo: {
     obj: () => 'Rejoins <b>Zu Pippo</b> dans la cour du baglio Sant’Anna.', cible: () => PNJ.pippo.pos,
@@ -1381,7 +1554,7 @@ const ETAPES = {
           ['Nardo', 'Et l’eau de la source coulera comme avant. Elle baisse, en ce moment, non ?'],
           ['Donna Rosa', 'Turi… Ton père a travaillé ici trente ans. Qu’est-ce que tu en penses ?'],
           { question: '<em>Nardo te regarde. Les deux autres n’ont pas lâché leurs fusils.</em>', choix: [
-            ['« Payez, Donna Rosa. On ne discute pas avec ces gens-là. »', () => finir('silence')],
+            ['« Payez, Donna Rosa. On ne discute pas avec ces gens-là. »', () => dire([['Donna Rosa', '<em>(Elle baisse les yeux.)</em> Va bene. Sant’Anna paiera.'], ['Nardo', 'Sage décision, Donna Rosa.'], ['Nardo', '<em>(Il se tourne vers toi.)</em> Et toi, Turi… Don Gaspare aime les garçons qui ont du courage et qui savent se taire. Monte à la masseria. Ce soir.']], () => aller('masseria'))],
             ['« Ne payez rien. Je vais voir les carabiniers à Santa Lucia. »', () => dire([
               ['Nardo', '<em>(Il rit doucement.)</em> Les carabiniers… Va, alors, Turi Ferrante. Mais les routes sont sombres, la nuit.']
             ], () => fondu(() => aller('caserne')))]
@@ -1390,12 +1563,98 @@ const ETAPES = {
       }
     }
   },
+  masseria: {
+    obj: () => 'Monte à la <b>masseria</b> de Don Gaspare, sur la colline.', cible: () => ({ x: 121, z: -31 }),
+    setup() { ETAPES.poursuite.setup(); heure(2); visibles(true); scene_(['pippo'], false); placerJoueur(55, 50, -PI / 2); },
+    prep() {
+      heure(2); visibles(true); scene_(['toto', 'ruffo', 'pippo'], false); scene_(['nardo', 'campiere1', 'campiere2', 'don'], true);
+      poserPnj('don', 121, -34.2, 0); poserPnj('nardo', 118.6, -33.6, .5); poserPnj('campiere1', 123.6, -33.4, -.4); poserPnj('campiere2', 125.6, -34.6, -.6);
+    },
+    maj() {
+      if (dist(J, { x: 121, z: -30 }) < 6) {
+        fige(); placerJoueur(121, -31.4, PI);
+        const initiation = () => carton('La « punciuta »', 'Le serment', `<p>Le campiere pique le doigt de Turi avec une épine d’oranger amer. Une goutte de sang tombe sur l’image de la sainte. Don Gaspare l’enflamme et la pose dans ses mains.</p><p>« Que ma chair brûle comme cette image si je trahis la famille. »</p><p>Turi ne lâche l’image que lorsqu’elle n’est plus que cendre. Cette nuit-là, il devient un <i>uomo d’onore</i>, un homme d’honneur.</p>`,
+          () => carton('Ce que l’histoire retient', 'Un rituel bien réel', `<ul><li>Dès les années 1870, des rapports de police décrivent ce rituel chez les « Stuppagghieri » de Monreale et les « Fratuzzi » de Bagheria, près de Palerme : piqûre du doigt, image sainte brûlée, serment de silence.</li><li>Les membres se disent « hommes d’honneur » et parlent de leur « famille ». Le mot « mafia » vient de l’extérieur ; « Cosa Nostra », « notre chose », ne se répandra qu’au XXᵉ siècle.</li></ul>`, () => charger('a2_intro')));
+        dire([
+          ['Don Gaspare', 'Avvicinati. Approche, Turi Ferrante. Ton père était un homme sérieux. On dit que tu l’es aussi.'],
+          ['Don Gaspare', 'Tu as rattrapé le petit voleur. Tu n’as pas crié. Tu as rapporté la cassette. C’est bien.'],
+          ['Don Gaspare', 'Ici, l’État est loin. Le roi est à Turin, les juges à Palerme. Nous, nous sommes là. Nous gardons les jardins, l’eau, les routes. Nous sommes une famille.'],
+          ['Don Gaspare', 'Une famille a ses règles. On ne vole pas les siens. On ne touche pas à leurs femmes. Et surtout, on ne parle jamais. À personne.'],
+          ['Turi', '…'],
+          ['Don Gaspare', 'Ce soir, tu peux entrer dans la famille. Sache une chose : on y entre par le sang, et on n’en sort qu’avec lui.'],
+          { question: '<em>Nardo pose une petite image de sainte sur le muret. Un campiere tient une épine d’oranger.</em>', choix: [
+            ['Tendre la main.', initiation],
+            ['Garder le silence.', () => dire([['Don Gaspare', 'Le silence… C’est déjà une réponse, figlio mio. Donne-moi ta main.']], initiation)]
+          ] }
+        ]);
+      }
+    }
+  },
+  a2_intro: {
+    setup() { monde(2); heure(.12); visibles(false); placerCharrette(66, 51, -PI / 2, 0); placerJoueur(64.5, 49.5, PI / 2); poserPositions1877(); },
+    debut() { SON.theme(); carton('Seize ans plus tard', 'Santa Lucia<br>13 décembre 1877', TXT.acte2, () => aller('a2_festa'), 'Le drapeau rouge et jaune à la Trinacria reprend les couleurs des Vêpres siciliennes de 1282 ; il est devenu le drapeau officiel de la Région sicilienne en 2000.'); }
+  },
+  a2_festa: {
+    obj: () => `Fête de Santa Lucia. <b>Don Gaspare</b> t’attend sur la place.<br><span style="color:var(--fumee)">Travaux honnêtes : points verts sur la carte.</span>`, cible: () => PNJ.don.pos,
+    setup() { ETAPES.a2_intro.setup(); },
+    debut() {
+      if (SAUVE.vuConcetta) return; SAUVE.vuConcetta = true; sauver();
+      dire([
+        ['Concetta', 'Turi… Mon frère a écrit de la Nouvelle-Orléans. Il décharge les citrons de Palerme sur le port. Il dit qu’il y a du travail pour tout le monde.'],
+        ['Concetta', `Le passage coûte ${PRIX_PASSAGE} lire pour nous trois. Pas avec l’argent de Don Gaspare : avec de l’argent propre.`],
+        ['Turi', 'On verra, Concetta. Aujourd’hui, c’est la fête.'],
+        ['Concetta', 'Carmelo cherche des bras au jardin, et Zu Vanni achète le poisson au port. Réfléchis.']
+      ], () => aide('Parle à <b>Carmelo</b> (baglio) ou à <b>Zu Vanni</b> (port) pour gagner de l’argent honnête.', 7000));
+    }
+  },
+  a2_part: { obj: () => 'Va chercher la part de <b>Mastro Nunzio</b> au marché.', cible: () => PNJ.nunzio.pos, setup() { ETAPES.a2_intro.setup(); placerJoueur(-88, -68, PI / 2); } },
+  a2_retourDon: { obj: () => 'Apporte la part à <b>Don Gaspare</b>.', cible: () => PNJ.don.pos, setup() { ETAPES.a2_intro.setup(); placerJoueur(-76, -65, -PI / 2); } },
+  a2_rafle: {
+    setup() { ETAPES.a2_intro.setup(); },
+    prep() {
+      heure(2); visibles(true); scene_(['don', 'nardo2', 'marechal'], true); scene_(['concetta', 'saro', 'carmelo', 'vanni'], false);
+      poserPnj('don', -91.5, -72, PI / 2); poserPnj('nardo2', -89.5, -74.2, .8); poserPnj('marechal', -84.5, -66.5, -2.4); placerJoueur(-87.5, -70.5, -PI / 2 - .3);
+      preparerPatrouilles(true, PAT_CARA); PATROUILLES.forEach(p => { const a = p.pts[0]; p.pos.set(a[0], H(a[0], a[1]), a[1]); p.i = 0; p.attente = 0; });
+    },
+    debut() {
+      dire([
+        ['Le maréchal', 'Au nom du Roi ! Que personne ne bouge !'],
+        ['Le maréchal', 'Leonardo Nicosia, dit Nardo. Vous êtes en état d’arrestation. Et vous… Salvatore Ferrante ?'],
+        ['Nardo', '<em>(Il bouscule le maréchal.)</em> Turi ! Ils ont la liste ! File par les ruelles, rentre à Sant’Anna !'],
+        ['Don Gaspare', '<em>(Sans bouger de son banc.)</em> Va, figlio mio. Et souviens-toi : tu n’as rien vu.']
+      ], () => charger('a2_fuite'));
+    }
+  },
+  a2_fuite: {
+    furtif: true, repere: { qui: 'Un carabinier', txt: 'Halte ! Au nom du Roi ! C’est lui, c’est Ferrante !', msg: 'Les carabiniers t’ont arrêté.' },
+    obj: () => 'Échappe aux <b>carabiniers</b> par les ruelles et rejoins le baglio Sant’Anna.', cible: () => L.porte,
+    setup() { ETAPES.a2_intro.setup(); },
+    prep() {
+      heure(2); visibles(true); scene_(['don', 'nardo2', 'marechal', 'concetta', 'saro', 'carmelo', 'vanni'], false);
+      placerJoueur(-89, -58.6, PI); preparerPatrouilles(true, PAT_CARA); soupcon = 0;
+      PATROUILLES.forEach(p => { p.i = 0; p.attente = 0; const a = p.pts[0]; p.pos.set(a[0], H(a[0], a[1]), a[1]); });
+      scene_(['concetta', 'saro'], true); poserPnj('concetta', 57.6, 49.6, -PI / 2); poserPnj('saro', 58.2, 51, -PI / 2);
+    },
+    debut() { aide('Les carabiniers fouillent le village. Passe entre les maisons au nord de la place, évite leurs lanternes et ne cours pas près d’eux.', 8000); },
+    maj(dt) { majPatrouilles(dt); if (dist(J, L.porte) < 8) { fige(); charger('a2_choix'); } }
+  },
+  a2_choix: {
+    obj: () => 'Parle à <b>Concetta</b>.', cible: () => PNJ.concetta.pos,
+    setup() { ETAPES.a2_intro.setup(); heure(2); visibles(true); scene_(['don', 'carmelo', 'vanni'], false); poserPnj('concetta', 57.6, 49.6, -PI / 2); poserPnj('saro', 58.2, 51, -PI / 2); placerJoueur(55.4, 50.4, PI / 2); },
+    debut() { decision(true); }
+  },
+  a2_jours: {
+    obj: () => `Gagne encore <b>${Math.max(0, PRIX_PASSAGE - SAUVE.lire)}</b> lire honnêtes, puis retrouve <b>Concetta</b> au baglio.`, cible: () => PNJ.concetta.pos,
+    setup() { ETAPES.a2_intro.setup(); scene_(['don'], false); placerJoueur(64.5, 49.5, PI / 2); },
+    debut() { aide('Quelques jours ont passé. Les carabiniers ont relâché la surveillance. Travaille, puis retourne voir Concetta.', 7000); }
+  },
   caserne: {
+    furtif: true, repere: { qui: 'Un campiere', txt: 'Ehi ! Turi Ferrante… Où tu vas comme ça, à cette heure ? Rentre chez toi. Tout de suite.', msg: 'Les campieri t’ont reconduit au baglio.' },
     obj: () => 'Rejoins la <b>caserne des carabiniers</b> de Santa Lucia sans te faire repérer.', cible: () => L.porteCaserne,
     setup() { ETAPES.poursuite.setup(); },
     prep() {
       heure(2); visibles(true); scene_(['toto', 'nardo', 'campiere1', 'campiere2', 'ruffo'], false); poserPnj('rosa', 72, 45.5, 0); scene_(['pippo'], false);
-      placerJoueur(55, 50, -PI / 2); preparerPatrouilles(true); soupcon = 0;
+      placerJoueur(55, 50, -PI / 2); preparerPatrouilles(true, PAT_CAMPIERI); soupcon = 0;
       PATROUILLES.forEach(p => { p.i = 0; p.t = 0; p.attente = 0; const a = p.pts[0]; p.pos.set(a[0], H(a[0], a[1]), a[1]); });
     },
     debut() { aide('Les campieri patrouillent avec des lanternes. Reste hors de leur lumière et ne cours pas près d’eux. Les champs sont plus sûrs que la route.', 8000); },
@@ -1404,14 +1663,14 @@ const ETAPES = {
 };
 function aller(id) {
   ETAPE = id; FIGE = false; const e = ETAPES[id]; if (id !== 'intro') { SAUVE.etape = id; sauver(); }
-  chrono = null; UI.chrono.hidden = true; UI.soupcon.hidden = id !== 'caserne'; if (id !== 'caserne') preparerPatrouilles(false);
+  chrono = null; JOB = null; UI.chrono.hidden = true; UI.soupcon.hidden = !e.furtif; if (!e.furtif) preparerPatrouilles(false);
   e.prep && e.prep(); etat = etat === 'carton' || etat === 'dialogue' ? etat : 'jeu';
   if (etat === 'jeu') UI.hud.hidden = false;
   e.debut && e.debut();
   majObjectif();
 }
 function charger(id) { if (ETAPES[id].reprise) id = ETAPES[id].reprise; etat = 'jeu'; ETAPES[id].setup && ETAPES[id].setup(); aller(id); }
-function majObjectif() { const e = ETAPES[ETAPE]; if (!e || !e.obj) return; let t = e.obj(); const c = e.cible && e.cible(); if (c) { const ici = J.dansChar ? CHAR : J; t += ` <span style="color:var(--fumee)">· ${Math.round(dist(ici, c))} m</span>`; } if (UI.objTxt.dataset.t !== t) { UI.objTxt.dataset.t = t; UI.objTxt.innerHTML = t; } }
+function majObjectif() { const e = ETAPES[ETAPE]; if (!e || !e.obj) return; let t = JOB ? JOB.obj() : e.obj(); const c = JOB ? JOB.cible() : e.cible && e.cible(); if (c) { const ici = J.dansChar ? CHAR : J; t += ` <span style="color:var(--fumee)">· ${Math.round(dist(ici, c))} m</span>`; } if (UI.objTxt.dataset.t !== t) { UI.objTxt.dataset.t = t; UI.objTxt.innerHTML = t; } }
 function echec(msg, id) {
   if (etat === 'transition') return; etat = 'transition'; fige(); chrono = null; SON.rate(); toast(msg, true, 3200);
   setTimeout(() => fondu(() => { charger(id); toast('Dernier point de passage', false, 1800); }), 1400);
@@ -1421,7 +1680,7 @@ function finir(cle) {
   preparerPatrouilles(false); UI.soupcon.hidden = true;
   fondu(() => {
     SON.theme();
-    carton('Fin du chapitre I', f.titre, f.texte, () => carton('Ce que l’histoire retient', 'Sicile, 1861-1876', TXT.histoire, () => carton('À suivre', 'Chapitre II<br>Les mines de Buggerru', `<p>Sardaigne, 1904. Le petit-fils de Turi descend chaque matin dans une mine de zinc, au bord de la mer.</p><p>Fins découvertes : <b>${SAUVE.fins.length} sur 3</b>. Rejoue le chapitre pour faire un autre choix.</p>`, () => retourMenu())));
+    carton('Fin du chapitre I', f.titre, f.texte + (SAUVE.part === 'payee' && cle !== 'temoin' ? '<p>Personne n’a jamais su que Turi avait payé de sa poche la part du vieux Nunzio.</p>' : ''), () => carton('Ce que l’histoire retient', cle === 'temoin' ? 'Sicile, 1861-1876' : cle === 'amerique' ? 'De Palerme à la Nouvelle-Orléans' : 'Sicile, 1877-1893', f.histoire || TXT.histoire, () => carton('À suivre', 'Chapitre II<br>Les mines de Buggerru', `<p>Sardaigne, 1904. Le petit-fils de Turi descend chaque matin dans une mine de zinc, au bord de la mer.</p><p>Fins découvertes : <b>${SAUVE.fins.length} sur 3</b>. Rejoue le chapitre pour faire un autre choix.</p>`, () => retourMenu())));
   }, 900);
 }
 
@@ -1442,14 +1701,16 @@ inter({ pos: () => PNJ.pippo.pos, r: 2.6, si: () => PNJ.pippo.h.g.visible && (ET
 inter({ pos: () => PNJ.rosa.pos, r: 2.4, si: () => ETAPE === 'pippo' || ETAPE === 'cueillir', lib: () => 'Parler à Donna Rosa', faire() {
   dire([['Donna Rosa', 'Depuis la mort de mon mari, on dit à Palerme qu’une veuve ne sait pas tenir un jardin. Montre-leur le contraire, Turi.']]);
 } });
-CUEILLETTE.forEach(c => inter({ pos: () => c, r: 2.5, si: () => ETAPE === 'cueillir' && !c.pris, lib: () => 'Cueillir', faire() {
-  c.pris = true; c.g.visible = false; nbCueillis++; SON.cueille(); majObjectif();
+CUEILLETTE.forEach(c => inter({ pos: () => c, r: 2.5, si: () => !c.pris && (ETAPE === 'cueillir' || (JOB && JOB.type === 'cueillette' && !JOB.plein)), lib: () => 'Cueillir', faire() {
+  c.pris = true; c.g.visible = false; SON.cueille();
+  if (JOB) { JOB.n++; if (JOB.n >= 8) { JOB.plein = true; SON.bien(); toast('Le panier est plein'); } majObjectif(); return; }
+  nbCueillis++; majObjectif();
   if (nbCueillis >= 8) { SON.bien(); toast('Le panier est plein'); aller('rapporter'); }
 } }));
-inter({ pos: () => CHAR, r: 4.2, touche: 'F', si: () => !J.dansChar && ETAPE !== 'poursuite' && ETAPE !== 'cassette', lib: () => 'Monter sur le carretto', faire() {
+inter({ pos: () => CHAR, r: 4.2, touche: 'F', si: () => !J.dansChar && !['poursuite', 'cassette', 'masseria', 'a2_rafle', 'a2_choix'].includes(ETAPE), lib: () => 'Monter sur le carretto', faire() {
   monterChar(); if (ETAPE === 'monter') aller('livrer');
 } });
-inter({ pos: () => PNJ.nunzio.pos, r: 2.6, si: () => PNJ.nunzio.h.g.visible && ETAPE !== 'livrer', lib: () => 'Parler à Mastro Nunzio', faire() { dire([['Mastro Nunzio', ETAPE === 'retour' ? 'Tu es encore là ? Rentre, Turi. La nuit, les routes ne sont à personne.' : 'Pas de citrons, pas de tarì. Reviens avec la récolte de Sant’Anna.']]); } });
+inter({ pos: () => PNJ.nunzio.pos, r: 2.6, si: () => PNJ.nunzio.h.g.visible && ACTE === 1 && ETAPE !== 'livrer', lib: () => 'Parler à Mastro Nunzio', faire() { dire([['Mastro Nunzio', ETAPE === 'retour' ? 'Tu es encore là ? Rentre, Turi. La nuit, les routes ne sont à personne.' : 'Pas de citrons, pas de tarì. Reviens avec la récolte de Sant’Anna.']]); } });
 inter({ pos: () => PNJ.pretre.pos, r: 2.6, si: () => PNJ.pretre.h.g.visible, lib: () => 'Parler au padre', faire() { dire([['Padre Calogero', 'Dieu voit tout, mon fils. Les hommes de cette paroisse, eux, ont appris à ne rien voir.']]); } });
 inter({ pos: () => L.porteCaserne, r: 2.6, si: () => ETAPE === 'caserne', lib: () => 'Frapper à la porte', faire() {
   preparerPatrouilles(false); UI.soupcon.hidden = true; scene_(['ruffo'], true); poserPnj('ruffo', -97.6, -71.2, PI / 2); placerJoueur(-95.8, -70.4, -PI / 2);
@@ -1462,11 +1723,98 @@ inter({ pos: () => L.porteCaserne, r: 2.6, si: () => ETAPE === 'caserne', lib: (
     ['Le brigadier Ruffo', 'Alors il n’y a que toi. Si tu signes, ton nom sera dans ce registre. Et tout Santa Lucia le saura avant midi.'],
     { question: '<em>Le brigadier tourne le registre vers toi et te tend la plume.</em>', choix: [
       ['Signer.', () => finir('temoin')],
-      ['« …Je ne peux pas. »', () => finir('peur')]
+      ['« …Je ne peux pas. »', () => dire([['Le brigadier Ruffo', 'Alors rentre chez toi, garçon. Et que Dieu te garde.']], () => fondu(() => { placerJoueur(-93.5, -69.5, PI / 2); scene_(['ruffo'], false); scene_(['nardo'], true); poserPnj('nardo', -90.5, -69.8, -PI / 2); dire([['Nardo', '<em>(Une lanterne s’approche dans le noir.)</em> Les carabiniers, Turi… Tu vois bien : ici, ils ne servent à rien. Nous, si.'], ['Nardo', 'Don Gaspare veut te voir. Maintenant. Suis-moi à la masseria, et ne le fais pas attendre.']], () => aller('masseria')); }))]
     ] }
   ]);
 } });
 for (const n of Object.values(PNJ)) if (n.figurant) inter({ pos: () => n.pos, r: 2.2, si: () => n.h.g.visible && etat === 'jeu', lib: () => 'Parler', faire() { dire([['Un habitant', n.repliques[0]]]); } });
+
+/* ---------- Travaux honnêtes (1877) : cueillette, livraisons en carretto, pêche ---------- */
+const libre_ = () => ACTE === 2 && LIBRES.includes(ETAPE);
+const DESTS = [{ nom: 'le marché de Santa Lucia', x: -75, z: -63, qui: 'Mastro Nunzio' }, { nom: 'le port', x: -73.5, z: -131, qui: 'Zu Vanni' }];
+let numLivraison = 0;
+function lancerCueillette() {
+  CUEILLETTE.forEach(c => { c.pris = false; c.g.visible = true; });
+  JOB = { type: 'cueillette', n: 0, obj: () => JOB.plein ? 'Rapporte les citrons à <b>Carmelo</b>.' : `Cueille 8 citrons pour Carmelo : <b>${JOB.n}/8</b>`, cible: () => JOB.plein ? PNJ.carmelo.pos : CUEILLETTE.filter(c => !c.pris).sort((a, b) => dist(a, J) - dist(b, J))[0] };
+  aide('Les citrons mûrs brillent dans les rangées du sud.', 4000);
+}
+function lancerLivraison() {
+  const d = DESTS[numLivraison++ % DESTS.length];
+  placerCharrette(66, 51, -PI / 2, 6);
+  JOB = { type: 'livraison', d, obj: () => `Livre les cagettes à <b>${d.nom}</b>. Cagettes : <b>${CHAR.nb}/6</b>`, cible: () => d };
+  chrono = { reste: 110, job: true, echec: 'Trop tard : le client a acheté ailleurs.' };
+  aide('Monte sur le carretto (F). Chaque choc fait tomber une cagette, et chaque cagette compte.', 5000);
+}
+function lancerPeche() { JOB = { type: 'peche', n: 0, essais: 0, obj: () => JOB.fini ? `Vends ta pêche à <b>Zu Vanni</b> : <b>${JOB.n}</b> poisson${JOB.n > 1 ? 's' : ''}.` : `Va au bout de la jetée et pêche : <b>${JOB.essais}/6</b> lancers.`, cible: () => JOB.fini ? PNJ.vanni.pos : { x: -76, z: -152.5 } }; }
+const PECHE = { actif: false, t: 0, zone: .5, larg: .18, vitesse: 1.2 };
+function lancerLigne() { Object.assign(PECHE, { actif: true, t: 0, zone: .2 + R() * .6, larg: .2 - JOB.essais * .015 }); $('#peche').hidden = false; const z = $('#peche .zone'); z.style.left = (PECHE.zone - PECHE.larg / 2) * 100 + '%'; z.style.width = PECHE.larg * 100 + '%'; }
+function ferrer() {
+  const pos = (Math.sin(PECHE.t * PECHE.vitesse * (1 + JOB.essais * .18)) + 1) / 2;
+  const ok = Math.abs(pos - PECHE.zone) < PECHE.larg / 2; JOB.essais++;
+  if (ok) { JOB.n++; SON.cueille(); toast(['Une dorade !', 'Un beau rouget !', 'Un pageot !', 'Une sardine… mais grosse.'][(R() * 4) | 0]); } else toast('Raté… le poisson a filé.');
+  PECHE.actif = false; $('#peche').hidden = true;
+  if (JOB.essais >= 6) { JOB.fini = true; aide('Rapporte ta pêche à Zu Vanni.', 3000); }
+}
+inter({ pos: () => PNJ.carmelo.pos, r: 2.6, si: () => PNJ.carmelo.h.g.visible && libre_(), lib: () => 'Parler à Carmelo', faire() {
+  if (JOB && JOB.type === 'cueillette' && JOB.plein) { JOB = null; return dire([['Carmelo', 'Huit beaux citrons. Tiens, c’est ton dû : pas un centesimo de plus, pas un de moins.']], () => gagner(8, 'cueillette')); }
+  if (JOB) return dire([['Carmelo', 'Finis d’abord ce que tu as commencé, don Turi.']]);
+  dire([['Carmelo', 'Don Turi ! Vous voulez vraiment travailler comme un journalier, un jour de fête ? <em>(Il sourit.)</em> Il y a toujours à faire.'],
+    { qui: 'Turi', question: 'Que proposer à Carmelo ?', choix: [['Cueillir des citrons au jardin (8 lire).', lancerCueillette], ['Livrer six cagettes en carretto (10 lire, plus 2 par cagette intacte).', lancerLivraison], ['Plus tard.', () => {}]] }]);
+} });
+inter({ pos: () => PNJ.vanni.pos, r: 2.6, si: () => PNJ.vanni.h.g.visible && libre_(), lib: () => 'Parler à Zu Vanni', faire() {
+  if (JOB && JOB.type === 'peche' && JOB.fini) { const n = JOB.n; JOB = null; return dire([['Zu Vanni', n ? `${n} poisson${n > 1 ? 's' : ''}. Trois lire chacun, c’est le prix du marché.` : 'Rien ? La mer ne donne qu’à ceux qui savent attendre, figlio.']], () => n && gagner(3 * n, 'pêche')); }
+  if (JOB) return dire([['Zu Vanni', 'Tu as déjà un travail sur les bras.']]);
+  dire([['Zu Vanni', 'Le gabellotto de Sant’Anna qui veut pêcher ! Prends ma ligne. Le poisson, je te l’achète trois lire pièce.'], { qui: 'Turi', question: 'Pêcher avec Zu Vanni ?', choix: [['Prendre la ligne.', () => { lancerPeche(); aide('Au bout de la jetée : appuie sur E quand le curseur passe dans la zone dorée.', 6000); }], ['Plus tard.', () => {}]] }]);
+} });
+inter({ pos: () => ({ x: -76, z: -152.5 }), r: 2.4, si: () => JOB && JOB.type === 'peche' && !JOB.fini && !PECHE.actif, lib: () => 'Lancer la ligne', faire() { lancerLigne(); } });
+inter({ pos: () => PNJ.concetta.pos, r: 2.6, si: () => PNJ.concetta.h.g.visible && ACTE === 2 && ETAPE !== 'a2_choix', lib: () => 'Parler à Concetta', faire() {
+  if (ETAPE === 'a2_jours') return decision(false);
+  const m = Math.max(0, PRIX_PASSAGE - SAUVE.lire);
+  dire([['Concetta', m ? `Il nous manque ${m} lire pour le passage. De l’argent propre, Turi.` : 'Nous avons de quoi payer le passage. Il suffirait d’un mot de toi.']]);
+} });
+inter({ pos: () => PNJ.saro.pos, r: 2, si: () => PNJ.saro.h.g.visible && ACTE === 2, lib: () => 'Parler à Saro', faire() { dire([['Saro', ['Papà, c’est vrai qu’en Amérique les maisons touchent le ciel ?', 'Tout le monde te salue, papà. Pourquoi ils baissent les yeux ?', 'Je peux avoir de la cuccìa ?'][(R() * 3) | 0]]]); } });
+inter({ pos: () => PNJ.don.pos, r: 2.8, si: () => PNJ.don.h.g.visible && ACTE === 2 && (ETAPE === 'a2_festa' || ETAPE === 'a2_retourDon'), lib: () => 'Parler à Don Gaspare', faire() {
+  if (ETAPE === 'a2_festa') dire([
+    ['Don Gaspare', 'Turi ! Viens, assieds-toi. Regarde-les : toute la Conca est là. Et tout ce que tu vois, c’est un peu à nous.'],
+    ['Don Gaspare', 'Le nouveau maréchal des carabiniers vient de Turin. Il pose des questions. Il paraît qu’il a une liste.'],
+    ['Don Gaspare', 'Les listes, ça se perd. En attendant, les affaires continuent. Va chercher la part de Mastro Nunzio, au marché. Il est en retard.']
+  ], () => aller('a2_part'));
+  else dire([
+    ['Don Gaspare', 'Bravo. Tu vois, ce n’est pas difficile.'],
+    ['Don Gaspare', '<em>(Il glisse une enveloppe dans ta veste.)</em> Ta part. Trente lire. La famille n’oublie pas les siens.'],
+    ['Don Gaspare', 'Ce soir, il y a la procession. Reste près de moi.']
+  ], () => { SAUVE.sale += 30; sauver(); majArgent(); fondu(() => charger('a2_rafle')); });
+} });
+inter({ pos: () => PNJ.nunzio.pos, r: 3.6, si: () => PNJ.nunzio.h.g.visible && ETAPE === 'a2_part', lib: () => 'Réclamer la part', faire() {
+  const peut = SAUVE.lire >= 15;
+  dire([
+    ['Mastro Nunzio', '<em>(Le vieil homme compte les pièces sans te regarder.)</em> Quinze lire. C’est tout ce que j’ai vendu cette semaine.'],
+    ['Mastro Nunzio', 'Tu te souviens, Turi ? Tu avais dix-neuf ans, tu m’apportais les citrons de Donna Rosa. Tu m’as demandé : « Quelle part ? »'],
+    ['Mastro Nunzio', 'Maintenant, c’est toi qui viens la prendre.'],
+    { question: '<em>Les pièces sont sur l’étal.</em>', choix: [
+      ['Prendre la part pour Don Gaspare.', () => { SAUVE.part = 'prise'; sauver(); aller('a2_retourDon'); }],
+      [peut ? 'Laisser ses pièces à Nunzio et payer la part de ta poche (15 lire).' : 'Payer de ta poche… il te faudrait 15 lire d’argent propre.', () => {
+        if (!SAUVE.lire || SAUVE.lire < 15) { toast('Il te faut 15 lire d’argent propre.', true); return dire([['Turi', '<em>(Tu ramasses les pièces en silence.)</em>']], () => { SAUVE.part = 'prise'; sauver(); aller('a2_retourDon'); }); }
+        SAUVE.lire -= 15; SAUVE.part = 'payee'; sauver(); majArgent();
+        dire([['Mastro Nunzio', '<em>(Il te regarde enfin.)</em> … Grazie, Turi. Ton père aurait compris.']], () => aller('a2_retourDon'));
+      }]
+    ] }
+  ]);
+} });
+function decision(premiere) {
+  const manque = Math.max(0, PRIX_PASSAGE - SAUVE.lire);
+  const lignes = premiere ? [
+    ['Concetta', 'Turi ! Ils sont venus ici aussi. Ils ont tout fouillé. Ils ont demandé où tu étais.'],
+    ['Concetta', 'Le bateau pour la Nouvelle-Orléans part de Palerme dans trois jours. C’est maintenant ou jamais.'],
+    ['Turi', '<em>(Saro s’est endormi contre l’épaule de sa mère.)</em>']
+  ] : [['Concetta', 'Alors, Turi ?']];
+  if (SAUVE.sale) lignes.push(['Concetta', `Et l’enveloppe de Don Gaspare, tu la gardes. Je ne monterai pas sur ce bateau avec l’argent de la famille.`]);
+  lignes.push({ question: `<em>Tu as ${SAUVE.lire} lire d’argent propre. Le passage pour trois en coûte ${PRIX_PASSAGE}.</em>`, choix: [
+    manque ? [`Se cacher quelques jours et gagner les ${manque} lire qui manquent.`, () => fondu(() => charger('a2_jours'))] : ['Partir pour la Nouvelle-Orléans avec Concetta et Saro.', () => { SAUVE.lire -= PRIX_PASSAGE; sauver(); finir('amerique'); }],
+    ['Rester en Sicile et prendre la place de Nardo.', () => finir('sicile')]
+  ] });
+  dire(lignes);
+}
 
 /* Patrouilles de nuit (étape « caserne ») */
 function cone(portee, demi) {
@@ -1474,15 +1822,20 @@ function cone(portee, demi) {
   const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(v, 3));
   const m = new T.Mesh(g, new T.MeshBasicMaterial({ color: 0xffc860, transparent: true, opacity: .07, depthWrite: false, side: T.DoubleSide, fog: false })); m.renderOrder = 2; scene.add(m); return m;
 }
-[[[24, 41], [8, 25]], [[-16, -6], [-33, -42]], [[-46, -60], [-46, -92]], 'rond'].forEach((pts, i) => {
-  const rond = pts === 'rond';
-  const pp = rond ? Array.from({ length: 10 }, (_, k) => [L.village.x + Math.cos(k / 10 * PI * 2) * 9, L.village.z - 2 + Math.sin(k / 10 * PI * 2) * 9]) : pts;
-  const p = pnj('pat' + i, 'Un campiere', { veste: [0x3f3a2a, 0x2f3a33, 0x3a3a30, 0x4a3a2a, 0x353028][i], pantalon: 0x2e2a24, chapeau: i % 2 ? 'feutre' : 'coppola', chapeauC: 0x2a2620, lupara: true, lanterne: true }, pp[0][0], pp[0][1], 0, 'scene');
-  p.pts = pp; p.boucle = rond; p.i = 0; p.sens = 1; p.attente = 0; p.portee = rond ? 12 : 15; p.demi = .62;
-  p.cone = cone(p.portee, p.demi); p.lumiere = lampe(0, 1.2, .3, p.h.g);
-  p.h.g.visible = false; p.cone.visible = false;
-  PATROUILLES.push(p);
-});
+const TOUTES_PATROUILLES = [];
+function creerPatrouilles(pref, nom, habit) {
+  return [[[24, 41], [8, 25]], [[-16, -6], [-33, -42]], [[-46, -60], [-46, -92]], 'rond'].map((pts, i) => {
+    const rond = pts === 'rond';
+    const pp = rond ? Array.from({ length: 10 }, (_, k) => [L.village.x + Math.cos(k / 10 * PI * 2) * 9, L.village.z - 2 + Math.sin(k / 10 * PI * 2) * 9]) : pts;
+    const p = pnj(pref + i, nom, habit(i), pp[0][0], pp[0][1], 0, 'scene');
+    p.patrouille = true; p.pts = pp; p.boucle = rond; p.i = 0; p.sens = 1; p.attente = 0; p.portee = rond ? 12 : 15; p.demi = .62;
+    p.cone = cone(p.portee, p.demi); p.lumiere = lampe(0, 1.2, .3, p.h.g);
+    p.h.g.visible = false; p.cone.visible = false; TOUTES_PATROUILLES.push(p); return p;
+  });
+}
+const PAT_CAMPIERI = creerPatrouilles('pat', 'Un campiere', i => ({ veste: [0x3f3a2a, 0x2f3a33, 0x3a3a30, 0x4a3a2a][i], pantalon: 0x2e2a24, chapeau: i % 2 ? 'feutre' : 'coppola', chapeauC: 0x2a2620, lupara: true, lanterne: true }));
+const PAT_CARA = creerPatrouilles('car', 'Un carabinier', i => ({ veste: 0x1a2232, chemise: 0x1a2232, pantalon: 0x1a2232, chapeau: 'lucerna', moustache: i % 2 ? 0x3a2a1a : true, cheveux: 0x2a1d12, ceinture: 0xe8e2d0, lupara: true, lanterne: true, peau: [0xd9ad88, 0xc8946a, 0xe0b898, 0xc08660][i] }));
+PATROUILLES = PAT_CAMPIERI;
 function vueBloquee(a, b) { const d = dist(a, b), n = Math.ceil(d); for (let k = 1; k < n; k++) { const t = k / n, x = lerp(a.x, b.x, t), z = lerp(a.z, b.z, t); if (dansBatiment(x, z, H(x, z) + 1.5)) return true; } return false; }
 function majPatrouilles(dt) {
   let vu = false; const ici = J.dansChar ? CHAR : J;
@@ -1507,7 +1860,8 @@ function majPatrouilles(dt) {
   UI.soupcon.firstElementChild.style.width = Math.min(100, soupcon * 100) + '%';
   if (soupcon >= 1 && etat === 'jeu') {
     SON.alerte(); toast('Repéré !', true, 1600); soupcon = 0; etat = 'dialogue';
-    setTimeout(() => dire([['Un campiere', 'Ehi ! Turi Ferrante… Où tu vas comme ça, à cette heure ? Rentre chez toi. Tout de suite.']], () => echec('Les campieri t’ont reconduit au baglio.', 'caserne')), 500);
+    const r = ETAPES[ETAPE].repere;
+    setTimeout(() => dire([[r.qui, r.txt]], () => echec(r.msg, ETAPE)), 500);
   }
 }
 
@@ -1522,6 +1876,7 @@ function entree() {
   return { ix, iz, m: Math.min(1, m) };
 }
 function majJoueur(dt) {
+  if (PECHE.actif) { J.v = 0; animer(J.h, dt, 0); return; }
   const { ix, iz, m } = entree();
   const veut = (K.ShiftLeft || K.ShiftRight || boutonCourir) && m > .2;
   if (J.endu <= 0) J.epuise = true; if (J.epuise && J.endu > .35) J.epuise = false;
@@ -1534,7 +1889,7 @@ function majJoueur(dt) {
   J.v = approche(J.v, vmax * (m > .05 ? 1 : 0), dt * 22);
   if (m > .05) { J.yaw += ecartAngle(J.yaw, Math.atan2(mx, mz)) * Math.min(1, dt * 12); const l = Math.hypot(mx, mz) || 1; J.x += mx / l * J.v * dt; J.z += mz / l * J.v * dt; }
   const p = { x: J.x, z: J.z }; resoudre(p, .38, true); J.x = p.x; J.z = p.z;
-  J.h.g.position.set(J.x, H(J.x, J.z), J.z); J.h.g.rotation.y = J.yaw;
+  J.h.g.position.set(J.x, solJ(J.x, J.z), J.z); J.h.g.rotation.y = J.yaw;
   animer(J.h, dt, J.v);
 }
 function majCharrette(dt) {
@@ -1550,7 +1905,7 @@ function majCharrette(dt) {
     CHAR.x = centre.x + (avant.x - a0x); CHAR.z = centre.z + (avant.z - a0z);
     CHAR.cooldown -= dt;
     if ((c1 || c2) && Math.abs(CHAR.v) > 1) {
-      if (Math.abs(CHAR.v) > 4.2 && CHAR.cooldown <= 0 && CHAR.nb > 0 && ETAPE === 'livrer') { CHAR.nb--; CHAR.caisses[CHAR.nb].visible = false; CHAR.cooldown = 1.2; SON.choc(); CAM.secousse = .35; toast('Une cagette est tombée !', true, 1500); majObjectif(); }
+      if (Math.abs(CHAR.v) > 4.2 && CHAR.cooldown <= 0 && CHAR.nb > 0 && (ETAPE === 'livrer' || (JOB && JOB.type === 'livraison'))) { CHAR.nb--; CHAR.caisses[CHAR.nb].visible = false; CHAR.cooldown = 1.2; SON.choc(); CAM.secousse = .35; toast('Une cagette est tombée !', true, 1500); majObjectif(); }
       CHAR.v *= .55;
     }
   }
@@ -1563,13 +1918,13 @@ function majCharrette(dt) {
 }
 function majPnj(dt) {
   for (const n of Object.values(PNJ)) {
-    if (!n.h.g.visible || n.id.startsWith('pat')) { if (n.id.startsWith('pat') && n.h.g.visible) animer(n.h, dt, n.v); continue; }
+    if (!n.h.g.visible || n.patrouille) { if (n.patrouille && n.h.g.visible) animer(n.h, dt, n.v); continue; }
     if (n.id === 'toto' && ETAPE === 'poursuite') { animer(n.h, dt, n.v); continue; }
     const proche = dist(n.pos, J) < 3.2 && !J.dansChar;
     if (n.trajet && !proche && etat === 'jeu') {
       if (n.attente > 0) { n.attente -= dt; n.v = 0; }
       else { const c = n.trajet[n.ti], dx = c[0] - n.pos.x, dz = c[1] - n.pos.z, l = Math.hypot(dx, dz); if (l < .5) { n.ti = (n.ti + 1) % n.trajet.length; n.attente = 1.5 + R() * 3; } else { n.pos.x += dx / l * 1.2 * dt; n.pos.z += dz / l * 1.2 * dt; n.h.g.rotation.y += ecartAngle(n.h.g.rotation.y, Math.atan2(dx, dz)) * Math.min(1, dt * 5); n.v = 1.2; } }
-      n.pos.y = H(n.pos.x, n.pos.z);
+      n.pos.y = solJ(n.pos.x, n.pos.z);
     } else n.v = 0;
     const vise = n.regarde ?? (proche ? Math.atan2(J.x - n.pos.x, J.z - n.pos.z) : null);
     if (vise != null && n.v === 0) n.h.g.rotation.y += ecartAngle(n.h.g.rotation.y, vise) * Math.min(1, dt * 4);
@@ -1597,8 +1952,9 @@ function majMinicarte() {
   mini.clearRect(0, 0, W, W); mini.save(); mini.beginPath(); mini.arc(W / 2, W / 2, W / 2, 0, 7); mini.clip();
   mini.drawImage(CARTE, (ici.x + 280) * k - fen, (ici.z + 280) * k - fen, fen * 2, fen * 2, 0, 0, W, W);
   const s = W / (fen * 2) * k, P = (x, z) => [W / 2 + (x - ici.x) * s, W / 2 + (z - ici.z) * s];
-  if (ETAPE === 'caserne') for (const p of PATROUILLES) { const [x, y] = P(p.pos.x, p.pos.z); mini.fillStyle = '#b8402e'; mini.beginPath(); mini.arc(x, y, 6, 0, 7); mini.fill(); }
-  const e = ETAPES[ETAPE], c = e && e.cible && etat === 'jeu' ? e.cible() : null;
+  if (ETAPES[ETAPE] && ETAPES[ETAPE].furtif) for (const p of PATROUILLES) { const [x, y] = P(p.pos.x, p.pos.z); mini.fillStyle = '#b8402e'; mini.beginPath(); mini.arc(x, y, 6, 0, 7); mini.fill(); }
+  const e = ETAPES[ETAPE], c = JOB && etat === 'jeu' ? JOB.cible() : e && e.cible && etat === 'jeu' ? e.cible() : null;
+  if (libre_() && !JOB) for (const id of ['carmelo', 'vanni']) { const [x, y] = P(PNJ[id].pos.x, PNJ[id].pos.z); mini.fillStyle = '#6fbf6a'; mini.strokeStyle = '#15110c'; mini.lineWidth = 3; mini.beginPath(); mini.arc(clamp(x, 14, W - 14), clamp(y, 14, W - 14), 8, 0, 7); mini.fill(); mini.stroke(); }
   if (c) { let [x, y] = P(c.x, c.z); const dx = x - W / 2, dy = y - W / 2, l = Math.hypot(dx, dy); if (l > W / 2 - 14) { x = W / 2 + dx / l * (W / 2 - 14); y = W / 2 + dy / l * (W / 2 - 14); } mini.fillStyle = '#e2bd45'; mini.strokeStyle = '#15110c'; mini.lineWidth = 3; mini.beginPath(); mini.arc(x, y, 9, 0, 7); mini.fill(); mini.stroke(); }
   const yaw = J.dansChar ? CHAR.yaw : J.yaw;
   mini.translate(W / 2, W / 2); mini.rotate(Math.atan2(Math.cos(yaw), Math.sin(yaw)));
@@ -1652,7 +2008,7 @@ if (tactile) document.body.classList.add('tactile');
 
 /* ---------- Menus ---------- */
 const COMMANDES = `<div class="touches"><div><h3>Clavier et souris</h3><dl>
-<dt>ZQSD · WASD · flèches</dt><dd>Marcher, conduire</dd><dt>Souris</dt><dd>Regarder (clique pour la capturer)</dd><dt>Maj</dt><dd>Sprinter</dd><dt>E</dt><dd>Parler, agir</dd><dt>F</dt><dd>Monter, descendre du carretto</dd><dt>Espace</dt><dd>Faire avancer un dialogue</dd><dt>1 · 2</dt><dd>Choisir une réponse</dd><dt>Échap</dt><dd>Pause</dd></dl></div>
+<dt>ZQSD · WASD · flèches</dt><dd>Marcher, conduire</dd><dt>Souris</dt><dd>Regarder (clique pour la capturer)</dd><dt>Maj</dt><dd>Sprinter</dd><dt>E</dt><dd>Parler, agir</dd><dt>F</dt><dd>Monter, descendre du carretto</dd><dt>Espace</dt><dd>Faire avancer un dialogue</dd><dt>1 · 2 · 3</dt><dd>Choisir une réponse</dd><dt>E à la pêche</dt><dd>Ferrer le poisson</dd><dt>Échap</dt><dd>Pause</dd></dl></div>
 <div><h3>Écran tactile</h3><dl><dt>Pouce gauche</dt><dd>Marcher, conduire</dd><dt>Glisser à droite</dt><dd>Regarder</dd><dt>Agir</dt><dd>Parler, monter, cueillir</dd><dt>Courir</dt><dd>Sprinter (maintenir)</dd><dt>II</dt><dd>Pause</dd></dl></div></div>`;
 function panneau(html, boutons) {
   UI.panneau.hidden = false; const b = UI.panneau.querySelector('.boite'); b.innerHTML = html;
@@ -1665,7 +2021,7 @@ function listeChapitres() {
   const fins = SAUVE.fins.length;
   return `<h2>Chapitres</h2><ul class="chapitres">${CHAPITRES.map(c => `<li class="${c.jouable ? '' : 'verrou'}"><span class="num">${c.n}</span><div><div class="nom">${c.nom}</div><div class="lieu">${c.lieu}</div></div><div class="etat">${c.jouable ? `<button data-jouer="1">Jouer</button>` : 'Bientôt'}</div></li>`).join('')}</ul><p class="note" style="color:var(--fumee);margin-top:16px">Chapitre I : ${fins} fin${fins > 1 ? 's' : ''} découverte${fins > 1 ? 's' : ''} sur 3.</p>`;
 }
-const NOMS_ETAPES = { pippo: 'Le baglio', cueillir: 'La cueillette', rapporter: 'La cueillette', monter: 'Le marché', livrer: 'Le marché', retour: 'Le retour', poursuite: 'Le voleur', cassette: 'La visite', caserne: 'La nuit' };
+const NOMS_ETAPES = { masseria: 'La masseria', a2_intro: '1877', a2_festa: 'La Santa Lucia', a2_part: 'La part', a2_retourDon: 'La part', a2_rafle: 'La rafle', a2_fuite: 'La rafle', a2_choix: 'Le choix', a2_jours: 'Le choix', pippo: 'Le baglio', cueillir: 'La cueillette', rapporter: 'La cueillette', monter: 'Le marché', livrer: 'Le marché', retour: 'Le retour', poursuite: 'Le voleur', cassette: 'La visite', caserne: 'La nuit' };
 function majMenu() {
   const c = $('#m-continuer'); c.hidden = !SAUVE.etape || !ETAPES[SAUVE.etape]; $('#m-ou').textContent = SAUVE.etape ? 'Chapitre I · ' + (NOMS_ETAPES[SAUVE.etape] || '') : '';
   $('#m-son-etat').textContent = SON.actif ? 'activé' : 'coupé'; $('#m-qualite-etat').textContent = Q.nom;
@@ -1677,7 +2033,8 @@ function lancer(id) {
 $('#m-nouvelle').onclick = () => lancer('intro');
 $('#m-continuer').onclick = () => lancer(SAUVE.etape);
 $('#m-chapitres').onclick = () => { SON.init(); panneau(listeChapitres(), [['Retour', fermerPanneau]]); const b = UI.panneau.querySelector('[data-jouer]'); b && (b.onclick = () => lancer('intro')); };
-$('#m-commandes').onclick = () => { SON.init(); panneau('<h2>Commandes</h2>' + COMMANDES, [['Retour', fermerPanneau]]); };
+$('#m-commandes').onclick = () => { SON.init(); panneau('<h2>Commandes</h2>' + COMMANDES + CREDITS, [['Retour', fermerPanneau]]); };
+const CREDITS = `<h3 style="font-family:var(--etiquette);letter-spacing:.18em;text-transform:uppercase;font-size:13px;color:var(--citron);margin:28px 0 10px;font-weight:400">Crédits</h3><p style="color:var(--fumee);font-size:14px;line-height:1.6;margin:0">Visage scanné : « Lee Perry-Smith head », Infinite Realities, licence Creative Commons Attribution 3.0 (adapté : yeux ouverts, buste coupé). Moteur : three.js (licence MIT). Polices : Cormorant, Bitter, Oswald (SIL Open Font License). Tout le reste (décors, matières, personnages, sons) est fabriqué par le programme du jeu.</p>`;
 $('#m-son').onclick = () => { SON.init(); SON.basculer(); majMenu(); };
 $('#m-qualite').onclick = changerQualite;
 function changerQualite() { const o = ['haute', 'moyenne', 'basse'], n = o[(o.indexOf(QN) + 1) % 3]; SAUVE.qualite = n; sauver(); toast('Qualité ' + QUALITES[n].nom.toLowerCase() + '…'); setTimeout(() => location.reload(), 300); }
@@ -1718,13 +2075,15 @@ function boucle(now) {
     if (etat === 'jeu') {
       if (J.dansChar) { majCharrette(dt); animer(J.h, dt, 0); } else { majJoueur(dt); majCharrette(dt); }
       const e = ETAPES[ETAPE]; if (e && e.maj && !FIGE) e.maj(dt);
-      if (chrono) { chrono.reste -= dt; UI.chrono.hidden = false; const r = Math.max(0, Math.ceil(chrono.reste)); UI.chrono.textContent = `${Math.floor(r / 60)}:${String(r % 60).padStart(2, '0')}`; UI.chrono.classList.toggle('urgent', r <= 15); if (chrono.reste <= 0) echec(chrono.echec, 'monter'); }
+      if (chrono) { chrono.reste -= dt; UI.chrono.hidden = false; const r = Math.max(0, Math.ceil(chrono.reste)); UI.chrono.textContent = `${Math.floor(r / 60)}:${String(r % 60).padStart(2, '0')}`; UI.chrono.classList.toggle('urgent', r <= 15); if (chrono.reste <= 0) { if (chrono.job) { toast(chrono.echec, true, 3000); SON.rate(); JOB = null; chrono = null; UI.chrono.hidden = true; } else echec(chrono.echec, 'monter'); } }
+      if (JOB && JOB.type === 'livraison' && J.dansChar && dist(CHAR, JOB.d) < 9 && Math.abs(CHAR.v) < 3) { const n = CHAR.nb, q = JOB.d.qui; JOB = null; chrono = null; UI.chrono.hidden = true; CHAR.v = 0; placerCharrette(CHAR.x, CHAR.z, CHAR.yaw, 0); gagner(10 + 2 * n, `livraison à ${q}, ${n} cagette${n > 1 ? 's' : ''} intacte${n > 1 ? 's' : ''}`); }
+      if (PECHE.actif) { PECHE.t += dt; $('#peche .curseur').style.left = ((Math.sin(PECHE.t * PECHE.vitesse * (1 + JOB.essais * .18)) + 1) / 2 * 100) + '%'; }
       if (!mesure.fait) { mesure.t += dt; mesure.n++; if (mesure.t > 12) { mesure.fait = true; const fps = mesure.n / mesure.t; if (fps < 26 && QN !== 'basse') aide(`L’image saccade (${Math.round(fps)} images/s). Baisse la <b>qualité graphique</b> dans la pause (Échap).`, 9000); } }
     } else if (etat === 'dialogue') { majDialogue(dt); if (!J.dansChar) { J.h.g.rotation.y += ecartAngle(J.h.g.rotation.y, J.yaw) * Math.min(1, dt * 6); animer(J.h, dt, 0); } }
     majPnj(dt);
     majCamera(dt);
     chercherInteraction();
-    const e = ETAPES[ETAPE], c = e && e.cible && etat === 'jeu' ? e.cible() : null;
+    const e = ETAPES[ETAPE], c = JOB && etat === 'jeu' ? JOB.cible() : e && e.cible && etat === 'jeu' ? e.cible() : null;
     repere.visible = !!c; if (c) { repere.position.set(c.x, H(c.x, c.z), c.z); losange.position.y = 3.2 + Math.sin(now / 300) * .25; losange.rotation.y = now / 600; }
     CUEILLETTE.forEach((k, i) => { if (k.g.visible) { k.g.children[3].scale.setScalar(1 + Math.sin(now / 250 + i) * .15); } });
     if (etat === 'jeu') { majMinicarte(); majObjectif(); }
@@ -1750,4 +2109,4 @@ function boucle(now) {
 ETAPES.intro.setup(); retourMenu(); heure(1.05, true);
 $('#chargement').hidden = true;
 requestAnimationFrame(boucle);
-window.__silenzio = { aller, charger, ETAPES, J, CHAR, PNJ, CUEILLETTE, etat: () => etat, etape: () => ETAPE, inter: () => interProche && interProche.lib(), heure, camera, cam: CAM };
+window.__silenzio = { aller, charger, ETAPES, J, CHAR, PNJ, CUEILLETTE, etat: () => etat, etape: () => ETAPE, inter: () => interProche && interProche.lib(), heure, camera, cam: CAM, sauve: SAUVE, job: () => JOB && JOB.type };

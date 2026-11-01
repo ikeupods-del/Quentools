@@ -162,6 +162,30 @@ function imagePieuse() {
   x.strokeStyle = '#d8b04a'; x.lineWidth = 6; x.strokeRect(3, 3, 122, 186);
   const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t;
 }
+
+/* Drapeau de la Sicile : diagonale rouge et jaune, Trinacria au centre (tête de Méduse, trois jambes, épis de blé) */
+export function texDrapeau() {
+  const W = 600, Hh = 400, c = document.createElement('canvas'); c.width = W; c.height = Hh; const x = c.getContext('2d');
+  x.fillStyle = '#c4161c'; x.beginPath(); x.moveTo(0, 0); x.lineTo(W, 0); x.lineTo(0, Hh); x.fill();
+  x.fillStyle = '#f4c21a'; x.beginPath(); x.moveTo(W, 0); x.lineTo(W, Hh); x.lineTo(0, Hh); x.fill();
+  x.translate(W / 2, Hh / 2); x.lineCap = x.lineJoin = 'round';
+  for (let k = 0; k < 3; k++) {
+    x.save(); x.rotate(k * Math.PI * 2 / 3 + .35);
+    for (const [lw, col] of [[34, '#6a3a1e'], [26, '#ecc89c']]) { x.strokeStyle = col; x.lineWidth = lw; x.beginPath(); x.moveTo(0, -10); x.lineTo(0, -98); x.lineTo(62, -128); x.stroke(); x.lineWidth = lw * .7; x.beginPath(); x.moveTo(62, -128); x.lineTo(92, -116); x.stroke(); }
+    x.restore();
+    x.save(); x.rotate(k * Math.PI * 2 / 3 + Math.PI / 3 + .35);
+    x.strokeStyle = '#b8860b'; x.lineWidth = 3; x.beginPath(); x.moveTo(0, -48); x.lineTo(0, -92); x.stroke();
+    for (let i = 0; i < 6; i++) { x.fillStyle = i % 2 ? '#e8b830' : '#d4a020'; x.beginPath(); x.ellipse(i % 2 ? 6 : -6, -60 - i * 6, 5, 9, i % 2 ? .4 : -.4, 0, 7); x.fill(); }
+    x.restore();
+  }
+  for (const sx of [-1, 1]) { x.fillStyle = '#f2ead8'; x.beginPath(); x.ellipse(sx * 44, -26, 18, 9, sx * -.5, 0, 7); x.fill(); x.strokeStyle = '#8a7a6a'; x.lineWidth = 2; x.stroke(); }
+  x.strokeStyle = '#3a5a2a'; x.lineWidth = 5;
+  for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; x.beginPath(); x.moveTo(Math.cos(a) * 40, Math.sin(a) * 40); x.quadraticCurveTo(Math.cos(a + .3) * 56, Math.sin(a + .3) * 56, Math.cos(a) * 64, Math.sin(a) * 64); x.stroke(); }
+  x.fillStyle = '#ecc89c'; x.strokeStyle = '#6a3a1e'; x.lineWidth = 4; x.beginPath(); x.arc(0, 0, 42, 0, 7); x.fill(); x.stroke();
+  x.fillStyle = '#3a2214'; for (const sx of [-1, 1]) { x.beginPath(); x.ellipse(sx * 14, -6, 5, 3.5, 0, 0, 7); x.fill(); x.fillRect(sx * 14 - 8, -16, 16, 3); }
+  x.strokeStyle = '#6a3a1e'; x.lineWidth = 3; x.beginPath(); x.moveTo(0, -2); x.lineTo(-3, 12); x.lineTo(3, 13); x.stroke(); x.beginPath(); x.arc(0, 20, 9, .2, Math.PI - .2); x.stroke();
+  const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.anisotropy = 4; return t;
+}
 const VISAGES = {};
 export function texVisage(type, aniso = 4) {
   if (!VISAGES[type]) { const t = fabrique(256, visage(type), 1.1); for (const k in t) t[k].anisotropy = aniso; VISAGES[type] = t; }

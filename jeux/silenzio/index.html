@@ -44,6 +44,13 @@ body.cinema #bandes .h,body.cinema #bandes .b{transform:none}
 #objectif .chap{font-family:var(--etiquette);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--citron)}
 #objectif .txt{font-size:clamp(14px,1.6vw,17px);line-height:1.35;text-shadow:0 1px 3px #000,0 0 12px rgba(0,0,0,.7);margin-top:4px}
 #objectif .txt b{color:var(--citron);font-weight:600}
+#argent{margin-top:8px;font-family:var(--etiquette);font-size:13px;letter-spacing:.06em;text-shadow:0 1px 3px #000}
+#argent b{color:var(--citron);font-size:16px}
+#argent span{color:var(--fumee)}
+#peche{position:absolute;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(80vw,420px);text-align:center;font-size:13px;text-shadow:0 1px 3px #000}
+#peche .barre{position:relative;height:18px;border-radius:9px;background:rgba(16,12,8,.75);border:1px solid rgba(238,226,200,.4);overflow:hidden;margin-bottom:8px}
+#peche .zone{position:absolute;top:0;bottom:0;background:rgba(226,189,69,.55)}
+#peche .curseur{position:absolute;top:-2px;bottom:-2px;width:6px;margin-left:-3px;background:#fff;border-radius:3px;box-shadow:0 0 8px #fff}
 #minicarte{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:calc(16px + env(safe-area-inset-right,0px));width:150px;height:150px;border-radius:50%;border:2px solid rgba(238,226,200,.55);box-shadow:0 4px 18px rgba(0,0,0,.5)}
 #chrono{position:absolute;top:calc(176px + env(safe-area-inset-top,0px));right:calc(16px + env(safe-area-inset-right,0px));width:150px;text-align:center;font-family:var(--etiquette);font-size:22px;letter-spacing:.06em;text-shadow:0 1px 4px #000}
 #chrono.urgent{color:#ff8a6a}
@@ -142,7 +149,8 @@ body.tactile #jauges{bottom:calc(126px + env(safe-area-inset-bottom,0px))}
 <div id="bandes"><i class="h"></i><i class="b"></i></div>
 
 <div id="hud" hidden>
-  <div id="objectif"><div class="chap" id="obj-chap">Chapitre I</div><div class="txt" id="obj-txt"></div></div>
+  <div id="objectif"><div class="chap" id="obj-chap">Chapitre I</div><div class="txt" id="obj-txt"></div><div id="argent" hidden></div></div>
+  <div id="peche" hidden><div class="barre"><i class="zone"></i><i class="curseur"></i></div><div class="txt">Appuie sur <b>E</b> (ou Agir) quand le flotteur passe dans la zone dorée</div></div>
   <canvas id="minicarte" width="300" height="300"></canvas>
   <div id="chrono" hidden></div>
   <div id="toast"></div>
