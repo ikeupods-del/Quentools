@@ -1,6 +1,0 @@
-tete.json (géométrie convertie depuis LeePerrySmith.glb), Map-COL.jpg, Infinite-Level_02_Tangent_SmoothUV.jpg
-Scan de tête « Lee Perry-Smith », Infinite Realities (Lee Perry-Smith), licence Creative Commons Attribution 3.0
-(https://creativecommons.org/licenses/by/3.0/). Fichiers copiés des exemples du dépôt mrdoob/three.js (r169).
-Modifications faites par le jeu au chargement : paupières repoussées pour loger des yeux ouverts, buste coupé sous le cou,
-mise à l'échelle, teinte de peau par personnage. Crédit affiché dans le jeu (menu Commandes).
-Avant toute diffusion commerciale, vérifier à nouveau les conditions de la licence auprès de l'auteur.

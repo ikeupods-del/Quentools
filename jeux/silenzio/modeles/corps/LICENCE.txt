@@ -1,0 +1,4 @@
+corps.json — corps humains du jeu, convertis par outils/corps.js depuis MakeHuman (https://github.com/makehumancommunity/makehuman) :
+maillage de base hm08 (base.obj), squelette par défaut (default.mhskel), poids de peau (default_weights.mhw) et cibles
+« macrodetails » (sexe, âge, origine, musculature, corpulence). Ces données ont été publiées dans le domaine public (CC0)
+par l'équipe MakeHuman en septembre 2020. Vêtements, peau, cheveux, yeux et animations sont ajoutés par le jeu.

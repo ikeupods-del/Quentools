@@ -149,6 +149,8 @@ function visage(type) {
     o.r = r; o.g = g; o.b = b; o.ru = .5 + n * .15 + levre * -.15;
   };
 }
+/* Grain de peau (pores et ridules), raccordable */
+function pores(u, v, o) { const n = fbm(u, v, 32, 3, 95), p = cellules(u, v, 40, 40, 96); o.h = n * .5 + Math.min(1, p.d1 * 3) * .4; gris(o, .97 + (n - .5) * .05); o.ru = .5 + n * .2; }
 /* Mèches de cheveux (le long de v) */
 function meches(u, v, o) { const m = bruitP(u * 90, v * 4, 90, 91) * .6 + bruitP(u * 180, v * 6, 180, 92) * .4; o.h = m; gris(o, .8 + m * .35); o.ru = .5 + (1 - m) * .2; }
 /* Image pieuse (Vierge au manteau bleu, auréole dorée) pour les autels de bord de route */
@@ -186,6 +188,19 @@ export function texDrapeau() {
   x.strokeStyle = '#6a3a1e'; x.lineWidth = 3; x.beginPath(); x.moveTo(0, -2); x.lineTo(-3, 12); x.lineTo(3, 13); x.stroke(); x.beginPath(); x.arc(0, 20, 9, .2, Math.PI - .2); x.stroke();
   const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.anisotropy = 4; return t;
 }
+
+/* Salissures (canal alpha) : coulures de pluie sous les appuis, crasse au pied des murs */
+function salissure(type) {
+  const W = 128, Hh = 256, c = document.createElement('canvas'); c.width = W; c.height = Hh; const x = c.getContext('2d'); const im = x.createImageData(W, Hh);
+  for (let j = 0; j < Hh; j++) for (let i = 0; i < W; i++) {
+    const u = i / W, v = j / Hh, n = fbm(u, v * .5, 8, 4, 101), k = (j * W + i) * 4;
+    let a;
+    if (type === 'coulure') { const col = fbm(u * 1.5, 0, 16, 2, 102), larg = Math.min(1, Math.max(0, (col - .38) * 3)); a = larg * Math.pow(1 - v, 1.4) * (.5 + n * .6) * Math.min(1, u * 8, (1 - u) * 8); }
+    else a = Math.pow(v, 2.2) * (.55 + n * .6) * (1 - Math.max(0, .5 - n) * .8);
+    im.data[k] = 46; im.data[k + 1] = 38; im.data[k + 2] = 30; im.data[k + 3] = Math.max(0, Math.min(255, a * 200));
+  }
+  x.putImageData(im, 0, 0); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t;
+}
 const VISAGES = {};
 export function texVisage(type, aniso = 4) {
   if (!VISAGES[type]) { const t = fabrique(256, visage(type), 1.1); for (const k in t) t[k].anisotropy = aniso; VISAGES[type] = t; }
@@ -201,7 +216,7 @@ export function fabriquerTextures(qualite, aniso) {
     olivier: feuillage(n, { nombre: 420, longueur: .085, largeur: .22, couleurs: [[112, 124, 92], [92, 104, 74], [138, 146, 116]], graine: 11 }),
     cypres: feuillage(n, { nombre: 520, longueur: .05, largeur: .5, couleurs: [[34, 52, 30], [44, 62, 36], [28, 44, 26]], graine: 13 }),
     herbes: feuillage(n / 2, { nombre: 140, longueur: .2, largeur: .08, couleurs: [[176, 160, 96], [150, 140, 80], [120, 124, 70]], graine: 17 }),
-    cheveux: fabrique(n / 2, meches, 2.5), image: imagePieuse(),
+    cheveux: fabrique(n / 2, meches, 2.5), image: imagePieuse(), pores: fabrique(256, pores, 1.4), coulure: salissure('coulure'), crasse: salissure('pied'),
     bougainvillee: feuillage(n, { nombre: 700, longueur: .055, largeur: .8, couleurs: [[200, 36, 120], [224, 60, 150], [176, 28, 102], [212, 48, 138], [60, 92, 40], [48, 80, 34]], graine: 19 }),
     geranium: feuillage(n / 2, { nombre: 260, longueur: .09, largeur: .85, couleurs: [[206, 34, 34], [232, 56, 44], [190, 24, 40], [74, 112, 52], [62, 100, 44]], graine: 23 }),
     vigne: feuillage(n, { nombre: 300, longueur: .13, largeur: .85, couleurs: [[98, 124, 52], [116, 142, 62], [80, 108, 44], [128, 140, 64]], graine: 29 })
