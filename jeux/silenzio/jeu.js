@@ -71,7 +71,7 @@ if (Q.ao) {
 const sansFeuillage = pass => { const r0 = pass.render.bind(pass); pass.render = (...a) => { const vus = SANS_AO.map(m => m.visible); SANS_AO.forEach(m => { m.visible = false; }); r0(...a); SANS_AO.forEach((m, i) => { m.visible = vus[i]; }); }; };
 let passeFlou = null;
 if (Q.dof) { passeFlou = new BokehPass(scene, camera, { focus: 2, aperture: .0012, maxblur: .005 }); passeFlou.enabled = false; sansFeuillage(passeFlou); compo.addPass(passeFlou); }
-if (Q.bloom) { passeHalo = new UnrealBloomPass(new T.Vector2(256, 256), .32, .6, .92); compo.addPass(passeHalo); }
+if (Q.bloom) { passeHalo = new UnrealBloomPass(new T.Vector2(256, 256), .42, .65, .86); compo.addPass(passeHalo); }
 const RAYONS = new ShaderPass({
   uniforms: { tDiffuse: { value: null }, uSoleil: { value: new T.Vector2(.5, .5) }, uForce: { value: 0 }, uSeuil: { value: 1.1 }, uTeinte: { value: new T.Color(1, .85, .6) } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
@@ -83,7 +83,7 @@ const RAYONS = new ShaderPass({
 RAYONS.enabled = false; if (Q.bloom) compo.addPass(RAYONS);
 compo.addPass(new OutputPass());
 const ETALON = new ShaderPass({
-  uniforms: { tDiffuse: { value: null }, uTemps: { value: 0 }, uRes: { value: new T.Vector2(1, 1) }, uVignette: { value: .55 }, uGrain: { value: .035 }, uNet: { value: .3 }, uChaleur: { value: .35 }, uSat: { value: .95 } },
+  uniforms: { tDiffuse: { value: null }, uTemps: { value: 0 }, uRes: { value: new T.Vector2(1, 1) }, uVignette: { value: .55 }, uGrain: { value: .035 }, uNet: { value: .35 }, uChaleur: { value: .35 }, uSat: { value: .95 } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
   fragmentShader: `uniform sampler2D tDiffuse; uniform float uTemps, uVignette, uGrain, uChaleur, uSat, uNet; uniform vec2 uRes; varying vec2 vUv;
     float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
@@ -99,7 +99,11 @@ const ETALON = new ShaderPass({
       vec3 lum = mix(vec3(1.0), uChaleur > 0.0 ? vec3(1.1, 1.0, 0.83) : vec3(0.86, 0.95, 1.14), k);
       c *= mix(ombre, lum, smoothstep(0.05, 0.75, l));
       c = mix(vec3(l), c, uSat);
-      c = (c - 0.5) * 1.07 + 0.5;
+      // Ombres légèrement froides, lumières chaudes, courbe en S (rendu cinéma)
+      float lc = dot(c, vec3(0.2126, 0.7152, 0.0722));
+      c += mix(vec3(-0.012, 0.004, 0.022), vec3(0.03, 0.012, -0.024), smoothstep(0.15, 0.8, lc));
+      c = mix(c, c * c * (3.0 - 2.0 * c), 0.35);
+      c = (c - 0.5) * 1.06 + 0.5;
       c *= 1.0 - uVignette * smoothstep(0.1, 0.7, r2 * 1.6);
       c += (h(vUv * uRes + fract(uTemps) * 91.7) - 0.5) * uGrain;
       gl_FragColor = vec4(clamp(c, 0.0, 1.0), 1.0);
@@ -117,9 +121,16 @@ addEventListener('resize', redimensionner); redimensionner();
 await etape('Matières…');
 const ANISO = rendu.capabilities.getMaxAnisotropy();
 const TX = fabriquerTextures(QN, Math.min(ANISO, 8));
+/* Matières photographiques (ambientCG, CC0 ; outils/matieres.js) à la place des matières dessinées, sauf en qualité Basse */
+function matierePhoto(fam) {
+  const charge = (suffixe, srgb) => { const t = new T.TextureLoader().load('matieres/' + fam + suffixe + '.jpg'); t.wrapS = t.wrapT = T.RepeatWrapping; if (srgb) t.colorSpace = T.SRGBColorSpace; t.anisotropy = Math.min(ANISO, 8); return t; };
+  return { map: charge('_c', true), normalMap: charge('_n'), roughnessMap: charge('_r') };
+}
+if (QN !== 'basse' && !ESSAI) for (const fam of ['enduit', 'pierre', 'moellon', 'tuiles', 'paves', 'sol', 'bois', 'roche', 'gravier']) TX[fam] = matierePhoto(fam);
+else { TX.moellon = TX.pierre; TX.roche = TX.pierre; TX.gravier = TX.sol; }
 
 /* ---------- Matériaux ---------- */
-const ECH = { enduit: 3, pierre: 2.4, tuiles: 1.7, paves: 2.6, bois: 1.3, sol: 4 };
+const ECH = { enduit: 2.6, pierre: 1.9, moellon: 1.6, tuiles: 1.4, paves: 1.8, bois: 1.2, sol: 3.2, roche: 6, gravier: 2 }; // mètres couverts par une répétition de la matière
 const MATS = new Map();
 function M(cle) {
   if (MATS.has(cle)) return MATS.get(cle);
@@ -250,6 +261,11 @@ Object.assign(soleil.shadow.camera, { left: -PORTEE_OMBRE, right: PORTEE_OMBRE, 
 soleil.shadow.bias = -0.0004; soleil.shadow.normalBias = .04; soleil.shadow.radius = 3;
 scene.add(soleil, soleil.target);
 scene.fog = new T.FogExp2(0xd5cfc0, .003);
+/* Brume plus dense au ras du sol et dans les creux (perspective aérienne), plus légère en altitude */
+T.ShaderChunk.fog_pars_vertex = T.ShaderChunk.fog_pars_vertex.replace('varying float vFogDepth;', 'varying float vFogDepth; varying float vFogY;');
+T.ShaderChunk.fog_vertex = T.ShaderChunk.fog_vertex.replace('vFogDepth = - mvPosition.z;', 'vFogDepth = - mvPosition.z;\n\tvec4 fw = vec4(transformed, 1.0);\n#ifdef USE_INSTANCING\n\tfw = instanceMatrix * fw;\n#endif\n\tvFogY = (modelMatrix * fw).y;');
+T.ShaderChunk.fog_pars_fragment = T.ShaderChunk.fog_pars_fragment.replace('varying float vFogDepth;', 'varying float vFogDepth; varying float vFogY;');
+T.ShaderChunk.fog_fragment = T.ShaderChunk.fog_fragment.replace('float fogFactor = 1.0 - exp( - fogDensity * fogDensity * vFogDepth * vFogDepth );', 'float fogFactor = (1.0 - exp( - fogDensity * fogDensity * vFogDepth * vFogDepth )) * (0.8 + 0.35 * exp(-max(vFogY, 0.0) / 22.0));');
 
 /* La mer : reflets du ciel et vaguelettes animées */
 const eauNormales = new T.TextureLoader().load('textures/waternormals.jpg', t => { t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(70, 40); t.anisotropy = ANISO; });
@@ -307,7 +323,7 @@ await etape('Relief…');
   #endif`); };
   sol.receiveShadow = true; scene.add(sol);
   // Montagnes du fond et promontoire au bord de la mer (roche)
-  const roc = M('pierre:8a8070'), ge = facettes(new T.IcosahedronGeometry(1, 2));
+  const roc = (() => { const rep = t => { const x = t.clone(); x.repeat.set(9, 9); x.needsUpdate = true; return x; }; return new T.MeshStandardMaterial({ color: 0xa89c88, map: rep(TX.roche.map), normalMap: rep(TX.roche.normalMap), normalScale: new T.Vector2(1.6, 1.6), roughnessMap: rep(TX.roche.roughnessMap), roughness: 1 }); })(), ge = facettes(new T.IcosahedronGeometry(1, 2));
   for (let i = 0; i < 30; i++) {
     const a = -PI * .05 + i / 29 * PI * 1.1, rr = 330 + R() * 90, hh = 70 + R() * 110;
     const m = new T.Mesh(ge, roc); m.scale.set(90 + R() * 70, hh, 90 + R() * 70); m.rotation.y = R() * 3; m.position.set(Math.cos(a) * rr, -hh * .3, Math.sin(a) * rr); scene.add(m);
@@ -328,7 +344,7 @@ function ruban(pts, larg, couleur) {
     v.push(...A0, ...A1, ...B0, ...B0, ...A1, ...B1); u.push(0, v0, 0, v1, w, v0, w, v0, 0, v1, w, v1);
   }
   const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(v, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(u, 2)); g.computeVertexNormals();
-  const m = new T.Mesh(g, new T.MeshStandardMaterial({ color: couleur, map: TX.sol.map, normalMap: TX.sol.normalMap, normalScale: new T.Vector2(2, 2), roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+  const m = new T.Mesh(g, new T.MeshStandardMaterial({ color: couleur, map: TX.gravier.map, normalMap: TX.gravier.normalMap, roughnessMap: TX.gravier.roughnessMap, normalScale: new T.Vector2(1.5, 1.5), roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
   m.receiveShadow = true; scene.add(m);
 }
 ruban(ROUTES[0], 4.6, 0xd7c29c); ruban(ROUTES[1], 4, 0xcdb792); ruban(ROUTES[2], 3, 0xc0aa82); ruban(ROUTES[3], 3, 0xc8b08a);
@@ -610,17 +626,21 @@ function foret(liste, geoTronc, matTronc, geoFeuilles, matFeuilles) {
   SANS_AO.push(...foret(cy, tY, ecorce, fY, matFeuilleY).slice(1));
   // Figuiers de Barbarie : raquettes empilées
   const gr = [], rq = alea(71), sph = new T.SphereGeometry(.5, 12, 8);
-  const pose = (x, y, z, rx, ry, rz, s) => { const g = sph.clone(); g.scale(.95 * s, .72 * s, .22 * s); g.rotateZ(rz); g.rotateX(rx); g.rotateY(ry); g.translate(x, y, z); gr.push(g.toNonIndexed()); };
+  const pose = (x, y, z, rx, ry, rz, s) => { const g = sph.clone(); g.scale(.95 * s, .74 * s, .13 * s); g.rotateZ(rz); g.rotateX(rx); g.rotateY(ry); g.translate(x, y, z); gr.push(g.toNonIndexed()); };
   for (let i = 0; i < 4; i++) { const a = i / 4 * PI * 2; pose(Math.cos(a) * .35, .4, Math.sin(a) * .35, 0, a, (rq() - .5) * .5, 1); for (let j = 0; j < 2; j++) pose(Math.cos(a) * (.5 + j * .25), 1 + j * .55, Math.sin(a) * (.5 + j * .25), (rq() - .5) * .4, a + rq(), (rq() - .5) * .9, .85 - j * .1); }
-  pose(0, 1.6, 0, 0, 0, .2, .8);
+  pose(0, 1.6, 0, 0, 0, .2, .8); pose(.3, 1.95, .1, .2, 1.2, -.3, .62); pose(-.25, 2.0, -.15, -.15, 2.4, .35, .58);
   const gFi = mergeGeometries(gr);
+  // Figues de Barbarie mûres sur le bord des raquettes du haut
+  const fr = [], bout = new T.SphereGeometry(.045, 8, 6); bout.scale(1, 1.3, 1);
+  for (const [x, y, z] of [[.05, 1.98, .02], [.16, 1.94, .05], [-.12, 1.92, -.02], [.38, 2.27, .12], [.48, 2.18, .1], [-.3, 2.33, -.16], [-.18, 2.36, -.12], [.62, 1.64, .2], [-.58, 1.62, -.3]]) fr.push(bout.clone().translate(x, y, z).toNonIndexed());
+  const gFr = mergeGeometries(fr);
   n = 0;
   while (fi.length < 120 * Q.arbres && n++ < 6000) {
     let x, z; if (R() < .55) { const r = ROUTES[(R() * 2) | 0], i = (R() * (r.length - 1)) | 0, t = R(), sd = R() < .5 ? -1 : 1; x = lerp(r[i][0], r[i + 1][0], t) + sd * (4.5 + R() * 3); z = lerp(r[i][1], r[i + 1][1], t) + (R() - .5) * 4; } else { x = (R() - .5) * 400; z = (R() - .5) * 380; }
     if (!libre(x, z, -2.5) || distRoute(x, z) < 4) continue;
     fi.push({ x, y: H(x, z), z, s: .8 + R() * .6, ry: R() * 6 }); CERCLES.push({ x, z, r: 1 });
   }
-  foret(fi, gFi, M('raquette:9fbf7a'));
+  foret(fi, gFi, M('raquette:86a272')); foret(fi, gFr, new T.MeshStandardMaterial({ color: 0xd2662e, roughness: .45 }));
   n = 0;
   while (ro.length < 110 && n++ < 3000) { const x = (R() - .5) * 460, z = (R() - .5) * 420; if (!libre(x, z, -2)) continue; const s = .4 + R() * 1.3; ro.push({ x, y: H(x, z) - s * .2, z, s, ry: R() * 6 }); if (s > .8) CERCLES.push({ x, z, r: s * .9 }); }
   const gRo = facettes(new T.IcosahedronGeometry(1, 1)); gRo.scale(1, .65, 1.1);
@@ -2033,8 +2053,8 @@ function majCamera(dt) {
 
 /* ---------- Heure du jour : soleil, ciel, nuages, brume, étalonnage ---------- */
 const AMBIANCES = [
-  { elev: 48, azim: 25, turb: 4.5, ray: 1.3, mie: .004, mieG: .8, soleil: 0xfff0d8, si: 3.2, hs: 0xd8e2ea, hg: 0x8a7350, hi: .45, env: .75, brume: 0xcdd0cc, dens: .0024, expo: .62, nuit: 0, chaleur: .32, couv: .58, nClair: 0xffffff, nSombre: 0x9aa0aa, nOpac: .9 },
-  { elev: 2.5, azim: 262, turb: 10, ray: 3, mie: .012, mieG: .9, soleil: 0xffa25a, si: 2.6, hs: 0xd0a080, hg: 0x4a3426, hi: .38, env: .7, brume: 0xd6a07a, dens: .0034, expo: .78, nuit: .08, chaleur: .6, couv: .55, nClair: 0xffb27a, nSombre: 0x6a4a5a, nOpac: .95 },
+  { elev: 48, azim: 25, turb: 3.2, ray: 1.5, mie: .004, mieG: .8, soleil: 0xfff0d8, si: 3.7, hs: 0xd0dcea, hg: 0x8a7350, hi: .36, env: .7, brume: 0xc9cfd4, dens: .0016, expo: .64, nuit: 0, chaleur: .32, couv: .58, nClair: 0xffffff, nSombre: 0x9aa0aa, nOpac: .9 },
+  { elev: 2.5, azim: 262, turb: 10, ray: 3, mie: .012, mieG: .9, soleil: 0xffa25a, si: 2.6, hs: 0xd0a080, hg: 0x4a3426, hi: .38, env: .7, brume: 0xd6a07a, dens: .0026, expo: .78, nuit: .08, chaleur: .6, couv: .55, nClair: 0xffb27a, nSombre: 0x6a4a5a, nOpac: .95 },
   { elev: -16, azim: 290, turb: 2, ray: .5, mie: .002, mieG: .7, soleil: 0x9db4e8, si: .7, hs: 0x5a6e9e, hg: 0x16161a, hi: .32, env: .9, brume: 0x0e1424, dens: .0085, expo: 1.0, nuit: 1, chaleur: -.35, couv: .6, nClair: 0x2a3550, nSombre: 0x0c1020, nOpac: .7 }
 ];
 let HEURE = 0;

@@ -121,7 +121,7 @@ function feuillage(n, o) {
   const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t;
 }
 /* Raquette de figuier de Barbarie : vert cireux, aréoles et épines */
-function raquette(u, v, o) { const p = cellules(u, v, 9, 9, 71), n = fbm(u, v, 6, 4, 72); o.h = n * .4 + (p.d1 < .07 ? .6 : 0); const c = .5 + n * .2; o.r = c * .62; o.g = c * .92; o.b = c * .5; if (p.d1 < .07) { o.r = .85; o.g = .8; o.b = .6; } o.ru = .55; }
+function raquette(u, v, o) { const p = cellules(u, v, 9, 9, 71), n = fbm(u, v, 6, 4, 72), f = fbm(u * 3, v * 3, 5, 4, 73); o.h = n * .35 + f * .15 + (p.d1 < .06 ? .7 : 0); const c = .5 + n * .2 + f * .08; o.r = c * .66; o.g = c * .86; o.b = c * .58; if (p.d1 < .06) { o.r = .72; o.g = .68; o.b = .5; } if (p.d1 < .025) { o.r = .9; o.g = .86; o.b = .7; } o.ru = .62; } // raquette glauque, aréoles à épines
 
 
 /* Peau du visage, dans les coordonnées de la sphère de la tête (u = tour, v = du haut vers le bas) :

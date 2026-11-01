@@ -1,0 +1,11 @@
+Matières photographiques : ambientCG (ambientcg.com), domaine public (CC0 1.0).
+enduit : Plaster001
+pierre : Bricks019
+moellon : Bricks040
+tuiles : RoofingTiles014A
+paves : PavingStones054
+sol : Ground037
+bois : Wood043
+roche : Rock029
+gravier : Gravel011
+Réduites, désaturées et égalisées par outils/matieres.js.
