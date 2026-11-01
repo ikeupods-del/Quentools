@@ -1024,12 +1024,12 @@ const MAT_CHEV = c => { const k = 'pp-chev:' + c; if (MATS.has(k)) return MATS.g
 /* Jupe longue, du tour de taille aux chevilles, attachée au bassin et un peu aux cuisses */
 function jupePP(f, fk, ample = 1) {
   const k = 'jupe|' + fk + '|' + ample; if (PP_GEO[k]) return PP_GEO[k];
-  const NA = 44, NY = 18, yH = 1.02, yB = .06, prof_ = y => y > .88 ? lerp(.175, .138, (y - .88) / (yH - .88)) : lerp(.27 * ample, .175, (y - yB) / (.88 - yB)) ** 1;
+  const NA = 44, NY = 18, yH = 1.06, yB = .06, prof_ = y => y > .88 ? lerp(.212, .2, (y - .88) / (yH - .88)) : lerp(.29 * ample, .212, (y - yB) / (.88 - yB));
   const pos = [], uv = [], si = [], sw = [], idx = [], ra = PP_RANG.root;
   for (let j = 0; j <= NY; j++) for (let i = 0; i <= NA; i++) {
-    const a = i / NA * 2 * PI, y = lerp(yH, yB, j / NY), r = prof_(y) + (j === NY ? 0 : Math.sin(a * 9 + j * .3) * .004 * (1 - y)), x = Math.sin(a) * r, z = Math.cos(a) * r * .84 - .006;
+    const a = i / NA * 2 * PI, y = lerp(yH, yB, j / NY), r = prof_(y) + (j === NY ? 0 : Math.sin(a * 9 + j * .3) * .004 * (1 - y)), x = Math.sin(a) * r, z = Math.cos(a) * r * .9 + .01;
     pos.push(x, y, z); uv.push(i / NA * 3, j / NY * 3);
-    const jambe = (1 - lisse(.45, .95, y)) * .4 * Math.min(1, Math.abs(x) / .1);
+    const jambe = (1 - lisse(.3, .95, y)) * .62 * Math.min(1, Math.abs(x) / .09);
     si.push(ra, PP_RANG[x >= 0 ? 'upperleg01.L' : 'upperleg01.R'], 0, 0); sw.push(Math.round((1 - jambe) * 255), Math.round(jambe * 255), 0, 0);
   }
   for (let j = 0; j < NY; j++) for (let i = 0; i < NA; i++) { const p = j * (NA + 1) + i; idx.push(p, p + 1, p + NA + 1, p + 1, p + NA + 2, p + NA + 1); }
@@ -1044,8 +1044,8 @@ function habitPP(nom, fam, c, uni = false) {
   const k = 'pph:' + nom + ':' + fam + ':' + c + uni; if (MATS.has(k)) return MATS.get(k);
   const m0 = PP.maillages.find(x => x.nom === nom), plis = uni ? null : texPP(m0.normalMap); let m;
   if (fam && REPET[fam]) { const t = TX[fam], rep = x => { const y = x.clone(); y.repeat.set(REPET[fam] * 2.5, REPET[fam] * 2.5); y.needsUpdate = true; return y; }; m = new T.MeshPhysicalMaterial({ color: c, map: rep(t.map), normalMap: plis, roughnessMap: rep(t.roughnessMap), roughness: 1, sheen: ['velours', 'tricot', 'laine'].includes(fam) ? .9 : .25, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .3) }); }
-  else if (uni) m = new T.MeshPhysicalMaterial({ color: c, normalMap: TX.tissu ? TX.tissu.normalMap : null, roughness: .92, sheen: .35, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .25) });
-  else m = new T.MeshPhysicalMaterial({ color: new T.Color(c).multiplyScalar(1 / (GRIS_PP[nom] || .4)), map: texPP(m0.map, true), normalMap: plis, roughness: .92, sheen: .35, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .25) });
+  else if (uni) m = new T.MeshPhysicalMaterial({ color: c, roughness: .92, sheen: .35, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .25) });
+  else m = new T.MeshPhysicalMaterial({ color: c, normalMap: plis, roughness: .92, sheen: .35, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .25) });
   MATS.set(k, m); return m;
 }
 const cuirPP = c => { const k = 'ppc:' + c; if (MATS.has(k)) return MATS.get(k); const m = new T.MeshPhysicalMaterial({ color: c, normalMap: texPP('chaussures-n.jpg'), roughness: .5, clearcoat: .25, clearcoatRoughness: .5 }); MATS.set(k, m); return m; };
@@ -1107,26 +1107,29 @@ function humainPP(o = {}) {
   const moderne = !!o.moderne, chemise = o.chemise ?? 0xe8e0cc, robe = o.robe != null;
   const habit = (nom, cleT, c) => habitPP(nom, tx[cleT], c), manche = (cleT, c) => habitPP('haut', tx[cleT], c, true);
   const bras = (lim, debut = .26) => (x, y, z) => Math.abs(x) > debut && Math.abs(x) < lim && y > 1.2;
-  ajouter(geo('haut', { ep: o.ample ? .004 : 0 }), habit('haut', 'chemise', robe ? (o.chemise ?? o.robe) : chemise));
-  if (!moderne) ajouter(geo('corps', { ep: .007, filtre: bras(o.manches ? .47 : .655), fc: 'manche' + !!o.manches }), manche('chemise', robe ? (o.chemise ?? o.robe) : chemise));
+  // Manches longues d'époque : la manche courte d'origine couvre l'épaule (elle plie bien), la manche longue part
+  // de dessous, aussi large qu'elle à la jonction, puis s'affine vers le coude (mêmes poids de peau : elle suit le bras)
+  const epBras = e => (x, y, z) => e + .014 * (1 - lisse(.33, .46, Math.abs(x)));
+  const couleurChemise = robe ? (o.chemise ?? o.robe) : chemise;
+  ajouter(geo('haut', { ep: o.ample ? .004 : 0 }), habit('haut', 'chemise', couleurChemise));
+  if (!moderne) ajouter(geo('corps', { ep: epBras(.006), filtre: bras(o.manches ? .47 : .655), fc: 'manche' + !!o.manches }), manche('chemise', couleurChemise));
   if (robe) ajouter(jupePP(f, fk, o.epaisse ? 1.15 : 1), (() => { const m = habit('bas', 'robe', o.robe); return m; })()).material.side = T.DoubleSide;
   else ajouter(geo('bas', { ep: o.ample ? .008 : 0 }), habit('bas', 'pantalon', o.pantalon ?? 0x4a3f33));
   const encolure = (lim, larg) => (x, y, z) => z > .02 && y > lim ? Math.abs(x) - (larg + (y - lim) * .3) : .05;
-  if (o.gilet != null) ajouter(geo('haut', { ep: .009, coupe: (x, y, z) => Math.min(.185 - Math.abs(x), 1.43 - y, encolure(1.25, .008)(x, y, z)), fc: 'gilet' }), decoupe(habit('haut', 'gilet', o.gilet)));
+  if (o.gilet != null) ajouter(geo('haut', { ep: .009, coupe: (x, y, z) => Math.min(.19 - Math.abs(x), encolure(1.25, .008)(x, y, z)), fc: 'gilet' }), decoupe(habit('haut', 'gilet', o.gilet)));
   if (o.veste != null) {
     const ep = o.epaisse ? .026 : .018;
-    if (o.croise) ajouter(geo('haut', { ep, fc: 'vestec' }), habit('haut', 'veste', o.veste));
-    else ajouter(geo('haut', { ep, coupe: encolure(o.longue ? 1.0 : 1.12, .014), fc: 'veste' + (o.longue ? 'l' : '') }), decoupe(habit('haut', 'veste', o.veste)));
-    if (!moderne) ajouter(geo('corps', { ep: ep + .004, filtre: bras(o.manches ? .47 : .65), fc: 'vmanche' + !!o.manches }), manche('veste', o.veste));
-    if (!robe) ajouter(geo('bas', { ep: ep + .012, filtre: (x, y, z) => y > .8 && y < 1.02 && (o.croise || !(z > .03 && Math.abs(x) < .02)), fc: 'pan' }), habit('bas', 'veste', o.veste));
+    const col = o.croise ? () => .05 : encolure(o.longue ? 1.0 : 1.12, .014);
+    ajouter(geo('haut', { ep, coupe: col, fc: 'veste' + (o.croise ? 'c' : '') + (o.longue ? 'l' : '') }), decoupe(habit('haut', 'veste', o.veste)));
+    if (!moderne) ajouter(geo('corps', { ep: epBras(ep + .006), filtre: bras(o.manches ? .47 : .65), fc: 'vmanche' + ep + !!o.manches }), manche('veste', o.veste));
   }
-  if (o.bretelles) for (const sx of [-1, 1]) ajouter(geo('haut', { ep: .012, filtre: (x, y, z) => { const ax = x * sx; return ax > .05 && ax < .085 && y > .95; }, fc: 'bret' + sx }), cuirPP(0x3a2416));
+  if (o.bretelles) for (const sx of [-1, 1]) ajouter(geo('haut', { ep: .012, coupe: (x, y, z) => Math.min(.014 - Math.abs(x * sx - .068 - (z < 0 ? .0 : (1.4 - y) * .02)), y - .93), fc: 'bret' + sx }), decoupe(cuirPP(0x3a2416)));
   if (o.tablier) { ajouter(geo('bas', { ep: .022, filtre: (x, y, z) => z > .0 && y > .42 && y < 1.03, fc: 'tablierB' }), habitPP('bas', null, 0xece6d6)); ajouter(geo('haut', { ep: .016, filtre: (x, y, z) => z > .03 && y < 1.3 && Math.abs(x) < .14, fc: 'tablierH' }), habitPP('haut', null, 0xece6d6)); }
-  if (o.ceinture != null) ajouter(geo(robe ? 'haut' : 'bas', { ep: .014, filtre: (x, y, z) => y > .95 && y < 1.03, fc: 'ceint' + robe }), habitPP('bas', null, o.ceinture));
+  if (o.ceinture != null && !robe) ajouter(geo('bas', { ep: .014, filtre: (x, y, z) => y > .95 && y < 1.03, fc: 'ceint' }), habitPP('bas', null, o.ceinture));
+  if (o.ceinture != null && robe) { const r = VAR.deformerPoint([.205, 1.06, 0], 0, f, null, false), c = VAR.deformerPoint([0, 1.06, 0], 0, f, null, false), rt = J('root'), cs = new T.Mesh(new T.CylinderGeometry(1, 1, 1, 40, 1, true), tissu_(o.ceinture)); cs.material = cs.material.clone(); cs.material.side = T.DoubleSide; cs.scale.set(r[0] - c[0], .05, (r[0] - c[0]) * .93); cs.position.set(0, c[1] - rt[1] - .005, .012); cs.castShadow = true; B('root').add(cs); }
   // Col, revers et poignets (vêtements d'époque)
   if (!moderne && !robe) {
     const col = new T.Mesh(new T.CylinderGeometry(.058, .064, .04, 24, 1, true, PI / 2 + .35, PI * 2 - .7), habit('haut', 'chemise', chemise)); col.material = col.material.clone(); col.material.side = T.DoubleSide; col.position.set(0, .03, .006); col.rotation.x = -.15; col.castShadow = true; B('neck01').add(col);
-    if (o.veste != null && !o.croise) for (const sx of [-1, 1]) { const rv = new T.Mesh(new T.BoxGeometry(.05, .17, .008), habit('haut', 'veste', o.veste)); rv.position.set(sx * .05, .12, .12); rv.rotation.set(-.12, sx * .3, sx * -.3); rv.castShadow = true; B('spine02').add(rv); }
     if (o.veste != null && o.croise) for (const sx of [-1, 1]) for (let k = 0; k < 3; k++) { const bt = new T.Mesh(GH.bouton, M('uni:1a1a1a')); bt.position.set(sx * .05, .1 - k * .07, .13); B('spine02').add(bt); }
     if (o.gilet != null) for (let i = 0; i < 4; i++) { const bt = new T.Mesh(GH.bouton, M('bronze')); bt.position.set(0, -.03 + i * .06, .128); B('spine02').add(bt); }
   }
@@ -1149,10 +1152,10 @@ function humainPP(o = {}) {
     const t = ch === 'coppolaTombante', cal = new T.Mesh(GH.coppola, M(cc)); cal.scale.set(rx * (t ? 1.0 : .94), t ? .074 : .08, rz * (t ? 1.02 : .96)); cal.position.set(0, yb - .03, -.012); cal.rotation.x = t ? .26 : .2; cal.castShadow = true; chap.add(cal);
     partie(chap, GH.visiere, cc, 0, yb - .026, .008, rx / .115 * .95, .6, rz / .115 * 1.18, t ? .34 : .22);
   }
-  else if (ch === 'paille') { const c2 = 'tissu:' + hex(o.chapeauC ?? 0xcdb27a); calotte(.016, 1.75, 1.84, c2); disque(.2, .008, yb + .012, c2); partie(chap, GH.disque, c2, 0, yb + .06, 0, rx * 1.02, .1, rz * 1.02); partie(chap, GH.disque, 'tissu:4a3020', 0, yb + .026, 0, rx * 1.04, .026, rz * 1.04); }
-  else if (ch === 'feutre' || ch === 'cabosse') { const k = ch === 'cabosse'; calotte(.014, 1.75, 1.83, cc); disque(.165, .008, yb + .012, cc).rotation.set(k ? .1 : 0, 0, k ? -.07 : 0); const cr = partie(chap, GH.disque, cc, 0, yb + .07, 0, rx * 1.0, .11, rz * 1.02); if (k) { cr.scale.y = .085; cr.rotation.z = .08; } partie(chap, GH.disque, 'tissu:151210', 0, yb + .032, 0, rx * 1.03, .028, rz * 1.05); }
+  else if (ch === 'paille') { const c2 = 'tissu:' + hex(o.chapeauC ?? 0xcdb27a); calotte(.016, 1.735, 1.84, c2); disque(.2, .008, yb - .008, c2); partie(chap, GH.disque, c2, 0, yb + .048, 0, rx * 1.02, .11, rz * 1.02); partie(chap, GH.disque, 'tissu:4a3020', 0, yb + .008, 0, rx * 1.04, .026, rz * 1.04); }
+  else if (ch === 'feutre' || ch === 'cabosse') { const k = ch === 'cabosse'; calotte(.014, 1.735, 1.83, cc); disque(.165, .008, yb - .022, cc).rotation.set(k ? .1 : 0, 0, k ? -.07 : 0); const cr = partie(chap, GH.disque, cc, 0, yb + .044, 0, rx * 1.0, .132, rz * 1.02); if (k) { cr.scale.y = .1; cr.rotation.z = .08; } partie(chap, GH.disque, 'tissu:151210', 0, yb - .006, 0, rx * 1.03, .028, rz * 1.05); }
   else if (ch === 'lucerna') { calotte(.012, 1.745, 1.83, 'tissu:121318'); partie(chap, GH.demiLune, 'tissu:121318', 0, yb + .06, 0, 1.0, 1, 1, PI / 2, 0); partie(chap, GH.oreille, 'tissu:b03a2e', 0, yb + .16, .03, .8, .8, .5); partie(chap, GH.disque, 'bronze', .045, yb + .1, .03, .03, .01, .03, PI / 2); }
-  else if (ch === 'pretre') { calotte(.012, 1.745, 1.83, cc); disque(.2, .008, yb + .012, cc); partie(chap, GH.calotte, cc, 0, yb + .03, 0, .82, .62, .9); }
+  else if (ch === 'pretre') { calotte(.012, 1.735, 1.83, cc); disque(.2, .008, yb - .008, cc); partie(chap, GH.calotte, cc, 0, yb + .01, 0, .82, .7, .9); }
   else if (ch === 'scialle') {
     const sc = tx.scialle ? etoffe(tx.scialle, o.chapeauC ?? 0x161414) : M(cc);
     const voile = new T.Mesh(enveloppeTete({ ecart: .02, bas: a => 1.52 + Math.abs(a) * .012, ouverture: y => .78 * (1 - lisse(1.69, 1.725, y)), pend: true }), decoupe(sc)); voile.castShadow = true; tete.add(voile);
@@ -1160,16 +1163,17 @@ function humainPP(o = {}) {
   }
   if (o.foulard != null) { const fo = new T.Mesh(GH.col, tissu_(o.foulard)); fo.rotation.x = PI / 2 + .3; fo.scale.set(.95, .95, 1.1); fo.position.set(0, .035, .01); B('neck01').add(fo); }
   // Objets portés
-  if (o.lupara) { const fr = new T.Group(); fr.position.set(0, .05, -.15); fr.rotation.set(0, 0, .75); B('spine02').add(fr); partie(fr, GH.disque, 'fer', -.012, 0, 0, .014, .9, .014); partie(fr, GH.disque, 'fer', .012, 0, 0, .014, .9, .014); partie(fr, GH.disque, 'bois:5a3a22', 0, -.55, 0, .03, .35, .05); }
+  // (fusil en bandoulière : posé plus bas, une fois le personnage prêt)
   let lanterne = null;
   if (o.lanterne) { lanterne = new T.Group(); lanterne.position.set(.01, -.16, .02); B('wrist.L').add(lanterne); partie(lanterne, GH.disque, 'lumiere', 0, -.1, 0, .06, .16, .06); partie(lanterne, GH.disque, 'fer', 0, 0, 0, .075, .03, .075); partie(lanterne, GH.disque, 'fer', 0, -.19, 0, .075, .03, .075); }
   if (o.cassette) { const c = new T.Mesh(new T.BoxGeometry(.3, .18, .22), M('bois:5a3a22')); c.position.set(-.02, -.12, .06); B('wrist.R').add(c); }
   const bd = B('upperarm01.L'), bg = B('upperarm01.R'), jd = B('upperleg01.L'), jg = B('upperleg01.R');
   bd.coude = B('lowerarm01.L'); bg.coude = B('lowerarm01.R'); jd.genou = B('lowerleg01.L'); jg.genou = B('lowerleg01.R');
-  const h = { reel: true, pp: true, g, B, J, corps: B('root'), corps0: B('root').position.clone(), tete, osTete: B('head'), torse: B('spine02'), dos: B('spine04'), bassin: B('root'), jg, jd, bg, bd, brasZ: 1.45, ph: R() * 6, amp: 0, lanterne, porte: !!o.lanterne, assis: false, paupieres: [], parle: false, tp: R() * 9, couches, raideur: !!o.raideur, voute: f.voute || 0, ecart: .1 + (f.ventre || 0) * .08 + Math.max(0, f.epais || 0) * 6 + (o.veste != null ? (o.epaisse ? .08 : .05) : 0) + (o.capuche != null ? .05 : 0),
+  const h = { reel: true, pp: true, g, B, J, corps: B('root'), corps0: B('root').position.clone(), tete, osTete: B('head'), torse: B('spine02'), dos: B('spine04'), bassin: B('root'), jg, jd, bg, bd, brasZ: 1.45, ph: R() * 6, amp: 0, lanterne, porte: !!o.lanterne, assis: false, paupieres: [], parle: false, tp: R() * 9, couches, raideur: !!o.raideur, voute: f.voute || 0, pt: p => VAR.deformerPoint(p, 0, f, null, false), ecart: .1 + (f.ventre || 0) * .08 + Math.max(0, f.epais || 0) * 6 + (o.veste != null ? (o.epaisse ? .08 : .05) : 0) + (o.capuche != null ? .05 : 0),
     coucheSupp: (regions, ep, filtre, cle, mat) => { const fl = (x, y, z) => filtre(0, [x, y, z]); ajouter(geo('haut', { ep, filtre: fl, fc: 'supp' + cle }), mat); if (regions.includes(RG.bras)) ajouter(geo('corps', { ep: ep * .8, filtre: (x, y, z) => bras(.4)(x, y, z) && fl(x, y, z), fc: 'suppb' + cle }), mat); } };
   bd.rotation.z = -h.brasZ; bg.rotation.z = h.brasZ;
   animerAvecClips(h, 'pp');
+  if (o.lupara) luparaPP(h);
   if (o.accessoires) for (const a of o.accessoires) a(h);
   if (o.echelle) g.scale.setScalar(o.echelle);
   return h;
@@ -1642,6 +1646,40 @@ function majVie(dt, s) {
 }
 
 /* ---------- Accessoires des familles ---------- */
+/* Chaîne en or posée sur la chemise, autour du cou */
+function chainePP(h) {
+  const os = h.B('spine02'), o = h.J('spine02'), loc = p => { const q = h.pt(p); return new T.Vector3(q[0] - o[0], q[1] - o[1], q[2] - o[2]); };
+  const pts = [[0, 1.445, -.07], [.06, 1.43, -.035], [.075, 1.41, .02], [.05, 1.35, .095], [0, 1.31, .118], [-.05, 1.35, .095], [-.075, 1.41, .02], [-.06, 1.43, -.035]].map(loc);
+  const c = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts, true), 60, .0035, 6, true), MAT_OR); os.add(c);
+  const m = new T.Mesh(new T.CylinderGeometry(.013, .013, .003, 20), MAT_OR); m.rotation.x = PI / 2 - .3; m.position.copy(loc([0, 1.29, .124])); os.add(m);
+}
+/* Étui d'épaule : sangle autour de l'épaule gauche, étui sous l'aisselle (visible quand la veste s'ouvre) */
+function holsterPP(h) {
+  const os = h.B('spine02'), o = h.J('spine02'), loc = p => { const q = h.pt(p); return new T.Vector3(q[0] - o[0], q[1] - o[1], q[2] - o[2]); };
+  const pts = [[.13, 1.45, .0], [.07, 1.36, .14], [.1, 1.24, .165], [.18, 1.2, .1], [.2, 1.25, -.06], [.12, 1.36, -.14]].map(loc);
+  const s = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts, true), 40, .007, 4, true), M('cuir:7a1a16')); s.scale.z = 1; os.add(s);
+  const e = new T.Mesh(new T.BoxGeometry(.04, .12, .06), M('cuir:9a1e1a')); e.position.copy(loc([.19, 1.19, .07])); e.rotation.z = .2; os.add(e);
+  const c = new T.Mesh(new T.BoxGeometry(.02, .05, .025), MAT_CHROME); c.position.copy(loc([.19, 1.27, .075])); c.rotation.z = .5; os.add(c);
+}
+/* Sacoches de toile pendues aux hanches par une sangle en travers du buste */
+function sacochesPP(h, moderne = false) {
+  const os = h.B('spine02'), o = h.J('spine02'), loc = p => { const q = h.pt(p); return new T.Vector3(q[0] - o[0], q[1] - o[1], q[2] - o[2]); };
+  const tour = [[.15, 1.44, -.02], [.08, 1.35, .15], [-.06, 1.12, .2], [-.2, .95, .06], [-.2, .97, -.08], [-.05, 1.16, -.16], [.1, 1.36, -.14]].map(loc);
+  const s = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(tour, true), 50, .008, 4, true), M('cuir:4a3420')); os.add(s);
+  const rt = h.J('root'), r = h.B('root'), lr = p => { const q = h.pt(p); return new T.Vector3(q[0] - rt[0], q[1] - rt[1], q[2] - rt[2]); };
+  if (moderne) { s.material = M('uni:1a1a1c'); const p = new T.Mesh(new T.BoxGeometry(.06, .14, .2), etoffe('technique', 0x1e1e22)); p.position.copy(lr([-.205, .95, .03])); p.castShadow = true; r.add(p); return; }
+  const a = new T.Mesh(new T.BoxGeometry(.08, .22, .2), etoffe('cire', 0x7a7050)); a.position.copy(lr([-.225, .88, .0])); a.rotation.z = -.08; a.castShadow = true; r.add(a);
+  const b = new T.Mesh(new T.BoxGeometry(.07, .16, .15), etoffe('cire', 0x6a6044)); b.position.copy(lr([.22, .91, -.04])); b.rotation.z = .08; b.castShadow = true; r.add(b);
+}
+/* Fusil en bandoulière ajusté au buste du personnage de base : sangle qui fait le tour du torse, canons dans le dos */
+function luparaPP(h, fusil = false) {
+  const os = h.B('spine02'), o = h.J('spine02'), loc = p => { const q = h.pt(p); return new T.Vector3(q[0] - o[0], q[1] - o[1], q[2] - o[2]); };
+  const tour = [[-.15, 1.43, .0], [-.09, 1.38, .13], [0, 1.27, .17], [.09, 1.15, .19], [.17, 1.03, .18], [.215, .97, .0], [.17, 1.03, -.165], [.07, 1.17, -.165], [-.06, 1.32, -.16], [-.15, 1.43, -.07]].map(loc);
+  const sangle = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(tour, true), 64, .006, 5, true), M('cuir:3a2416')); sangle.castShadow = true; os.add(sangle);
+  const f = new T.Group(); f.position.copy(loc([.01, 1.13, -.19])); f.rotation.set(0, 0, .38); os.add(f);
+  if (fusil) { const n = 'uni:16171a'; partie(f, GH.disque, n, 0, .32, 0, .009, .36, .009); const c = new T.Mesh(BOX, MAT_NOIR); c.scale.set(.05, .34, .065); c.position.set(0, .0, .0); f.add(c); const ch = new T.Mesh(BOX, MAT_NOIR); ch.scale.set(.03, .13, .05); ch.position.set(0, -.07, .06); ch.rotation.x = -.25; f.add(ch); const cr = new T.Mesh(BOX, MAT_NOIR); cr.scale.set(.03, .22, .04); cr.position.set(0, -.27, -.005); f.add(cr); return; }
+  partie(f, GH.disque, 'fer', -.012, .05, 0, .013, .6, .013); partie(f, GH.disque, 'fer', .012, .05, 0, .013, .6, .013); partie(f, GH.disque, 'bois:5a3a22', 0, -.36, 0, .028, .28, .018);
+}
 const MAT_OR = new T.MeshStandardMaterial({ color: 0xd8aa48, metalness: 1, roughness: .22 }), MAT_CHROME = new T.MeshStandardMaterial({ color: 0xe8e8ec, metalness: 1, roughness: .08 });
 const MAT_NOIR = new T.MeshStandardMaterial({ color: 0x16171a, metalness: .4, roughness: .45 }), MAT_VERRE_FUME = new T.MeshStandardMaterial({ color: 0x3a2a1a, metalness: .6, roughness: .05, transparent: true, opacity: .82 });
 const MAT_JOURNAL = new T.MeshStandardMaterial({ map: TX.journal, roughness: .9 });
@@ -1649,7 +1687,7 @@ const piece3 = (parent, geo, mat, x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 
 const BOX = new T.BoxGeometry(1, 1, 1), CYL = new T.CylinderGeometry(.5, .5, 1, 14), SPH = new T.SphereGeometry(.5, 12, 10);
 const main_ = (h, s) => { const w = h.J('wrist.' + s), d = new T.Vector3(w[3] - w[0], w[4] - w[1], w[5] - w[2]).normalize().multiplyScalar(.06); const g = new T.Group(); g.position.copy(d); h.B('wrist.' + s).add(g); return g; };
 const ACC = {
-  lupara: h => { const f = new T.Group(); f.position.set(0, .05, -.15); f.rotation.set(0, 0, .75); h.B('spine02').add(f); piece3(f, CYL, M('fer'), -.012, 0, 0, 0, 0, 0, .028, .62, .028); piece3(f, CYL, M('fer'), .012, 0, 0, 0, 0, 0, .028, .62, .028); piece3(f, BOX, M('bois:5a3a22'), 0, -.42, .0, 0, 0, 0, .05, .3, .03); const sangle = new T.Mesh(new T.TorusGeometry(.2, .007, 6, 30), M('cuir:3a2416')); sangle.rotation.set(PI / 2.3, 0, .75); sangle.position.set(0, .05, -.02); sangle.scale.set(1, 1.45, 1); h.B('spine02').add(sangle); },
+  lupara: h => { if (h.pp) return luparaPP(h); const f = new T.Group(); f.position.set(0, .05, -.15); f.rotation.set(0, 0, .75); h.B('spine02').add(f); piece3(f, CYL, M('fer'), -.012, 0, 0, 0, 0, 0, .028, .62, .028); piece3(f, CYL, M('fer'), .012, 0, 0, 0, 0, 0, .028, .62, .028); piece3(f, BOX, M('bois:5a3a22'), 0, -.42, .0, 0, 0, 0, .05, .3, .03); const sangle = new T.Mesh(new T.TorusGeometry(.2, .007, 6, 30), M('cuir:3a2416')); sangle.rotation.set(PI / 2.3, 0, .75); sangle.position.set(0, .05, -.02); sangle.scale.set(1, 1.45, 1); h.B('spine02').add(sangle); },
   chapelet: h => { const g = main_(h, 'R'); const n = 34; for (let i = 0; i < n; i++) { const a = i / n * PI * 2; piece3(g, SPH, M('bois:5a3018'), Math.sin(a) * .045, -.06 - (1 - Math.cos(a)) * .055, .015, 0, 0, 0, .011, .011, .011); } piece3(g, BOX, M('bois:4a2812'), 0, -.19, .015, 0, 0, 0, .008, .045, .006); piece3(g, BOX, M('bois:4a2812'), 0, -.18, .015, 0, 0, 0, .028, .008, .006); },
   mastruca: h => { const yT = h.J('spine05')[1]; h.coucheSupp([RG.torse, RG.bassin, RG.bras], .05, (i, P) => P[i * 3 + 1] > yT - .32 && !(Math.abs(P[i * 3]) > .2), 'mastruca', etoffe('laine', 0xd2c4a6)); h.coucheSupp([RG.torse], .062, (i, P) => P[i * 3 + 1] > h.J('neck01')[1] - .08 && P[i * 3 + 2] < .05, 'mastrucaCol', etoffe('laine', 0xc8b896)); },
   resolza: h => { const g = main_(h, 'R'); piece3(g, BOX, M('uni:d8c8a8'), 0, -.02, .02, .3, 0, 0, .022, .1, .016); piece3(g, BOX, MAT_CHROME, 0, -.11, .045, .3, 0, 0, .004, .1, .022); piece3(g, BOX, M('bronze'), 0, -.07, .03, .3, 0, 0, .024, .008, .018); },
@@ -1659,19 +1697,19 @@ const ACC = {
   lunettesFines: h => { const t = h.tete, f = new T.Group(); f.position.set(0, -.022, h.pp ? .1 : .085); t.add(f); const verre = new T.MeshStandardMaterial({ color: 0xdfe8ec, transparent: true, opacity: .18, roughness: .02, metalness: .3 });
     for (const sx of [-1, 1]) { const l = new T.Mesh(new T.PlaneGeometry(.04, .026), verre); l.position.set(sx * .031, 0, .004); f.add(l); const r = new T.Mesh(new T.TorusGeometry(.02, .0011, 4, 4), MAT_NOIR); r.rotation.z = PI / 4; r.scale.set(1.4, .95, 1); r.position.copy(l.position); f.add(r); piece3(f, BOX, MAT_NOIR, sx * .068, .006, -.05, 0, sx * .12, 0, .0015, .002, .1); }
     piece3(f, BOX, MAT_NOIR, 0, .006, .005, 0, 0, 0, .022, .0015, .0015); },
-  chaineOr: h => { const c = new T.Mesh(new T.TorusGeometry(.075, .0045, 8, 40), MAT_OR); c.rotation.x = PI / 2 - .5; c.scale.set(1, 1.15, 1); c.position.set(0, -.04, .055); h.B('spine01').add(c); piece3(h.B('spine01'), CYL, MAT_OR, 0, -.12, .115, PI / 2, 0, 0, .025, .004, .025); },
-  holster: h => { const s = h.B('spine02'); piece3(s, BOX, M('cuir:9a1e1a'), .16, -.08, .02, 0, 0, .15, .045, .14, .07); piece3(s, BOX, M('cuir:9a1e1a'), .07, .06, .08, 0, 0, -.9, .02, .34, .006); piece3(s, BOX, M('cuir:9a1e1a'), .07, .06, -.09, 0, 0, -.9, .02, .34, .006); piece3(s, CYL, MAT_CHROME, .16, -.02, .04, 0, 0, .15, .024, .05, .024); piece3(s, BOX, MAT_CHROME, .155, .03, .04, 0, 0, .5, .022, .07, .026); piece3(s, BOX, M('bois:6a3a20'), .145, .07, .04, 0, 0, .9, .022, .05, .026); },
+  chaineOr: h => { if (h.pp) return chainePP(h); const c = new T.Mesh(new T.TorusGeometry(.075, .0045, 8, 40), MAT_OR); c.rotation.x = PI / 2 - .5; c.scale.set(1, 1.15, 1); c.position.set(0, -.04, .055); h.B('spine01').add(c); piece3(h.B('spine01'), CYL, MAT_OR, 0, -.12, .115, PI / 2, 0, 0, .025, .004, .025); },
+  holster: h => { if (h.pp) return holsterPP(h); const s = h.B('spine02'); piece3(s, BOX, M('cuir:9a1e1a'), .16, -.08, .02, 0, 0, .15, .045, .14, .07); piece3(s, BOX, M('cuir:9a1e1a'), .07, .06, .08, 0, 0, -.9, .02, .34, .006); piece3(s, BOX, M('cuir:9a1e1a'), .07, .06, -.09, 0, 0, -.9, .02, .34, .006); piece3(s, CYL, MAT_CHROME, .16, -.02, .04, 0, 0, .15, .024, .05, .024); piece3(s, BOX, MAT_CHROME, .155, .03, .04, 0, 0, .5, .022, .07, .026); piece3(s, BOX, M('bois:6a3a20'), .145, .07, .04, 0, 0, .9, .022, .05, .026); },
   telephoneSat: h => { const g = main_(h, 'R'); piece3(g, BOX, MAT_NOIR, 0, -.05, .03, .2, 0, 0, .06, .17, .035); piece3(g, CYL, MAT_NOIR, .018, .06, .03, .2, 0, 0, .014, .12, .014); piece3(g, BOX, M('verre'), 0, -.02, .049, .2, 0, 0, .045, .04, .002); },
   cigare: h => { const t = h.tete; const c = new T.Group(); c.position.set(.02, h.pp ? -.088 : -.072, h.pp ? .108 : .098); c.rotation.set(.15, .5, .1); t.add(c); piece3(c, CYL, M('bois:5a3a20'), 0, 0, .04, PI / 2, 0, 0, .014, .09, .014); const braise = new T.Mesh(new T.CircleGeometry(.007, 12), new T.MeshBasicMaterial({ color: new T.Color(2.5, .8, .2) })); braise.position.set(0, 0, .086); c.add(braise); },
-  sacoches: h => { const s = h.B('spine05'); piece3(s, BOX, etoffe('cire', 0x7a7050), .2, -.06, .02, 0, .3, .05, .1, .26, .22); piece3(s, BOX, etoffe('cire', 0x6a6044), -.17, -.04, -.06, 0, -.4, -.05, .09, .18, .16); piece3(h.B('spine02'), BOX, M('cuir:4a3420'), .02, .0, .1, 0, 0, -.6, .03, .5, .006); piece3(h.B('spine02'), BOX, M('cuir:4a3420'), -.03, .02, -.11, 0, 0, .55, .03, .48, .006); },
+  sacoches: h => { if (h.pp) return sacochesPP(h); const s = h.B('spine05'); piece3(s, BOX, etoffe('cire', 0x7a7050), .2, -.06, .02, 0, .3, .05, .1, .26, .22); piece3(s, BOX, etoffe('cire', 0x6a6044), -.17, -.04, -.06, 0, -.4, -.05, .09, .18, .16); piece3(h.B('spine02'), BOX, M('cuir:4a3420'), .02, .0, .1, 0, 0, -.6, .03, .5, .006); piece3(h.B('spine02'), BOX, M('cuir:4a3420'), -.03, .02, -.11, 0, 0, .55, .03, .48, .006); },
   pochesCargo: h => { for (const s of ['L', 'R']) piece3(h.B('upperleg01.' + s), BOX, etoffe('tissu', 0x5a5a3a), (s === 'L' ? 1 : -1) * .075, -.25, .0, 0, 0, 0, .03, .13, .11); },
-  ar70: h => { const g = main_(h, 'R'); const f = new T.Group(); f.rotation.set(-1.3, .1, 0); f.position.set(0, -.04, .05); g.add(f);
+  ar70: h => { if (h.pp) return luparaPP(h, true); const g = main_(h, 'R'); const f = new T.Group(); f.rotation.set(-1.3, .1, 0); f.position.set(0, -.04, .05); g.add(f);
     piece3(f, BOX, MAT_NOIR, 0, 0, 0, 0, 0, 0, .045, .07, .32); piece3(f, CYL, MAT_NOIR, 0, .015, .3, PI / 2, 0, 0, .016, .3, .016); piece3(f, BOX, M('uni:2a2a24'), 0, .015, .2, 0, 0, 0, .05, .045, .16); piece3(f, BOX, MAT_NOIR, 0, -.08, .02, .25, 0, 0, .028, .14, .05); piece3(f, BOX, MAT_NOIR, 0, -.05, -.07, -.3, 0, 0, .025, .1, .035);
     piece3(f, BOX, M('fer'), 0, -.02, -.25, 0, 0, 0, .01, .02, .2); piece3(f, BOX, M('fer'), 0, -.06, -.33, 0, 0, 0, .012, .08, .012);
     const sg = new T.Mesh(new T.TorusGeometry(.05, .007, 6, 20), M('tissu:3a3a2a')); sg.rotation.y = PI / 2; sg.scale.set(1, 1, .7); h.B('lowerarm01.R').add(sg); const w = h.J('lowerarm01.R'); sg.position.set((w[3] - w[0]) * .55, (w[4] - w[1]) * .55, (w[5] - w[2]) * .55); },
   montre: h => { const w = h.J('lowerarm01.L'), g = new T.Group(); g.position.set((w[3] - w[0]) * .9, (w[4] - w[1]) * .9, (w[5] - w[2]) * .9); h.B('lowerarm01.L').add(g); const r = new T.Mesh(new T.TorusGeometry(.028, .006, 8, 24), M('cuir:1a1a1a')); r.rotation.set(PI / 2, 0, .8); g.add(r); piece3(g, CYL, MAT_CHROME, .0, .02, .025, PI / 2, 0, .8, .03, .008, .03); piece3(g, CYL, M('uni:e8e4d8'), .0, .02, .03, PI / 2, 0, .8, .025, .002, .025); },
   journalSilencieux: h => { const g = main_(h, 'R'); const r = piece3(g, CYL, MAT_JOURNAL, 0, -.06, .04, .1, 0, 0, .05, .3, .05); piece3(g, CYL, MAT_NOIR, 0, -.215, .055, .1, 0, 0, .022, .03, .022); },
-  sacocheBandouliere: h => { const s = h.B('spine02'); piece3(s, BOX, M('uni:1a1a1c'), 0, -.02, .135, 0, 0, .75, .035, .62, .008); piece3(h.B('root'), BOX, etoffe('technique', 0x1e1e22), -.12, .05, .1, 0, -.3, 0, .2, .13, .06); piece3(h.B('root'), BOX, M('fer'), -.12, .1, .132, 0, -.3, 0, .17, .006, .004); },
+  sacocheBandouliere: h => { if (h.pp) return sacochesPP(h, true); const s = h.B('spine02'); piece3(s, BOX, M('uni:1a1a1c'), 0, -.02, .135, 0, 0, .75, .035, .62, .008); piece3(h.B('root'), BOX, etoffe('technique', 0x1e1e22), -.12, .05, .1, 0, -.3, 0, .2, .13, .06); piece3(h.B('root'), BOX, M('fer'), -.12, .1, .132, 0, -.3, 0, .17, .006, .004); },
   telephones: h => { for (const s of ['L', 'R']) { const g = main_(h, s); piece3(g, BOX, MAT_NOIR, 0, -.03, .03, .2, 0, 0, .072, .15, .008); piece3(g, BOX, M('verre'), 0, -.03, .035, .2, 0, 0, .066, .14, .002); } const g = main_(h, 'L'); piece3(g, BOX, MAT_CHROME, .04, -.1, .02, 0, 0, .3, .012, .04, .006); }
 };
 
@@ -2700,7 +2738,7 @@ function montrerFamille(i) {
 }
 function majGalerie(dt) {
   const h = GAL.actuel; if (!h) return;
-  if (!GAL.glisse) GAL.rot += dt * .18; h.g.rotation.y = GAL.rot; animer(h, dt, 0);
+  if (!GAL.glisse) GAL.rot += dt * .18; h.g.rotation.y = GAL.rot; animer(h, dt, GAL.vitesse || 0);
   const large = innerWidth > innerHeight * 1.1, c = GAL.cam; c.aspect = innerWidth / innerHeight; c.fov = large ? 26 : 36; c.updateProjectionMatrix();
   const ht = h.tete.getWorldPosition(new T.Vector3()).y;
   if (GAL.zoom) { c.fov = large ? 24 : 30; c.updateProjectionMatrix(); c.position.set(large ? -.12 : 0, ht - .02, 1.05); c.lookAt(large ? -.2 : 0, ht - .05, 0); }
