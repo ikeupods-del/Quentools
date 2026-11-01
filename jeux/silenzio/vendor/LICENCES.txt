@@ -1,2 +1,4 @@
-three.js r128 (three-r128.min.js) — licence MIT, © 2010-2021 three.js authors, https://github.com/mrdoob/three.js
-Copie de exemples/alimentation/vendor/three-r128.min.js, hébergée ici pour ne dépendre d'aucun service externe.
+three.js r169 (three.module.min.js et addons/ : ciel, post-traitements, fusion de géométries) — licence MIT,
+© 2010-2024 three.js authors, https://github.com/mrdoob/three.js (texte complet : LICENSE-three.txt).
+Fichiers copiés du paquet npm « three@0.169.0 », hébergés ici pour ne dépendre d'aucun service externe.
+../textures/waternormals.jpg : texture d'eau des exemples de three.js (dépôt mrdoob/three.js, licence MIT).

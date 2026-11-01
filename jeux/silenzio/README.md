@@ -6,7 +6,7 @@ Projet personnel : **pas publié sur le site** (dossier absent des `rsync` de `.
 
 ## Jouer
 
-Ouvrir `index.html` par un petit serveur local (les navigateurs refusent WebGL et les polices depuis un simple fichier) :
+Ouvrir `index.html` par un petit serveur local (les navigateurs refusent les modules et les polices depuis un simple fichier) :
 
 ```
 cd jeux/silenzio && python3 -m http.server 8765
@@ -22,9 +22,11 @@ puis http://localhost:8765. Fonctionne sur ordinateur (clavier + souris) et sur 
 | E | parler, cueillir, agir |
 | F | monter ou descendre du carretto |
 | Espace, 1, 2 | dialogues et choix |
-| Échap | pause (recommencer l'étape, effet pellicule, son) |
+| Échap | pause (recommencer l'étape, effet pellicule, qualité graphique, son) |
 
-La progression (dernière étape, fins découvertes) est gardée dans le navigateur (`localStorage`, clé `silenzio:v1`).
+**Qualité graphique** (menu ou pause) : Haute (ombres 4096, occlusion ambiante, halo, herbe dense), Moyenne, Basse (téléphones). Par défaut : Haute sur ordinateur, Basse sur écran tactile. Si l'image saccade pendant les 12 premières secondes, le jeu propose de baisser la qualité.
+
+La progression (dernière étape, fins découvertes, qualité) est gardée dans le navigateur (`localStorage`, clé `silenzio:v1`).
 
 ## Chapitre I — Conca d'Oro, Sicile, 1861 (jouable)
 
@@ -38,9 +40,11 @@ II Les mines de Buggerru (Sardaigne, 1904) · III Le Préfet de fer (Sicile, 192
 
 ## Fichiers
 
-- `index.html` : écrans (titre, cartons, dialogues, interface, commandes tactiles) et style.
-- `jeu.js` : tout le jeu. Sections dans l'ordre : rendu, ciel et mer, relief (`H(x, z)` donne la hauteur du sol), obstacles (`CERCLES`, `BOITES`, `resoudre`), bâtiments (`maison`, `muret`), végétation en instances, personnages (`humain`, `animer`, `pnj`), carretto, joueur, caméra, heure du jour (`heure(0 → 2)` : jour, crépuscule, nuit), interface et dialogues (`dire`, `carton`), son fabriqué (`SON`), histoire (`TXT`, `FINS`, `ETAPES`), patrouilles, boucle.
-- `vendor/three-r128.min.js` (three.js, MIT) et `fonts/` (Cormorant, Bitter, Oswald, OFL) : hébergés ici, aucun service externe.
+- `index.html` : écrans (chargement, titre, cartons, dialogues, interface, commandes tactiles) et style ; charge `jeu.js` comme module (carte d'import vers `vendor/`).
+- `textures.js` : matières fabriquées par le programme, raccordables, avec couleur, relief (normales) et rugosité : enduit à la chaux, pierre de taille dorée, tuiles canal, pavés, terre, bois peint écaillé, écorce, tissu, raquettes de figuier, bouquets de feuilles (citronnier, olivier, cyprès, herbes).
+- `jeu.js` : tout le jeu. Sections dans l'ordre : qualité (`QUALITES`), rendu et post-traitements (`compo` : occlusion ambiante GTAO, halo, sortie ACES, étalonnage `ETALON` : chaud/froid, vignette, grain, légère aberration), matériaux (`M('famille:couleur')`), constructeur de décors fusionnés par matière (`piece`, `poser`, `construireLots`), ciel physique + nuages + nuit étoilée et éclairage d'ambiance tiré du ciel (`majEnvironnement`), mer, relief (`H(x, z)`), obstacles, bâtiments (`maison`, `fenetre`, `porte`, `toit`, `muret`, église, baglio, masseria), végétation en instances au vent (`auVent`, `couronne`, `foret`, herbe autour du joueur `majHerbe`), lanternes, personnages articulés (`humain`, `animer`, `pnj`), carretto, joueur, caméra d'épaule, heure du jour (`heure(0 → 2)` : jour, crépuscule, nuit ; réglages dans `AMBIANCES`), interface et dialogues, son fabriqué (`SON`), histoire (`TXT`, `FINS`, `ETAPES`), patrouilles, boucle.
+- `vendor/` : three.js r169 et ses modules (ciel, post-traitements, fusion de géométries), MIT ; `textures/waternormals.jpg` (eau, exemples three.js, MIT) ; `fonts/` (Cormorant, Bitter, Oswald, OFL). Tout est hébergé ici, aucun service externe.
+- Essais automatiques : ajouter `?essai` à l'adresse fait tourner la logique sans dessiner l'image (utile dans un navigateur sans carte graphique).
 
 ## Ajouter ou modifier une étape
 
@@ -48,4 +52,4 @@ Une étape = une entrée de `ETAPES` : `obj()` (texte de l'objectif), `cible()` 
 
 ## Limites
 
-Personnages et décors en formes simples (pas de modèles 3D importés ni de doublage), pas de combat ni d'armes à feu jouables, un seul chapitre jouable. Le navigateur doit accepter WebGL.
+Rendu d'un jeu indépendant soigné, pas d'un jeu de grand studio : personnages modelés par le programme (pas de visages scannés ni de capture de mouvement), pas de doublage, pas de combat ni d'armes à feu jouables, un seul chapitre jouable. Le navigateur doit accepter WebGL 2 ; en qualité Haute, un Mac récent est recommandé.
