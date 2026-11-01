@@ -12,6 +12,7 @@ import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { fabriquerTextures, texVisage, texDrapeau, texTatouage } from './textures.js';
+import * as VAR from './variantes.js';
 
 const $ = s => document.querySelector(s);
 const PI = Math.PI;
@@ -800,8 +801,10 @@ construireLots();
 /* ---------- Personnages : corps modelés et articulés (hanches, genoux, épaules, coudes) ---------- */
 await etape('Personnages…');
 const TETE = null;
-/* ---------- Corps humains réalistes (MakeHuman, CC0) : squelette, peau qui se plie, vêtements ajustés ---------- */
-const CORPS = await (async () => {
+/* Personnage de base photoréaliste (décliné plus bas par humainPP) */
+const PP = await (async () => { try { return await (await fetch('modeles/promptplay/perso.json')).json(); } catch (e) { console.warn('Personnage de base indisponible :', e && e.message); return null; } })();
+/* ---------- Corps MakeHuman (CC0) : secours, chargés seulement si le personnage de base manque ---------- */
+const CORPS = PP ? null : await (async () => {
   try {
     const d = await (await fetch('modeles/corps/corps.json')).json();
     const dec = (s, Type) => { const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return new Type(u.buffer); };
@@ -916,14 +919,270 @@ function deformVisage(S, v) {
 /* Animations transférées (Quaternius, CC0) : clips construits une fois par squelette */
 const ANIMS = await (async () => { try { return await (await fetch('modeles/anim/anims.json')).json(); } catch (e) { console.warn('Animations indisponibles :', e && e.message); return null; } })();
 const CLIPS = {};
+
+/* ---------- Personnages : un seul modèle photoréaliste (fourni par le propriétaire), décliné par variantes.js ----------
+   Vieil homme, femme, grand-mère, enfant, homme fort, gros ou maigre : même visage réel, forme et peau retouchées,
+   vêtements d'époque taillés dans la tenue d'origine (coques décalées le long de la surface), squelette commun. */
+const PP_RANG = PP ? Object.fromEntries(PP.os.map((x, i) => [x.n, i])) : {};
+const PP_ALIAS = { spine05: 'root', spine03: 'spine04', spine01: 'spine02' };
+const PP_GEO = {}, PP_TEX = {}, PP_BRUT = {}, PP_C = [0, 1.689, .013]; // centre du crâne (repère des chapeaux et coiffures)
+function texPP(f, srgb) { if (!f) return null; if (PP_TEX[f]) return PP_TEX[f]; const t = new T.TextureLoader().load('modeles/promptplay/' + f); t.flipY = false; if (srgb) t.colorSpace = T.SRGBColorSpace; t.anisotropy = Math.min(ANISO, 8); return (PP_TEX[f] = t); }
+/* Images de base lues une fois, pour peindre les variantes de peau (teint, rides, cheveux, barbe, maquillage) */
+const PP_IMG = PP && !ESSAI ? await (async () => {
+  const lire = async (f, t) => { const b = await createImageBitmap(await (await fetch('modeles/promptplay/' + f)).blob(), { premultiplyAlpha: 'none', colorSpaceConversion: 'none' }); const c = document.createElement('canvas'); c.width = c.height = t; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(b, 0, 0, t, t); return x.getImageData(0, 0, t, t); };
+  try {
+    const [pos, t1, n1, t5, n5, c1, c5, oeil] = await Promise.all([lire('tete-pos.png', 512), lire('tete.jpg', 1024), lire('tete-n.jpg', 1024), lire('tete.jpg', 512), lire('tete-n.jpg', 512), lire('corps.jpg', 1024), lire('corps.jpg', 512), lire('oeilG.jpg', 256)]);
+    return { pos, 1024: [t1, n1, c1], 512: [t5, n5, c5], oeil };
+  } catch (e) { console.warn('Retouches de peau indisponibles :', e && e.message); return null; }
+})() : null;
+const PEINT = new Map(), FILE_PEINT = [];
+function texToile(img, srgb) { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; c.getContext('2d').putImageData(img, 0, 0); const t = new T.CanvasTexture(c); t.flipY = false; if (srgb) t.colorSpace = T.SRGBColorSpace; t.anisotropy = Math.min(ANISO, 8); return t; }
+function majToile(t, data) { const c = t.image; c.getContext('2d').putImageData(new ImageData(data, c.width, c.height), 0, 0); t.needsUpdate = true; }
+/* Peau peinte d'une variante : tout de suite pour les gros plans, en tâche de fond pour les passants */
+function peauPeinte(p, detail) {
+  const res = detail ? 1024 : 512, cle = res + JSON.stringify(p); if (PEINT.has(cle)) return PEINT.get(cle);
+  let r;
+  if (!PP_IMG) r = { tete: texPP('tete.jpg', true), teteN: texPP('tete-n.jpg'), corps: texPP('corps.jpg', true), oeil: texPP('oeilG.jpg', true) };
+  else {
+    const [src, nrm, corps] = PP_IMG[res], relief = p.age || p.barbe > .6 || p.femme || p.enfant;
+    r = { tete: texToile(src, true), teteN: relief ? texToile(nrm, false) : texPP('tete-n.jpg'), corps: texToile(corps, true), oeil: p.yeux != null ? texToile(PP_IMG.oeil, true) : texPP('oeilG.jpg', true) };
+    const faire = () => { const t = VAR.peindreTete(src, PP_IMG.pos, p, relief ? nrm : null); majToile(r.tete, t.couleur); if (relief) majToile(r.teteN, t.normale); majToile(r.corps, VAR.peindreCorps(corps, p)); if (p.yeux != null) majToile(r.oeil, VAR.peindreOeil(PP_IMG.oeil, p.yeux)); };
+    if (detail) faire(); else { FILE_PEINT.push(faire); if (FILE_PEINT.length === 1) setTimeout(suitePeinture, 40); }
+  }
+  PEINT.set(cle, r); return r;
+}
+function suitePeinture() { const f = FILE_PEINT.shift(); if (f) f(); if (FILE_PEINT.length) setTimeout(suitePeinture, 20); }
+/* Maillages d'origine décodés (positions en mètres du jeu, part de la tête par sommet) */
+function brutPP(nom) {
+  if (PP_BRUT[nom]) return PP_BRUT[nom];
+  const m = PP.maillages.find(x => x.nom === nom), dec = (s, Type) => { const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return new Type(u.buffer); };
+  const p16 = dec(m.pos, Int16Array), n8 = dec(m.nor, Int8Array), n = m.n, pos = new Float32Array(n * 3), nor = new Float32Array(n * 3);
+  for (let i = 0; i < n * 3; i++) { pos[i] = p16[i] / PP.echelle; nor[i] = n8[i] / 127; }
+  const si = dec(m.skinI, Uint8Array), sw = dec(m.skinW, Uint8Array), wt = new Float32Array(n), hd = PP_RANG.head;
+  for (let i = 0; i < n; i++) for (let k = 0; k < 4; k++) if (si[i * 4 + k] === hd) wt[i] += sw[i * 4 + k] / 255;
+  const index = dec(m.index, m.index32 ? Uint32Array : Uint16Array);
+  return (PP_BRUT[nom] = { m, n, pos, nor, wt, index, uvA: new T.BufferAttribute(dec(m.uv, Uint16Array), 2, true), siA: new T.BufferAttribute(si, 4), swA: new T.BufferAttribute(sw, 4, true) });
+}
+const normalesDe = (p, index) => { const h = new T.BufferGeometry(); h.setAttribute('position', new T.BufferAttribute(p, 3)); h.setIndex(new T.BufferAttribute(index, 1)); h.computeVertexNormals(); return h.attributes.normal.array; };
+/* Géométrie d'un maillage : décalée le long de la surface (ep, nombre ou fonction de la position), filtrée, déformée */
+function geoPP(nom, { ep = 0, f = null, fk = '', filtre = null, fc = '', coupe = null } = {}) {
+  const k = [nom, typeof ep === 'number' ? ep : 'f', fk, fc].join('|'); if (PP_GEO[k]) return PP_GEO[k];
+  const b = brutPP(nom), n = b.n; let pos = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { const e = typeof ep === 'number' ? ep : ep(b.pos[i * 3], b.pos[i * 3 + 1], b.pos[i * 3 + 2]); for (let c = 0; c < 3; c++) pos[i * 3 + c] = b.pos[i * 3 + c] + b.nor[i * 3 + c] * e; }
+  let index = b.index, cp = null;
+  if (coupe) { cp = new Float32Array(n); for (let i = 0; i < n; i++) cp[i] = coupe(b.pos[i * 3], b.pos[i * 3 + 1], b.pos[i * 3 + 2]); const l = []; for (let t = 0; t < index.length; t += 3) if (Math.max(cp[index[t]], cp[index[t + 1]], cp[index[t + 2]]) > 0) l.push(index[t], index[t + 1], index[t + 2]); index = new Uint32Array(l); }
+  if (filtre) { const ok = new Uint8Array(n); for (let i = 0; i < n; i++) ok[i] = filtre(b.pos[i * 3], b.pos[i * 3 + 1], b.pos[i * 3 + 2]) ? 1 : 0; const l = []; for (let t = 0; t < index.length; t += 3) if (ok[index[t]] && ok[index[t + 1]] && ok[index[t + 2]]) l.push(index[t], index[t + 1], index[t + 2]); index = new Uint32Array(l); }
+  let nor = b.nor;
+  if (f) {
+    const pd = VAR.deformer(pos, b.wt, b.nor, f, /tete|cils|oeil/.test(nom)), n0 = normalesDe(pos, b.index), n1 = normalesDe(pd, b.index); nor = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { const x = b.nor[i * 3] + n1[i * 3] - n0[i * 3], y = b.nor[i * 3 + 1] + n1[i * 3 + 1] - n0[i * 3 + 1], z = b.nor[i * 3 + 2] + n1[i * 3 + 2] - n0[i * 3 + 2], l = Math.hypot(x, y, z) || 1; nor[i * 3] = x / l; nor[i * 3 + 1] = y / l; nor[i * 3 + 2] = z / l; }
+    pos = pd;
+  }
+  const g = new T.BufferGeometry(); g.setIndex(new T.BufferAttribute(index, 1));
+  g.setAttribute('position', new T.BufferAttribute(pos, 3)); g.setAttribute('normal', new T.BufferAttribute(nor, 3)); g.setAttribute('uv', b.uvA); g.setAttribute('skinIndex', b.siA); g.setAttribute('skinWeight', b.swA);
+  if (cp) g.setAttribute('coupe', new T.BufferAttribute(cp, 1));
+  g.computeBoundingSphere(); return (PP_GEO[k] = g);
+}
+/* Découpe nette d'un vêtement (encolure, emmanchure, bas) : la matière écarte les points où « coupe » est négatif */
+function decoupe(mat) {
+  const k = mat.uuid + ':coupe'; if (MATS.has(k)) return MATS.get(k);
+  const m = mat.clone(); m.side = T.DoubleSide;
+  m.onBeforeCompile = sh => {
+    sh.vertexShader = 'attribute float coupe;\nvarying float vCoupe;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvCoupe = coupe;');
+    sh.fragmentShader = 'varying float vCoupe;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\nif (vCoupe < 0.) discard;');
+  };
+  m.customProgramCacheKey = () => 'coupe'; MATS.set(k, m); return m;
+}
+/* Rayon du crâne autour de son axe, par angle et hauteur : sert à ajuster coiffures et capuches */
+let RAYON_TETE = null;
+function rayonTete() {
+  if (RAYON_TETE) return RAYON_TETE;
+  const b = brutPP('tete'), NA = 48, NY = 32, y0 = 1.5, y1 = 1.806, cz = PP_C[2], r = new Float32Array(NA * NY);
+  for (let i = 0; i < b.n; i++) { const x = b.pos[i * 3], y = b.pos[i * 3 + 1], z = b.pos[i * 3 + 2]; if (y < y0 || y >= y1) continue; const a = Math.atan2(x, z - cz), ia = Math.floor((a + PI) / (2 * PI) * NA) % NA, iy = Math.floor((y - y0) / (y1 - y0) * NY); r[iy * NA + ia] = Math.max(r[iy * NA + ia], Math.hypot(x, z - cz)); }
+  for (let passe = 0; passe < 6; passe++) for (let iy = 0; iy < NY; iy++) for (let ia = 0; ia < NA; ia++) { const k = iy * NA + ia; if (r[k]) continue; const v = [r[iy * NA + (ia + 1) % NA], r[iy * NA + (ia + NA - 1) % NA], iy ? r[k - NA] : 0, iy < NY - 1 ? r[k + NA] : 0].filter(x => x); if (v.length) r[k] = Math.max(...v); }
+  for (let passe = 0; passe < 3; passe++) { const r0 = Float32Array.from(r); for (let iy = 0; iy < NY; iy++) for (let ia = 0; ia < NA; ia++) { let s_ = 0, n_ = 0; for (let dy = -1; dy <= 1; dy++) for (let da = -1; da <= 1; da++) { const jy = iy + dy; if (jy < 0 || jy >= NY) continue; s_ += r0[jy * NA + (ia + da + NA) % NA]; n_++; } r[iy * NA + ia] = r0[iy * NA + ia] * .5 + s_ / n_ * .5; } }
+  const at = (a, y) => { const fa = ((a + PI) / (2 * PI) * NA - .5 + NA) % NA, fy = clamp((y - y0) / (y1 - y0) * NY - .5, 0, NY - 1.001), ia = Math.floor(fa), iy = Math.floor(fy), ta = fa - ia, ty = fy - iy, g = (i, j) => r[Math.min(NY - 1, j) * NA + (i % NA)]; return lerp(lerp(g(ia, iy), g(ia + 1, iy), ta), lerp(g(ia, iy + 1), g(ia + 1, iy + 1), ta), ty); };
+  return (RAYON_TETE = { at });
+}
+/* Coiffure ou capuche ajustée au crâne (repère : centre du crâne) */
+function enveloppeTete({ ecart = .008, bas = () => 1.57, ouverture = () => 0, haut = 0, pend = true, NA = 64, NY = 30 }) {
+  haut = haut || 1.812 + ecart * 1.2;
+  const R = rayonTete(), pos = [], uv = [], idx = [], cp = [], cz = PP_C[2], yLarge = 1.665;
+  for (let j = 0; j <= NY; j++) for (let i = 0; i <= NA; i++) {
+    const a = -PI + i / NA * 2 * PI, yb = bas(a), y = lerp(yb, haut, Math.pow(j / NY, .85));
+    let r = R.at(a, Math.min(y, 1.775));
+    if (pend && y < yLarge) r = Math.max(r, R.at(a, yLarge) * (1 - (yLarge - y) * .5));
+    r += ecart; if (y > 1.775) r *= Math.sqrt(Math.max(0, 1 - ((y - 1.775) / (haut - 1.775)) ** 2));
+    pos.push(Math.sin(a) * r - PP_C[0], y - PP_C[1], Math.cos(a) * r + cz - PP_C[2]); uv.push(i / NA * 7, j / NY * 2.2); cp.push(Math.abs(a) - ouverture(y));
+  }
+  for (let j = 0; j < NY; j++) for (let i = 0; i < NA; i++) {
+    const p = j * (NA + 1) + i; if (Math.max(cp[p], cp[p + 1], cp[p + NA + 1], cp[p + NA + 2]) <= 0) continue; idx.push(p, p + 1, p + NA + 1, p + 1, p + NA + 2, p + NA + 1);
+  }
+  const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); g.setAttribute('coupe', new T.Float32BufferAttribute(cp, 1)); g.setIndex(idx); g.computeVertexNormals(); return g;
+}
+const MAT_CHEV = c => { const k = 'pp-chev:' + c; if (MATS.has(k)) return MATS.get(k); const m = new T.MeshStandardMaterial({ color: c, map: TX.cheveux.map, normalMap: TX.cheveux.normalMap, roughness: .55, side: T.DoubleSide }); MATS.set(k, m); return m; };
+/* Jupe longue, du tour de taille aux chevilles, attachée au bassin et un peu aux cuisses */
+function jupePP(f, fk, ample = 1) {
+  const k = 'jupe|' + fk + '|' + ample; if (PP_GEO[k]) return PP_GEO[k];
+  const NA = 44, NY = 18, yH = 1.02, yB = .06, prof_ = y => y > .88 ? lerp(.175, .138, (y - .88) / (yH - .88)) : lerp(.27 * ample, .175, (y - yB) / (.88 - yB)) ** 1;
+  const pos = [], uv = [], si = [], sw = [], idx = [], ra = PP_RANG.root;
+  for (let j = 0; j <= NY; j++) for (let i = 0; i <= NA; i++) {
+    const a = i / NA * 2 * PI, y = lerp(yH, yB, j / NY), r = prof_(y) + (j === NY ? 0 : Math.sin(a * 9 + j * .3) * .004 * (1 - y)), x = Math.sin(a) * r, z = Math.cos(a) * r * .84 - .006;
+    pos.push(x, y, z); uv.push(i / NA * 3, j / NY * 3);
+    const jambe = (1 - lisse(.45, .95, y)) * .4 * Math.min(1, Math.abs(x) / .1);
+    si.push(ra, PP_RANG[x >= 0 ? 'upperleg01.L' : 'upperleg01.R'], 0, 0); sw.push(Math.round((1 - jambe) * 255), Math.round(jambe * 255), 0, 0);
+  }
+  for (let j = 0; j < NY; j++) for (let i = 0; i < NA; i++) { const p = j * (NA + 1) + i; idx.push(p, p + 1, p + NA + 1, p + 1, p + NA + 2, p + NA + 1); }
+  let P = new Float32Array(pos); if (f) P = VAR.deformer(P, new Float32Array(P.length / 3), null, f, false);
+  const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(P, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2));
+  g.setAttribute('skinIndex', new T.Uint8BufferAttribute(si, 4)); g.setAttribute('skinWeight', new T.Uint8BufferAttribute(sw, 4, true)); g.setIndex(idx); g.computeVertexNormals();
+  return (PP_GEO[k] = g);
+}
+/* Matières des vêtements : tissu teint sur la texture d'origine (plis, coutures) ou étoffe à motif */
+const GRIS_PP = { haut: .32, bas: .48 };
+function habitPP(nom, fam, c, uni = false) {
+  const k = 'pph:' + nom + ':' + fam + ':' + c + uni; if (MATS.has(k)) return MATS.get(k);
+  const m0 = PP.maillages.find(x => x.nom === nom), plis = uni ? null : texPP(m0.normalMap); let m;
+  if (fam && REPET[fam]) { const t = TX[fam], rep = x => { const y = x.clone(); y.repeat.set(REPET[fam] * 2.5, REPET[fam] * 2.5); y.needsUpdate = true; return y; }; m = new T.MeshPhysicalMaterial({ color: c, map: rep(t.map), normalMap: plis, roughnessMap: rep(t.roughnessMap), roughness: 1, sheen: ['velours', 'tricot', 'laine'].includes(fam) ? .9 : .25, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .3) }); }
+  else if (uni) m = new T.MeshPhysicalMaterial({ color: c, normalMap: TX.tissu ? TX.tissu.normalMap : null, roughness: .92, sheen: .35, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .25) });
+  else m = new T.MeshPhysicalMaterial({ color: new T.Color(c).multiplyScalar(1 / (GRIS_PP[nom] || .4)), map: texPP(m0.map, true), normalMap: plis, roughness: .92, sheen: .35, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .25) });
+  MATS.set(k, m); return m;
+}
+const cuirPP = c => { const k = 'ppc:' + c; if (MATS.has(k)) return MATS.get(k); const m = new T.MeshPhysicalMaterial({ color: c, normalMap: texPP('chaussures-n.jpg'), roughness: .5, clearcoat: .25, clearcoatRoughness: .5 }); MATS.set(k, m); return m; };
+function silhouettePP(o) {
+  const femme = o.femme ?? (o.robe != null), t = o.taille ?? 1;
+  const nom = o.silhouette || (femme ? (o.vieux ? 'vieille' : 'femme') : t < .7 ? 'enfant' : t < .9 ? 'ado' : o.vieux ? 'vieux' : o.corpulent ? 'gros' : o.fort ? 'fort' : o.mince ? 'mince' : 'homme');
+  const f = VAR.silhouette(nom, o.forme), v = o.visage || {};
+  if (v.machoire) f.machoire = (f.machoire ?? 1) * (1 + .05 * v.machoire); if (v.anguleux) f.joues = (f.joues ?? 0) - .5 * v.anguleux;
+  if (v.jouesCreuses) f.joues = (f.joues ?? 0) - v.jouesCreuses; if (v.rond) f.joues = (f.joues ?? 0) + v.rond; if (v.nezCasse) f.nezCasse = v.nezCasse;
+  if (o.mince && nom !== 'mince') Object.assign(f, { largeur: (f.largeur ?? 1) * .93, epais: (f.epais ?? 0) - .004, joues: (f.joues ?? 0) - .5 });
+  if (o.largeur) f.largeur = (f.largeur ?? 1) * o.largeur; if (o.longueur) { f.jambes = (f.jambes ?? 1) * o.longueur; f.buste = (f.buste ?? 1) * o.longueur; }
+  if (t > 1 && nom === 'homme') { f.jambes = t; f.buste = t; }
+  return { nom, f, femme };
+}
+/* Le personnage : options identiques à celles des PNJ (chemise, gilet, veste, robe, chapeau, barbe, etc.) */
+function humainPP(o = {}) {
+  const { nom: silNom, f, femme } = silhouettePP(o), fk = JSON.stringify(f), enfant = f.enfant || 0, vieux = /vieu/.test(silNom);
+  const g = new T.Group(), noms = PP.os.map(x => x.n), rang = PP_RANG;
+  const joints = PP.joints.map((jt, i) => [...VAR.deformerPoint(jt.slice(0, 3), 0, f, null, false), ...VAR.deformerPoint(jt.slice(3), PP.os[i].n === 'head' ? 1 : 0, f, null, false)]);
+  const bones = PP.os.map(x => { const b = new T.Bone(); b.name = nomOs(x.n); return b; });
+  joints.forEach((jt, i) => { const p = PP.os[i].p; if (p < 0) { bones[i].position.set(jt[0], jt[1], jt[2]); g.add(bones[i]); } else { const q = joints[p]; bones[i].position.set(jt[0] - q[0], jt[1] - q[1], jt[2] - q[2]); bones[p].add(bones[i]); } });
+  g.updateMatrixWorld(true);
+  const squelette = new T.Skeleton(bones), nm = n => PP_ALIAS[n] || n, B = n => bones[rang[nm(n)]], J = n => joints[rang[nm(n)]];
+  const couches = [], ajouter = (geo, mat) => { const m = new T.SkinnedMesh(geo, mat); m.castShadow = m.receiveShadow = true; m.bind(squelette); g.add(m); couches.push(m); return m; };
+  const geo = (nom, opt = {}) => geoPP(nom, Object.assign({ f, fk }, opt)), tx = o.tex || {};
+  // Peau (teint, âge, cheveux, barbe, maquillage)
+  const cheveux = o.cheveux ?? 0x1e1712, lumC = ((cheveux >> 16 & 255) * .3 + (cheveux >> 8 & 255) * .59 + (cheveux & 255) * .11);
+  const barbeC = typeof o.barbe === 'number' ? o.barbe : cheveux, moustC = typeof o.moustache === 'number' ? o.moustache : cheveux;
+  const peint = { peau: o.peau ?? 0xc69068, age: o.rides ?? (vieux ? .95 : 0), cheveux, gris: lumC > 105 ? Math.min(1, (lumC - 90) / 120) : 0, femme: femme ? (vieux ? .35 : 1) : 0, enfant,
+    barbe: o.barbe ? (o.barbeEpaisse ? 1 : .8) : femme || enfant > .5 ? 0 : o.coiffure === 'rase' ? .3 : .22, barbeC: o.barbe ? barbeC : 0x1a120c, moust: o.moustache ? 1 : 0, rase: o.coiffure === 'rase' || undefined,
+    recul: o.coiffure === 'recul' ? 1 : undefined, chauve: o.chauve || undefined, yeux: o.yeux ?? 0x3a2414, levres: o.levres };
+  if (o.moustache && !o.barbe) peint.barbeC = moustC;
+  const pt = peauPeinte(peint, !!o.detail), cle = 'pp-peau:' + JSON.stringify(peint) + o.detail + !!o.sueur;
+  let matPeau = MATS.get(cle), matCorps = MATS.get(cle + 'c');
+  if (!matPeau) {
+    const base = { roughness: o.sueur ? .32 : vieux ? .58 : .5, sheen: .3, sheenRoughness: .6, sheenColor: new T.Color(0xff8a70), clearcoat: o.sueur ? .35 : 0, clearcoatRoughness: .4 };
+    matPeau = new T.MeshPhysicalMaterial(Object.assign({ map: pt.tete, normalMap: pt.teteN }, base)); matCorps = new T.MeshPhysicalMaterial(Object.assign({ map: pt.corps, normalMap: texPP('corps-n.jpg') }, base));
+    MATS.set(cle, matPeau); MATS.set(cle + 'c', matCorps);
+  }
+  const matOeil = MATS.get('pp-oeil:' + peint.yeux + o.detail) || (MATS.set('pp-oeil:' + peint.yeux + o.detail, new T.MeshPhysicalMaterial({ map: pt.oeil, normalMap: texPP('oeilG-n.jpg'), roughness: .08, clearcoat: 1 })), MATS.get('pp-oeil:' + peint.yeux + o.detail));
+  ajouter(geo('tete'), matPeau); ajouter(geo('corps'), matCorps); ajouter(geo('cils'), M('cils')); ajouter(geo('oeilG'), matOeil); ajouter(geo('oeilD'), matOeil);
+  // Cheveux : volume sur la partie peinte (sauf crâne rasé), chignon, carré
+  const co = o.coiffure, chevC = peint.gris > .5 ? new T.Color(0xa8a39c).lerp(new T.Color(cheveux), .25).getHex() : cheveux;
+  if (co !== 'rase' && o.chapeau !== 'scialle') {
+    const nu = (x, y, z) => (o.chauve ? lisse(1.71, 1.74, y) * lisse(-.07, 0, z) : 0) + (co === 'recul' ? lisse(1.728, 1.75, y) * lisse(0, .08, z) * .8 : 0);
+    const epC = femme ? .006 : .0042, epf = (x, y, z) => epC * VAR.partCheveux(x, y, z) * (1 - Math.min(1, nu(x, y, z)));
+    const mc = MATS.get(cle + 'h') || (MATS.set(cle + 'h', new T.MeshStandardMaterial({ map: pt.tete, normalMap: TX.cheveux.normalMap, roughness: .6 })), MATS.get(cle + 'h'));
+    ajouter(geo('tete', { ep: epf, filtre: (x, y, z) => VAR.partCheveux(x, y, z) > .05 && nu(x, y, z) < .9, fc: 'chev' + femme + (o.chauve ? 'c' : '') + (co || '') }), mc);
+  }
+  const tete = new T.Group(); const hd = J('head'), C = VAR.deformerPoint(PP_C, 1, f, null, false); tete.position.set(C[0] - hd[0], C[1] - hd[1], C[2] - hd[2]); tete.scale.setScalar(f.tete ?? 1); B('head').add(tete);
+  if (co === 'carre') { const gc = enveloppeTete({ ecart: .011, bas: a => a < 0 ? 1.545 : 1.575, ouverture: y => 1.3 * (1 - lisse(1.6, 1.745, y)), NA: 96, NY: 40 }); const m = new T.Mesh(gc, decoupe(MAT_CHEV(chevC))); m.castShadow = true; tete.add(m); }
+  if (femme && !co && o.chapeau !== 'scialle') { const gc = enveloppeTete({ ecart: .006, bas: a => Math.abs(a) > 2.2 ? 1.6 : 1.63, ouverture: y => 1.25 * (1 - lisse(1.63, 1.75, y)), pend: false, NA: 96, NY: 40 }); const m = new T.Mesh(gc, decoupe(MAT_CHEV(chevC))); m.castShadow = true; tete.add(m); }
+  if (((femme && co !== 'carre') || co === 'chignon') && o.chapeau !== 'scialle') { const ch = new T.Mesh(new T.SphereGeometry(.046, 18, 12), MAT_CHEV(chevC)); ch.scale.set(1, .85, .8); ch.position.set(0, .0, -.122); ch.castShadow = true; tete.add(ch); }
+  // Barbe épaisse et moustache en relief
+  if (o.barbe && o.barbeEpaisse) ajouter(geo('tete', { ep: (x, y, z) => .009 * VAR.zoneBarbe(x, y, z), filtre: (x, y, z) => VAR.zoneBarbe(x, y, z) > .04, fc: 'barbe' }), MATS.get(cle + 'b') || (MATS.set(cle + 'b', new T.MeshStandardMaterial({ map: pt.tete, normalMap: TX.cheveux.normalMap, roughness: .7 })), MATS.get(cle + 'b')));
+  if (o.moustache || o.barbe) ajouter(geo('tete', { ep: (x, y, z) => .0045 * VAR.zoneMoustache(x, y, z), filtre: (x, y, z) => VAR.zoneMoustache(x, y, z) > .08, fc: 'moust' }), MATS.get(cle + 'b') || (MATS.set(cle + 'b', new T.MeshStandardMaterial({ map: pt.tete, normalMap: TX.cheveux.normalMap, roughness: .7 })), MATS.get(cle + 'b')));
+  if (o.guidon) for (const sx of [-1, 1]) { const c = new T.CatmullRomCurve3([new T.Vector3(sx * .02, -.082, .118), new T.Vector3(sx * .038, -.085, .106), new T.Vector3(sx * .05, -.075, .097), new T.Vector3(sx * .049, -.062, .094)]); const tb = new T.Mesh(new T.TubeGeometry(c, 12, .0024, 6), MAT_CHEV(typeof o.moustache === 'number' ? o.moustache : cheveux)); tete.add(tb); }
+  // Vêtements
+  const moderne = !!o.moderne, chemise = o.chemise ?? 0xe8e0cc, robe = o.robe != null;
+  const habit = (nom, cleT, c) => habitPP(nom, tx[cleT], c), manche = (cleT, c) => habitPP('haut', tx[cleT], c, true);
+  const bras = (lim, debut = .26) => (x, y, z) => Math.abs(x) > debut && Math.abs(x) < lim && y > 1.2;
+  ajouter(geo('haut', { ep: o.ample ? .004 : 0 }), habit('haut', 'chemise', robe ? (o.chemise ?? o.robe) : chemise));
+  if (!moderne) ajouter(geo('corps', { ep: .007, filtre: bras(o.manches ? .47 : .655), fc: 'manche' + !!o.manches }), manche('chemise', robe ? (o.chemise ?? o.robe) : chemise));
+  if (robe) ajouter(jupePP(f, fk, o.epaisse ? 1.15 : 1), (() => { const m = habit('bas', 'robe', o.robe); return m; })()).material.side = T.DoubleSide;
+  else ajouter(geo('bas', { ep: o.ample ? .008 : 0 }), habit('bas', 'pantalon', o.pantalon ?? 0x4a3f33));
+  const encolure = (lim, larg) => (x, y, z) => z > .02 && y > lim ? Math.abs(x) - (larg + (y - lim) * .3) : .05;
+  if (o.gilet != null) ajouter(geo('haut', { ep: .009, coupe: (x, y, z) => Math.min(.185 - Math.abs(x), 1.43 - y, encolure(1.25, .008)(x, y, z)), fc: 'gilet' }), decoupe(habit('haut', 'gilet', o.gilet)));
+  if (o.veste != null) {
+    const ep = o.epaisse ? .026 : .018;
+    if (o.croise) ajouter(geo('haut', { ep, fc: 'vestec' }), habit('haut', 'veste', o.veste));
+    else ajouter(geo('haut', { ep, coupe: encolure(o.longue ? 1.0 : 1.12, .014), fc: 'veste' + (o.longue ? 'l' : '') }), decoupe(habit('haut', 'veste', o.veste)));
+    if (!moderne) ajouter(geo('corps', { ep: ep + .004, filtre: bras(o.manches ? .47 : .65), fc: 'vmanche' + !!o.manches }), manche('veste', o.veste));
+    if (!robe) ajouter(geo('bas', { ep: ep + .012, filtre: (x, y, z) => y > .8 && y < 1.02 && (o.croise || !(z > .03 && Math.abs(x) < .02)), fc: 'pan' }), habit('bas', 'veste', o.veste));
+  }
+  if (o.bretelles) for (const sx of [-1, 1]) ajouter(geo('haut', { ep: .012, filtre: (x, y, z) => { const ax = x * sx; return ax > .05 && ax < .085 && y > .95; }, fc: 'bret' + sx }), cuirPP(0x3a2416));
+  if (o.tablier) { ajouter(geo('bas', { ep: .022, filtre: (x, y, z) => z > .0 && y > .42 && y < 1.03, fc: 'tablierB' }), habitPP('bas', null, 0xece6d6)); ajouter(geo('haut', { ep: .016, filtre: (x, y, z) => z > .03 && y < 1.3 && Math.abs(x) < .14, fc: 'tablierH' }), habitPP('haut', null, 0xece6d6)); }
+  if (o.ceinture != null) ajouter(geo(robe ? 'haut' : 'bas', { ep: .014, filtre: (x, y, z) => y > .95 && y < 1.03, fc: 'ceint' + robe }), habitPP('bas', null, o.ceinture));
+  // Col, revers et poignets (vêtements d'époque)
+  if (!moderne && !robe) {
+    const col = new T.Mesh(new T.CylinderGeometry(.058, .064, .04, 24, 1, true, PI / 2 + .35, PI * 2 - .7), habit('haut', 'chemise', chemise)); col.material = col.material.clone(); col.material.side = T.DoubleSide; col.position.set(0, .03, .006); col.rotation.x = -.15; col.castShadow = true; B('neck01').add(col);
+    if (o.veste != null && !o.croise) for (const sx of [-1, 1]) { const rv = new T.Mesh(new T.BoxGeometry(.05, .17, .008), habit('haut', 'veste', o.veste)); rv.position.set(sx * .05, .12, .12); rv.rotation.set(-.12, sx * .3, sx * -.3); rv.castShadow = true; B('spine02').add(rv); }
+    if (o.veste != null && o.croise) for (const sx of [-1, 1]) for (let k = 0; k < 3; k++) { const bt = new T.Mesh(GH.bouton, M('uni:1a1a1a')); bt.position.set(sx * .05, .1 - k * .07, .13); B('spine02').add(bt); }
+    if (o.gilet != null) for (let i = 0; i < 4; i++) { const bt = new T.Mesh(GH.bouton, M('bronze')); bt.position.set(0, -.03 + i * .06, .128); B('spine02').add(bt); }
+  }
+  // Chaussures et bottes
+  const b = o.bottes || (moderne ? 'baskets' : 'cuir'), hautB = { montagne: .3, crottees: .28, talons: 0, baskets: 0, cuir: 0 }[b] ?? 0;
+  const cuir = { cuir: 0x3a2a1e, crottees: 0x3a2a1c, montagne: 0x3a2a1c, talons: 0x141414, baskets: 0xf2f0ea }[b] || 0x3a2a1e;
+  ajouter(geo('chaussures', { ep: b === 'baskets' ? .006 : 0 }), b === 'baskets' ? M('uni:eeeeea') : cuirPP(cuir));
+  if (hautB && !robe) ajouter(geo('bas', { ep: .014, filtre: (x, y, z) => y < hautB, fc: 'botte' + hautB }), cuirPP(cuir));
+  if (b === 'crottees') ajouter(geo('chaussures', { ep: .006, filtre: (x, y, z) => y < .05 + (Math.sin(x * 300) + Math.sin(z * 250)) * .012, fc: 'boue' }), M('sol:6a5236'));
+  if (b === 'talons') for (const s of ['L', 'R']) { const tl = new T.Mesh(new T.CylinderGeometry(.006, .01, .07, 8), cuirPP(0x141414)); tl.position.set(0, -.05, -.07); B('foot.' + s).add(tl); }
+  // Capuche (tenue moderne)
+  if (o.capuche != null) { const m = new T.Mesh(enveloppeTete({ ecart: .028, bas: () => 1.5, ouverture: y => 1.05 * (1 - lisse(1.72, 1.79, y)) }), decoupe(etoffe('technique', o.capuche))); m.castShadow = true; tete.add(m); ajouter(geo('haut', { ep: .012 }), etoffe('technique', o.capuche)); ajouter(geo('corps', { ep: .016, filtre: bras(.66), fc: 'sweat' }), etoffe('technique', o.capuche)); }
+  // Chapeaux, châle, foulard
+  const chap = new T.Group(); tete.add(chap);
+  const ch = o.chapeau, cc = (o.chapeauC != null ? 'tissu:' + hex(o.chapeauC) : 'tissu:3b3530'), Rt = rayonTete();
+  const rz = Rt.at(0, 1.745) + .012, rx = Rt.at(PI / 2, 1.745) + .012, yb = 1.745 - PP_C[1]; // tour de tête au niveau du front
+  const calotte = (ecart, bas, haut, cle) => { const m = new T.Mesh(enveloppeTete({ ecart, bas: () => bas, haut, pend: false, NY: 12 }), M(cle)); m.castShadow = true; chap.add(m); return m; };
+  const disque = (r, ep, y, cle, rzF = 1) => partie(chap, GH.disque, cle, 0, y, 0, r, ep, r * rzF);
+  if (ch === 'coppola' || ch === 'coppolaTombante') {
+    const t = ch === 'coppolaTombante', cal = new T.Mesh(GH.coppola, M(cc)); cal.scale.set(rx * (t ? 1.0 : .94), t ? .074 : .08, rz * (t ? 1.02 : .96)); cal.position.set(0, yb - .03, -.012); cal.rotation.x = t ? .26 : .2; cal.castShadow = true; chap.add(cal);
+    partie(chap, GH.visiere, cc, 0, yb - .026, .008, rx / .115 * .95, .6, rz / .115 * 1.18, t ? .34 : .22);
+  }
+  else if (ch === 'paille') { const c2 = 'tissu:' + hex(o.chapeauC ?? 0xcdb27a); calotte(.016, 1.75, 1.84, c2); disque(.2, .008, yb + .012, c2); partie(chap, GH.disque, c2, 0, yb + .06, 0, rx * 1.02, .1, rz * 1.02); partie(chap, GH.disque, 'tissu:4a3020', 0, yb + .026, 0, rx * 1.04, .026, rz * 1.04); }
+  else if (ch === 'feutre' || ch === 'cabosse') { const k = ch === 'cabosse'; calotte(.014, 1.75, 1.83, cc); disque(.165, .008, yb + .012, cc).rotation.set(k ? .1 : 0, 0, k ? -.07 : 0); const cr = partie(chap, GH.disque, cc, 0, yb + .07, 0, rx * 1.0, .11, rz * 1.02); if (k) { cr.scale.y = .085; cr.rotation.z = .08; } partie(chap, GH.disque, 'tissu:151210', 0, yb + .032, 0, rx * 1.03, .028, rz * 1.05); }
+  else if (ch === 'lucerna') { calotte(.012, 1.745, 1.83, 'tissu:121318'); partie(chap, GH.demiLune, 'tissu:121318', 0, yb + .06, 0, 1.0, 1, 1, PI / 2, 0); partie(chap, GH.oreille, 'tissu:b03a2e', 0, yb + .16, .03, .8, .8, .5); partie(chap, GH.disque, 'bronze', .045, yb + .1, .03, .03, .01, .03, PI / 2); }
+  else if (ch === 'pretre') { calotte(.012, 1.745, 1.83, cc); disque(.2, .008, yb + .012, cc); partie(chap, GH.calotte, cc, 0, yb + .03, 0, .82, .62, .9); }
+  else if (ch === 'scialle') {
+    const sc = tx.scialle ? etoffe(tx.scialle, o.chapeauC ?? 0x161414) : M(cc);
+    const voile = new T.Mesh(enveloppeTete({ ecart: .02, bas: a => 1.52 + Math.abs(a) * .012, ouverture: y => .78 * (1 - lisse(1.69, 1.725, y)), pend: true }), decoupe(sc)); voile.castShadow = true; tete.add(voile);
+    ajouter(geo('haut', { ep: o.epaisse ? .03 : .022, coupe: (x, y, z) => y - (1.12 - Math.abs(x) * .25 + (z > 0 ? .04 : 0)), fc: 'chale' }), decoupe(sc)); ajouter(geo('corps', { ep: .03, filtre: bras(.42, .2), fc: 'chaleb' }), tx.scialle ? sc : M(cc));
+  }
+  if (o.foulard != null) { const fo = new T.Mesh(GH.col, tissu_(o.foulard)); fo.rotation.x = PI / 2 + .3; fo.scale.set(.95, .95, 1.1); fo.position.set(0, .035, .01); B('neck01').add(fo); }
+  // Objets portés
+  if (o.lupara) { const fr = new T.Group(); fr.position.set(0, .05, -.15); fr.rotation.set(0, 0, .75); B('spine02').add(fr); partie(fr, GH.disque, 'fer', -.012, 0, 0, .014, .9, .014); partie(fr, GH.disque, 'fer', .012, 0, 0, .014, .9, .014); partie(fr, GH.disque, 'bois:5a3a22', 0, -.55, 0, .03, .35, .05); }
+  let lanterne = null;
+  if (o.lanterne) { lanterne = new T.Group(); lanterne.position.set(.01, -.16, .02); B('wrist.L').add(lanterne); partie(lanterne, GH.disque, 'lumiere', 0, -.1, 0, .06, .16, .06); partie(lanterne, GH.disque, 'fer', 0, 0, 0, .075, .03, .075); partie(lanterne, GH.disque, 'fer', 0, -.19, 0, .075, .03, .075); }
+  if (o.cassette) { const c = new T.Mesh(new T.BoxGeometry(.3, .18, .22), M('bois:5a3a22')); c.position.set(-.02, -.12, .06); B('wrist.R').add(c); }
+  const bd = B('upperarm01.L'), bg = B('upperarm01.R'), jd = B('upperleg01.L'), jg = B('upperleg01.R');
+  bd.coude = B('lowerarm01.L'); bg.coude = B('lowerarm01.R'); jd.genou = B('lowerleg01.L'); jg.genou = B('lowerleg01.R');
+  const h = { reel: true, pp: true, g, B, J, corps: B('root'), corps0: B('root').position.clone(), tete, osTete: B('head'), torse: B('spine02'), dos: B('spine04'), bassin: B('root'), jg, jd, bg, bd, brasZ: 1.45, ph: R() * 6, amp: 0, lanterne, porte: !!o.lanterne, assis: false, paupieres: [], parle: false, tp: R() * 9, couches, raideur: !!o.raideur, voute: f.voute || 0, ecart: .1 + (f.ventre || 0) * .08 + Math.max(0, f.epais || 0) * 6 + (o.veste != null ? (o.epaisse ? .08 : .05) : 0) + (o.capuche != null ? .05 : 0),
+    coucheSupp: (regions, ep, filtre, cle, mat) => { const fl = (x, y, z) => filtre(0, [x, y, z]); ajouter(geo('haut', { ep, filtre: fl, fc: 'supp' + cle }), mat); if (regions.includes(RG.bras)) ajouter(geo('corps', { ep: ep * .8, filtre: (x, y, z) => bras(.4)(x, y, z) && fl(x, y, z), fc: 'suppb' + cle }), mat); } };
+  bd.rotation.z = -h.brasZ; bg.rotation.z = h.brasZ;
+  animerAvecClips(h, 'pp');
+  if (o.accessoires) for (const a of o.accessoires) a(h);
+  if (o.echelle) g.scale.setScalar(o.echelle);
+  return h;
+}
+
 const nomOs = n => T.PropertyBinding.sanitizeNodeName(n);
-function clipsPour(cible, racine0) {
-  const k = cible + racine0.join(','); if (CLIPS[k]) return CLIPS[k];
+function clipsPour(cible, racine0, ech = 1) {
+  const k = cible + racine0.join(',') + ech; if (CLIPS[k]) return CLIPS[k];
   const out = {};
   for (const [nom, c] of Object.entries(ANIMS.cibles[cible])) {
     const times = Array.from({ length: c.n }, (_, i) => Math.min(c.duree, i / ANIMS.fps)), pistes = [];
     for (const [os, v] of Object.entries(c.pistes)) pistes.push(new T.QuaternionKeyframeTrack(nomOs(os) + '.quaternion', times, v));
-    const rp = []; for (let i = 0; i < c.n; i++) rp.push(racine0[0], racine0[1] + c.racine[i * 3 + 1], racine0[2]);
+    const rp = []; for (let i = 0; i < c.n; i++) rp.push(racine0[0], racine0[1] + c.racine[i * 3 + 1] * ech, racine0[2]);
     pistes.push(new T.VectorKeyframeTrack(nomOs('root') + '.position', times, rp));
     out[nom] = new T.AnimationClip(nom, c.duree, pistes);
   }
@@ -931,7 +1190,7 @@ function clipsPour(cible, racine0) {
 }
 function animerAvecClips(h, cible) {
   if (!ANIMS) return;
-  h.mixer = new T.AnimationMixer(h.g); const cl = clipsPour(cible, h.corps0.toArray());
+  h.mixer = new T.AnimationMixer(h.g); const cl = clipsPour(cible, h.corps0.toArray(), cible === 'pp' ? h.corps0.y / PP.joints[PP_RANG.root][1] : 1);
   h.actions = {}; h.poids = {};
   for (const k of ['repos', 'marche', 'course', 'assis']) { if (!cl[k]) continue; const a = h.mixer.clipAction(cl[k]); a.play(); a.setEffectiveWeight(k === 'repos' ? 1 : 0); h.actions[k] = a; h.poids[k] = k === 'repos' ? 1 : 0; }
   if (h.actions.assis) { h.actions.assis.time = 5.5; h.actions.assis.timeScale = 0; }
@@ -1051,9 +1310,16 @@ function animerOs(h, dt, v) {
   for (const k in h.actions) { h.poids[k] = lerp(h.poids[k], k === cible ? 1 : 0, 1 - Math.exp(-dt * (h.assis ? 30 : 8))); h.actions[k].setEffectiveWeight(h.poids[k]); }
   if (h.actions.marche) h.actions.marche.timeScale = clamp(v / 1.35, .6, 1.7);
   if (h.actions.course) h.actions.course.timeScale = clamp(v / 5.2, .7, 1.5);
+  // Les retouches ci-dessous s'ajoutent à la pose du clip : on repart de la pose du clip à chaque image
+  // (le mélangeur ne réécrit pas un os dont la valeur n'a pas changé)
+  if (h.base) for (const [os, q] of h.base) os.quaternion.copy(q);
   h.mixer.update(dt * (h.raideur ? .8 : 1));
+  if (!h.base) h.base = new Map([h.dos, h.torse, h.osTete, h.bd, h.bg, h.bd.coude, h.bg.coude].map(o => [o, new T.Quaternion()]));
+  for (const [os, q] of h.base) q.copy(os.quaternion);
+  if (h.ecart) { tourner(h.bd, 0, 0, h.ecart); tourner(h.bg, 0, 0, -h.ecart); }
   if (h.raideur) { h.bd.quaternion.slerp(_qx.setFromEuler(_e.set(0, 0, -h.brasZ)), .55); h.bg.quaternion.slerp(_qx.setFromEuler(_e.set(0, 0, h.brasZ)), .55); h.dos.quaternion.identity(); }
   if (h.figeBras) h.figeBras(h);
+  if (h.voute) { tourner(h.dos, h.voute * .12, 0, 0); tourner(h.torse, h.voute * .3, 0, 0); tourner(h.osTete, -h.voute * .25, 0, 0); }
   if (h.porte) { tourner(h.bd, -.35, 0, 0); tourner(h.bd.coude, -.6, 0, 0); }
   const t = (h.tp += dt);
   if (v < .2 && !h.assis) {
@@ -1133,6 +1399,8 @@ GH.tete = sculpter(new T.SphereGeometry(1, 64, 48));
 GH.chevelure = sculpter(new T.SphereGeometry(1, 40, 20, 0, PI * 2, 0, PI * .5), 1.07, .06);
 GH.barbe = sculpter(new T.SphereGeometry(1, 40, 20, PI * .05, PI * .9, PI * .58, PI * .42), 1.06, .05);
 const OEIL = (sx) => { const v = new T.Vector3(sx * .32, .075, .94).normalize(); return formeTete(v.x, v.y, v.z).multiplyScalar(.93); };
+GH.coppola = new T.LatheGeometry(prof([[1, 0], [1.06, .35], [1.1, .66], [1.06, .86], [.85, .97], [.45, 1.01], [0, 1.02]]), 40); { const p = GH.coppola.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, p.getZ(i) + p.getY(i) * .32); GH.coppola.computeVertexNormals(); } // casquette plate : le dessus avance sur la visière
+GH.capePP = new T.LatheGeometry(prof([[.07, 1.5], [.115, 1.475], [.185, 1.435], [.232, 1.37], [.25, 1.26], [.256, 1.1]]), 32); GH.capePP.scale(1, 1, .68); GH.capePP.translate(0, 0, -.025);
 GH.globe = new T.SphereGeometry(.0128, 16, 12); GH.iris = new T.SphereGeometry(.0068, 14, 10); GH.paupiere = new T.SphereGeometry(.0142, 16, 8, 0, PI * 2, 0, PI * .5);
 GH.sourcil = new T.CapsuleGeometry(.0042, .03, 2, 6); GH.sourcil.rotateZ(PI / 2);
 GH.moust = new T.CapsuleGeometry(.0075, .036, 3, 8); GH.moust.rotateZ(PI / 2);
@@ -1140,6 +1408,7 @@ GH.paume = new T.CapsuleGeometry(.032, .05, 4, 10); GH.pouce = new T.CapsuleGeom
 GH.col = new T.TorusGeometry(.062, .014, 8, 20); GH.bouton = new T.SphereGeometry(.009, 8, 6);
 function partie(parent, geo, cle, x, y, z, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0) { const m = new T.Mesh(geo, M(cle)); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.rotation.set(rx, ry, rz); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m; }
 function humain(o = {}) {
+  if (PP && !o.simple) return humainPP(o);
   if (CORPS && !o.simple) return humainReel(o);
   const g = new T.Group(), corps = new T.Group(); g.add(corps);
   const peau = 'peau:' + hex(o.peau ?? 0xc69068), chem = 'tissu:' + hex(o.chemise ?? 0xe8e0cc), pant = 'tissu:' + hex(o.pantalon ?? 0x4a3f33), chev = 'cheveux:' + hex(o.cheveux ?? 0x1e1712), chaus = 'cuir:2a1e16';
@@ -1372,52 +1641,6 @@ function majVie(dt, s) {
   for (const b of BARQUES) { b.g.position.y = .3 + Math.sin(s * 1.1 + b.ph) * .05; b.g.rotation.z = Math.sin(s * .9 + b.ph) * .04; }
 }
 
-/* ---------- Personnage PromptPlay (fourni par le propriétaire) : visage photoréaliste, squelette ajouté ---------- */
-const PP = await (async () => { try { return await (await fetch('modeles/promptplay/perso.json')).json(); } catch (e) { console.warn('Personnage PromptPlay indisponible :', e && e.message); return null; } })();
-const PP_GEO = {}, PP_TEX = {};
-function texPP(f, srgb) { if (!f) return null; if (PP_TEX[f]) return PP_TEX[f]; const t = new T.TextureLoader().load('modeles/promptplay/' + f); t.flipY = false; if (srgb) t.colorSpace = T.SRGBColorSpace; t.anisotropy = Math.min(ANISO, 8); return (PP_TEX[f] = t); }
-function geoPP(m, ep = 0) {
-  const k = m.nom + ep; if (PP_GEO[k]) return PP_GEO[k];
-  const dec = (s, Type) => { const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return new Type(u.buffer); };
-  const p16 = dec(m.pos, Int16Array), nor = dec(m.nor, Int8Array), pos = new Float32Array(p16.length);
-  for (let i = 0; i < p16.length; i++) pos[i] = p16[i] / PP.echelle + nor[i] / 127 * ep;
-  const g = new T.BufferGeometry();
-  g.setAttribute('position', new T.BufferAttribute(pos, 3)); g.setAttribute('normal', new T.BufferAttribute(nor, 3, true)); g.setAttribute('uv', new T.BufferAttribute(dec(m.uv, Uint16Array), 2, true));
-  g.setAttribute('skinIndex', new T.BufferAttribute(dec(m.skinI, Uint8Array), 4)); g.setAttribute('skinWeight', new T.BufferAttribute(dec(m.skinW, Uint8Array), 4, true));
-  g.setIndex(new T.BufferAttribute(dec(m.index, m.index32 ? Uint32Array : Uint16Array), 1)); g.computeBoundingSphere();
-  return (PP_GEO[k] = g);
-}
-function humainPP(o = {}) {
-  const g = new T.Group(), noms = PP.os.map(x => x.n), rang = Object.fromEntries(noms.map((n, i) => [n, i]));
-  const bones = PP.os.map(x => { const b = new T.Bone(); b.name = nomOs(x.n); return b; });
-  PP.joints.forEach((jt, i) => { const p = PP.os[i].p; if (p < 0) { bones[i].position.set(jt[0], jt[1], jt[2]); g.add(bones[i]); } else { const q = PP.joints[p]; bones[i].position.set(jt[0] - q[0], jt[1] - q[1], jt[2] - q[2]); bones[p].add(bones[i]); } });
-  g.updateMatrixWorld(true);
-  const squelette = new T.Skeleton(bones), B = n => bones[rang[n]], J = n => PP.joints[rang[n]];
-  const ajouter = (geo, mat) => { const m = new T.SkinnedMesh(geo, mat); m.castShadow = m.receiveShadow = true; m.bind(squelette); g.add(m); return m; };
-  for (const m of PP.maillages) {
-    if (o.sans && o.sans.includes(m.nom)) continue;
-    const peau = /corps|tete/.test(m.nom), oeil = /oeil/.test(m.nom);
-    const k = 'pp:' + m.nom; let mat = MATS.get(k);
-    if (!mat) { mat = new T.MeshPhysicalMaterial({ color: m.nom === 'cils' ? 0x0c0806 : 0xffffff, map: texPP(m.map, true), normalMap: texPP(m.normalMap), roughness: oeil ? .08 : peau ? .5 : .85, clearcoat: oeil ? 1 : 0, sheen: peau ? .3 : .2, sheenRoughness: .6, sheenColor: new T.Color(peau ? 0xff8a70 : 0xffffff), side: T.DoubleSide }); MATS.set(k, mat); }
-    ajouter(geoPP(m), mat);
-  }
-  if (o.capuche) {
-    ajouter(geoPP(PP.maillages.find(x => x.nom === 'haut'), .013), etoffe('technique', o.capuche));
-    const hd = J('head'), cap = new T.Mesh(new T.SphereGeometry(.128, 28, 16, PI / 2 + .95, PI * 2 - 1.9, 0, PI * .66), etoffe('technique', o.capuche));
-    cap.material.side = T.DoubleSide; cap.scale.set(1, 1.08, 1.12); cap.position.set(0, .135, -.02); cap.castShadow = true; B('head').add(cap);
-  }
-  if (o.baskets) { const ch = PP.maillages.find(x => x.nom === 'chaussures'); ajouter(geoPP(ch, .014), M('uni:eeeeea')); }
-  const ey = 1.815 * 1.8 / 1.957, hd = J('head');
-  const tete = new T.Group(); tete.position.set(0, ey + .02 - hd[1], .089 - .085 - hd[2]); B('head').add(tete);
-  const bd = B('upperarm01.L'), bg = B('upperarm01.R'), jd = B('upperleg01.L'), jg = B('upperleg01.R');
-  bd.coude = B('lowerarm01.L'); bg.coude = B('lowerarm01.R'); jd.genou = B('lowerleg01.L'); jg.genou = B('lowerleg01.R');
-  const h = { reel: true, g, B, J, corps: B('root'), corps0: B('root').position.clone(), tete, osTete: B('head'), torse: B('spine02'), dos: B('spine04'), bassin: B('root'), jg, jd, bg, bd, brasZ: 1.45, ph: 0, amp: 0, porte: false, assis: false, paupieres: [], parle: false, tp: 0 };
-  bd.rotation.z = -h.brasZ; bg.rotation.z = h.brasZ;
-  animerAvecClips(h, 'pp');
-  if (o.accessoires) for (const a of o.accessoires) a(h);
-  return h;
-}
-
 /* ---------- Accessoires des familles ---------- */
 const MAT_OR = new T.MeshStandardMaterial({ color: 0xd8aa48, metalness: 1, roughness: .22 }), MAT_CHROME = new T.MeshStandardMaterial({ color: 0xe8e8ec, metalness: 1, roughness: .08 });
 const MAT_NOIR = new T.MeshStandardMaterial({ color: 0x16171a, metalness: .4, roughness: .45 }), MAT_VERRE_FUME = new T.MeshStandardMaterial({ color: 0x3a2a1a, metalness: .6, roughness: .05, transparent: true, opacity: .82 });
@@ -1430,16 +1653,16 @@ const ACC = {
   chapelet: h => { const g = main_(h, 'R'); const n = 34; for (let i = 0; i < n; i++) { const a = i / n * PI * 2; piece3(g, SPH, M('bois:5a3018'), Math.sin(a) * .045, -.06 - (1 - Math.cos(a)) * .055, .015, 0, 0, 0, .011, .011, .011); } piece3(g, BOX, M('bois:4a2812'), 0, -.19, .015, 0, 0, 0, .008, .045, .006); piece3(g, BOX, M('bois:4a2812'), 0, -.18, .015, 0, 0, 0, .028, .008, .006); },
   mastruca: h => { const yT = h.J('spine05')[1]; h.coucheSupp([RG.torse, RG.bassin, RG.bras], .05, (i, P) => P[i * 3 + 1] > yT - .32 && !(Math.abs(P[i * 3]) > .2), 'mastruca', etoffe('laine', 0xd2c4a6)); h.coucheSupp([RG.torse], .062, (i, P) => P[i * 3 + 1] > h.J('neck01')[1] - .08 && P[i * 3 + 2] < .05, 'mastrucaCol', etoffe('laine', 0xc8b896)); },
   resolza: h => { const g = main_(h, 'R'); piece3(g, BOX, M('uni:d8c8a8'), 0, -.02, .02, .3, 0, 0, .022, .1, .016); piece3(g, BOX, MAT_CHROME, 0, -.11, .045, .3, 0, 0, .004, .1, .022); piece3(g, BOX, M('bronze'), 0, -.07, .03, .3, 0, 0, .024, .008, .018); },
-  aviateurs: h => { const t = h.tete, f = new T.Group(); f.position.set(0, -.022, .085); t.add(f);
+  aviateurs: h => { const t = h.tete, f = new T.Group(); f.position.set(0, -.022, h.pp ? .1 : .085); t.add(f);
     for (const sx of [-1, 1]) { const l = new T.Mesh(new T.CircleGeometry(.023, 24), MAT_VERRE_FUME); l.scale.set(1.15, 1, 1); l.position.set(sx * .031, -.004, .004); l.rotation.y = sx * -.12; f.add(l); const r = new T.Mesh(new T.TorusGeometry(.023, .0018, 6, 28), MAT_OR); r.scale.set(1.15, 1, 1); r.position.copy(l.position); r.rotation.y = l.rotation.y; f.add(r); piece3(f, BOX, MAT_OR, sx * .068, .006, -.05, 0, sx * .12, 0, .0025, .003, .1); }
     piece3(f, BOX, MAT_OR, 0, .012, .005, 0, 0, 0, .03, .003, .003); },
-  lunettesFines: h => { const t = h.tete, f = new T.Group(); f.position.set(0, -.022, .085); t.add(f); const verre = new T.MeshStandardMaterial({ color: 0xdfe8ec, transparent: true, opacity: .18, roughness: .02, metalness: .3 });
+  lunettesFines: h => { const t = h.tete, f = new T.Group(); f.position.set(0, -.022, h.pp ? .1 : .085); t.add(f); const verre = new T.MeshStandardMaterial({ color: 0xdfe8ec, transparent: true, opacity: .18, roughness: .02, metalness: .3 });
     for (const sx of [-1, 1]) { const l = new T.Mesh(new T.PlaneGeometry(.04, .026), verre); l.position.set(sx * .031, 0, .004); f.add(l); const r = new T.Mesh(new T.TorusGeometry(.02, .0011, 4, 4), MAT_NOIR); r.rotation.z = PI / 4; r.scale.set(1.4, .95, 1); r.position.copy(l.position); f.add(r); piece3(f, BOX, MAT_NOIR, sx * .068, .006, -.05, 0, sx * .12, 0, .0015, .002, .1); }
     piece3(f, BOX, MAT_NOIR, 0, .006, .005, 0, 0, 0, .022, .0015, .0015); },
   chaineOr: h => { const c = new T.Mesh(new T.TorusGeometry(.075, .0045, 8, 40), MAT_OR); c.rotation.x = PI / 2 - .5; c.scale.set(1, 1.15, 1); c.position.set(0, -.04, .055); h.B('spine01').add(c); piece3(h.B('spine01'), CYL, MAT_OR, 0, -.12, .115, PI / 2, 0, 0, .025, .004, .025); },
   holster: h => { const s = h.B('spine02'); piece3(s, BOX, M('cuir:9a1e1a'), .16, -.08, .02, 0, 0, .15, .045, .14, .07); piece3(s, BOX, M('cuir:9a1e1a'), .07, .06, .08, 0, 0, -.9, .02, .34, .006); piece3(s, BOX, M('cuir:9a1e1a'), .07, .06, -.09, 0, 0, -.9, .02, .34, .006); piece3(s, CYL, MAT_CHROME, .16, -.02, .04, 0, 0, .15, .024, .05, .024); piece3(s, BOX, MAT_CHROME, .155, .03, .04, 0, 0, .5, .022, .07, .026); piece3(s, BOX, M('bois:6a3a20'), .145, .07, .04, 0, 0, .9, .022, .05, .026); },
   telephoneSat: h => { const g = main_(h, 'R'); piece3(g, BOX, MAT_NOIR, 0, -.05, .03, .2, 0, 0, .06, .17, .035); piece3(g, CYL, MAT_NOIR, .018, .06, .03, .2, 0, 0, .014, .12, .014); piece3(g, BOX, M('verre'), 0, -.02, .049, .2, 0, 0, .045, .04, .002); },
-  cigare: h => { const t = h.tete; const c = new T.Group(); c.position.set(.026, -.072, .098); c.rotation.set(.15, .5, .1); t.add(c); piece3(c, CYL, M('bois:5a3a20'), 0, 0, .04, PI / 2, 0, 0, .014, .09, .014); const braise = new T.Mesh(new T.CircleGeometry(.007, 12), new T.MeshBasicMaterial({ color: new T.Color(2.5, .8, .2) })); braise.position.set(0, 0, .086); c.add(braise); },
+  cigare: h => { const t = h.tete; const c = new T.Group(); c.position.set(.02, h.pp ? -.088 : -.072, h.pp ? .108 : .098); c.rotation.set(.15, .5, .1); t.add(c); piece3(c, CYL, M('bois:5a3a20'), 0, 0, .04, PI / 2, 0, 0, .014, .09, .014); const braise = new T.Mesh(new T.CircleGeometry(.007, 12), new T.MeshBasicMaterial({ color: new T.Color(2.5, .8, .2) })); braise.position.set(0, 0, .086); c.add(braise); },
   sacoches: h => { const s = h.B('spine05'); piece3(s, BOX, etoffe('cire', 0x7a7050), .2, -.06, .02, 0, .3, .05, .1, .26, .22); piece3(s, BOX, etoffe('cire', 0x6a6044), -.17, -.04, -.06, 0, -.4, -.05, .09, .18, .16); piece3(h.B('spine02'), BOX, M('cuir:4a3420'), .02, .0, .1, 0, 0, -.6, .03, .5, .006); piece3(h.B('spine02'), BOX, M('cuir:4a3420'), -.03, .02, -.11, 0, 0, .55, .03, .48, .006); },
   pochesCargo: h => { for (const s of ['L', 'R']) piece3(h.B('upperleg01.' + s), BOX, etoffe('tissu', 0x5a5a3a), (s === 'L' ? 1 : -1) * .075, -.25, .0, 0, 0, 0, .03, .13, .11); },
   ar70: h => { const g = main_(h, 'R'); const f = new T.Group(); f.rotation.set(-1.3, .1, 0); f.position.set(0, -.04, .05); g.add(f);
@@ -1452,7 +1675,7 @@ const ACC = {
   telephones: h => { for (const s of ['L', 'R']) { const g = main_(h, s); piece3(g, BOX, MAT_NOIR, 0, -.03, .03, .2, 0, 0, .072, .15, .008); piece3(g, BOX, M('verre'), 0, -.03, .035, .2, 0, 0, .066, .14, .002); } const g = main_(h, 'L'); piece3(g, BOX, MAT_CHROME, .04, -.1, .02, 0, 0, .3, .012, .04, .006); }
 };
 
-/* ---------- Les familles : dix personnages de la saga (galerie) ---------- */
+/* ---------- Les familles : personnages de la saga et du chapitre I (galerie) ---------- */
 const FAMILLES = [
   { nom: 'Don Calogero « U Viddanu »', lieu: 'Sicile, 1880 - 1910', texte: 'Gardien de domaine agricole devenu chef de clan lors de l’abolition de la féodalité. Visage buriné par le soleil de Corleone, rides profondes comme des crevasses, épaisse moustache en guidon poivre et sel. Velours côtelé marron, lourdes bottes crottées, la lupara toujours en bandoulière. Un regard habitué à régler les conflits terriens par le sang.',
     o: { silhouette: 'vieux', peau: 0x8e6044, rides: 1, cheveux: 0x8a8680, moustache: 0x6e6a64, guidon: true, chemise: 0xd8ccb0, tex: { veste: 'velours', pantalon: 'velours', gilet: 'velours' }, veste: 0x6a4a2e, gilet: 0x5a3e26, pantalon: 0x5e4228, bottes: 'crottees', chapeau: 'coppola', chapeauC: 0x3a2e24, yeux: 0x1a120a, visage: { machoire: 1, anguleux: .6 }, accessoires: [ACC.lupara] } },
@@ -1471,9 +1694,17 @@ const FAMILLES = [
   { nom: 'Isabella « La Dottoressa » Greco', lieu: 'Sicile, 2000 - aujourd’hui', texte: 'Le visage de la Cosa Nostra moderne : col blanc, invisible des radars de la police. Avocate d’affaires, elle blanchit l’argent par des montages immobiliers internationaux. Tailleur-pantalon anthracite à la géométrie stricte, talons aiguilles, aucun bijou sauf une montre suisse compliquée. Traits lisses et froids, carré asymétrique parfaitement net.',
     o: { femme: true, peau: 0xe6c4a8, cheveux: 0x1a1210, coiffure: 'carre', chemise: 0xeeece8, veste: 0x34363a, pantalon: 0x34363a, bottes: 'talons', visage: { anguleux: .5 }, accessoires: [ACC.montre] } },
   { nom: 'Matteo « Ghost »', lieu: 'Calabre, 2015 - aujourd’hui', texte: 'La nouvelle génération de la ’Ndrangheta. Il ne touche jamais la marchandise : il coordonne les expéditions par des applications chiffrées. Streetwear de luxe, baskets massives, sweat technique à capuche, crâne rasé en dégradé, sacoche en bandoulière, une clé USB biométrique et deux smartphones sans coque.',
-    pp: { capuche: 0x1e2024, baskets: true, accessoires: [ACC.sacocheBandouliere, ACC.telephones] } },
+    o: { moderne: true, capuche: 0x1e2024, coiffure: 'rase', peau: 0xc89a7a, chemise: 0x1e2024, pantalon: 0x26272b, bottes: 'baskets', accessoires: [ACC.sacocheBandouliere, ACC.telephones] } },
   { nom: 'Angelo « L’Ombre »', lieu: 'Sicile, 1990 - 2010', texte: 'Le tueur insaisissable de l’après-1992, quand la mafia a dû devenir totalement silencieuse. Un homme volontairement banal : coupe-vent beige, lunettes à monture fine, calvitie naissante. Seul détail qui trahit : une posture anormalement raide, mécanique. Dans un simple journal roulé, un pistolet au long silencieux artisanal.',
-    o: { peau: 0xd2a684, cheveux: 0x3a3028, coiffure: 'recul', veste: 0xc4b08a, tex: { veste: 'technique' }, chemise: 0xdcd6c8, pantalon: 0x4a4a48, raideur: true, accessoires: [ACC.lunettesFines, ACC.journalSilencieux] } }
+    o: { peau: 0xd2a684, cheveux: 0x3a3028, coiffure: 'recul', veste: 0xc4b08a, tex: { veste: 'technique' }, chemise: 0xdcd6c8, pantalon: 0x4a4a48, raideur: true, accessoires: [ACC.lunettesFines, ACC.journalSilencieux] } },
+  { nom: 'Turi Ferrante', lieu: 'Sicile, 1861', texte: 'Le héros du chapitre I : vingt ans, cueilleur de citrons dans la Conca d’Oro. Chemise de lin aux manches retroussées, gilet de laine, coppola. Un garçon qui a appris à se taire avant d’apprendre à lire.',
+    o: { manches: true, chemise: 0xe9e1cc, gilet: 0x3e2e22, pantalon: 0x383029, chapeau: 'coppola', chapeauC: 0x56503f, cheveux: 0x22180f, peau: 0xc68e62 } },
+  { nom: 'Concetta', lieu: 'Sicile, 1877', texte: 'L’épouse de Turi. Robe de toile bleue, corsage clair, châle de laine sur les épaules les jours de fête. Elle tient la maison, les comptes et le silence de la famille.',
+    o: { robe: 0x24365a, chemise: 0xe8e0cc, peau: 0xd6a582, cheveux: 0x1a120c, ceinture: 0x6a2a22 } },
+  { nom: 'Saro', lieu: 'Sicile, 1877', texte: 'Le fils de Turi et de Concetta, sept ans. Il court pieds nus entre les citronniers et répète tout ce qu’il entend : c’est bien ce qui inquiète son père.',
+    o: { chemise: 0xe0d6bf, pantalon: 0x5a4a38, taille: .62, cheveux: 0x2a1d12, peau: 0xd2a07a, bretelles: true } },
+  { nom: 'Donna Rosa', lieu: 'Sicile, 1861', texte: 'La grand-mère du quartier, veuve depuis trente ans. Toujours en noir, le châle sur la tête, assise devant sa porte : elle voit tout et ne dit que ce qu’elle veut.',
+    o: { robe: 0x1a1717, chemise: 0x1f1b1b, chapeau: 'scialle', chapeauC: 0x141212, peau: 0xd6a582, vieux: true, cheveux: 0xd8d4cc } }
 ];
 
 /* ---------- Le carretto sicilien et sa mule ---------- */
@@ -2463,7 +2694,7 @@ function montrerFamille(i) {
   GAL.i = (i + FAMILLES.length) % FAMILLES.length; const f = FAMILLES[GAL.i];
   if (GAL.actuel) GAL.scene.remove(GAL.actuel.g);
   let h = GAL.cache[GAL.i];
-  if (!h) { h = f.pp && PP ? humainPP(f.pp) : humain(f.o || {}); GAL.cache[GAL.i] = h; }
+  if (!h) { h = humain(Object.assign({ detail: true }, f.o)); GAL.cache[GAL.i] = h; }
   GAL.actuel = h; GAL.scene.add(h.g); h.g.position.set(0, 0, 0); GAL.rot = -.4;
   $('#g-num').textContent = `${GAL.i + 1} / ${FAMILLES.length}`; $('#g-nom').textContent = f.nom; $('#g-lieu').textContent = f.lieu; $('#g-texte').textContent = f.texte;
 }
@@ -2534,4 +2765,4 @@ function boucle(now) {
 ETAPES.intro.setup(); retourMenu(); heure(1.05, true);
 $('#chargement').hidden = true;
 requestAnimationFrame(boucle);
-window.__silenzio = { galerie: (i, z) => { ouvrirGalerie(); GAL.zoom = !!z; montrerFamille(i); }, aller, charger, ETAPES, J, CHAR, PNJ, CUEILLETTE, etat: () => etat, etape: () => ETAPE, inter: () => interProche && interProche.lib(), heure, camera, cam: CAM, sauve: SAUVE, job: () => JOB && JOB.type };
+window.__silenzio = { galerie: (i, z) => { ouvrirGalerie(); GAL.zoom = !!z; montrerFamille(i); }, gal: () => GAL, aller, charger, ETAPES, J, CHAR, PNJ, CUEILLETTE, etat: () => etat, etape: () => ETAPE, inter: () => interProche && interProche.lib(), heure, camera, cam: CAM, sauve: SAUVE, job: () => JOB && JOB.type };

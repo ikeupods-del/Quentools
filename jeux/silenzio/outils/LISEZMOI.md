@@ -13,9 +13,13 @@ for n in universal-male-young-maxmuscle-averageweight universal-male-young-avera
 cd - && node outils/corps.js /tmp/mh
 ```
 
-## `promptplay.js` : personnage photoréaliste (Matteo « Ghost »)
+## `promptplay.js` : personnage de base photoréaliste
 
-`node outils/promptplay.js <fichier.glb>` : ajoute au modèle PromptPlay (posé bras en croix, sans squelette) un squelette aux mêmes noms que MakeHuman, des poids de peau calculés par proximité des os, fusionne les sommets en double et convertit les textures en JPEG (ImageMagick `convert`). Sortie : `modeles/promptplay/`. Ce modèle n'a pas de corps sous sa tenue (torse et jambes retirés) : il garde donc son tee-shirt, son jean et ses chaussures, auxquels le jeu ajoute capuche, baskets et accessoires.
+`node outils/promptplay.js <fichier.glb>` : ajoute au modèle PromptPlay (posé bras en croix, sans squelette) un squelette aux mêmes noms que MakeHuman, des poids de peau calculés par proximité des os (épaules adoucies sur une douzaine de centimètres), fusionne les sommets en double et convertit les textures en JPEG (ImageMagick `convert`). Sortie : `modeles/promptplay/`. Ce modèle n'a pas de corps sous sa tenue (torse et jambes retirés) : le jeu taille les vêtements d'époque dans son tee-shirt et son pantalon (`humainPP`).
+
+## `carte-visage.js` : carte des positions du visage
+
+`node outils/carte-visage.js` (après `promptplay.js`) : écrit `modeles/promptplay/tete-pos.png`, où chaque point de la texture de la tête donne sa position sur le visage. `variantes.js` s'en sert pour peindre rides, barbe, cheveux gris et maquillage au bon endroit.
 
 ## `animations.mjs` : animations transférées (Quaternius, CC0)
 

@@ -36,6 +36,8 @@ function poids(p, rigide) {
     if (/head|neck/.test(n) && y < 1.42) continue;
     cand.push([rang[n], segDist(p, a, c)]);
   }
+  // Épaule : passage progressif du buste au bras sur une douzaine de centimètres (évite les bosses quand le bras descend)
+  if (ax > .13 && ax < .34 && y > 1.36 && y < 1.7) { const t = Math.max(0, Math.min(1, (ax - .15) / .16)), u = t * t * (3 - 2 * t), buste = y > 1.45 ? 'clavicle.' + cote : 'spine02'; return [[rang['upperarm01.' + cote], u], [rang[buste], 1 - u]].filter(w => w[1] > 0); }
   const l = cand.map(([i, d]) => [i, 1 / Math.pow(d + .015, 4)]).sort((a, b) => b[1] - a[1]).slice(0, 3), s = l.reduce((a, b) => a + b[1], 0);
   return l.map(([i, w]) => [i, w / s]);
 }
