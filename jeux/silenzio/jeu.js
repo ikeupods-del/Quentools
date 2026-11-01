@@ -11,7 +11,6 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { fabriquerTextures, texVisage, texDrapeau } from './textures.js';
 
 const $ = s => document.querySelector(s);
@@ -799,9 +798,9 @@ construireLots();
 await etape('Personnages…');
 const TETE = await (async () => {
   try {
-    const gl = await new GLTFLoader().loadAsync('modeles/tete/LeePerrySmith.glb');
-    const src = gl.scene.getObjectByName('LeePerrySmith') || gl.scene.children.find(o => o.isMesh);
-    const g = src.geometry.clone(), p = g.attributes.position, s = .0532, X0 = .11, Y0 = .5, Z0 = .24;
+    const d0 = await (await fetch('modeles/tete/tete.json')).json();
+    const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(d0.p, 3)); g.setAttribute('normal', new T.Float32BufferAttribute(d0.n, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(d0.u, 2)); g.setIndex(d0.i);
+    const p = g.attributes.position, s = .0532, X0 = .11, Y0 = .5, Z0 = .24;
     for (let i = 0; i < p.count; i++) {
       const x = p.getX(i), y = p.getY(i); let z = p.getZ(i);
       for (const ex of [-.72, .5]) { const dx = (x - ex) / .31, dy = (y - 1.8) / .135, d2 = dx * dx + dy * dy; if (d2 < 1 && z > 1.5) z -= (1 - d2) * .4; }
