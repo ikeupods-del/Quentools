@@ -201,6 +201,35 @@ function salissure(type) {
   }
   x.putImageData(im, 0, 0); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t;
 }
+
+/* Étoffes des personnages des familles */
+function velours(u, v, o) { const c = Math.sin(u * Math.PI * 2 * 48), n = fbm(u, v, 12, 3, 111), use = fbm(u, v, 3, 4, 112); o.h = (c * .5 + .5) * .7 + n * .2; gris(o, .8 + c * .07 + (n - .5) * .1 + (use - .5) * .14); o.ru = .85 - c * .1; }
+function laine(u, v, o) { const p = cellules(u, v, 26, 26, 121), n = fbm(u, v, 10, 4, 122), b = Math.max(0, 1 - p.d1 * 2.2); o.h = b * .8 + n * .3; const c = .72 + b * .2 + (n - .5) * .25 - Math.max(0, p.d2 - p.d1 - .1) * .2; o.r = c; o.g = c * .96; o.b = c * .86; o.ru = .98; }
+function camouflage(u, v, o) { const a = fbm(u, v, 4, 4, 131), b = fbm(u, v, 5, 4, 132), c = fbm(u, v, 6, 3, 133), t = tissu(u, v, { h: 0, r: 1, g: 1, b: 1, ru: .9 }), d = fbm(u, v, 3, 5, 134);
+  let col = [.62, .58, .42]; if (a > .55) col = [.3, .36, .22]; if (b > .6) col = [.4, .3, .2]; if (c > .66) col = [.12, .12, .1];
+  if (d > .72) col = col.map(x => x * .7 + .06); const w = fbm(u, v, 40, 2, 135) * .1;
+  o.r = col[0] + w; o.g = col[1] + w; o.b = col[2] + w; o.h = Math.sin(u * Math.PI * 2 * 64) * .2 + Math.sin(v * Math.PI * 2 * 64) * .2 + .5; o.ru = .92; }
+function rayures(u, v, o) { const r = Math.abs(((u * 12) % 1) - .5) < .02, n = fbm(u, v, 30, 2, 141); gris(o, r ? .92 : .2 + n * .04); o.h = Math.sin(u * Math.PI * 2 * 96) * .2 + .5; o.ru = .6; }
+function tricot(u, v, o) { const x = u * 40, y = v * 56, fx = x - Math.floor(x), fy = y - Math.floor(y), m = Math.abs(fx - .5 + (fy - .5) * .6 * (Math.floor(x) % 2 ? 1 : -1)), n = fbm(u, v, 20, 2, 151); o.h = Math.max(0, .5 - m) * 1.6 + n * .1; gris(o, .86 + o.h * .1 + (n - .5) * .05); o.ru = .95; }
+function technique(u, v, o) { const g = Math.abs(((u * 30) % 1) - .5) < .04 || Math.abs(((v * 30) % 1) - .5) < .04, n = fbm(u, v, 8, 3, 161); o.h = g ? .7 : .4 + n * .1; gris(o, .88 + (g ? .04 : 0) + (n - .5) * .06); o.ru = .55; }
+function cire(u, v, o) { const n = fbm(u, v, 6, 5, 171), f = fbm(u, v, 30, 3, 172), pli = fbm(u * .4, v * 2, 5, 4, 173); o.h = n * .4 + f * .2 + pli * .3; gris(o, .78 + (n - .5) * .3 + (pli > .6 ? .1 : 0)); o.ru = .45 + n * .3; }
+function journal() {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 256; const x = c.getContext('2d'); x.fillStyle = '#e6dfcc'; x.fillRect(0, 0, 256, 256);
+  x.fillStyle = '#222'; x.font = 'bold 22px Georgia, serif'; x.fillText('IL GIORNALE DI SICILIA', 8, 28); x.fillRect(8, 36, 240, 2);
+  let s = 3; const r = () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
+  for (let col = 0; col < 4; col++) for (let l = 0; l < 26; l++) { x.fillStyle = l % 9 === 0 ? '#333' : '#777'; x.fillRect(8 + col * 61, 48 + l * 8, 50 * (.6 + r() * .4), l % 9 === 0 ? 4 : 2.5); }
+  const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.wrapS = t.wrapT = T.RepeatWrapping; return t;
+}
+/* Tatouage de l'archange Michel (encre sur peau transparente) */
+export function texTatouage() {
+  const c = document.createElement('canvas'); c.width = 128; c.height = 256; const x = c.getContext('2d'); x.strokeStyle = 'rgba(20,30,45,.9)'; x.fillStyle = 'rgba(20,30,45,.75)'; x.lineWidth = 3; x.lineCap = 'round';
+  x.beginPath(); x.arc(64, 52, 14, 0, 7); x.stroke(); x.beginPath(); x.arc(64, 36, 18, Math.PI, 0); x.stroke();
+  for (const s of [-1, 1]) { x.beginPath(); x.moveTo(64 + s * 10, 80); x.quadraticCurveTo(64 + s * 60, 40, 64 + s * 54, 120); x.quadraticCurveTo(64 + s * 30, 100, 64 + s * 14, 110); x.stroke(); for (let i = 0; i < 4; i++) { x.beginPath(); x.moveTo(64 + s * (20 + i * 8), 92 + i * 4); x.lineTo(64 + s * (30 + i * 8), 118 + i * 3); x.stroke(); } }
+  x.beginPath(); x.moveTo(52, 72); x.lineTo(76, 72); x.lineTo(84, 190); x.lineTo(44, 190); x.closePath(); x.globalAlpha = .55; x.fill(); x.globalAlpha = 1;
+  x.lineWidth = 4; x.beginPath(); x.moveTo(94, 30); x.lineTo(56, 200); x.stroke(); x.beginPath(); x.moveTo(82, 52); x.lineTo(106, 60); x.stroke();
+  x.beginPath(); x.moveTo(30, 230); x.quadraticCurveTo(64, 200, 100, 236); x.stroke();
+  const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t;
+}
 const VISAGES = {};
 export function texVisage(type, aniso = 4) {
   if (!VISAGES[type]) { const t = fabrique(256, visage(type), 1.1); for (const k in t) t[k].anisotropy = aniso; VISAGES[type] = t; }
@@ -216,7 +245,7 @@ export function fabriquerTextures(qualite, aniso) {
     olivier: feuillage(n, { nombre: 420, longueur: .085, largeur: .22, couleurs: [[112, 124, 92], [92, 104, 74], [138, 146, 116]], graine: 11 }),
     cypres: feuillage(n, { nombre: 520, longueur: .05, largeur: .5, couleurs: [[34, 52, 30], [44, 62, 36], [28, 44, 26]], graine: 13 }),
     herbes: feuillage(n / 2, { nombre: 140, longueur: .2, largeur: .08, couleurs: [[176, 160, 96], [150, 140, 80], [120, 124, 70]], graine: 17 }),
-    cheveux: fabrique(n / 2, meches, 2.5), image: imagePieuse(), pores: fabrique(256, pores, 1.4), coulure: salissure('coulure'), crasse: salissure('pied'),
+    cheveux: fabrique(n / 2, meches, 2.5), image: imagePieuse(), pores: fabrique(256, pores, 1.4), coulure: salissure('coulure'), crasse: salissure('pied'), velours: fabrique(n / 2, velours, 1.6), laine: fabrique(n / 2, laine, 3), camouflage: fabrique(n, camouflage, 1), rayures: fabrique(n / 2, rayures, .6), tricot: fabrique(n / 2, tricot, 1.4), technique: fabrique(n / 2, technique, .8), cire: fabrique(n / 2, cire, 1.2), journal: journal(),
     bougainvillee: feuillage(n, { nombre: 700, longueur: .055, largeur: .8, couleurs: [[200, 36, 120], [224, 60, 150], [176, 28, 102], [212, 48, 138], [60, 92, 40], [48, 80, 34]], graine: 19 }),
     geranium: feuillage(n / 2, { nombre: 260, longueur: .09, largeur: .85, couleurs: [[206, 34, 34], [232, 56, 44], [190, 24, 40], [74, 112, 52], [62, 100, 44]], graine: 23 }),
     vigne: feuillage(n, { nombre: 300, longueur: .13, largeur: .85, couleurs: [[98, 124, 52], [116, 142, 62], [80, 108, 44], [128, 140, 64]], graine: 29 })

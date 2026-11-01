@@ -1,0 +1,4 @@
+perso.json et textures .jpg — personnage fourni par le propriétaire du projet (fichier « promptplay-male-1717.glb »,
+généré avec le service PromptPlay). Converti par outils/promptplay.js : squelette, poids de peau et textures JPEG ajoutés,
+dents retirées, taille ramenée à 1,80 m. Avant toute diffusion publique ou commerciale, vérifier les conditions
+d'utilisation de PromptPlay pour ce modèle.

@@ -1,0 +1,3 @@
+anims.json — animations (repos, marche, course, assis, applaudir, se lever) tirées du personnage Quaternius fourni par le
+propriétaire (« quaternius_cc0-male-character-1355.glb », domaine public CC0), transférées sur les squelettes du jeu par
+outils/animations.mjs.

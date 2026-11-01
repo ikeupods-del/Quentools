@@ -12,3 +12,11 @@ for r in caucasian african asian; do for g in male female; do for a in baby chil
 for n in universal-male-young-maxmuscle-averageweight universal-male-young-averagemuscle-maxweight universal-male-old-averagemuscle-maxweight universal-male-young-minmuscle-minweight; do curl -s -o targets/$n.target $R/targets/macrodetails/$n.target; done
 cd - && node outils/corps.js /tmp/mh
 ```
+
+## `promptplay.js` : personnage photoréaliste (Matteo « Ghost »)
+
+`node outils/promptplay.js <fichier.glb>` : ajoute au modèle PromptPlay (posé bras en croix, sans squelette) un squelette aux mêmes noms que MakeHuman, des poids de peau calculés par proximité des os, fusionne les sommets en double et convertit les textures en JPEG (ImageMagick `convert`). Sortie : `modeles/promptplay/`. Ce modèle n'a pas de corps sous sa tenue (torse et jambes retirés) : il garde donc son tee-shirt, son jean et ses chaussures, auxquels le jeu ajoute capuche, baskets et accessoires.
+
+## `animations.mjs` : animations transférées (Quaternius, CC0)
+
+`node outils/animations.mjs <quaternius.glb>` (après `corps.js` et `promptplay.js`) : pour chaque image des clips Man_Idle, Man_Walk, Man_Run, Man_Sitting, Man_Clapping et Man_Standing, l'orientation de chaque os source est appliquée à l'os correspondant des deux squelettes du jeu, corrigée de la différence de pose de repos (bras en croix ou en A ; le bassin n'est pas réaligné). Sortie : `modeles/anim/anims.json`.
