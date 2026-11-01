@@ -202,6 +202,47 @@ function salissure(type) {
   x.putImageData(im, 0, 0); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t;
 }
 
+/* Persiennes siciliennes : lames inclinées, peinture écaillée */
+function persienne(u, v, o) {
+  const f = (v * 18) % 1, n = fbm(u, v, 10, 4, 181), ec = fbm(u, v, 5, 5, 182) > .7;
+  o.h = f < .1 ? 0 : .25 + f * .75; const c = f < .1 ? .22 : (.5 + f * .2) + (n - .5) * .1;
+  o.r = o.g = o.b = c; if (ec) { o.r = c * 1.1 + .05; o.g = c * 1.02 + .04; o.b = c * .9 + .02; } o.ru = ec ? .9 : .6;
+}
+/* Vitres : quatre carreaux différents dans une seule image (pièce sombre, rideaux de lin plissés, reflet du ciel en haut) */
+function vitres() {
+  const S = 256, c = document.createElement('canvas'); c.width = c.height = S * 2; const x = c.getContext('2d');
+  for (let k = 0; k < 4; k++) {
+    const ox = (k % 2) * S, oy = ((k / 2) | 0) * S; x.save(); x.translate(ox, oy); x.beginPath(); x.rect(0, 0, S, S); x.clip();
+    const g = x.createLinearGradient(0, 0, 0, S); g.addColorStop(0, '#2a2620'); g.addColorStop(1, '#0c0a08'); x.fillStyle = g; x.fillRect(0, 0, S, S);
+    if (k === 1) { x.fillStyle = 'rgba(255,190,110,.18)'; x.fillRect(S * .3, S * .35, S * .4, S * .5); }
+    // Rideaux : bandes plissées claires, ouvertes plus ou moins
+    const ouv = [.42, .2, .62, .05][k], teinte = ['236,228,208', '226,214,190', '240,236,226', '214,196,170'][k];
+    for (const cote of [0, 1]) {
+      const larg = S * (.5 - ouv / 2), x0 = cote ? S - larg : 0;
+      for (let i = 0; i < larg; i++) { const pli = .62 + .38 * Math.sin((i / larg) * Math.PI * (5 + k)) ** 2, b = .75 + .25 * Math.sin(i * .9 + k); x.fillStyle = `rgba(${teinte},${(.9 * pli * b).toFixed(3)})`; x.fillRect(x0 + i, 0, 1, S); }
+      x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(cote ? x0 : x0 + larg - 3, 0, 3, S);
+    }
+    // Reflet du ciel et poussière sur le verre
+    const r = x.createLinearGradient(0, 0, S * .6, S); r.addColorStop(0, 'rgba(200,215,230,.38)'); r.addColorStop(.45, 'rgba(200,215,230,.08)'); r.addColorStop(1, 'rgba(200,215,230,0)'); x.fillStyle = r; x.fillRect(0, 0, S, S);
+    x.restore();
+  }
+  const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t;
+}
+/* Enduit tombé : plaque irrégulière où l'on voit les moellons et le mortier (canal alpha pour la forme) */
+function ecaille() {
+  const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const x = c.getContext('2d'); const im = x.createImageData(S, S);
+  for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+    const u = i / S, v = j / S, k = (j * S + i) * 4, d = Math.hypot(u - .5, (v - .5) * 1.25) * 2, bord = fbm(u, v, 6, 5, 191);
+    const forme = 1 - lisse(.5, .72, d + (bord - .5) * .9), p = cellules(u, v, 16, 22, 192, 1), mortier = lisse(.02, .07, p.d2 - p.d1), n = fbm(u, v, 24, 4, 193), relief = 1 - p.d1 * .55;
+    const pierre = (.74 + p.id * .2 + (n - .5) * .25) * relief * mortier + (1 - mortier) * (.52 + n * .1);
+    const lis = lisse(0, .12, forme) * (1 - lisse(.12, .3, forme));
+    im.data[k] = Math.min(255, 214 * pierre + 10); im.data[k + 1] = Math.min(255, 184 * pierre + 8); im.data[k + 2] = Math.min(255, 138 * pierre + 4);
+    if (lis > 0) { im.data[k] *= 1 - lis * .35; im.data[k + 1] *= 1 - lis * .35; im.data[k + 2] *= 1 - lis * .35; }
+    im.data[k + 3] = Math.round(255 * lisse(.0, .06, forme));
+  }
+  x.putImageData(im, 0, 0); const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t;
+}
+
 /* Étoffes des personnages des familles */
 function velours(u, v, o) { const c = Math.sin(u * Math.PI * 2 * 48), n = fbm(u, v, 12, 3, 111), use = fbm(u, v, 3, 4, 112); o.h = (c * .5 + .5) * .7 + n * .2; gris(o, .8 + c * .07 + (n - .5) * .1 + (use - .5) * .14); o.ru = .85 - c * .1; }
 function laine(u, v, o) { const p = cellules(u, v, 26, 26, 121), n = fbm(u, v, 10, 4, 122), b = Math.max(0, 1 - p.d1 * 2.2); o.h = b * .8 + n * .3; const c = .72 + b * .2 + (n - .5) * .25 - Math.max(0, p.d2 - p.d1 - .1) * .2; o.r = c; o.g = c * .96; o.b = c * .86; o.ru = .98; }
@@ -245,7 +286,7 @@ export function fabriquerTextures(qualite, aniso) {
     olivier: feuillage(n, { nombre: 420, longueur: .085, largeur: .22, couleurs: [[112, 124, 92], [92, 104, 74], [138, 146, 116]], graine: 11 }),
     cypres: feuillage(n, { nombre: 520, longueur: .05, largeur: .5, couleurs: [[34, 52, 30], [44, 62, 36], [28, 44, 26]], graine: 13 }),
     herbes: feuillage(n / 2, { nombre: 140, longueur: .2, largeur: .08, couleurs: [[176, 160, 96], [150, 140, 80], [120, 124, 70]], graine: 17 }),
-    cheveux: fabrique(n / 2, meches, 2.5), image: imagePieuse(), pores: fabrique(256, pores, 1.4), coulure: salissure('coulure'), crasse: salissure('pied'), velours: fabrique(n / 2, velours, 1.6), laine: fabrique(n / 2, laine, 3), camouflage: fabrique(n, camouflage, 1), rayures: fabrique(n / 2, rayures, .6), tricot: fabrique(n / 2, tricot, 1.4), technique: fabrique(n / 2, technique, .8), cire: fabrique(n / 2, cire, 1.2), journal: journal(),
+    cheveux: fabrique(n / 2, meches, 2.5), image: imagePieuse(), pores: fabrique(256, pores, 1.4), coulure: salissure('coulure'), crasse: salissure('pied'), vitres: vitres(), ecaille: ecaille(), persienne: fabrique(n / 2, persienne, 2.2), velours: fabrique(n / 2, velours, 1.6), laine: fabrique(n / 2, laine, 3), camouflage: fabrique(n, camouflage, 1), rayures: fabrique(n / 2, rayures, .6), tricot: fabrique(n / 2, tricot, 1.4), technique: fabrique(n / 2, technique, .8), cire: fabrique(n / 2, cire, 1.2), journal: journal(),
     bougainvillee: feuillage(n, { nombre: 700, longueur: .055, largeur: .8, couleurs: [[200, 36, 120], [224, 60, 150], [176, 28, 102], [212, 48, 138], [60, 92, 40], [48, 80, 34]], graine: 19 }),
     geranium: feuillage(n / 2, { nombre: 260, longueur: .09, largeur: .85, couleurs: [[206, 34, 34], [232, 56, 44], [190, 24, 40], [74, 112, 52], [62, 100, 44]], graine: 23 }),
     vigne: feuillage(n, { nombre: 300, longueur: .13, largeur: .85, couleurs: [[98, 124, 52], [116, 142, 62], [80, 108, 44], [128, 140, 64]], graine: 29 })

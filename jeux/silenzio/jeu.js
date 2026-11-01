@@ -87,7 +87,7 @@ const RAYONS = new ShaderPass({
 RAYONS.enabled = false; if (Q.bloom) compo.addPass(RAYONS);
 compo.addPass(new OutputPass());
 const ETALON = new ShaderPass({
-  uniforms: { tDiffuse: { value: null }, uTemps: { value: 0 }, uRes: { value: new T.Vector2(1, 1) }, uVignette: { value: .55 }, uGrain: { value: .035 }, uNet: { value: .35 }, uChaleur: { value: .35 }, uSat: { value: .95 } },
+  uniforms: { tDiffuse: { value: null }, uTemps: { value: 0 }, uRes: { value: new T.Vector2(1, 1) }, uVignette: { value: .55 }, uGrain: { value: .035 }, uNet: { value: .35 }, uChaleur: { value: .35 }, uSat: { value: 1.04 } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
   fragmentShader: `uniform sampler2D tDiffuse; uniform float uTemps, uVignette, uGrain, uChaleur, uSat, uNet; uniform vec2 uRes; varying vec2 vUv;
     float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
@@ -106,7 +106,7 @@ const ETALON = new ShaderPass({
       // Ombres légèrement froides, lumières chaudes, courbe en S (rendu cinéma)
       float lc = dot(c, vec3(0.2126, 0.7152, 0.0722));
       c += mix(vec3(-0.012, 0.004, 0.022), vec3(0.03, 0.012, -0.024), smoothstep(0.15, 0.8, lc));
-      c = mix(c, c * c * (3.0 - 2.0 * c), 0.35);
+      c = mix(c, c * c * (3.0 - 2.0 * c), 0.5);
       c = (c - 0.5) * 1.06 + 0.5;
       c *= 1.0 - uVignette * smoothstep(0.1, 0.7, r2 * 1.6);
       c += (h(vUv * uRes + fract(uTemps) * 91.7) - 0.5) * uGrain;
@@ -133,9 +133,10 @@ function matierePhoto(fam) {
 }
 if (!ESSAI) for (const fam of ['enduit', 'pierre', 'moellon', 'tuiles', 'paves', 'sol', 'bois', 'roche', 'gravier']) TX[fam] = matierePhoto(fam);
 else { TX.moellon = TX.pierre; TX.roche = TX.pierre; TX.gravier = TX.sol; }
+TX.taille = TX.enduit; // pierre de taille : même grain fin que l'enduit, teinte calcaire
 
 /* ---------- Matériaux ---------- */
-const ECH = { enduit: 2.6, pierre: 1.9, moellon: 1.6, tuiles: 1.4, paves: 1.8, bois: 1.2, sol: 3.2, roche: 6, gravier: 2 }; // mètres couverts par une répétition de la matière
+const ECH = { taille: 3.4, persienne: 1.3, enduit: 2.6, pierre: 1.9, moellon: 1.6, tuiles: 1.4, paves: 1.8, bois: 1.2, sol: 3.2, roche: 6, gravier: 2 }; // mètres couverts par une répétition de la matière
 const MATS = new Map();
 function M(cle) {
   if (MATS.has(cle)) return MATS.get(cle);
@@ -143,6 +144,7 @@ function M(cle) {
   if (t && t.map && ECH[fam]) m = new T.MeshStandardMaterial({ color: c, map: t.map, normalMap: t.normalMap, roughnessMap: t.roughnessMap, roughness: 1 });
   else switch (fam) {
     case 'verre': m = new T.MeshStandardMaterial({ color: 0x14171c, roughness: .08, metalness: .2 }); break;
+    case 'vitre': m = new T.MeshStandardMaterial({ map: TX.vitres, roughness: .05, metalness: .15, envMapIntensity: 1.3 }); break;
     case 'verreLum': m = new T.MeshStandardMaterial({ color: 0x14171c, roughness: .2, emissive: 0xffa040, emissiveIntensity: 0 }); break;
     case 'lumiere': m = new T.MeshStandardMaterial({ color: 0x2a1c08, emissive: 0xffc070, emissiveIntensity: 0 }); break;
     case 'fer': m = new T.MeshStandardMaterial({ color: 0x1e1c1a, roughness: .5, metalness: .75 }); break;
@@ -322,14 +324,11 @@ await etape('Relief…');
   }
   g.setAttribute('color', new T.BufferAttribute(cols, 3)); g.computeVertexNormals();
   const sol = new T.Mesh(g, new T.MeshStandardMaterial({ vertexColors: true, map: TX.sol.map, normalMap: TX.sol.normalMap, normalScale: new T.Vector2(1.4, 1.4), roughnessMap: TX.sol.roughnessMap, roughness: 1 }));
-  sol.material.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `#ifdef USE_MAP
-    vec4 t1 = texture2D(map, vMapUv); vec4 t2 = texture2D(map, vMapUv * 0.37 + vec2(0.31, 0.77)); float mm = texture2D(map, vMapUv * 0.031).r;
-    vec4 sampledDiffuseColor = mix(t1, t2, smoothstep(0.42, 0.62, mm)); diffuseColor *= sampledDiffuseColor * (0.88 + 0.24 * mm);
-  #endif`); };
+  sol.material.onBeforeCompile = melangeSol(35, 140); sol.material.customProgramCacheKey = () => 'sol';
   sol.receiveShadow = true; scene.add(sol);
   // Montagnes du fond : une couronne de relief continu (crêtes, ravines, normales lissées) qui prolonge le sol, et promontoire au bord de la mer
   const roc = new T.MeshStandardMaterial({ vertexColors: true, map: TX.roche.map, normalMap: TX.roche.normalMap, normalScale: new T.Vector2(1.5, 1.5), roughnessMap: TX.roche.roughnessMap, roughness: 1 });
-  roc.onBeforeCompile = sol.material.onBeforeCompile; roc.customProgramCacheKey = () => 'roc';
+  roc.onBeforeCompile = melangeSol(260, 700); roc.customProgramCacheKey = () => 'roc';
   const nA = tactile ? 300 : 420, nR = tactile ? 56 : 80, a0 = -PI * .16, a1 = PI * 1.16, r0 = 285, r1 = 680;
   const crete = (x, z) => { let a = 0, f = 1, amp = 1, t = 0; for (let o = 0; o < 5; o++) { const n = 1 - Math.abs(2 * bruit(x * f / 150 + o * 7.3, z * f / 150 - o * 3.1) - 1); a += n * n * amp; t += amp; f *= 2.05; amp *= .5; } return a / t; };
   const montagne = (x, z, a) => {
@@ -360,6 +359,17 @@ await etape('Relief…');
   const chaine = new T.Mesh(gm, roc); chaine.receiveShadow = true; scene.add(chaine);
   const prom = new T.Mesh(rocher(5, .32), roc); prom.scale.set(110, 85, 70); prom.position.set(230, -12, -250); scene.add(prom);
 })();
+/* Sol et roche : deux échelles de la photo mêlées (pas de motif répété), puis fondu vers la teinte moyenne au loin
+   (sinon la répétition de la photo dessine des rayures sur les collines vues en biais) */
+function melangeSol(proche, loin) {
+  return sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `#ifdef USE_MAP
+    vec4 t1 = texture2D(map, vMapUv); vec4 t2 = texture2D(map, vMapUv * 0.37 + vec2(0.31, 0.77)); float mm = texture2D(map, vMapUv * 0.031).r;
+    vec4 sampledDiffuseColor = mix(t1, t2, smoothstep(0.42, 0.62, mm));
+    float fondu = smoothstep(${proche.toFixed(1)}, ${loin.toFixed(1)}, length(vViewPosition));
+    sampledDiffuseColor = mix(sampledDiffuseColor, textureLod(map, vec2(0.5), 12.0), fondu);
+    diffuseColor *= sampledDiffuseColor * (0.88 + 0.24 * mm);
+  #endif`).replace('#include <normal_fragment_maps>', '#include <normal_fragment_maps>\n normal = normalize(mix(normal, nonPerturbedNormal, smoothstep(' + proche.toFixed(1) + ', ' + loin.toFixed(1) + ', length(vViewPosition))));'); };
+}
 // Rocher lisse : sphère fine déformée par un bruit à plusieurs échelles, normales lissées et couleurs par sommet (creux plus sombres)
 function rocher(det, rug = .25) {
   const g = mergeVertices(new T.IcosahedronGeometry(1, det).deleteAttribute('normal').deleteAttribute('uv')), p = g.attributes.position, uv = new Float32Array(p.count * 2), col = new Float32Array(p.count * 3);
@@ -420,21 +430,67 @@ function dansBatiment(x, z, y) { for (const b of BOITES) { if (b.haut < 2.2) con
 await etape('Village…');
 const ENDUITS = [0xe6d3b0, 0xdcb68a, 0xeadcc0, 0xd49c78, 0xe2bf94, 0xd2b696, 0xecd09c, 0xc9a47e];
 const VOLETS = ['5d7a55', '6b4a2e', '46667a', '8a4632', '7d7a5a'];
-const PIERRE = 'pierre:e8d2a4', PIERRE_C = 'pierre:f2e3c0', ENC = 'pierre:f0e0bc';
-function fenetre(B, x, y, sens, zf, volet, balcon) {
-  const F = B.clone().multiply(mat4(0, 0, zf, sens > 0 ? 0 : PI));
-  piece(F, ENC, 1.18, .16, .18, x, y + .72, .06); piece(F, ENC, 1.22, .1, .24, x, y - .7, .08);
+// Pierre de taille (encadrements, corniches, marches) : calcaire lisse, pas de joints de briques
+const PIERRE = 'pierre:e8d2a4', PIERRE_C = 'taille:efe2c4', ENC = 'taille:ecdcb8';
+function vitreGeo(w, h) { const g = new T.PlaneGeometry(w, h), uv = g.attributes.uv, k = (R() * 4) | 0, cx = k % 2, ry = (k / 2) | 0; for (let i = 0; i < uv.count; i++) uv.setXY(i, (uv.getX(i) + cx) / 2, (uv.getY(i) + 1 - ry) / 2); return g; }
+/* Fenêtre : embrasure en profondeur, encadrement de pierre, croisée à petits carreaux, vitres avec rideaux, persiennes à lames */
+function fenetre(B, x, y, sens, zf, volet, balcon, enduit) {
+  const F = B.clone().multiply(mat4(0, 0, zf, sens > 0 ? 0 : PI)), P = .16, cad = 'bois:e4dccb';
+  // Embrasure (tableau enduit) : la vitre paraît enfoncée dans le mur
+  piece(F, enduit, .1, 1.3, P, x - .5, y, P / 2); piece(F, enduit, .1, 1.3, P, x + .5, y, P / 2); piece(F, enduit, 1.1, .1, P, x, y + .63, P / 2);
+  // Encadrement de pierre, appui saillant, linteau mouluré
+  piece(F, ENC, 1.36, .18, .1, x, y + .74, P + .05); piece(F, ENC, 1.44, .07, .14, x, y + .86, P + .06);
+  piece(F, ENC, 1.4, .1, .32, x, y - .7, .16); piece(F, ENC, 1.2, .06, .28, x, y - .77, .14);
+  piece(F, ENC, .14, 1.4, .1, x - .61, y, P + .05); piece(F, ENC, .14, 1.4, .1, x + .61, y, P + .05);
   if (R() < .75) poser(new T.PlaneGeometry(1.1, 1.3 + R() * .8).translate(0, -.6, 0), 'salissure:coulure', F.clone().multiply(mat4(x + (R() - .5) * .1, y - .75, .012)), false);
-  piece(F, ENC, .13, 1.32, .14, x - .53, y, .04); piece(F, ENC, .13, 1.32, .14, x + .53, y, .04);
-  piece(F, R() < .35 ? 'verreLum' : 'verre', .92, 1.28, .04, x, y, 0, 0, 0, 0, false);
-  piece(F, 'bois:6b5844', .05, 1.28, .05, x, y, .03, 0, 0, 0, false); piece(F, 'bois:6b5844', .92, .05, .05, x, y + .2, .03, 0, 0, 0, false);
-  if (R() < .8) { const o1 = (R() - .5) * .5, o2 = (R() - .5) * .5; piece(F, 'bois:' + volet, .47, 1.3, .05, x - .79, y, .07, o1 * .2); piece(F, 'bois:' + volet, .47, 1.3, .05, x + .79, y, .07, o2 * .2); }
+  poser(vitreGeo(.9, 1.24), R() < .25 ? 'verreLum' : 'vitre', F.clone().multiply(mat4(x, y, .01)), false);
+  // Croisée : deux battants, trois carreaux chacun
+  piece(F, cad, .9, .05, .05, x, y + .6, .03, 0, 0, 0, false); piece(F, cad, .9, .06, .05, x, y - .6, .03, 0, 0, 0, false);
+  piece(F, cad, .05, 1.24, .05, x - .44, y, .03, 0, 0, 0, false); piece(F, cad, .05, 1.24, .05, x + .44, y, .03, 0, 0, 0, false); piece(F, cad, .06, 1.24, .06, x, y, .035, 0, 0, 0, false);
+  for (const yy of [-.2, .2]) piece(F, cad, .88, .025, .035, x, y + yy, .03, 0, 0, 0, false);
+  // Persiennes : ouvertes contre le mur, entrebâillées ou fermées
+  const etat = R();
+  if (etat < .62) { for (const sx of [-1, 1]) { const a = (R() - .5) * .25; piece(F, 'persienne:' + volet, .5, 1.36, .045, x + sx * .96, y, P + .06, a); } }
+  else if (etat < .85) { const sx = R() < .5 ? -1 : 1; piece(F, 'persienne:' + volet, .5, 1.36, .045, x + sx * .96, y, P + .06); piece(F, 'persienne:' + volet, .5, 1.36, .045, x - sx * .3, y, P + .2, sx * .9); }
+  else for (const sx of [-1, 1]) piece(F, 'persienne:' + volet, .45, 1.3, .045, x + sx * .225, y, P + .02);
   if (balcon) {
-    piece(F, PIERRE_C, 1.7, .14, .7, x, y - .76, .35); piece(F, ENC, 1.5, .14, .12, x, y - .88, .62);
-    piece(F, 'fer', 1.66, .035, .035, x, y + .18, .68, 0, 0, 0, false); piece(F, 'fer', 1.66, .03, .03, x, y - .6, .68, 0, 0, 0, false);
-    for (let i = 0; i <= 10; i++) piece(F, 'fer', .022, .8, .022, x - .8 + i * .16, y - .22, .68, 0, 0, 0, false);
-    for (const sx of [-1, 1]) { piece(F, 'fer', .035, .035, .6, x + sx * .82, y + .18, .38, 0, 0, 0, false); for (let i = 0; i < 4; i++) piece(F, 'fer', .022, .8, .022, x + sx * .82, y - .22, .14 + i * .16, 0, 0, 0, false); }
-    for (let i = 0, n = 1 + ((R() * 3) | 0); i < n; i++) pot(F.clone().multiply(mat4(x - .55 + i * .55, y - .69, .32)), .8);
+    piece(F, PIERRE_C, 1.8, .14, .78, x, y - .76, .39); piece(F, ENC, 1.6, .14, .12, x, y - .88, .7);
+    for (const sx of [-.6, .6]) poser(new T.CylinderGeometry(.06, .02, .3, 8), ENC, F.clone().multiply(mat4(x + sx, y - 1.0, .45, 0, PI / 2 * 0)));
+    piece(F, 'fer', 1.76, .035, .035, x, y + .18, .76, 0, 0, 0, false); piece(F, 'fer', 1.76, .03, .03, x, y - .6, .76, 0, 0, 0, false);
+    for (let i = 0; i <= 11; i++) piece(F, 'fer', .022, .8, .022, x - .85 + i * .155, y - .22, .76, 0, 0, 0, false);
+    poser(new T.TorusGeometry(.12, .012, 4, 12), 'fer', F.clone().multiply(mat4(x - .4, y - .2, .76))); poser(new T.TorusGeometry(.12, .012, 4, 12), 'fer', F.clone().multiply(mat4(x + .4, y - .2, .76)));
+    for (const sx of [-1, 1]) { piece(F, 'fer', .035, .035, .66, x + sx * .87, y + .18, .43, 0, 0, 0, false); for (let i = 0; i < 4; i++) piece(F, 'fer', .022, .8, .022, x + sx * .87, y - .22, .16 + i * .17, 0, 0, 0, false); }
+    for (let i = 0, n = 1 + ((R() * 3) | 0); i < n; i++) pot(F.clone().multiply(mat4(x - .55 + i * .55, y - .69, .36)), .8);
+  }
+}
+const LINGE = ['eee8da', 'f4f0e6', 'b8c8d8', 'c84a3a', 'e2d2a8', '5a6a8a', 'f0e4cc'];
+/* Détails de façade : enduit tombé, descente d'eau, gouttière, lanterne, linge, chaises */
+function vieFacade(B, w, h, d, o) {
+  const ce = B.userData.enduit;
+  for (const [ry, L0, off] of [[0, w, d / 2], [PI, w, d / 2], [PI / 2, d, w / 2], [-PI / 2, d, w / 2]]) {
+    const FF = B.clone().multiply(mat4(0, 0, 0, ry)).multiply(mat4(0, 0, off + .02));
+    for (let i = 0, n = (R() * 3) | 0; i < n; i++) { const pw = 1.2 + R() * 2.6, ph = .9 + R() * 1.8; poser(new T.PlaneGeometry(pw, ph), 'salissure:ecaille', FF.clone().multiply(mat4((R() - .5) * Math.max(0, L0 - pw - 1), 1 + R() * Math.max(.2, h - ph - 1.5), 0, 0, 0, (R() - .5) * .3)), false); }
+  }
+  const F = B.clone().multiply(mat4(0, 0, d / 2));
+  // Gouttière et descente d'eau en terre cuite
+  if (!o.plat) { const sx = R() < .5 ? -1 : 1; piece(B, 'tc:9a5434', w + .5, .14, .16, 0, h + .1, d / 2 + .38); poser(new T.CylinderGeometry(.065, .065, h + .1, 10), 'tc:9a5434', F.clone().multiply(mat4(sx * (w / 2 - .5), (h + .1) / 2, .12))); for (let k = 1; k < h / 1.6; k++) piece(F, 'fer', .2, .03, .16, sx * (w / 2 - .5), k * 1.6, .06, 0, 0, 0, false); }
+  // Lanterne à huile sur potence près de la porte
+  if (!o.sansPorte && R() < .5) {
+    const lx = (o.porteX ?? 0) + (R() < .5 ? -1.6 : 1.6), L = F.clone().multiply(mat4(lx, 3.1, 0));
+    piece(L, 'fer', .04, .04, .55, 0, 0, .28, 0, 0, 0, false); piece(L, 'fer', .03, .3, .03, 0, -.12, .02, 0, 0, 0, false);
+    piece(L, 'fer', .26, .03, .26, 0, -.04, .55, 0, 0, 0, false); piece(L, 'verreLum', .2, .3, .2, 0, -.22, .55, 0, 0, 0, false); poser(new T.ConeGeometry(.19, .16, 4), 'fer', L.clone().multiply(mat4(0, .06, .55, PI / 4)), false);
+  }
+  // Linge tendu entre deux fenêtres de l'étage
+  if (h > 5.5 && w > 5 && R() < .45) {
+    const y = 4.2 + R() * .3, x0 = -w / 2 + 1, x1 = w / 2 - 1; piece(F, 'fer', x1 - x0, .012, .012, (x0 + x1) / 2, y, .55, 0, 0, 0, false);
+    for (const sx of [x0, x1]) piece(F, 'fer', .02, .02, .55, sx, y, .28, 0, 0, 0, false);
+    let cx = x0 + .3; while (cx < x1 - .6) { const lw = .4 + R() * .7, lh = .45 + R() * .6; piece(F, 'tissu:' + LINGE[(R() * LINGE.length) | 0], lw, lh, .012, cx + lw / 2, y - lh / 2, .55, 0, (R() - .5) * .06); cx += lw + .08 + R() * .3; }
+  }
+  // Chaises paillées devant la porte (on prend le frais dans la rue)
+  if (!o.sansPorte && R() < .4) for (let i = 0, n = 1 + ((R() * 2) | 0); i < n; i++) {
+    const C = F.clone().multiply(mat4((o.porteX ?? 0) + (i ? -1 : 1) * (1.5 + R() * .4), 0, .7 + R() * .5, (R() - .5) * 1.2));
+    piece(C, 'tc:c8a45a', .44, .04, .42, 0, .46, 0); for (const [a, b] of [[-.2, -.19], [.2, -.19], [-.2, .19], [.2, .19]]) piece(C, 'bois:4a3424', .035, a < 0 || true ? (b < 0 ? .95 : .46) : .46, .035, a, b < 0 ? .475 : .23, b);
+    piece(C, 'bois:4a3424', .44, .05, .03, 0, .75, -.19); piece(C, 'bois:4a3424', .44, .05, .03, 0, .9, -.19);
   }
 }
 function porte(B, x, sens, zf, couleur = '4e3624') {
@@ -471,11 +527,12 @@ function maison(x, z, w, d, h, rot = 0, o = {}) {
       for (let et = 0; et < Math.floor(h / 3.1); et++) {
         const y = 1.75 + et * 3.1; if (y + 1.1 > h) break;
         if (et === 0 && sens > 0 && !o.sansPorte && Math.abs(fx - (o.porteX ?? 0)) < 1.5) continue;
-        fenetre(B, fx, y, sens, face, volet, et > 0 && sens > 0 && R() < .45);
+        fenetre(B, fx, y, sens, face, volet, et > 0 && sens > 0 && R() < .45, ce);
       }
     }
   }
   if (!o.sansPorte) porte(B, o.porteX ?? 0, 1, d / 2);
+  vieFacade(B, w, h, d, o);
   if (o.fleurs ?? R() < .3) bougainvillier(B.clone().multiply(mat4((R() - .5) * (w - 3), 0, d / 2)), Math.min(h - .5, 4.5));
   if (o.plat) { piece(B, ce, w + .2, .7, d + .2, 0, h + .45, 0); piece(B, PIERRE_C, w + .3, .12, d + .3, 0, h + .85, 0); }
   else toit(B, w, d, h, R() < .5 ? 'tuiles:ffffff' : 'tuiles:e2c8b8');
