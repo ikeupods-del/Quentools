@@ -94,7 +94,7 @@ function bois(u, v, o) {
   const fente = Math.min(fx, 1 - fx) < .04;
   const nu = ec > .7;
   o.h = fente ? 0 : .5 + fil * .3 + (nu ? -.12 : 0);
-  if (nu) { o.r = .52 + fil * .12; o.g = .46 + fil * .1; o.b = .38; o.ru = .95; } else { gris(o, .86 + (fil - .5) * .12); o.ru = .7; }
+  if (nu) { o.r = .7 + fil * .1; o.g = .62 + fil * .08; o.b = .5; o.ru = .95; } else { gris(o, .86 + (fil - .5) * .12); o.ru = .7; }
   if (fente) { gris(o, .25); }
 }
 /* Écorce */
@@ -123,6 +123,51 @@ function feuillage(n, o) {
 /* Raquette de figuier de Barbarie : vert cireux, aréoles et épines */
 function raquette(u, v, o) { const p = cellules(u, v, 9, 9, 71), n = fbm(u, v, 6, 4, 72); o.h = n * .4 + (p.d1 < .07 ? .6 : 0); const c = .5 + n * .2; o.r = c * .62; o.g = c * .92; o.b = c * .5; if (p.d1 < .07) { o.r = .85; o.g = .8; o.b = .6; } o.ru = .55; }
 
+
+/* Peau du visage, dans les coordonnées de la sphère de la tête (u = tour, v = du haut vers le bas) :
+   joues, orbites, lèvres, barbe naissante, rides. La teinte vient du matériau. */
+function visage(type) {
+  const ex = (a, b) => Math.exp(-a * a - b * b), homme = type !== 'femme', vieux = type === 'vieux';
+  return (u, v, o) => {
+    const ph = u * Math.PI * 2, th = v * Math.PI, x = -Math.cos(ph) * Math.sin(th), y = Math.cos(th), z = Math.sin(ph) * Math.sin(th), ax = Math.abs(x);
+    const n = fbm(u, v, 24, 3, 81), f = fbm(u, v, 96, 2, 82);
+    let r = .97 + (n - .5) * .07, g = r, b = r;
+    const face = lisse(.05, .45, z);
+    const joue = ex((ax - .52) / .2, (y + .14) / .2) * face; g -= joue * .1; b -= joue * .11;
+    const orb = ex((ax - .32) / .12, (y - .07) / .09) * face; r -= orb * .12; g -= orb * .14; b -= orb * .08;
+    const nez = ex(x / .07, (y + .26) / .07) * face; g -= nez * .06; b -= nez * .06;
+    const levre = ex(x / (homme ? .17 : .19), (y + .455) / .045) * face;
+    const lr = homme ? [.8, .55, .52] : [.78, .36, .36];
+    r = lerp(r, lr[0], levre * .85); g = lerp(g, lr[1], levre * .85); b = lerp(b, lr[2], levre * .85);
+    o.h = n * .25 + f * .12 - levre * .1;
+    if (homme) {
+      const zone = (lisse(-.2, -.42, y) * lisse(.05, .5, z) + lisse(.55, .75, ax) * lisse(.2, -.3, y) * lisse(.1, -.4, -z)) * (1 - levre);
+      const poil = f > .5 ? 1 : .3; const k = clamp(zone, 0, 1) * poil * (vieux ? .16 : .26);
+      r -= k; g -= k * 1.02; b -= k * .92;
+    }
+    if (vieux) { const ride = (Math.sin(y * 140) * .5 + .5) * lisse(.28, .4, y) * lisse(.6, .45, y) * face + (Math.sin((ax * 3 + y) * 90) * .5 + .5) * ex((ax - .52) / .08, (y - .06) / .1) * face; o.h -= ride * .25; r -= ride * .04; g -= ride * .05; b -= ride * .05; }
+    o.r = r; o.g = g; o.b = b; o.ru = .5 + n * .15 + levre * -.15;
+  };
+}
+/* Mèches de cheveux (le long de v) */
+function meches(u, v, o) { const m = bruitP(u * 90, v * 4, 90, 91) * .6 + bruitP(u * 180, v * 6, 180, 92) * .4; o.h = m; gris(o, .8 + m * .35); o.ru = .5 + (1 - m) * .2; }
+/* Image pieuse (Vierge au manteau bleu, auréole dorée) pour les autels de bord de route */
+function imagePieuse() {
+  const c = document.createElement('canvas'); c.width = 128; c.height = 192; const x = c.getContext('2d');
+  const fond = x.createLinearGradient(0, 0, 0, 192); fond.addColorStop(0, '#2d4a7a'); fond.addColorStop(1, '#16243e'); x.fillStyle = fond; x.fillRect(0, 0, 128, 192);
+  x.fillStyle = '#d8b04a'; x.beginPath(); x.arc(64, 52, 30, 0, 7); x.fill();
+  x.fillStyle = '#e6c8a6'; x.beginPath(); x.ellipse(64, 56, 13, 16, 0, 0, 7); x.fill();
+  x.fillStyle = '#244f9e'; x.beginPath(); x.moveTo(64, 40); x.bezierCurveTo(26, 60, 22, 170, 30, 186); x.lineTo(98, 186); x.bezierCurveTo(106, 170, 102, 60, 64, 40); x.fill();
+  x.fillStyle = '#b8323a'; x.beginPath(); x.moveTo(64, 80); x.bezierCurveTo(48, 110, 46, 170, 50, 186); x.lineTo(78, 186); x.bezierCurveTo(82, 170, 80, 110, 64, 80); x.fill();
+  x.strokeStyle = '#d8b04a'; x.lineWidth = 6; x.strokeRect(3, 3, 122, 186);
+  const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; return t;
+}
+const VISAGES = {};
+export function texVisage(type, aniso = 4) {
+  if (!VISAGES[type]) { const t = fabrique(256, visage(type), 1.1); for (const k in t) t[k].anisotropy = aniso; VISAGES[type] = t; }
+  return VISAGES[type];
+}
+
 export function fabriquerTextures(qualite, aniso) {
   const n = qualite === 'basse' ? 256 : 512;
   const t = {
@@ -131,7 +176,11 @@ export function fabriquerTextures(qualite, aniso) {
     citronnier: feuillage(n, { nombre: 520, longueur: .075, largeur: .42, couleurs: [[52, 78, 32], [64, 92, 38], [42, 66, 28], [74, 100, 44]], graine: 7 }),
     olivier: feuillage(n, { nombre: 420, longueur: .085, largeur: .22, couleurs: [[112, 124, 92], [92, 104, 74], [138, 146, 116]], graine: 11 }),
     cypres: feuillage(n, { nombre: 520, longueur: .05, largeur: .5, couleurs: [[34, 52, 30], [44, 62, 36], [28, 44, 26]], graine: 13 }),
-    herbes: feuillage(n / 2, { nombre: 140, longueur: .2, largeur: .08, couleurs: [[176, 160, 96], [150, 140, 80], [120, 124, 70]], graine: 17 })
+    herbes: feuillage(n / 2, { nombre: 140, longueur: .2, largeur: .08, couleurs: [[176, 160, 96], [150, 140, 80], [120, 124, 70]], graine: 17 }),
+    cheveux: fabrique(n / 2, meches, 2.5), image: imagePieuse(),
+    bougainvillee: feuillage(n, { nombre: 700, longueur: .055, largeur: .8, couleurs: [[200, 36, 120], [224, 60, 150], [176, 28, 102], [212, 48, 138], [60, 92, 40], [48, 80, 34]], graine: 19 }),
+    geranium: feuillage(n / 2, { nombre: 260, longueur: .09, largeur: .85, couleurs: [[206, 34, 34], [232, 56, 44], [190, 24, 40], [74, 112, 52], [62, 100, 44]], graine: 23 }),
+    vigne: feuillage(n, { nombre: 300, longueur: .13, largeur: .85, couleurs: [[98, 124, 52], [116, 142, 62], [80, 108, 44], [128, 140, 64]], graine: 29 })
   };
   for (const k in t) { const e = t[k]; for (const x of (e.isTexture ? [e] : Object.values(e))) { x.anisotropy = aniso; x.needsUpdate = true; } }
   return t;

@@ -10,7 +10,8 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { fabriquerTextures } from './textures.js';
+import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
+import { fabriquerTextures, texVisage } from './textures.js';
 
 const $ = s => document.querySelector(s);
 const PI = Math.PI;
@@ -25,6 +26,7 @@ const R = alea(1861);
 function h2(x, z) { let h = (Math.imul(x | 0, 374761393) + Math.imul(z | 0, 668265263)) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); h ^= h >>> 16; return (h >>> 0) / 4294967296; }
 function bruit(x, z) { const xi = Math.floor(x), zi = Math.floor(z), xf = x - xi, zf = z - zi, u = xf * xf * (3 - 2 * xf), v = zf * zf * (3 - 2 * zf); return lerp(lerp(h2(xi, zi), h2(xi + 1, zi), u), lerp(h2(xi, zi + 1), h2(xi + 1, zi + 1), u), v); }
 const hex = c => c.toString(16).padStart(6, '0');
+const prof = pts => pts.map(([r, y]) => new T.Vector2(r, y));
 
 /* ---------- Sauvegarde (dans ce navigateur seulement) ---------- */
 const CLE = 'silenzio:v1';
@@ -37,8 +39,8 @@ SAUVE.fins = SAUVE.fins || [];
 const tactile = matchMedia('(pointer: coarse)').matches;
 const ESSAI = new URLSearchParams(location.search).has('essai'); // essais automatiques : logique sans dessin
 const QUALITES = {
-  haute: { nom: 'Haute', ombre: 4096, ao: true, bloom: true, msaa: 4, dpr: 1.5, herbe: 42000, rayonHerbe: 26, arbres: 1 },
-  moyenne: { nom: 'Moyenne', ombre: 2048, ao: false, bloom: true, msaa: 2, dpr: 1.25, herbe: 16000, rayonHerbe: 20, arbres: 1 },
+  haute: { nom: 'Haute', dof: true, ombre: 4096, ao: true, bloom: true, msaa: 4, dpr: 1.5, herbe: 42000, rayonHerbe: 26, arbres: 1 },
+  moyenne: { nom: 'Moyenne', dof: true, ombre: 2048, ao: false, bloom: true, msaa: 2, dpr: 1.25, herbe: 16000, rayonHerbe: 20, arbres: 1 },
   basse: { nom: 'Basse', ombre: 1024, ao: false, bloom: false, msaa: 0, dpr: 1, herbe: 0, rayonHerbe: 0, arbres: .6 }
 };
 const QN = QUALITES[SAUVE.qualite] ? SAUVE.qualite : (tactile ? 'basse' : 'haute');
@@ -65,7 +67,19 @@ if (Q.ao) {
   passeAO.render = (...a) => { const vus = SANS_AO.map(m => m.visible); SANS_AO.forEach(m => { m.visible = false; }); r0(...a); SANS_AO.forEach((m, i) => { m.visible = vus[i]; }); };
   compo.addPass(passeAO);
 }
+const sansFeuillage = pass => { const r0 = pass.render.bind(pass); pass.render = (...a) => { const vus = SANS_AO.map(m => m.visible); SANS_AO.forEach(m => { m.visible = false; }); r0(...a); SANS_AO.forEach((m, i) => { m.visible = vus[i]; }); }; };
+let passeFlou = null;
+if (Q.dof) { passeFlou = new BokehPass(scene, camera, { focus: 2, aperture: .0022, maxblur: .007 }); passeFlou.enabled = false; sansFeuillage(passeFlou); compo.addPass(passeFlou); }
 if (Q.bloom) { passeHalo = new UnrealBloomPass(new T.Vector2(256, 256), .32, .6, .92); compo.addPass(passeHalo); }
+const RAYONS = new ShaderPass({
+  uniforms: { tDiffuse: { value: null }, uSoleil: { value: new T.Vector2(.5, .5) }, uForce: { value: 0 }, uSeuil: { value: 1.1 }, uTeinte: { value: new T.Color(1, .85, .6) } },
+  vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+  fragmentShader: `uniform sampler2D tDiffuse; uniform vec2 uSoleil; uniform float uForce, uSeuil; uniform vec3 uTeinte; varying vec2 vUv;
+    void main(){ vec4 c = texture2D(tDiffuse, vUv); vec2 d = (uSoleil - vUv) / 56.0; vec2 p = vUv; float dec = 1.0; vec3 acc = vec3(0.0);
+      for (int i = 0; i < 56; i++){ p += d; vec3 e = texture2D(tDiffuse, clamp(p, 0.0, 1.0)).rgb; float l = max(dot(e, vec3(0.3, 0.59, 0.11)) - uSeuil, 0.0); acc += min(l, 4.0) * dec; dec *= 0.965; }
+      gl_FragColor = vec4(c.rgb + uTeinte * acc * uForce / 56.0, c.a); }`
+});
+RAYONS.enabled = false; if (Q.bloom) compo.addPass(RAYONS);
 compo.addPass(new OutputPass());
 const ETALON = new ShaderPass({
   uniforms: { tDiffuse: { value: null }, uTemps: { value: 0 }, uRes: { value: new T.Vector2(1, 1) }, uVignette: { value: .55 }, uGrain: { value: .05 }, uChaleur: { value: .35 }, uSat: { value: .95 } },
@@ -114,9 +128,14 @@ function M(cle) {
     case 'fer': m = new T.MeshStandardMaterial({ color: 0x1e1c1a, roughness: .5, metalness: .75 }); break;
     case 'bronze': m = new T.MeshStandardMaterial({ color: 0x8a6a3a, roughness: .35, metalness: 1 }); break;
     case 'dome': m = new T.MeshStandardMaterial({ color: c, map: TX.enduit.map, normalMap: TX.enduit.normalMap, roughnessMap: TX.enduit.roughnessMap }); break;
-    case 'tissu': m = new T.MeshStandardMaterial({ color: c, normalMap: TX.tissu.normalMap, normalScale: new T.Vector2(.7, .7), roughness: .95 }); break;
-    case 'peau': m = new T.MeshStandardMaterial({ color: c, roughness: .55 }); break;
-    case 'cheveux': m = new T.MeshStandardMaterial({ color: c, roughness: .65 }); break;
+    case 'tissu': m = new T.MeshPhysicalMaterial({ color: c, normalMap: TX.tissu.normalMap, normalScale: new T.Vector2(.7, .7), roughness: .92, sheen: .8, sheenRoughness: .75, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .35) }); break;
+    case 'peau': m = new T.MeshPhysicalMaterial({ color: c, roughness: .5, sheen: .3, sheenRoughness: .6, sheenColor: new T.Color(0xff9a7a) }); break;
+    case 'visage': { const [, type, hx2] = cle.split(':'), tv = texVisage(type, ANISO); m = new T.MeshPhysicalMaterial({ color: parseInt(hx2, 16), map: tv.map, normalMap: tv.normalMap, normalScale: new T.Vector2(.6, .6), roughnessMap: tv.roughnessMap, roughness: 1, sheen: .3, sheenRoughness: .6, sheenColor: new T.Color(0xff9a7a) }); break; }
+    case 'cheveux': m = new T.MeshStandardMaterial({ color: c, map: TX.cheveux.map, normalMap: TX.cheveux.normalMap, roughnessMap: TX.cheveux.roughnessMap, roughness: 1 }); break;
+    case 'oeil': m = new T.MeshPhysicalMaterial({ color: 0xf2eee6, roughness: .12, clearcoat: 1, clearcoatRoughness: .05 }); break;
+    case 'iris': m = new T.MeshPhysicalMaterial({ color: c, roughness: .1, clearcoat: 1, clearcoatRoughness: .05 }); break;
+    case 'fleurs': m = new T.MeshStandardMaterial({ map: TX[hx], alphaTest: .45, side: T.DoubleSide, roughness: .7 }); break;
+    case 'image': m = new T.MeshStandardMaterial({ map: TX.image, roughness: .6 }); break;
     case 'cuir': m = new T.MeshStandardMaterial({ color: c, roughness: .45 }); break;
     case 'fruit': m = new T.MeshStandardMaterial({ color: c, roughness: .4 }); break;
     case 'ecorce': m = new T.MeshStandardMaterial({ color: c, map: TX.ecorce.map, normalMap: TX.ecorce.normalMap, roughness: .95 }); break;
@@ -207,7 +226,8 @@ function majEnvironnement() { const rt = pmrem.fromScene(sceneCiel, 0, .1, 9000)
 const hemi = new T.HemisphereLight(0xffffff, 0x806040, .5); scene.add(hemi);
 const soleil = new T.DirectionalLight(0xffffff, 3); soleil.castShadow = true;
 soleil.shadow.mapSize.set(Q.ombre, Q.ombre);
-Object.assign(soleil.shadow.camera, { left: -55, right: 55, top: 55, bottom: -55, near: 1, far: 320 });
+const PORTEE_OMBRE = Q.ombre >= 4096 ? 75 : 55;
+Object.assign(soleil.shadow.camera, { left: -PORTEE_OMBRE, right: PORTEE_OMBRE, top: PORTEE_OMBRE, bottom: -PORTEE_OMBRE, near: 1, far: 360 });
 soleil.shadow.bias = -0.0004; soleil.shadow.normalBias = .04; soleil.shadow.radius = 3;
 scene.add(soleil, soleil.target);
 scene.fog = new T.FogExp2(0xd5cfc0, .003);
@@ -247,11 +267,12 @@ await etape('Relief…');
   const g = new T.PlaneGeometry(600, 600, 200, 200); g.rotateX(-PI / 2);
   const p = g.attributes.position, uv = g.attributes.uv, cols = new Float32Array(p.count * 3);
   const C = h => new T.Color(h);
-  const herbe = C(0xb7a46c), seche = C(0xc4ad78), ocre = C(0xa87a4c), vert = C(0x7f8046), sable = C(0xd8c49a), roche = C(0x958a78), poussiere = C(0xc8b088), c = new T.Color();
+  const herbe = C(0xb7a46c), seche = C(0xc4ad78), ocre = C(0xa87a4c), vert = C(0x7f8046), sable = C(0xd8c49a), roche = C(0x958a78), poussiere = C(0xc8b088), terreBattue = C(0xe0b98a), c = new T.Color();
   for (let i = 0; i < p.count; i++) {
     const x = p.getX(i), z = p.getZ(i), y = H(x, z); p.setY(i, y); uv.setXY(i, x / ECH.sol, z / ECH.sol);
     c.copy(herbe).lerp(seche, bruit(x / 40 + 3, z / 40)).lerp(ocre, lisse(.45, .8, bruit(x / 18, z / 18)) * .7);
     if (dansJardin(x, z, 4)) c.lerp(vert, .65);
+    const dv = Math.hypot(x - L.village.x, z - L.village.z); if (dv < 62) c.lerp(terreBattue, (1 - lisse(40, 62, dv)) * .85);
     const dr = distRoute(x, z); if (dr < 8) c.lerp(poussiere, (1 - dr / 8) * .6);
     if (y < 1.8) c.lerp(sable, clamp((1.8 - y) / 1.3, 0, 1));
     const r = Math.hypot(x, z); if (r > 205) c.lerp(roche, clamp((r - 205) / 45, 0, .85));
@@ -260,6 +281,10 @@ await etape('Relief…');
   }
   g.setAttribute('color', new T.BufferAttribute(cols, 3)); g.computeVertexNormals();
   const sol = new T.Mesh(g, new T.MeshStandardMaterial({ vertexColors: true, map: TX.sol.map, normalMap: TX.sol.normalMap, normalScale: new T.Vector2(1.4, 1.4), roughnessMap: TX.sol.roughnessMap, roughness: 1 }));
+  sol.material.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `#ifdef USE_MAP
+    vec4 t1 = texture2D(map, vMapUv); vec4 t2 = texture2D(map, vMapUv * 0.37 + vec2(0.31, 0.77)); float mm = texture2D(map, vMapUv * 0.031).r;
+    vec4 sampledDiffuseColor = mix(t1, t2, smoothstep(0.42, 0.62, mm)); diffuseColor *= sampledDiffuseColor * (0.88 + 0.24 * mm);
+  #endif`); };
   sol.receiveShadow = true; scene.add(sol);
   // Montagnes du fond et promontoire au bord de la mer (roche)
   const roc = M('pierre:8a8070'), ge = facettes(new T.IcosahedronGeometry(1, 2));
@@ -327,6 +352,7 @@ function fenetre(B, x, y, sens, zf, volet, balcon) {
     piece(F, 'fer', 1.66, .035, .035, x, y + .18, .68, 0, 0, 0, false); piece(F, 'fer', 1.66, .03, .03, x, y - .6, .68, 0, 0, 0, false);
     for (let i = 0; i <= 10; i++) piece(F, 'fer', .022, .8, .022, x - .8 + i * .16, y - .22, .68, 0, 0, 0, false);
     for (const sx of [-1, 1]) { piece(F, 'fer', .035, .035, .6, x + sx * .82, y + .18, .38, 0, 0, 0, false); for (let i = 0; i < 4; i++) piece(F, 'fer', .022, .8, .022, x + sx * .82, y - .22, .14 + i * .16, 0, 0, 0, false); }
+    for (let i = 0, n = 1 + ((R() * 3) | 0); i < n; i++) pot(F.clone().multiply(mat4(x - .55 + i * .55, y - .69, .32)), .8);
   }
 }
 function porte(B, x, sens, zf, couleur = '4e3624') {
@@ -335,6 +361,7 @@ function porte(B, x, sens, zf, couleur = '4e3624') {
   piece(F, ENC, 1.75, .32, .2, x, 2.52, .06); piece(F, ENC, .24, 2.4, .16, x - .74, 1.2, .05); piece(F, ENC, .24, 2.4, .16, x + .74, 1.2, .05);
   piece(F, PIERRE_C, 1.9, .16, .6, x, .02, .3);
   piece(F, 'fer', .05, .05, .08, x + .45, 1.15, .1, 0, 0, 0, false);
+  if (R() < .55) { pot(F.clone().multiply(mat4(x - 1.15, 0, .35)), 1.2); if (R() < .6) pot(F.clone().multiply(mat4(x + 1.15, 0, .35)), 1); }
 }
 function toit(B, w, d, h, cle) {
   const hr = Math.min(w, d) * .28, a = Math.atan2(hr, d / 2), run = d / 2 + .5, Lr = run / Math.cos(a) + .1, y0 = h + .2;
@@ -366,6 +393,7 @@ function maison(x, z, w, d, h, rot = 0, o = {}) {
     }
   }
   if (!o.sansPorte) porte(B, o.porteX ?? 0, 1, d / 2);
+  if (o.fleurs ?? R() < .3) bougainvillier(B.clone().multiply(mat4((R() - .5) * (w - 3), 0, d / 2)), Math.min(h - .5, 4.5));
   if (o.plat) { piece(B, ce, w + .2, .7, d + .2, 0, h + .45, 0); piece(B, PIERRE_C, w + .3, .12, d + .3, 0, h + .85, 0); }
   else toit(B, w, d, h, R() < .5 ? 'tuiles:ffffff' : 'tuiles:e2c8b8');
   if (!o.plat && R() < .6) { const cx = (R() - .5) * w * .6; piece(B, ce, .55, 1.6, .55, cx, h + Math.min(w, d) * .28 * .5 + .6, -d * .15); piece(B, PIERRE_C, .7, .12, .7, cx, h + Math.min(w, d) * .14 + 1.45, -d * .15); }
@@ -575,7 +603,7 @@ function foret(liste, geoTronc, matTronc, geoFeuilles, matFeuilles) {
   // Touffes d'herbes hautes (cartes croisées) le long des chemins et des murets
   const touffe = mergeGeometries([0, PI / 3, PI * 2 / 3].map(a => { const g = new T.PlaneGeometry(1.1, .8); g.translate(0, .38, 0); g.rotateY(a); return g; }));
   const hb = []; n = 0;
-  while (hb.length < 900 * Q.arbres && n++ < 9000) { const x = (R() - .5) * 420, z = (R() - .5) * 400; if (Math.hypot(x - L.village.x, z - L.village.z) < 30 || (Math.abs(x - L.baglio.x) < 14 && Math.abs(z - L.baglio.z) < 14) || distRoute(x, z) < 2.6 || H(x, z) < 2) continue; hb.push({ x, y: H(x, z) - .05, z, s: .6 + R() * .7, ry: R() * 6 }); }
+  while (hb.length < 900 * Q.arbres && n++ < 9000) { const x = (R() - .5) * 420, z = (R() - .5) * 400; if (Math.hypot(x - L.village.x, z - L.village.z) < 52 || (Math.abs(x - L.baglio.x) < 14 && Math.abs(z - L.baglio.z) < 14) || distRoute(x, z) < 2.6 || H(x, z) < 2) continue; hb.push({ x, y: H(x, z) - .05, z, s: .6 + R() * .7, ry: R() * 6 }); }
   const matHerbe = auVent(new T.MeshStandardMaterial({ map: TX.herbes, alphaTest: .4, side: T.DoubleSide, roughness: .9 }), 0, .09);
   SANS_AO.push(...foret(hb, null, null, touffe, matHerbe));
 })();
@@ -596,7 +624,7 @@ function majHerbe(x, z) {
   HERBE.cx = x; HERBE.cz = z; const o = new T.Object3D(), ra = alea((Math.round(x) * 73856093) ^ (Math.round(z) * 19349663)); let k = 0;
   for (let i = 0; i < Q.herbe * 3 && k < Q.herbe; i++) {
     const a = ra() * PI * 2, r = Math.sqrt(ra()) * Q.rayonHerbe, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r;
-    if (distRoute(px, pz) < 2.6 || Math.hypot(px - L.village.x, pz - L.village.z) < 22 || (Math.abs(px - L.baglio.x) < 13.5 && Math.abs(pz - L.baglio.z) < 13.5) || H(px, pz) < 1.9 || dansBatiment(px, pz, H(px, pz) + .5)) continue;
+    if (distRoute(px, pz) < 2.6 || Math.hypot(px - L.village.x, pz - L.village.z) < 54 || (Math.abs(px - L.baglio.x) < 13.5 && Math.abs(pz - L.baglio.z) < 13.5) || H(px, pz) < 1.9 || dansBatiment(px, pz, H(px, pz) + .5)) continue;
     o.position.set(px, H(px, pz), pz); o.rotation.set((ra() - .5) * .3, ra() * 6, (ra() - .5) * .3); const s = .55 + ra() * .8; o.scale.set(s, s * (dansJardin(px, pz) ? 1.25 : 1), s); o.updateMatrix();
     HERBE.im.setMatrixAt(k, o.matrix); HERBE.im.setColorAt(k, HERBE.tons[(ra() * HERBE.tons.length) | 0]); k++;
   }
@@ -609,6 +637,68 @@ const POUSSIERE = (() => {
   const c = document.createElement('canvas'); c.width = c.height = 32; const x = c.getContext('2d'); const gr = x.createRadialGradient(16, 16, 0, 16, 16, 16); gr.addColorStop(0, 'rgba(255,240,200,1)'); gr.addColorStop(1, 'rgba(255,240,200,0)'); x.fillStyle = gr; x.fillRect(0, 0, 32, 32);
   const m = new T.PointsMaterial({ size: .07, map: new T.CanvasTexture(c), transparent: true, depthWrite: false, blending: T.AdditiveBlending, color: 0xffe2a8, opacity: .5 });
   const pts = new T.Points(g, m); pts.frustumCulled = false; scene.add(pts); return pts;
+})();
+
+/* ---------- Décor sicilien : fleurs, treille, linge, autels, meules, bancs, maisons en plus ---------- */
+function pot(B, s = 1) {
+  poser(new T.LatheGeometry(prof([[.0, 0], [.11, 0], [.15, .2], [.17, .26], [.15, .28], [0, .28]]), 12), 'dome:b8653e', B.clone().multiply(mat4(0, 0, 0, 0, 0, 0, s, s, s)));
+  poser(couronne(9, .16, .1, .16, .34, .26, (R() * 1e6) | 0), 'fleurs:geranium', B.clone().multiply(mat4(0, 0, 0, R() * 6, 0, 0, s, s, s)), false);
+}
+function bougainvillier(B, haut) {
+  poser(tronc([[0, 0, .12, .25, haut * .5, .1, .07, .05], [.25, haut * .5, .1, -.3, haut * .85, .12, .05, .03], [.25, haut * .5, .1, .8, haut * .7, .12, .04, .025]]), 'ecorce:6a5a48', B);
+  poser(couronne(Math.round(40 + haut * 8), 1.4, haut * .32, .32, haut * .66, .7, (R() * 1e6) | 0), 'fleurs:bougainvillee', B.clone().multiply(mat4(0, 0, .3)), false);
+}
+function autel(x, z, ry) {
+  const B = mat4(x, H(x, z), z, ry);
+  piece(B, PIERRE, .8, 2.6, .55, 0, .3, 0); piece(B, PIERRE_C, .95, .14, .7, 0, 1.62, .05);
+  piece(B, 'verre', .5, .7, .05, 0, 1.15, .27, 0, 0, 0, false);
+  poser(new T.PlaneGeometry(.42, .62), 'image', B.clone().multiply(mat4(0, 1.15, .3)));
+  piece(B, 'tuiles:ffffff', .5, .08, .8, -.24, 1.82, .05, 0, 0, .5); piece(B, 'tuiles:ffffff', .5, .08, .8, .24, 1.82, .05, 0, 0, -.5);
+  for (const sx of [-.18, .18]) { poser(new T.CylinderGeometry(.025, .025, .14, 8), 'uni:f0ead8', B.clone().multiply(mat4(sx, .87, .38))); piece(B, 'lumiere', .02, .035, .02, sx, .96, .38, 0, 0, 0, false); }
+  pot(B.clone().multiply(mat4(-.45, 0, .5)), 1.1); pot(B.clone().multiply(mat4(.45, 0, .5)), 1);
+  obstacleBoite(x, z, .9, .7, ry, 2.6);
+}
+function meule(x, z, s = 1) {
+  const pts = prof([[0, 0], [1.6, 0], [1.75, .6], [1.55, 1.6], [1, 2.4], [.4, 2.85], [0, 3]]);
+  poser(new T.LatheGeometry(pts, 18), 'sol:e2c27a', mat4(x, H(x, z) - .1, z, R() * 6, 0, 0, s, s * (.9 + R() * .2), s));
+  poser(new T.CylinderGeometry(.04, .05, 1.2, 6), 'bois:6a4a30', mat4(x, H(x, z) + 3 * s, z));
+  CERCLES.push({ x, z, r: 1.7 * s });
+}
+function linge(ax, az, bx, bz, hh) {
+  const y = Math.max(H(ax, az), H(bx, bz)) + hh, L0 = Math.hypot(bx - ax, bz - az), rot = Math.atan2(-(bz - az) / L0, (bx - ax) / L0);
+  const B = mat4((ax + bx) / 2, y, (az + bz) / 2, rot);
+  piece(B, 'uni:cfc6b2', L0, .015, .015, 0, 0, 0, 0, 0, 0, false);
+  const tons = ['f2ede2', 'e8e0cc', 'c94a3a', '3f6a8a', 'ece4d0', 'd8b04a', 'f0ece4'];
+  for (let x = -L0 / 2 + .4; x < L0 / 2 - .4; x += .55 + R() * .5) { const l = .35 + R() * .45, h = .4 + R() * .55; piece(B, 'tissu:' + tons[(R() * tons.length) | 0], l, h, .02, x + l / 2, -h / 2 - .02, 0, 0, (R() - .5) * .25, 0, false); x += l; }
+}
+function banc(x, z, ry) { const B = mat4(x, H(x, z), z, ry); piece(B, PIERRE_C, 2.2, .14, .55, 0, .5, 0); piece(B, PIERRE, .3, .5, .45, -.85, .22, 0); piece(B, PIERRE, .3, .5, .45, .85, .22, 0); obstacleBoite(x, z, 2.2, .55, ry, .6); }
+function lanterneMurale(x, z, ry, hh = 3) { const B = mat4(x, H(x, z), z, ry); piece(B, 'fer', .05, .05, .45, 0, hh + .3, .22, 0, 0, 0, false); piece(B, 'fer', .26, .05, .26, 0, hh + .28, .45, 0, 0, 0, false); piece(B, 'lumiere', .17, .26, .17, 0, hh + .12, .45, 0, 0, 0, false); piece(B, 'fer', .2, .04, .2, 0, hh - .03, .45, 0, 0, 0, false); }
+(() => {
+  // Village plus dense : maisons en second rang, ruelles
+  for (const [x, z, w, d, h, r = 0, o = {}] of [
+    [-128, -64, 8, 9, 6, -PI / 2], [-128, -80, 8, 9, 7, -PI / 2], [-118, -96, 8, 9, 6, PI], [-110, -120, 9, 8, 6.5, PI], [-92, -122, 8, 8, 6, PI, { plat: true }],
+    [-72, -121, 9, 8, 7, PI], [-40, -100, 8, 8, 6, PI / 2], [-36, -74, 8, 8, 6, PI / 2], [-104, -36, 8, 8, 6, 0], [-120, -34, 7, 8, 5.5, 0], [-60, -36, 8, 8, 6, 0, { plat: true }], [-46, -28, 7, 7, 5, .4]
+  ]) maison(x, z, w, d, h, r, o);
+  // Linge tendu dans les ruelles derrière la place
+  for (const x of [-91, -86, -76, -72]) linge(x, -45.3, x + .4, -42.2, 3.6 + R());
+  linge(-109.4, -60.5, -111.1, -61, 3.4);
+  // Bancs de la place, lanternes murales
+  banc(-93, -76, PI / 2); banc(-67, -77, -PI / 2); banc(-80, -60.5, PI);
+  for (const [x, z, r] of [[-94, -54.4, PI], [-84, -54.4, PI], [-72, -54.4, PI], [-60.9, -80, -PI / 2], [-98.3, -73, PI / 2], [-77, -84.6, 0]]) lanterneMurale(x, z, r);
+  // Autels de bord de route
+  autel(8, 18.5, -.9); autel(-27, -16, .6); autel(48, 64, -2.2);
+  // Meules de foin près de la masseria et des champs
+  for (const [x, z, sc] of [[100, -12, 1], [106, -6, .85], [140, -12, 1.1], [95, 30, .9], [150, 15, 1], [20, 100, .9], [12, 112, 1]]) meule(x, z, sc);
+  // Treille de vigne devant la maison du baglio
+  const { x: bx, z: bz } = L.baglio, yb = H(bx, bz);
+  for (const px of [62, 66, 70, 74]) { piece(mat4(px, yb, bz - 2.2), 'bois:7a5636', .14, 2.8, .14, 0, 1.4, 0); CERCLES.push({ x: px, z: bz - 2.2, r: .15 }); poser(tronc([[0, 0, 0, .15, 1.4, .05, .05, .04], [.15, 1.4, .05, -.1, 2.7, .1, .04, .03]]), 'ecorce:5a4a38', mat4(px + .25, yb, bz - 2.15)); }
+  piece(mat4(68, yb, bz - 2.2), 'bois:7a5636', 12.6, .14, .14, 0, 2.82, 0);
+  for (const px of [62, 66, 70, 74]) piece(mat4(px, yb, bz - 3.6), 'bois:7a5636', .1, .1, 2.9, 0, 2.86, 0);
+  poser(couronne(Q.arbres < 1 ? 110 : 200, 6.6, .25, 1.4, 2.98, .9, 31), 'fleurs:vigne', mat4(68, yb, bz - 3.5), true);
+  for (let i = 0; i < 14; i++) { const gx = 62.5 + R() * 11, gz = bz - 2.6 - R() * 2.2; for (let k = 0; k < 7; k++) poser(new T.SphereGeometry(.035, 6, 5), 'fruit:4a2a48', mat4(gx + (R() - .5) * .08, yb + 2.72 - k * .03 - R() * .05, gz + (R() - .5) * .08), false); }
+  // Jarres, sacs et un vieux carretto contre un mur
+  for (const [x, z] of [[-66.5, -79.5], [-97.5, -56.5], [-58.8, -63], [118, -36], [131, -36]]) jarre(mat4(x, H(x, z), z, R() * 3));
+  for (const [x, z] of [[-89.5, -58.8], [-90.3, -58.6], [80.5, 46]]) poser(new T.SphereGeometry(.3, 10, 8), 'tissu:b8a27a', mat4(x, H(x, z) + .22, z, R() * 3, 0, 0, 1, .75, 1));
 })();
 
 /* ---------- Lanternes ---------- */
@@ -624,7 +714,6 @@ construireLots();
 
 /* ---------- Personnages : corps modelés et articulés (hanches, genoux, épaules, coudes) ---------- */
 await etape('Personnages…');
-const prof = pts => pts.map(([r, y]) => new T.Vector2(r, y));
 const GH = {
   cuisse: new T.CapsuleGeometry(.078, .34, 4, 12), tibia: new T.CapsuleGeometry(.062, .32, 4, 12), bras: new T.CapsuleGeometry(.054, .21, 4, 10), avb: new T.CapsuleGeometry(.046, .19, 4, 10),
   main: new T.SphereGeometry(.05, 12, 8), crane: new T.SphereGeometry(.105, 24, 18), nez: new T.ConeGeometry(.02, .055, 8), oreille: new T.SphereGeometry(.028, 10, 8), oeil: new T.SphereGeometry(.013, 10, 8),
@@ -639,6 +728,33 @@ const GH = {
   cape: new T.LatheGeometry(prof([[.07, 1.6], [.16, 1.55], [.215, 1.47], [.235, 1.3], [.24, 1.18]]), 22)
 };
 GH.chaussure.rotateX(PI / 2);
+/* Tête sculptée : une sphère déformée (nez, arcades, orbites, pommettes, lèvres, menton, mâchoire) */
+function formeTete(x, y, z) {
+  const ax = Math.abs(x), ex = (a, b) => Math.exp(-a * a - b * b);
+  let r = 1;
+  if (z > 0) {
+    const zf = Math.min(1, z * 2.2);
+    r += zf * (.2 * ex(x / .085, (y + .1) / .2) + .09 * ex(x / .075, (y + .26) / .065) + .045 * ex((ax - .075) / .045, (y + .31) / .045));
+    r += zf * .055 * ex((ax - .3) / .17, (y - .21) / .07);
+    r -= zf * .075 * ex((ax - .32) / .11, (y - .07) / .085);
+    r += zf * .05 * ex((ax - .52) / .15, (y + .06) / .12);
+    r += zf * (.045 * ex(x / .2, (y + .45) / .055) - .02 * ex(x / .18, (y + .468) / .012));
+    r += zf * .06 * ex(x / .2, (y + .74) / .12);
+  }
+  if (z < -.2) r += .04 * ex(x / .5, (y - .15) / .4);
+  const mach = y < 0 ? 1 - .2 * Math.pow(Math.min(1, -y), 1.5) : 1;
+  return new T.Vector3(x * r * .092 * mach, y * r * .118, z * r * .102);
+}
+function sculpter(g, gonfle = 1, bruitM = 0) { const p = g.attributes.position, v = new T.Vector3(); for (let i = 0; i < p.count; i++) { v.set(p.getX(i), p.getY(i), p.getZ(i)).normalize(); const q = formeTete(v.x, v.y, v.z).multiplyScalar(gonfle * (1 + (bruitM ? (h2(Math.round(v.x * 40), Math.round(v.y * 40 + v.z * 23)) - .5) * bruitM : 0))); p.setXYZ(i, q.x, q.y, q.z); } g.computeVertexNormals(); return g; }
+GH.tete = sculpter(new T.SphereGeometry(1, 64, 48));
+GH.chevelure = sculpter(new T.SphereGeometry(1, 40, 20, 0, PI * 2, 0, PI * .5), 1.07, .06);
+GH.barbe = sculpter(new T.SphereGeometry(1, 40, 20, PI * .05, PI * .9, PI * .58, PI * .42), 1.06, .05);
+const OEIL = (sx) => { const v = new T.Vector3(sx * .32, .075, .94).normalize(); return formeTete(v.x, v.y, v.z).multiplyScalar(.93); };
+GH.globe = new T.SphereGeometry(.0128, 16, 12); GH.iris = new T.SphereGeometry(.0068, 14, 10); GH.paupiere = new T.SphereGeometry(.0142, 16, 8, 0, PI * 2, 0, PI * .5);
+GH.sourcil = new T.CapsuleGeometry(.0042, .03, 2, 6); GH.sourcil.rotateZ(PI / 2);
+GH.moust = new T.CapsuleGeometry(.0075, .036, 3, 8); GH.moust.rotateZ(PI / 2);
+GH.paume = new T.CapsuleGeometry(.032, .05, 4, 10); GH.pouce = new T.CapsuleGeometry(.012, .035, 3, 8);
+GH.col = new T.TorusGeometry(.062, .014, 8, 20); GH.bouton = new T.SphereGeometry(.009, 8, 6);
 function partie(parent, geo, cle, x, y, z, sx = 1, sy = 1, sz = 1, rx = 0, ry = 0, rz = 0) { const m = new T.Mesh(geo, M(cle)); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.rotation.set(rx, ry, rz); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m; }
 function humain(o = {}) {
   const g = new T.Group(), corps = new T.Group(); g.add(corps);
@@ -659,16 +775,26 @@ function humain(o = {}) {
   if (o.robe == null) partie(corps, GH.disque, o.ceinture != null ? 'tissu:' + hex(o.ceinture) : 'cuir:2a2018', 0, .965, 0, .168, .05, .125);
   if (o.tablier) partie(corps, GH.disque, 'tissu:ece6d6', 0, .78, .1, .2, .5, .06);
   partie(corps, GH.cou, peau, 0, 1.6, 0);
+  if (o.robe == null || o.chemise != null) partie(corps, GH.col, o.veste != null ? 'tissu:' + hex(o.veste) : chem, 0, 1.555, .005, 1.05, .9, 1, PI / 2 + .25);
+  if (o.foulard != null) partie(corps, GH.col, 'tissu:' + hex(o.foulard), 0, 1.565, .01, 1.1, 1.1, 1.6, PI / 2 + .3);
+  if (o.gilet != null) for (let i = 0; i < 4; i++) partie(corps, GH.bouton, 'bronze', 0, 1.06 + i * .08, .143 + i * .006);
   const tete = new T.Group(); tete.position.set(0, 1.74, .01); corps.add(tete);
-  partie(tete, GH.crane, peau, 0, 0, 0, 1, 1.13, 1.04);
-  partie(tete, GH.crane, peau, 0, -.06, .03, .78, .62, .82);
-  partie(tete, GH.nez, peau, 0, -.012, .112, 1, 1, 1, PI / 2.2);
-  partie(tete, GH.oreille, peau, -.104, 0, -.005, .5, 1, .8); partie(tete, GH.oreille, peau, .104, 0, -.005, .5, 1, .8);
-  for (const sx of [-1, 1]) { partie(tete, GH.oeil, 'fruit:f4efe6', sx * .037, .018, .093, 1, .8, .6); partie(tete, GH.oeil, 'cheveux:1a1410', sx * .037, .018, .1, .55, .55, .4); partie(tete, GH.disque, chev, sx * .038, .05, .1, .022, .008, .006, 0, 0, sx * -.12); }
-  if (!o.chauve) partie(tete, GH.cheveux, chev, 0, .012, -.012, 1.04, 1.06, 1.08, -.35);
-  else partie(tete, GH.cheveux, chev, 0, -.02, -.02, 1.05, .7, 1.05, -1.25);
-  if (o.moustache) partie(tete, GH.oreille, 'cheveux:' + hex(o.moustache === true ? o.cheveux ?? 0x1e1712 : o.moustache), 0, -.045, .1, 1.6, .45, .5);
-  if (o.barbe) partie(tete, GH.crane, 'cheveux:' + hex(o.barbe), 0, -.075, .025, .82, .6, .85);
+  const typeVisage = o.robe != null ? 'femme' : o.vieux ? 'vieux' : 'homme';
+  partie(tete, GH.tete, 'visage:' + typeVisage + ':' + hex(o.peau ?? 0xc69068), 0, 0, 0);
+  partie(tete, GH.oreille, peau, -.091, -.004, -.008, .42, 1.05, .78); partie(tete, GH.oreille, peau, .091, -.004, -.008, .42, 1.05, .78);
+  const paupieres = [];
+  for (const sx of [-1, 1]) {
+    const e = OEIL(sx);
+    partie(tete, GH.globe, 'oeil', e.x, e.y, e.z);
+    partie(tete, GH.iris, 'iris:' + hex(o.yeux ?? 0x3a2414), e.x, e.y, e.z + .0085, 1, 1, .45);
+    const pp = new T.Group(); pp.position.copy(e); tete.add(pp); partie(pp, GH.paupiere, peau, 0, 0, 0); pp.rotation.x = .35; paupieres.push(pp);
+    const sc = formeTete(...new T.Vector3(sx * .3, .23, .92).normalize().toArray());
+    partie(tete, GH.sourcil, chev, sc.x, sc.y + .002, sc.z + .003, 1, 1, 1, 0, sx * -.25, sx * -.12);
+  }
+  if (!o.chauve) partie(tete, GH.chevelure, chev, 0, .004, -.006, 1, 1, 1, -.32);
+  else partie(tete, GH.chevelure, chev, 0, -.035, -.012, 1.01, .75, 1.01, -1.3);
+  if (o.moustache) { const mc = 'cheveux:' + hex(o.moustache === true ? o.cheveux ?? 0x1e1712 : o.moustache), m0 = formeTete(...new T.Vector3(0, -.37, .93).normalize().toArray()); for (const sx of [-1, 1]) partie(tete, GH.moust, mc, sx * .017, m0.y, m0.z + .004, 1, 1, 1, 0, sx * -.35, sx * .3); }
+  if (o.barbe) partie(tete, GH.barbe, 'cheveux:' + hex(o.barbe), 0, 0, 0);
   const ch = o.chapeau, cc = (o.chapeauC != null ? 'tissu:' + hex(o.chapeauC) : 'tissu:3b3530');
   if (ch === 'coppola') { partie(tete, GH.calotte, cc, 0, .065, .012, 1.06, .42, 1.12, -.12); partie(tete, GH.visiere, cc, 0, .07, .075, 1, 1, 1, .16); }
   else if (ch === 'paille') { partie(tete, GH.disque, 'tissu:' + hex(o.chapeauC ?? 0xcdb27a), 0, .08, 0, .27, .012, .27); partie(tete, GH.disque, 'tissu:' + hex(o.chapeauC ?? 0xcdb27a), 0, .14, 0, .118, .12, .118); partie(tete, GH.disque, 'tissu:4a3020', 0, .1, 0, .121, .03, .121); }
@@ -681,7 +807,8 @@ function humain(o = {}) {
     const tc = o.veste != null ? 'tissu:' + hex(o.veste) : chem;
     partie(p, GH.bras, tc, 0, -.15, 0);
     const coude = new T.Group(); coude.position.y = -.29; p.add(coude);
-    partie(coude, GH.avb, tc, 0, -.12, 0); partie(coude, GH.main, peau, 0, -.27, .01, .85, 1.2, .62);
+    partie(coude, GH.avb, o.manches ? peau : tc, 0, -.12, 0, o.manches ? .9 : 1, 1, o.manches ? .9 : 1); if (o.manches) partie(coude, GH.col, tc, 0, -.02, 0, .82, .82, 1.3, PI / 2);
+    partie(coude, GH.paume, peau, 0, -.275, .008, 1, 1, .58); partie(coude, GH.pouce, peau, sx * -.026, -.255, .022, 1, 1, 1, .4, 0, sx * .5);
     p.coude = coude; p.rotation.z = sx * .06; return p;
   };
   const bg = bras(-1), bd = bras(1);
@@ -690,7 +817,7 @@ function humain(o = {}) {
   if (o.lanterne) { lanterne = new T.Group(); lanterne.position.set(0, -.33, .04); bd.coude.add(lanterne); partie(lanterne, GH.disque, 'lumiere', 0, -.1, 0, .06, .16, .06); partie(lanterne, GH.disque, 'fer', 0, .0, 0, .075, .03, .075); partie(lanterne, GH.disque, 'fer', 0, -.19, 0, .075, .03, .075); }
   if (o.cassette) { const c = new T.Mesh(new T.BoxGeometry(.3, .18, .22), M('bois:5a3a22')); c.position.set(0, -.32, .1); bg.coude.add(c); }
   g.scale.setScalar(o.taille ?? 1);
-  return { g, corps, tete, torse, jg, jd, bg, bd, ph: R() * 6, amp: 0, lanterne, porte: !!o.lanterne, assis: false };
+  return { g, corps, tete, torse, jg, jd, bg, bd, ph: R() * 6, amp: 0, lanterne, porte: !!o.lanterne, assis: false, paupieres, cligne: R() * 4, ferme: 0, parle: false, tp: 0 };
 }
 function animer(h, dt, v) {
   if (h.assis) { h.jg.rotation.x = h.jd.rotation.x = -1.5; h.jg.genou.rotation.x = h.jd.genou.rotation.x = 1.45; h.bg.rotation.x = h.bd.rotation.x = -.55; h.bg.coude.rotation.x = h.bd.coude.rotation.x = -.7; h.corps.position.y = 0; h.corps.rotation.set(0, 0, 0); return; }
@@ -706,6 +833,19 @@ function animer(h, dt, v) {
   h.corps.rotation.set(.04 * k + (k > 1.2 ? .1 : 0), s * .07 * h.amp, 0);
   h.tete.rotation.y = -s * .05 * h.amp;
   h.torse.scale.y = 1 + Math.sin(h.ph * .35) * .008 * (1 - h.amp);
+  h.cligne -= dt; if (h.cligne < 0) { h.cligne = 2 + R() * 4.5; h.ferme = .13; } if (h.ferme > 0) h.ferme -= dt;
+  for (const p of h.paupieres) p.rotation.x = h.ferme > 0 ? 1.45 : .35;
+  h.bd.rotation.z = .06; h.bg.rotation.z = -.06;
+  if (v < .2) {
+    const t = (h.tp += dt);
+    if (h.parle) {
+      h.bd.rotation.x = -.38 + Math.sin(t * 2.1) * .2; h.bd.coude.rotation.x = -.95 + Math.sin(t * 3.3) * .32; h.bd.rotation.z = .2 + Math.sin(t * 1.7) * .1;
+      if (!h.porte) { h.bg.rotation.x = -.12 + Math.sin(t * 1.6 + 1) * .12; h.bg.coude.rotation.x = -.4 + Math.sin(t * 2.4) * .2; }
+      h.tete.rotation.x = Math.sin(t * 4.1) * .045; h.tete.rotation.y = Math.sin(t * 1.3) * .08;
+    } else {
+      h.corps.rotation.z = Math.sin(t * .5) * .014; h.tete.rotation.y = Math.sin(t * .23) * .22 * Math.sin(t * .11); h.tete.rotation.x = Math.sin(t * .31) * .03;
+    }
+  } else h.corps.rotation.z = 0;
 }
 
 const PNJ = {};
@@ -713,15 +853,15 @@ function pnj(id, nom, o, x, z, rot = 0, quand = 'jour') {
   const h = humain(o); h.g.position.set(x, H(x, z), z); h.g.rotation.y = rot; scene.add(h.g);
   return (PNJ[id] = { id, nom, h, pos: h.g.position, quand, v: 0, base: { x, z, rot }, trajet: null, ti: 0, attente: 0, repliques: null });
 }
-const TURI = { chemise: 0xe9e1cc, gilet: 0x3e2e22, pantalon: 0x383029, chapeau: 'coppola', chapeauC: 0x56503f, cheveux: 0x22180f, peau: 0xc68e62 };
-pnj('pippo', 'Zu Pippo', { chemise: 0xe0d6bf, pantalon: 0x5a4a38, chapeau: 'paille', chapeauC: 0xcdb27a, moustache: 0xc9c2b4, cheveux: 0xb9b2a4, peau: 0xae7650, ceinture: 0x7a2a22 }, 63, 56, -PI / 2);
+const TURI = { manches: true, chemise: 0xe9e1cc, gilet: 0x3e2e22, pantalon: 0x383029, chapeau: 'coppola', chapeauC: 0x56503f, cheveux: 0x22180f, peau: 0xc68e62 };
+pnj('pippo', 'Zu Pippo', { vieux: true, manches: true, chemise: 0xe0d6bf, pantalon: 0x5a4a38, chapeau: 'paille', chapeauC: 0xcdb27a, moustache: 0xc9c2b4, cheveux: 0xb9b2a4, peau: 0xae7650, ceinture: 0x7a2a22 }, 63, 56, -PI / 2);
 pnj('rosa', 'Donna Rosa', { robe: 0x1a1717, chemise: 0x1f1b1b, chapeau: 'scialle', chapeauC: 0x141212, peau: 0xd6a582 }, 72, 45.5, 0, 'toujours');
 pnj('nunzio', 'Mastro Nunzio', { chemise: 0xe8e0cc, gilet: 0x3b4a5a, tablier: true, chauve: true, moustache: 0x2a2018, pantalon: 0x4a3f33, taille: 1.04, peau: 0xc8946a }, -75, -59.4, PI);
 pnj('pretre', 'Padre Calogero', { robe: 0x121212, chemise: 0x121212, chapeau: 'pretre', chapeauC: 0x121212, peau: 0xc89a72 }, -80, -82, 0);
 pnj('toto', 'Le voleur', { chemise: 0xb8a77f, pantalon: 0x5e5040, taille: .8, cheveux: 0x2a1d12, cassette: true }, 66, 69, PI, 'scene');
-pnj('nardo', 'Nardo', { veste: 0x3f4a33, chemise: 0xd9cfb8, pantalon: 0x2e2a24, chapeau: 'coppola', chapeauC: 0x2a2620, moustache: true, lupara: true, lanterne: true, peau: 0xb8805a }, 50, 49, PI / 2, 'scene');
+pnj('nardo', 'Nardo', { foulard: 0x8e1f1a, veste: 0x3f4a33, chemise: 0xd9cfb8, pantalon: 0x2e2a24, chapeau: 'coppola', chapeauC: 0x2a2620, moustache: true, lupara: true, lanterne: true, peau: 0xb8805a }, 50, 49, PI / 2, 'scene');
 pnj('campiere1', 'Un campiere', { veste: 0x4a3a2a, pantalon: 0x2e2a24, chapeau: 'coppola', chapeauC: 0x33302a, lupara: true }, 49, 46, PI / 2, 'scene');
-pnj('campiere2', 'Un campiere', { veste: 0x3a3a30, pantalon: 0x2e2a24, chapeau: 'feutre', chapeauC: 0x2a2620, lupara: true, barbe: 0x1e1712 }, 49.5, 53, PI / 2, 'scene');
+pnj('campiere2', 'Un campiere', { foulard: 0x2a3a5a, veste: 0x3a3a30, pantalon: 0x2e2a24, chapeau: 'feutre', chapeauC: 0x2a2620, lupara: true, barbe: 0x1e1712 }, 49.5, 53, PI / 2, 'scene');
 pnj('ruffo', 'Le brigadier Ruffo', { veste: 0x1d2433, chemise: 0x1d2433, pantalon: 0x1d2433, chapeau: 'lucerna', moustache: 0x5a3a20, cheveux: 0x5a3a20, peau: 0xd9ad88, ceinture: 0xe8e2d0 }, -97, -70, PI / 2, 'scene');
 pnj('gardien1', 'Un campiere', { veste: 0x3f3a2a, pantalon: 0x2e2a24, chapeau: 'coppola', lupara: true }, 122, -34, 0);
 pnj('gardien2', 'Un campiere', { veste: 0x2f3a33, pantalon: 0x2e2a24, chapeau: 'feutre', lupara: true }, 128, -34, 0);
@@ -741,6 +881,69 @@ const FIGURANTS = [
   [-62, -66, [[-62, -66], [-40, -40], [-20, -12]]], [-95, -66, null], [44.5, 86.5, null], [58.5, 107.5, null], [93.5, 121.5, [[93.5, 121.5], [93.5, 93.5], [100.5, 93.5]]], [-84, -58, null]
 ];
 FIGURANTS.forEach(([x, z, trajet], i) => { const p = pnj('fig' + i, 'Un habitant', Object.assign({ peau: [0xc08a5e, 0xb07a50, 0xd2a07a][i % 3], moustache: i % 4 === 1 }, HABITS[i % HABITS.length]), x, z, R() * 6); p.trajet = trajet; p.repliques = [DIRES[i % DIRES.length]]; p.figurant = true; });
+
+/* ---------- Animaux : hirondelles, poules, chien, chat ---------- */
+const VIE = (() => {
+  const noir = M('uni:1c1c24'), matAile = new T.MeshStandardMaterial({ color: 0x1c1c24, side: T.DoubleSide, roughness: .7 });
+  const aile = new T.BufferGeometry(); aile.setAttribute('position', new T.Float32BufferAttribute([0, 0, -.04, 0, 0, .07, .24, 0, -.07], 3)); aile.computeVertexNormals();
+  const corpsO = new T.CapsuleGeometry(.028, .1, 2, 6); corpsO.rotateX(PI / 2);
+  const oiseaux = [];
+  for (let i = 0; i < 18; i++) {
+    const g = new T.Group(), a1 = new T.Mesh(aile, matAile), a2 = new T.Mesh(aile, matAile); a2.scale.x = -1; g.add(new T.Mesh(corpsO, noir), a1, a2); scene.add(g);
+    const c = i < 10 ? L.village : L.baglio;
+    oiseaux.push({ g, a1, a2, cx: c.x + (R() - .5) * 24, cz: c.z + (R() - .5) * 24, r: 10 + R() * 24, h: 8 + R() * 14, v: (.35 + R() * .45) * (R() < .5 ? -1 : 1), a: R() * 6, ph: R() * 6 });
+  }
+  const poules = [];
+  for (let i = 0; i < 6; i++) {
+    const g = new T.Group(), plume = M(i % 3 ? 'uni:8a5a32' : 'uni:ece6da');
+    const add = (geo, m, x, y, z, rx = 0, sx = 1, sy = 1, sz = 1, par = g) => { const me = new T.Mesh(geo, m); me.position.set(x, y, z); me.rotation.x = rx; me.scale.set(sx, sy, sz); me.castShadow = true; par.add(me); return me; };
+    add(new T.SphereGeometry(.15, 12, 10), plume, 0, .3, 0, 0, 1, .9, 1.35);
+    add(new T.ConeGeometry(.09, .22, 8), plume, 0, .42, -.2, -.8);
+    const cou = new T.Group(); cou.position.set(0, .36, .14); g.add(cou);
+    add(new T.SphereGeometry(.07, 10, 8), plume, 0, .12, .04, 0, 1, 1, 1, cou);
+    add(new T.SphereGeometry(.035, 8, 6), M('uni:c8281e'), 0, .19, .05, 0, .5, 1, 1.3, cou);
+    add(new T.ConeGeometry(.02, .06, 6), M('uni:e0a830'), 0, .11, .12, PI / 2, 1, 1, 1, cou);
+    for (const sx of [-.05, .05]) add(new T.CylinderGeometry(.012, .012, .2, 5), M('uni:d8a030'), sx, .1, 0);
+    const x = 61 + R() * 12, z = 51 + R() * 9; g.position.set(x, H(x, z), z); scene.add(g);
+    poules.push({ g, cou, cible: null, attente: R() * 3, t: R() * 5 });
+  }
+  const chien = new T.Group(), pel = M('uni:8a6644'), pelS = M('uni:5a4430');
+  const ad = (par, geo, m, x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) => { const me = new T.Mesh(geo, m); me.position.set(x, y, z); me.rotation.set(rx, ry, rz); me.scale.set(sx, sy, sz); me.castShadow = true; par.add(me); return me; };
+  const tronc_ = ad(chien, new T.CapsuleGeometry(.15, .45, 4, 12), pel, 0, .17, 0, PI / 2, 0, 0, 1.1, 1, .85);
+  ad(chien, new T.SphereGeometry(.12, 12, 10), pel, 0, .14, .42, 0, 0, 0, 1, .85, 1.1); ad(chien, new T.CapsuleGeometry(.055, .1, 3, 8), pel, 0, .1, .56, PI / 2);
+  ad(chien, new T.SphereGeometry(.025, 8, 6), M('uni:141414'), 0, .11, .63);
+  for (const sx of [-.08, .08]) { ad(chien, new T.ConeGeometry(.045, .11, 6), pelS, sx, .23, .4, -.3, 0, sx * 3); ad(chien, new T.CapsuleGeometry(.04, .25, 3, 6), pel, sx * 1.4, .05, .36, PI / 2); }
+  const queueC = ad(chien, new T.CapsuleGeometry(.03, .28, 3, 6), pelS, 0, .14, -.42, -1.1);
+  chien.position.set(-88.5, H(-88.5, -77), -77); chien.rotation.y = .6; scene.add(chien); CERCLES.push({ x: -88.5, z: -77, r: .5 });
+  const chat = new T.Group(), poilC = M('uni:3a3028');
+  ad(chat, new T.SphereGeometry(.1, 12, 10), poilC, 0, .1, 0, 0, 0, 0, .9, 1.2, 1.1); ad(chat, new T.SphereGeometry(.065, 12, 10), poilC, 0, .25, .06);
+  for (const sx of [-.035, .035]) { ad(chat, new T.ConeGeometry(.022, .05, 4), poilC, sx, .31, .06); ad(chat, new T.SphereGeometry(.009, 6, 5), M('iris:b8a030'), sx * .7, .26, .12); }
+  const queueT = new T.Group(); queueT.position.set(0, .05, -.09); chat.add(queueT); ad(queueT, new T.CapsuleGeometry(.014, .22, 3, 6), poilC, 0, -.1, -.04, -.5);
+  chat.position.set(36, H(36, 72) + 1.27, 72); chat.rotation.y = 2.6; scene.add(chat);
+  return { oiseaux, poules, chien, tronc_, queueC, chat, queueT };
+})();
+function majVie(dt, s) {
+  const nuit = HEURE > 1.45;
+  for (const o of VIE.oiseaux) {
+    o.g.visible = !nuit; if (nuit) continue;
+    o.a += o.v * dt * .9; const x = o.cx + Math.cos(o.a) * o.r, z = o.cz + Math.sin(o.a) * o.r * .7, y = H(o.cx, o.cz) + o.h + Math.sin(o.a * 3 + o.ph) * 2.5;
+    o.g.position.set(x, y, z); o.g.rotation.set(0, Math.atan2(-Math.sin(o.a) * o.v, Math.cos(o.a) * o.v * .7), -Math.sign(o.v) * .35);
+    const f = Math.sin(s * 18 + o.ph) * .9 * (Math.sin(s * .7 + o.ph) > -.3 ? 1 : .08); o.a1.rotation.z = f; o.a2.rotation.z = -f;
+  }
+  for (const p of VIE.poules) {
+    p.g.visible = !nuit; if (nuit) continue; p.t += dt;
+    if (p.attente > 0) { p.attente -= dt; p.cou.rotation.x = Math.max(0, Math.sin(p.t * 9)) * .9; }
+    else {
+      if (!p.cible) p.cible = { x: 59.5 + R() * 14, z: 49.5 + R() * 11 };
+      const dx = p.cible.x - p.g.position.x, dz = p.cible.z - p.g.position.z, l = Math.hypot(dx, dz);
+      if (l < .2 || Math.hypot(p.cible.x - 67, p.cible.z - 56) < 1.6) { p.cible = null; p.attente = 1 + R() * 4; }
+      else { p.g.position.x += dx / l * .7 * dt; p.g.position.z += dz / l * .7 * dt; p.g.rotation.y = Math.atan2(dx, dz); p.cou.rotation.x = Math.sin(p.t * 14) * .15; }
+      p.g.position.y = H(p.g.position.x, p.g.position.z) + Math.abs(Math.sin(p.t * 14)) * .02;
+    }
+  }
+  VIE.tronc_.scale.y = 1 + Math.sin(s * 1.6) * .035; VIE.queueC.rotation.y = Math.sin(s * 9) * .5 * Math.max(0, Math.sin(s * .4));
+  VIE.queueT.rotation.y = Math.sin(s * 1.3) * .6;
+}
 
 /* ---------- Le carretto sicilien et sa mule ---------- */
 function carretto() {
@@ -806,6 +1009,16 @@ function sortirChar(force) {
 /* ---------- Caméra ---------- */
 const CAM = { yaw: -PI / 2, pitch: .25, dist: 4.6, libre: 0, secousse: 0, pret: false, cible: new T.Vector3() };
 function majCamera(dt) {
+  if (etat === 'dialogue' && CINE) {
+    CINE.t += dt; const avance = Math.min(.22, CINE.t * .025);
+    camera.position.copy(CINE.pos).lerp(CINE.cible, avance / Math.max(.5, CINE.pos.distanceTo(CINE.cible)));
+    camera.lookAt(CINE.cible); CAM.cible.copy(CINE.cible);
+    const fv = camera.aspect < 1 ? 46 : 30; if (camera.fov !== fv) { camera.fov = fv; camera.updateProjectionMatrix(); }
+    if (passeFlou) { passeFlou.enabled = true; passeFlou.uniforms.focus.value = camera.position.distanceTo(CINE.cible); }
+    return;
+  }
+  if (passeFlou) passeFlou.enabled = false;
+  const fb = camera.aspect < 1 ? 70 : 55; if (camera.fov !== fb) { camera.fov = fb; camera.updateProjectionMatrix(); }
   const enChar = J.dansChar, px = enChar ? CHAR.x : J.x, pz = enChar ? CHAR.z : J.z;
   CAM.cible.set(px, (enChar ? CHAR.g.position.y + 2.1 : J.h.g.position.y + 1.62), pz);
   CAM.libre -= dt;
@@ -878,7 +1091,7 @@ function suivant() {
   choix.innerHTML = '';
   if (Array.isArray(l)) {
     const [qui, txt] = l; UI.dlg.querySelector('.qui').textContent = qui; DLG.txt = txt; DLG.tape = 0; UI.dlg.querySelector('.dit').innerHTML = '';
-    UI.dlg.querySelector('.suite').hidden = false; tournerVers(qui);
+    UI.dlg.querySelector('.suite').hidden = false; tournerVers(qui); parler(qui); cadrer(qui);
   } else {
     if (document.pointerLockElement) document.exitPointerLock();
     DLG.choixOuvert = true; DLG.txt = ''; DLG.tape = 0; UI.dlg.querySelector('.qui').textContent = l.qui || 'Turi'; UI.dlg.querySelector('.dit').innerHTML = l.question || ''; UI.dlg.querySelector('.suite').hidden = true;
@@ -886,8 +1099,27 @@ function suivant() {
     setTimeout(() => choix.querySelector('button') && !tactile && choix.querySelector('button').focus(), 50);
   }
 }
-function fermerDialogue() { DLG = null; UI.dlg.hidden = true; $('#choix').innerHTML = ''; cinema(false); if (etat === 'dialogue') { etat = 'jeu'; UI.hud.hidden = false; } }
+function fermerDialogue() { CINE = null; parler(null); if (passeFlou) passeFlou.enabled = false; DLG = null; UI.dlg.hidden = true; $('#choix').innerHTML = ''; cinema(false); if (etat === 'dialogue') { etat = 'jeu'; UI.hud.hidden = false; } }
 function majDialogue(dt) { if (!DLG || DLG.tape >= DLG.txt.length) return; DLG.tape = Math.min(DLG.txt.length, DLG.tape + dt * 55); let n = Math.floor(DLG.tape); const t = DLG.txt; if (t.lastIndexOf('<', n) > t.lastIndexOf('>', n)) n = t.indexOf('>', n) + 1; UI.dlg.querySelector('.dit').innerHTML = t.slice(0, n); }
+/* Mise en scène des dialogues : champ-contrechamp par-dessus l'épaule (règle des 180°), léger travelling, flou d'arrière-plan */
+let CINE = null, INTERLOCUTEUR = null;
+function parler(qui) { J.h.parle = qui === 'Turi'; for (const n of Object.values(PNJ)) n.h.parle = !!qui && n.nom === qui && n.h.g.visible; }
+const teteMonde = h => { h.g.updateMatrixWorld(true); return h.tete.getWorldPosition(new T.Vector3()).add(new T.Vector3(0, .02, 0)); };
+function cadrer(qui) {
+  if (J.dansChar) { CINE = null; return; }
+  const p = qui === 'Turi' ? null : Object.values(PNJ).find(n => n.nom === qui && n.h.g.visible);
+  if (p) INTERLOCUTEUR = p;
+  const autre = INTERLOCUTEUR && INTERLOCUTEUR.h.g.visible && dist(INTERLOCUTEUR.pos, J) < 9 ? INTERLOCUTEUR : null;
+  if (!autre) { CINE = null; return; }
+  if (!p) J.yaw = Math.atan2(autre.pos.x - J.x, autre.pos.z - J.z);
+  J.h.g.rotation.y = J.yaw; autre.h.g.rotation.y = autre.regarde ?? Math.atan2(J.x - autre.pos.x, J.z - autre.pos.z);
+  const parlant = p ? p.h : J.h, ecoute = p ? J.h : autre.h, A = teteMonde(parlant), B = teteMonde(ecoute);
+  const axe = new T.Vector3(autre.pos.x - J.x, 0, autre.pos.z - J.z).normalize(), cote = new T.Vector3(axe.z, 0, -axe.x);
+  const vers = A.clone().sub(B).setY(0).normalize();
+  const pos = B.clone().addScaledVector(vers, -1.35).addScaledVector(cote, .62).add(new T.Vector3(0, .05, 0));
+  if (dansBatiment(pos.x, pos.z, pos.y) || pos.y < H(pos.x, pos.z) + .3) { CINE = null; return; }
+  CINE = { pos, cible: A, t: 0 };
+}
 function tournerVers(nom) {
   const p = Object.values(PNJ).find(n => n.nom === nom && n.h.g.visible); if (!p) return;
   const jx = J.dansChar ? CHAR.x : J.x, jz = J.dansChar ? CHAR.z : J.z;
@@ -1500,6 +1732,12 @@ function boucle(now) {
   }
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) UI.toast.classList.remove('vu'); }
   if (aideT > 0) { aideT -= dt; if (aideT <= 0) UI.aide.classList.remove('vu'); }
+  majVie(dt, s);
+  if (Q.bloom) {
+    const sd = UC.sunPosition.value, sp = camera.position.clone().addScaledVector(sd, 1000).project(camera), m = Math.max(Math.abs(sp.x), Math.abs(sp.y));
+    const f = sd.y > -.02 && sp.z < 1 ? (1 - lisse(1, 1.6, m)) * clamp(1.3 - sd.y * 1.7, .25, 1) : 0;
+    RAYONS.enabled = f > .02; RAYONS.uniforms.uForce.value = f * .85; RAYONS.uniforms.uSoleil.value.set(sp.x * .5 + .5, sp.y * .5 + .5); RAYONS.uniforms.uTeinte.value.copy(soleil.color);
+  }
   if (DRAPEAU) DRAPEAU.children.forEach((b, i) => { b.rotation.x = Math.sin(s * 3 + i * .8) * .12; });
   POUSSIERE.position.set(camera.position.x, camera.position.y - 3 + Math.sin(s * .2) * .3, camera.position.z); POUSSIERE.rotation.y = s * .01;
   const ancre = etat === 'menu' ? new T.Vector3(-75, 0, -68) : CAM.cible;
@@ -1512,4 +1750,4 @@ function boucle(now) {
 ETAPES.intro.setup(); retourMenu(); heure(1.05, true);
 $('#chargement').hidden = true;
 requestAnimationFrame(boucle);
-window.__silenzio = { aller, charger, ETAPES, J, CHAR, PNJ, CUEILLETTE, etat: () => etat, etape: () => ETAPE, inter: () => interProche && interProche.lib(), heure, camera };
+window.__silenzio = { aller, charger, ETAPES, J, CHAR, PNJ, CUEILLETTE, etat: () => etat, etape: () => ETAPE, inter: () => interProche && interProche.lib(), heure, camera, cam: CAM };
