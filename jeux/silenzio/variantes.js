@@ -48,6 +48,8 @@ export function deformerPoint(p, wt, f, n, visage) {
     if (f.machoire && f.machoire !== 1) { const k = lisse(1.63, 1.575, y) * (1 - lisse(1.53, 1.48, y)) ; x *= 1 + (f.machoire - 1) * k; }
     if (f.nez && f.nez !== 1) { const d = Math.hypot(x / .026, (y - 1.632) / .03, (z - .13) / .03), k = Math.exp(-d * d * 1.2) * devant; const b = [0, 1.636, .108]; x = b[0] + (x - b[0]) * (1 + (f.nez - 1) * k); y = b[1] + (y - b[1]) * (1 + (f.nez - 1) * k); z = b[2] + (z - b[2]) * (1 + (f.nez - 1) * k); }
     if (f.nezCasse) { const d = Math.hypot(x / .018, (y - 1.632) / .022, (z - .135) / .02), k = Math.exp(-d * d) * devant; x += .0045 * f.nezCasse * k; z -= .0025 * f.nezCasse * k; }
+    if (f.menton) { const k = Math.exp(-((x / .025) ** 2) - (((y - 1.556) / .018) ** 2)) * devant; z += .005 * f.menton * k; y -= .002 * f.menton * k; }
+    if (f.levres) { const k = Math.exp(-((x / .028) ** 2) - (((y - 1.6) / .009) ** 2)) * lisse(.1, .12, z); z += .0018 * f.levres * k; }
     if (f.joues) { const k = Math.exp(-(((ax - .052) / .022) ** 2) - (((y - 1.618) / .028) ** 2)) * lisse(.0, .06, z); x += sg * .006 * f.joues * k; z += .004 * f.joues * k; }
     if (f.bajoues) { const k = Math.exp(-(((ax - .042) / .02) ** 2) - (((y - 1.582) / .02) ** 2)) * devant; y -= .004 * f.bajoues * k; x += sg * .002 * f.bajoues * k; }
     if (f.femme) {
@@ -194,6 +196,9 @@ export function peindreTete(src, pos, o = {}, nrm = null) {
       const fard = Math.exp(-(((ax - .036) / .016) ** 2) - (((y - 1.676) / .006) ** 2)) * lisse(.085, .095, z);
       const t1 = liner * .6 * femme, t2 = fard * .25 * femme; r = r * (1 - t1) + 34 * t1; g = g * (1 - t1) + 24 * t1; b = b * (1 - t1) + 22 * t1; r -= 26 * t2; g -= 32 * t2; b -= 26 * t2;
     }
+    // Yeux enfoncés : ombre de la ligne des cils et du creux de l'orbite (tout le monde)
+    { const de = Math.hypot((ax - .035) / .019, (y - 1.6665) / .0068), ligne = Math.exp(-(((de - 1) / .2) ** 2)) * (y > 1.664 ? 1 : .45) * lisse(.085, .095, z), creux = Math.exp(-(((ax - .036) / .02) ** 2) - (((y - 1.674) / .007) ** 2)) * lisse(.08, .095, z);
+      const k = 1 - .2 * ligne - .07 * creux; r *= k; g *= k * .99; b *= k * .985; }
     if (enfant) { const kl = Math.exp(-((x / .026) ** 2) - (((y - 1.6) / .009) ** 2)) * lisse(.112, .124, z); r += 10 * kl * enfant; g -= 6 * kl * enfant; }
     if (o.hale) { const t = o.hale * (1 - h); r *= 1 - .08 * t; g *= 1 - .15 * t; b *= 1 - .22 * t; }
     out[i] = r; out[i + 1] = g; out[i + 2] = b;
@@ -238,6 +243,8 @@ export function peindreCorps(src, o = {}) {
 /* Iris : couleur des yeux (texture de l'œil, iris au centre) */
 export function peindreOeil(src, couleur) {
   const d = new Uint8ClampedArray(src.data), W = src.width, c = rgb(couleur), cx = W / 2, cy = src.height * .6, R = W * .1;
+  // Blanc de l'œil moins blanc, plus sombre vers les bords (il est dans l'ombre des paupières)
+  for (let y = Math.round(src.height * .2); y < src.height; y++) for (let x = 0; x < W; x++) { const r = Math.hypot(x - cx, y - cy) / R; if (r < 1.3) continue; const i = (y * W + x) * 4, k = .9 - Math.min(.25, (r - 1.3) * .06); d[i] *= k; d[i + 1] *= k * .97; d[i + 2] *= k * .95; }
   for (let y = 0; y < src.height; y++) for (let x = 0; x < W; x++) { const r = Math.hypot(x - cx, y - cy) / R; if (r > 1.25 || r < .55) continue; const t = Math.min(1, (1.25 - r) * 4) * Math.min(1, (r - .55) * 6), i = (y * W + x) * 4, l = lum(d[i], d[i + 1], d[i + 2]) / 160; d[i] += (c[0] * l - d[i]) * t; d[i + 1] += (c[1] * l - d[i + 1]) * t; d[i + 2] += (c[2] * l - d[i + 2]) * t; }
   return d;
 }

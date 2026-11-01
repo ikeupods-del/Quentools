@@ -986,13 +986,15 @@ function geoPP(nom, { ep = 0, f = null, fk = '', filtre = null, fc = '', coupe =
   if (cp) g.setAttribute('coupe', new T.BufferAttribute(cp, 1));
   g.computeBoundingSphere(); return (PP_GEO[k] = g);
 }
+/* Intérieur des vêtements dans l'ombre (encolures, manches, bas) au lieu d'un vide ou d'un tissu éclairé */
+function interieurSombre(sh) { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\nif (!gl_FrontFacing) diffuseColor.rgb *= 0.3;'); }
 /* Découpe nette d'un vêtement (encolure, emmanchure, bas) : la matière écarte les points où « coupe » est négatif */
 function decoupe(mat) {
   const k = mat.uuid + ':coupe'; if (MATS.has(k)) return MATS.get(k);
   const m = mat.clone(); m.side = T.DoubleSide;
   m.onBeforeCompile = sh => {
     sh.vertexShader = 'attribute float coupe;\nvarying float vCoupe;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvCoupe = coupe;');
-    sh.fragmentShader = 'varying float vCoupe;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\nif (vCoupe < 0.) discard;');
+    sh.fragmentShader = 'varying float vCoupe;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\nif (vCoupe < 0.) discard;'); interieurSombre(sh);
   };
   m.customProgramCacheKey = () => 'coupe'; MATS.set(k, m); return m;
 }
@@ -1023,6 +1025,44 @@ function enveloppeTete({ ecart = .008, bas = () => 1.57, ouverture = () => 0, ha
   }
   const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); g.setAttribute('coupe', new T.Float32BufferAttribute(cp, 1)); g.setIndex(idx); g.computeVertexNormals(); return g;
 }
+/* Mèches : petites cartes de cheveux (texture de brins, bords découpés) posées sur une surface et peignées dans un sens */
+let TEX_MECHE = null;
+function texMeche() {
+  if (TEX_MECHE) return TEX_MECHE;
+  const W = 128, H = 256, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'), r = alea(77);
+  for (let i = 0; i < 140; i++) { const x0 = r() * W, l = H * (.45 + r() * .55), v = 140 + r() * 115 | 0; x.strokeStyle = `rgba(${v},${v},${v},${.5 + r() * .5})`; x.lineWidth = .5 + r() * 1.3; x.beginPath(); x.moveTo(x0, -2); x.bezierCurveTo(x0 + (r() - .5) * 8, l * .4, x0 + (r() - .5) * 12, l * .75, x0 + (r() - .5) * 16, l); x.stroke(); }
+  const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.anisotropy = Math.min(ANISO, 8); return (TEX_MECHE = t);
+}
+const matMeches = c => { const k = 'meche:' + c; if (MATS.has(k)) return MATS.get(k); const m = new T.MeshStandardMaterial({ color: new T.Color(c).multiplyScalar(1.7), map: texMeche(), alphaTest: .42, side: T.DoubleSide, roughness: .62, envMapIntensity: .35 });
+  m.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>', T.ShaderChunk.normal_fragment_begin.split('normal *= faceDirection;').join('')); }; // les deux faces gardent la normale du crâne
+  m.customProgramCacheKey = () => 'meche'; MATS.set(k, m); return m; }; // couleur compensée : la texture des brins est plus sombre que le blanc
+/* S = { pos (repère du crâne), index, src (positions servant au filtre, sinon pos) } ; filtre(x, y, z) → poids (0 = rien) ;
+   dir(p, n, d, r) écrit le sens du peigné dans d ; nb cartes de longueur long[0..1] */
+function cartesMeches(S, { filtre, dir, nb, long, larg = .012, leve = .006, graine = 1, rayon = .095 }) {
+  const P = S.pos, I = S.index, src = S.src || P, tris = [], cumul = []; let tot = 0;
+  const a = new T.Vector3(), b = new T.Vector3(), c = new T.Vector3(), e1 = new T.Vector3(), e2 = new T.Vector3(), n = new T.Vector3(), p = new T.Vector3(), d = new T.Vector3(), q = new T.Vector3();
+  for (let t = 0; t < I.length; t += 3) {
+    const i0 = I[t] * 3, i1 = I[t + 1] * 3, i2 = I[t + 2] * 3, w = filtre((src[i0] + src[i1] + src[i2]) / 3, (src[i0 + 1] + src[i1 + 1] + src[i2 + 1]) / 3, (src[i0 + 2] + src[i1 + 2] + src[i2 + 2]) / 3);
+    if (!(w > 0)) continue;
+    a.fromArray(P, i0); b.fromArray(P, i1); c.fromArray(P, i2); const ar = e1.subVectors(b, a).cross(e2.subVectors(c, a)).length() * w; if (!ar) continue;
+    tot += ar; tris.push(t); cumul.push(tot);
+  }
+  if (!tris.length) return null;
+  const r = alea(graine), pos = [], nor = [], uv = [], idx = [];
+  for (let k = 0; k < nb; k++) {
+    let lo = 0, hi = cumul.length - 1; const x = r() * tot; while (lo < hi) { const m = (lo + hi) >> 1; if (cumul[m] < x) lo = m + 1; else hi = m; }
+    const t = tris[lo]; a.fromArray(P, I[t] * 3); b.fromArray(P, I[t + 1] * 3); c.fromArray(P, I[t + 2] * 3);
+    let u = r(), v = r(); if (u + v > 1) { u = 1 - u; v = 1 - v; }
+    e1.subVectors(b, a); e2.subVectors(c, a); p.copy(a).addScaledVector(e1, u).addScaledVector(e2, v); n.crossVectors(e1, e2).normalize(); if (n.dot(p) < 0) n.negate();
+    dir(p, n, d, r); d.addScaledVector(n, -d.dot(n)); if (d.lengthSq() < 1e-8) continue; d.normalize();
+    const ang = (r() - .5) * .6; q.crossVectors(n, d); d.multiplyScalar(Math.cos(ang)).addScaledVector(q, Math.sin(ang)).normalize(); q.crossVectors(n, d).normalize();
+    const L = long[0] + r() * (long[1] - long[0]), W = larg * (.7 + r() * .6), h = leve * (.6 + r() * .8), base = pos.length / 3, u0 = r() * .62;
+    for (let sg = 0; sg <= 3; sg++) { const fr = sg / 3, lift = h * (1 - .6 * fr) - (L * fr) ** 2 / (2 * rayon), w = W * (1 - .3 * fr); // la mèche suit la courbure de la tête
+      for (const cote of [-.5, .5]) { pos.push(p.x + d.x * L * fr + n.x * lift + q.x * w * cote, p.y + d.y * L * fr + n.y * lift + q.y * w * cote, p.z + d.z * L * fr + n.z * lift + q.z * w * cote); nor.push(n.x, n.y, n.z); uv.push(u0 + (cote + .5) * .38, fr); } }
+    for (let sg = 0; sg < 3; sg++) { const o = base + sg * 2; idx.push(o, o + 1, o + 2, o + 1, o + 3, o + 2); }
+  }
+  const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new T.Float32BufferAttribute(nor, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeBoundingSphere(); return g;
+}
 const MAT_CHEV = c => { const k = 'pp-chev:' + c; if (MATS.has(k)) return MATS.get(k); const m = new T.MeshStandardMaterial({ color: c, map: TX.cheveux.map, normalMap: TX.cheveux.normalMap, roughness: .55, side: T.DoubleSide }); MATS.set(k, m); return m; };
 /* Jupe longue, du tour de taille aux chevilles, attachée au bassin et un peu aux cuisses */
 function jupePP(f, fk, ample = 1) {
@@ -1049,6 +1089,7 @@ function habitPP(nom, fam, c, uni = false) {
   if (fam && REPET[fam]) { const t = TX[fam], rep = x => { const y = x.clone(); y.repeat.set(REPET[fam] * 2.5, REPET[fam] * 2.5); y.needsUpdate = true; return y; }; m = new T.MeshPhysicalMaterial({ color: c, map: rep(t.map), normalMap: plis, roughnessMap: rep(t.roughnessMap), roughness: 1, sheen: ['velours', 'tricot', 'laine'].includes(fam) ? .9 : .25, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .3) }); }
   else if (uni) { const t = TX.tissu, rep = x => { const y = x.clone(); y.repeat.set(14, 14); y.needsUpdate = true; return y; }; m = new T.MeshPhysicalMaterial({ color: c, normalMap: rep(t.normalMap), normalScale: new T.Vector2(.5, .5), roughness: .92, sheen: .35, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .25) }); }
   else m = new T.MeshPhysicalMaterial({ color: new T.Color(c).multiplyScalar(1 / (GRIS_PP[nom] || .4)), map: texPP(m0.map, true), normalMap: plis, roughness: .92, sheen: .35, sheenRoughness: .7, sheenColor: new T.Color(c).lerp(new T.Color(0xffffff), .25) });
+  m.side = T.DoubleSide; m.onBeforeCompile = interieurSombre; m.customProgramCacheKey = () => 'interieur';
   MATS.set(k, m); return m;
 }
 const cuirPP = c => { const k = 'ppc:' + c; if (MATS.has(k)) return MATS.get(k); const m = new T.MeshPhysicalMaterial({ color: c, normalMap: texPP('chaussures-n.jpg'), roughness: .5, clearcoat: .25, clearcoatRoughness: .5 }); MATS.set(k, m); return m; };
@@ -1061,11 +1102,14 @@ function silhouettePP(o) {
   if (o.mince && nom !== 'mince') Object.assign(f, { largeur: (f.largeur ?? 1) * .93, epais: (f.epais ?? 0) - .004, joues: (f.joues ?? 0) - .5 });
   if (o.largeur) f.largeur = (f.largeur ?? 1) * o.largeur; if (o.longueur) { f.jambes = (f.jambes ?? 1) * o.longueur; f.buste = (f.buste ?? 1) * o.longueur; }
   if (t > 1 && nom === 'homme') { f.jambes = t; f.buste = t; }
+  // Chacun son visage : petites différences tirées des couleurs du personnage (toujours les mêmes pour lui)
+  const r = alea((o.peau ?? 1) * 31 + (o.cheveux ?? 7) * 17 + (o.chemise ?? o.robe ?? 3) + (o.pantalon ?? 5) * 3 + (o.veste ?? 11) * 7), ec = () => r() - .5;
+  f.nez = (f.nez ?? 1) * (1 + ec() * .14); f.machoire = (f.machoire ?? 1) * (1 + ec() * .1); f.joues = (f.joues ?? 0) + ec() * .7; f.menton = (f.menton ?? 0) + ec() * 1.4; f.levres = (f.levres ?? 0) + ec() * 1.4 + (femme ? .5 : 0);
   return { nom, f, femme };
 }
 /* Le personnage : options identiques à celles des PNJ (chemise, gilet, veste, robe, chapeau, barbe, etc.) */
 function humainPP(o = {}) {
-  const { nom: silNom, f, femme } = silhouettePP(o), fk = JSON.stringify(f), enfant = f.enfant || 0, vieux = /vieu/.test(silNom);
+  const { nom: silNom, f, femme } = silhouettePP(o), fk = JSON.stringify(f), fkCorps = JSON.stringify(Object.fromEntries(Object.entries(f).filter(([k]) => !['nez', 'machoire', 'joues', 'menton', 'levres', 'bajoues', 'nezCasse', 'femme', 'enfant'].includes(k)))), enfant = f.enfant || 0, vieux = /vieu/.test(silNom);
   const g = new T.Group(), noms = PP.os.map(x => x.n), rang = PP_RANG;
   const joints = PP.joints.map((jt, i) => [...VAR.deformerPoint(jt.slice(0, 3), 0, f, null, false), ...VAR.deformerPoint(jt.slice(3), PP.os[i].n === 'head' ? 1 : 0, f, null, false)]);
   const bones = PP.os.map(x => { const b = new T.Bone(); b.name = nomOs(x.n); return b; });
@@ -1073,7 +1117,7 @@ function humainPP(o = {}) {
   g.updateMatrixWorld(true);
   const squelette = new T.Skeleton(bones), nm = n => PP_ALIAS[n] || n, B = n => bones[rang[nm(n)]], J = n => joints[rang[nm(n)]];
   const couches = [], ajouter = (geo, mat) => { const m = new T.SkinnedMesh(geo, mat); m.castShadow = m.receiveShadow = true; m.bind(squelette); g.add(m); couches.push(m); return m; };
-  const geo = (nom, opt = {}) => geoPP(nom, Object.assign({ f, fk }, opt)), tx = o.tex || {};
+  const geo = (nom, opt = {}) => geoPP(nom, Object.assign({ f, fk: /tete|cils|oeil/.test(nom) ? fk : fkCorps }, opt)), tx = o.tex || {};
   // Peau (teint, âge, cheveux, barbe, maquillage)
   const cheveux = o.cheveux ?? 0x1e1712, lumC = ((cheveux >> 16 & 255) * .3 + (cheveux >> 8 & 255) * .59 + (cheveux & 255) * .11);
   const barbeC = typeof o.barbe === 'number' ? o.barbe : cheveux, moustC = typeof o.moustache === 'number' ? o.moustache : cheveux;
@@ -1099,9 +1143,30 @@ function humainPP(o = {}) {
     ajouter(geo('tete', { ep: epf, filtre: (x, y, z) => VAR.partCheveux(x, y, z) > .05 && nu(x, y, z) < .9, fc: 'chev' + femme + (o.chauve ? 'c' : '') + (co || '') }), mc);
   }
   const tete = new T.Group(); const hd = J('head'), C = VAR.deformerPoint(PP_C, 1, f, null, false); tete.position.set(C[0] - hd[0], C[1] - hd[1], C[2] - hd[2]); tete.scale.setScalar(f.tete ?? 1); B('head').add(tete);
-  if (co === 'carre') { const gc = enveloppeTete({ ecart: .011, bas: a => a < 0 ? 1.545 : 1.575, ouverture: y => 1.3 * (1 - lisse(1.6, 1.745, y)), NA: 96, NY: 40 }); const m = new T.Mesh(gc, decoupe(MAT_CHEV(chevC))); m.castShadow = true; tete.add(m); }
-  if (femme && !co && o.chapeau !== 'scialle') { const gc = enveloppeTete({ ecart: .006, bas: a => Math.abs(a) > 2.2 ? 1.6 : 1.63, ouverture: y => 1.25 * (1 - lisse(1.63, 1.75, y)), pend: false, NA: 96, NY: 40 }); const m = new T.Mesh(gc, decoupe(MAT_CHEV(chevC))); m.castShadow = true; tete.add(m); }
-  if (((femme && co !== 'carre') || co === 'chignon') && o.chapeau !== 'scialle') { const ch = new T.Mesh(new T.SphereGeometry(.046, 18, 12), MAT_CHEV(chevC)); ch.scale.set(1, .85, .8); ch.position.set(0, .0, -.122); ch.castShadow = true; tete.add(ch); }
+  let perruque = null, chignon = null;
+  if (co === 'carre') { const gc = perruque = enveloppeTete({ ecart: .011, bas: a => a < 0 ? 1.545 : 1.575, ouverture: y => 1.3 * (1 - lisse(1.6, 1.745, y)), NA: 96, NY: 40 }); const m = new T.Mesh(gc, decoupe(MAT_CHEV(chevC))); m.castShadow = true; tete.add(m); }
+  if (femme && !co && o.chapeau !== 'scialle') { const gc = perruque = enveloppeTete({ ecart: .006, bas: a => Math.abs(a) > 2.2 ? 1.6 : 1.63, ouverture: y => 1.25 * (1 - lisse(1.63, 1.75, y)), pend: false, NA: 96, NY: 40 }); const m = new T.Mesh(gc, decoupe(MAT_CHEV(chevC))); m.castShadow = true; tete.add(m); }
+  if (((femme && co !== 'carre') || co === 'chignon') && o.chapeau !== 'scialle') { const ch = chignon = new T.Mesh(new T.SphereGeometry(.046, 18, 12), MAT_CHEV(chevC)); ch.scale.set(1, .85, .8); ch.position.set(0, .0, -.122); ch.castShadow = true; tete.add(ch); }
+  // Mèches de cheveux, de barbe et de moustache
+  if (!ESSAI) {
+    const gT = geo('tete'), Pm = gT.attributes.position.array, sT = f.tete ?? 1, bT = brutPP('tete'), loc = new Float32Array(Pm.length);
+    for (let i = 0; i < Pm.length; i += 3) for (let k = 0; k < 3; k++) loc[i + k] = (Pm[i + k] - C[k]) / sT;
+    const crane = { pos: loc, index: bT.index, src: bT.pos }, graine = (cheveux ^ (o.peau ?? 0)) & 0xffff, cartes = (S, opt, mat) => { const g = cartesMeches(S, Object.assign({ graine }, opt)); if (g) { const m = new T.Mesh(g, mat); m.castShadow = true; tete.add(m); } };
+    const sommet = new T.Vector3(-.012, .112, -.035);
+    if (co !== 'rase' && o.chapeau !== 'scialle' && !perruque) {
+      const nu = (x, y, z) => (o.chauve ? lisse(1.71, 1.74, y) * lisse(-.07, 0, z) : 0) + (co === 'recul' ? lisse(1.728, 1.75, y) * lisse(0, .08, z) * .8 : 0);
+      const gomine = co === 'gomine';
+      cartes(crane, { filtre: (x, y, z) => VAR.partCheveux(x, y, z) > .5 && nu(x, y, z) < .3 ? 1 : 0, nb: gomine ? 1700 : 1700, long: gomine ? [.04, .07] : [.013, .026], leve: gomine ? .0035 : .005,
+        dir: (p, n, d) => gomine ? d.set(p.x * .4, -.25, -1) : d.set(p.x - sommet.x + .02, (p.y - sommet.y) * .3 - .04, Math.min(p.z - sommet.z, .02 - p.z * .4)) }, matMeches(chevC)); // peignés vers l'arrière et les côtés, jamais sur le front
+    }
+    if (perruque) { const cp = perruque.attributes.coupe.array, idxP = perruque.index.array, gardes = []; for (let t = 0; t < idxP.length; t += 3) if (cp[idxP[t]] > .25 && cp[idxP[t + 1]] > .25 && cp[idxP[t + 2]] > .25) gardes.push(idxP[t], idxP[t + 1], idxP[t + 2]);
+      cartes({ pos: perruque.attributes.position.array, index: gardes }, { filtre: () => 1, rayon: .11, nb: co === 'carre' ? 2600 : 2000, long: co === 'carre' ? [.05, .09] : [.04, .075], leve: .003, larg: .014,
+      dir: co === 'carre' ? (p, n, d) => d.set(p.x * .8, -1, p.z > .02 ? -.9 : 0) : (p, n, d) => d.set(-p.x, -.02 - p.y * .3, -.122 - p.z) }, matMeches(chevC)); }
+    if (chignon) { const g = chignon.geometry.clone(); g.scale(1, .85, .8); g.translate(0, 0, -.122); cartes({ pos: g.attributes.position.array, index: g.index.array }, { filtre: () => 1, nb: 500, long: [.03, .05], leve: .002, dir: (p, n, d) => d.set(-(p.y), p.x, 0) }, matMeches(chevC)); }
+    const cb = typeof o.barbe === 'number' ? o.barbe : cheveux;
+    if (o.barbe && o.barbeEpaisse) cartes(crane, { filtre: (x, y, z) => VAR.zoneBarbe(x, y, z) > .45 ? 1 : 0, nb: 1100, long: o.barbeEpaisse ? [.018, .034] : [.008, .015], leve: o.barbeEpaisse ? .005 : .0025, larg: .008, rayon: .07, dir: (p, n, d) => d.set(p.x * .5, -1, .3) }, matMeches(cb));
+    if (o.moustache || o.barbeEpaisse) cartes(crane, { filtre: (x, y, z) => VAR.zoneMoustache(x, y, z) > .3 ? 1 : 0, nb: 180, long: [.008, .015], leve: .003, larg: .007, rayon: .05, dir: (p, n, d) => d.set(Math.sign(p.x) * .7, -1, .25) }, matMeches(typeof o.moustache === 'number' ? o.moustache : cb));
+  }
   // Barbe épaisse et moustache en relief
   if (o.barbe && o.barbeEpaisse) ajouter(geo('tete', { ep: (x, y, z) => .009 * VAR.zoneBarbe(x, y, z), filtre: (x, y, z) => VAR.zoneBarbe(x, y, z) > .04, fc: 'barbe' }), MATS.get(cle + 'b') || (MATS.set(cle + 'b', new T.MeshStandardMaterial({ map: pt.tete, normalMap: TX.cheveux.normalMap, roughness: .7 })), MATS.get(cle + 'b')));
   if (o.moustache || o.barbe) ajouter(geo('tete', { ep: (x, y, z) => .0045 * VAR.zoneMoustache(x, y, z), filtre: (x, y, z) => VAR.zoneMoustache(x, y, z) > .08, fc: 'moust' }), MATS.get(cle + 'b') || (MATS.set(cle + 'b', new T.MeshStandardMaterial({ map: pt.tete, normalMap: TX.cheveux.normalMap, roughness: .7 })), MATS.get(cle + 'b')));
@@ -1156,7 +1221,7 @@ function humainPP(o = {}) {
     partie(chap, GH.visiere, cc, 0, yb - .026, .008, rx / .115 * .95, .6, rz / .115 * 1.18, t ? .34 : .22);
   }
   else if (ch === 'paille') { const c2 = 'tissu:' + hex(o.chapeauC ?? 0xcdb27a); calotte(.016, 1.735, 1.84, c2); disque(.2, .008, yb - .008, c2); partie(chap, GH.disque, c2, 0, yb + .048, 0, rx * 1.02, .11, rz * 1.02); partie(chap, GH.disque, 'tissu:4a3020', 0, yb + .008, 0, rx * 1.04, .026, rz * 1.04); }
-  else if (ch === 'feutre' || ch === 'cabosse') { const k = ch === 'cabosse'; calotte(.014, 1.735, 1.83, cc); disque(.165, .008, yb - .022, cc).rotation.set(k ? .1 : 0, 0, k ? -.07 : 0); const cr = partie(chap, GH.disque, cc, 0, yb + .044, 0, rx * 1.0, .132, rz * 1.02); if (k) { cr.scale.y = .1; cr.rotation.z = .08; } partie(chap, GH.disque, 'tissu:151210', 0, yb - .006, 0, rx * 1.03, .028, rz * 1.05); }
+  else if (ch === 'feutre' || ch === 'cabosse') { const k = ch === 'cabosse'; calotte(.014, 1.735, 1.83, cc); disque(.165, .008, yb - .022, cc).rotation.set(k ? .1 : 0, 0, k ? -.07 : 0); const cr = partie(chap, GH.calotteFeutre, cc, 0, yb + .04, 0, rx * 1.0, .11, rz * 1.02); if (k) { cr.scale.y = .095; cr.position.y = yb + .034; cr.rotation.z = .08; } partie(chap, GH.disque, 'tissu:151210', 0, yb - .006, 0, rx * 1.03, .028, rz * 1.05); }
   else if (ch === 'lucerna') { calotte(.012, 1.745, 1.83, 'tissu:121318'); partie(chap, GH.demiLune, 'tissu:121318', 0, yb + .06, 0, 1.0, 1, 1, PI / 2, 0); partie(chap, GH.oreille, 'tissu:b03a2e', 0, yb + .16, .03, .8, .8, .5); partie(chap, GH.disque, 'bronze', .045, yb + .1, .03, .03, .01, .03, PI / 2); }
   else if (ch === 'pretre') { calotte(.012, 1.735, 1.83, cc); disque(.2, .008, yb - .008, cc); partie(chap, GH.calotte, cc, 0, yb + .01, 0, .82, .7, .9); }
   else if (ch === 'scialle') {
@@ -1406,6 +1471,7 @@ GH.tete = sculpter(new T.SphereGeometry(1, 64, 48));
 GH.chevelure = sculpter(new T.SphereGeometry(1, 40, 20, 0, PI * 2, 0, PI * .5), 1.07, .06);
 GH.barbe = sculpter(new T.SphereGeometry(1, 40, 20, PI * .05, PI * .9, PI * .58, PI * .42), 1.06, .05);
 const OEIL = (sx) => { const v = new T.Vector3(sx * .32, .075, .94).normalize(); return formeTete(v.x, v.y, v.z).multiplyScalar(.93); };
+GH.calotteFeutre = new T.LatheGeometry(prof([[1, -.5], [.97, 0], [.9, .4], [.82, .5], [.5, .44], [0, .4]]), 36); // calotte de feutre : flancs inclinés, dessus creusé
 GH.coppola = new T.LatheGeometry(prof([[1, 0], [1.06, .35], [1.1, .66], [1.06, .86], [.85, .97], [.45, 1.01], [0, 1.02]]), 40); { const p = GH.coppola.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, p.getZ(i) + p.getY(i) * .32); GH.coppola.computeVertexNormals(); } // casquette plate : le dessus avance sur la visière
 GH.capePP = new T.LatheGeometry(prof([[.07, 1.5], [.115, 1.475], [.185, 1.435], [.232, 1.37], [.25, 1.26], [.256, 1.1]]), 32); GH.capePP.scale(1, 1, .68); GH.capePP.translate(0, 0, -.025);
 GH.globe = new T.SphereGeometry(.0128, 16, 12); GH.iris = new T.SphereGeometry(.0068, 14, 10); GH.paupiere = new T.SphereGeometry(.0142, 16, 8, 0, PI * 2, 0, PI * .5);
@@ -1659,10 +1725,10 @@ function chainePP(h) {
 /* Étui d'épaule : sangle autour de l'épaule gauche, étui sous l'aisselle (visible quand la veste s'ouvre) */
 function holsterPP(h) {
   const os = h.B('spine02'), o = h.J('spine02'), loc = p => { const q = h.pt(p); return new T.Vector3(q[0] - o[0], q[1] - o[1], q[2] - o[2]); };
-  const pts = [[.13, 1.45, .0], [.07, 1.36, .14], [.1, 1.24, .165], [.18, 1.2, .1], [.2, 1.25, -.06], [.12, 1.36, -.14]].map(loc);
+  const pts = [[.13, 1.45, .0], [.08, 1.36, .135], [.12, 1.25, .16], [.19, 1.2, .08], [.2, 1.25, -.06], [.12, 1.36, -.14]].map(loc);
   const s = new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts, true), 40, .007, 4, true), M('cuir:7a1a16')); s.scale.z = 1; os.add(s);
-  const e = new T.Mesh(new T.BoxGeometry(.04, .12, .06), M('cuir:9a1e1a')); e.position.copy(loc([.19, 1.19, .07])); e.rotation.z = .2; os.add(e);
-  const c = new T.Mesh(new T.BoxGeometry(.02, .05, .025), MAT_CHROME); c.position.copy(loc([.19, 1.27, .075])); c.rotation.z = .5; os.add(c);
+  const e = new T.Mesh(new T.BoxGeometry(.04, .12, .06), M('cuir:9a1e1a')); e.position.copy(loc([.135, 1.2, .135])); e.rotation.z = .15; os.add(e);
+  const c = new T.Mesh(new T.BoxGeometry(.02, .05, .025), MAT_CHROME); c.position.copy(loc([.13, 1.275, .14])); c.rotation.z = .4; os.add(c);
 }
 /* Sacoches de toile pendues aux hanches par une sangle en travers du buste */
 function sacochesPP(h, moderne = false) {
