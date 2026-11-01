@@ -1,0 +1,3 @@
+James realistic male character 3D model, StormierTunic16 (sketchfab.com/jondavila98), CC-BY 4.0
+Licence : Creative Commons Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/). Le crédit est affiché dans le jeu (menu « Les familles »).
+Modifications : squelette, poids de peau, recadrage et textures réduites par outils/base-humain.js.

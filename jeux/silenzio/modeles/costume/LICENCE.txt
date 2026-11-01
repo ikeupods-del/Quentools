@@ -1,0 +1,6 @@
+Male Character in Suit
+Auteur : sthaarpit (https://sketchfab.com/sthaarpit)
+Licence : CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+Source : https://sketchfab.com/3d-models/male-character-in-suit-14d3dd2000cf46cca34a4f5fc621ce74
+Le crédit est affiché dans le jeu (menu « Les familles »).
+Modifications : recadrage, os renommés et textures réduites par outils/modele-pret.js.

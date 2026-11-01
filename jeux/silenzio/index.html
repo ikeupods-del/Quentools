@@ -126,6 +126,7 @@ body.cinema #bandes .h,body.cinema #bandes .b{transform:none}
 #galerie .fiche{pointer-events:auto;width:min(440px,92vw);background:linear-gradient(90deg,rgba(12,9,6,.86),rgba(12,9,6,.55));padding:28px 26px;border-left:2px solid var(--citron)}
 #galerie .surtitre{font-family:var(--etiquette);font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--citron)}
 #galerie h2{font-family:var(--titre);font-style:italic;font-weight:500;font-size:clamp(30px,4vw,44px);line-height:1.05;margin:10px 0 6px;text-wrap:balance}
+#galerie .credit{font-size:12px;color:var(--fumee);margin:-6px 0 14px;opacity:.85}
 #galerie .lieu{font-family:var(--etiquette);letter-spacing:.12em;text-transform:uppercase;font-size:13px;color:var(--fumee);margin-bottom:14px}
 #galerie p{font-size:15px;line-height:1.6;margin:0 0 18px}
 #galerie .nav{display:flex;gap:8px;flex-wrap:wrap}
@@ -219,6 +220,7 @@ body.tactile #jauges{bottom:calc(126px + env(safe-area-inset-bottom,0px))}
     <h2 id="g-nom"></h2>
     <div class="lieu" id="g-lieu"></div>
     <p id="g-texte"></p>
+    <p class="credit" id="g-credit" hidden></p>
     <div class="nav"><button class="menu-btn" id="g-prec" aria-label="Personnage précédent">←</button><button class="menu-btn" id="g-suiv" aria-label="Personnage suivant">→</button><button class="menu-btn" id="g-zoom">Gros plan</button><button class="menu-btn" id="g-retour">Retour au menu</button></div>
     <div class="astuce">Glisse sur le personnage pour le faire tourner · flèches du clavier pour changer</div>
   </div>

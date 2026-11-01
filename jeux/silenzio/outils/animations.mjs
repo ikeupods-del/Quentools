@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* Transfère les animations d'un personnage Quaternius (CC0, fichier .glb) sur les squelettes du jeu
-   (corps MakeHuman et personnage PromptPlay) : pour chaque image, l'orientation de chaque os source dans le monde
+   (corps MakeHuman et personnages de base du dossier modeles/) : pour chaque image, l'orientation de chaque os source dans le monde
    est appliquée à l'os correspondant, corrigée de la différence de pose de repos (bras en croix / bras en A).
    Usage : node outils/animations.mjs <quaternius.glb>  →  modeles/anim/anims.json */
 import fs from 'fs';
@@ -44,6 +44,8 @@ function cibleDepuis(os, joints) {
 const corps = JSON.parse(fs.readFileSync(path.join(RACINE, 'modeles/corps/corps.json'), 'utf8'));
 const pp = JSON.parse(fs.readFileSync(path.join(RACINE, 'modeles/promptplay/perso.json'), 'utf8'));
 const CIBLES = { mh: cibleDepuis(corps.os, corps.silhouettes.homme.os), pp: cibleDepuis(pp.os, pp.joints) };
+// Autres personnages de base (dossiers modeles/<nom>/perso.json produits par base-humain.js ou modele-pret.js)
+for (const [cle, dossier] of [['jm', 'james'], ['costume', 'costume'], ['fille', 'fille'], ['joe', 'joe']]) { const f = path.join(RACINE, 'modeles', dossier, 'perso.json'); if (fs.existsSync(f)) { const d = JSON.parse(fs.readFileSync(f, 'utf8')); CIBLES[cle] = cibleDepuis(d.os, d.joints); } }
 
 const CLIPS = { repos: 'Man_Idle', marche: 'Man_Walk', course: 'Man_Run', assis: 'Man_Sitting', applaudir: 'Man_Clapping', debout: 'Man_Standing' };
 const sortie = { source: 'Animations Quaternius (CC0), transférées par outils/animations.mjs', fps: 30, cibles: {} };

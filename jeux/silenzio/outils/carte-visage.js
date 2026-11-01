@@ -2,16 +2,17 @@
 'use strict';
 /* Carte des positions du visage : pour chaque point de la texture de la tête, sa position 3D sur le personnage.
    Elle sert à peindre au bon endroit (rides, barbe, maquillage, cheveux gris) les variantes du personnage.
-   Usage : node outils/carte-visage.js   →  modeles/promptplay/tete-pos.png (R = x, V = y, B = z, alpha = surface) */
+   Usage : node outils/carte-visage.js [dossier] [maillage]   (par défaut : promptplay tete ; corps complet : james corps)
+   →  modeles/<dossier>/tete-pos.png (R = x, V = y, B = z, alpha = surface ; seule la tête, au-dessus du cou, est dessinée) */
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
-const dir = path.join(__dirname, '..', 'modeles', 'promptplay'), p = JSON.parse(fs.readFileSync(path.join(dir, 'perso.json'), 'utf8'));
+const [dossier = 'promptplay', nomM = 'tete'] = process.argv.slice(2), dir = path.join(__dirname, '..', 'modeles', dossier), p = JSON.parse(fs.readFileSync(path.join(dir, 'perso.json'), 'utf8'));
 const dec = (s, T) => { const b = Buffer.from(s, 'base64'); return new T(b.buffer.slice(b.byteOffset, b.byteOffset + b.length)); };
-const m = p.maillages.find(x => x.nom === 'tete'), P = dec(m.pos, Int16Array), U = dec(m.uv, Uint16Array), I = dec(m.index, m.index32 ? Uint32Array : Uint16Array);
+const m = p.maillages.find(x => x.nom === nomM), P = dec(m.pos, Int16Array), U = dec(m.uv, Uint16Array), I = dec(m.index, m.index32 ? Uint32Array : Uint16Array);
 const T = 512, BORNES = [[-.1, .1], [1.44, 1.81], [-.1, .15]]; // mètres du jeu : x, y, z
 const out = Buffer.alloc(T * T * 4);
 const ecrire = (px, py, a, b, c, w0, w1, w2) => { const o = (py * T + px) * 4; for (let k = 0; k < 3; k++) { const v = (P[a * 3 + k] * w0 + P[b * 3 + k] * w1 + P[c * 3 + k] * w2) / p.echelle, [lo, hi] = BORNES[k]; out[o + k] = Math.max(0, Math.min(255, Math.round((v - lo) / (hi - lo) * 255))); } out[o + 3] = 255; };
 for (let t = 0; t < I.length; t += 3) {
-  const [a, b, c] = [I[t], I[t + 1], I[t + 2]], uv = [a, b, c].map(i => [U[i * 2] / 65535 * T - .5, U[i * 2 + 1] / 65535 * T - .5]);
+  const [a, b, c] = [I[t], I[t + 1], I[t + 2]]; if ([a, b, c].some(i => P[i * 3 + 1] / p.echelle < 1.44)) continue; const uv = [a, b, c].map(i => [U[i * 2] / 65535 * T - .5, U[i * 2 + 1] / 65535 * T - .5]);
   const x0 = Math.max(0, Math.floor(Math.min(...uv.map(q => q[0])) - 1)), x1 = Math.min(T - 1, Math.ceil(Math.max(...uv.map(q => q[0])) + 1));
   const y0 = Math.max(0, Math.floor(Math.min(...uv.map(q => q[1])) - 1)), y1 = Math.min(T - 1, Math.ceil(Math.max(...uv.map(q => q[1])) + 1));
   const [[ax, ay], [bx, by], [cx, cy]] = uv, d = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy); if (Math.abs(d) < 1e-9) continue;

@@ -1,0 +1,6 @@
+Hight Quality Realistic Girl Character
+Auteur : hammer.gamedev (https://sketchfab.com/hammer.gamedev)
+Licence : CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+Source : https://sketchfab.com/3d-models/hight-quality-realistic-girl-character-e604d0b19f2f44c08f58bacad2ed03d8
+Le crédit est affiché dans le jeu (menu « Les familles »).
+Modifications : recadrage, os renommés et textures réduites par outils/modele-pret.js.
