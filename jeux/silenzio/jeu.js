@@ -808,7 +808,7 @@ const TETE = null;
 const PP = await (async () => { try { return await (await fetch('modeles/promptplay/perso.json')).json(); } catch (e) { console.warn('Personnage de base indisponible :', e && e.message); return null; } })();
 /* ---------- Corps MakeHuman (CC0) : secours, chargés seulement si le personnage de base manque ---------- */
 /* Second personnage de base au corps complet : « James » (Sketchfab, CC-BY 4.0, voir modeles/james/LICENCE.txt) */
-const JM = null; // « James » (modeles/james/) : chargé quand ses vêtements d'époque seront prêts (corps complet sans tenue)
+const JM = await (async () => { try { return await (await fetch('modeles/james/perso.json')).json(); } catch (e) { console.warn('Personnage James indisponible :', e && e.message); return null; } })();
 const CORPS = PP ? null : await (async () => {
   try {
     const d = await (await fetch('modeles/corps/corps.json')).json();
@@ -1173,6 +1173,7 @@ function humainPP(o = {}) {
   const squelette = new T.Skeleton(bones), nm = n => PP_ALIAS[n] || n, B = n => bones[rang[nm(n)]], J = n => joints[rang[nm(n)]];
   const couches = [], ajouter = (geo, mat) => { const m = new T.SkinnedMesh(geo, mat); m.castShadow = m.receiveShadow = true; m.bind(squelette); g.add(m); couches.push(m); return m; };
   const geo = (nom, opt = {}) => geoPP(nom, Object.assign({ f, fk: /tete|cils|oeil/.test(nom) ? fk : fkCorps }, opt)), tx = o.tex || {};
+  const h0pt = p => { const q = VAR.deformerPoint(p, 0, f, null, false), s2 = J('spine02'); return new T.Vector3(q[0] - s2[0], q[1] - s2[1], q[2] - s2[2]); };
   const tete = new T.Group(); const hd = J('head'), C = VAR.deformerPoint(BASE.C, 1, f, null, false); tete.position.set(C[0] - hd[0], C[1] - hd[1], C[2] - hd[2]); tete.scale.setScalar(f.tete ?? 1); B('head').add(tete);
   if (pret) {
     // Variantes d'un modèle prêt : visage repeint (âge, barbe, moustache, teint), peau du corps au même teint, cheveux recolorés ou retirés
@@ -1187,7 +1188,7 @@ function humainPP(o = {}) {
     }
   // Mèches posées sur un modèle prêt : barbe, moustache, et cheveux courts quand ceux d'origine sont retirés
     if (pret && !ESSAI && (o.barbeEpaisse || o.moustache || o.sansCheveux)) {
-      const gT = geo('tete'), Pm = gT.attributes.position.array, sT = f.tete ?? 1, bT = brutPP('tete'), loc = new Float32Array(Pm.length);
+      const gT = geo(BASE.teteMesh), Pm = gT.attributes.position.array, sT = f.tete ?? 1, bT = brutPP(BASE.teteMesh), loc = new Float32Array(Pm.length);
       for (let i = 0; i < Pm.length; i += 3) for (let k = 0; k < 3; k++) loc[i + k] = (Pm[i + k] - C[k]) / sT;
       const gris = c => { const v = new T.Color(c), l = .3 * v.r + .59 * v.g + .11 * v.b; return l > .45 ? v.lerp(new T.Color(.42, .41, .39), .45).getHex() : c; }; // mèches blanches : gris argenté, pas un blanc de papier
     const crane = { pos: loc, index: bT.index, src: bT.pos }, graine = ((o.cheveux ?? 7) ^ (o.peau ?? 0)) & 0xffff, chevP = gris(o.cheveux ?? 0x1e1712);
@@ -1205,24 +1206,32 @@ function humainPP(o = {}) {
   const barbeC = typeof o.barbe === 'number' ? o.barbe : cheveux, moustC = typeof o.moustache === 'number' ? o.moustache : cheveux;
   const peint = { peau: o.peau ?? 0xc69068, age: o.rides ?? (vieux ? .95 : 0), cheveux, gris: lumC > 105 ? Math.min(1, (lumC - 90) / 120) : 0, femme: femme ? (vieux ? .35 : 1) : 0, enfant,
     barbe: o.barbe ? (o.barbeEpaisse ? 1 : .8) : femme || enfant > .5 ? 0 : o.coiffure === 'rase' ? .3 : .22, barbeC: o.barbe ? barbeC : 0x1a120c, moust: o.moustache ? 1 : 0, rase: o.coiffure === 'rase' || undefined,
-    recul: o.coiffure === 'recul' ? 1 : undefined, chauve: o.chauve || undefined, yeux: o.yeux ?? 0x3a2414, levres: o.levres };
+    recul: o.coiffure === 'recul' ? 1 : undefined, chauve: o.chauve || undefined, yeux: o.yeux ?? 0x3a2414, levres: o.levres, cuir: !BASE.tenue || undefined };
   if (o.moustache && !o.barbe) peint.barbeC = moustC;
   const pt = peauPeinte(peint, !!o.detail), cle = 'pp-peau:' + JSON.stringify(peint) + o.detail + !!o.sueur;
   let matPeau = MATS.get(cle), matCorps = MATS.get(cle + 'c');
   if (!matPeau) {
     const base = { roughness: o.sueur ? .32 : vieux ? .58 : .5, sheen: .3, sheenRoughness: .6, sheenColor: new T.Color(0xff8a70), clearcoat: o.sueur ? .35 : 0, clearcoatRoughness: .4 };
-    matPeau = new T.MeshPhysicalMaterial(Object.assign({ map: pt.tete, normalMap: pt.teteN }, base)); matCorps = new T.MeshPhysicalMaterial(Object.assign({ map: pt.corps, normalMap: texPP('corps-n.jpg') }, base));
+    matPeau = new T.MeshPhysicalMaterial(Object.assign({ map: pt.tete, normalMap: pt.teteN }, base)); matCorps = new T.MeshPhysicalMaterial(Object.assign({ map: pt.corps, normalMap: BASE.tenue ? texPP('corps-n.jpg') : null }, base));
     MATS.set(cle, matPeau); MATS.set(cle + 'c', matCorps);
   }
-  const matOeil = MATS.get('pp-oeil:' + peint.yeux + o.detail) || (MATS.set('pp-oeil:' + peint.yeux + o.detail, new T.MeshPhysicalMaterial({ map: pt.oeil, normalMap: texPP('oeilG-n.jpg'), roughness: .08, clearcoat: 1 })), MATS.get('pp-oeil:' + peint.yeux + o.detail));
-  ajouter(geo('tete'), matPeau); ajouter(geo('corps'), matCorps); ajouter(geo('cils'), M('cils')); ajouter(geo('oeilG'), matOeil); ajouter(geo('oeilD'), matOeil);
+  const matOeil = MATS.get('pp-oeil:' + peint.yeux + o.detail) || (MATS.set('pp-oeil:' + peint.yeux + o.detail, new T.MeshPhysicalMaterial({ map: pt.oeil, normalMap: BASE.tenue ? texPP('oeilG-n.jpg') : null, roughness: .08, clearcoat: 1 })), MATS.get('pp-oeil:' + peint.yeux + o.detail));
+  if (BASE.tenue) { ajouter(geo('tete'), matPeau); ajouter(geo('corps'), matCorps); ajouter(geo('cils'), M('cils')); ajouter(geo('oeilG'), matOeil); ajouter(geo('oeilD'), matOeil); }
+  else { // corps complet : seule la peau visible est dessinée (tête, cou, mains, avant-bras si manches retroussées), rien ne traverse les vêtements
+    const b0 = brutPP('corps'), osN = i => D.os[b0.dom[i]].n, robeC = o.robe != null;
+    const couvert = i => { const n = osN(i); return /spine|root|clavicle|upperarm|upperleg|foot/.test(n) || (/lowerleg/.test(n) && !(robeC && false)) || (/lowerarm/.test(n) && !o.manches); };
+    if (BASE.fichiers.rug) { matPeau.roughnessMap = texPP(BASE.fichiers.rug); matPeau.roughness = 1; }
+    ajouter(geo('corps', { filtre: (x, y, z, i) => !couvert(i), fc: 'peau' + !!o.manches }), matPeau);
+    const mo = MATS.get('jm-oeil') || (MATS.set('jm-oeil', new T.MeshPhysicalMaterial({ map: texPP(BASE.fichiers.oeil, true), roughness: .1, clearcoat: 1 })), MATS.get('jm-oeil'));
+    for (const m of D.maillages) if (/oeil/.test(m.nom)) ajouter(geo(m.nom), mo);
+  }
   // Cheveux : volume sur la partie peinte (sauf crâne rasé), chignon, carré
   const co = o.coiffure, chevC = peint.gris > .5 ? new T.Color(0xa8a39c).lerp(new T.Color(cheveux), .25).getHex() : cheveux;
   if (co !== 'rase' && o.chapeau !== 'scialle') {
     const nu = (x, y, z) => (o.chauve ? lisse(1.71, 1.74, y) * lisse(-.07, 0, z) : 0) + (co === 'recul' ? lisse(1.728, 1.75, y) * lisse(0, .08, z) * .8 : 0);
     const epC = femme ? .006 : .0042, epf = (x, y, z) => epC * VAR.partCheveux(x, y, z) * (1 - Math.min(1, nu(x, y, z)));
     const mc = MATS.get(cle + 'h') || (MATS.set(cle + 'h', new T.MeshStandardMaterial({ map: pt.tete, normalMap: TX.cheveux.normalMap, roughness: .6 })), MATS.get(cle + 'h'));
-    ajouter(geo('tete', { ep: epf, filtre: (x, y, z) => VAR.partCheveux(x, y, z) > .05 && nu(x, y, z) < .9, fc: 'chev' + femme + (o.chauve ? 'c' : '') + (co || '') }), mc);
+    ajouter(geo(BASE.teteMesh, { ep: epf, filtre: (x, y, z) => VAR.partCheveux(x, y, z) > .05 && nu(x, y, z) < .9, fc: 'chev' + femme + (o.chauve ? 'c' : '') + (co || '') }), mc);
   }
   let perruque = null, chignon = null;
   if (co === 'carre') { const gc = perruque = enveloppeTete({ ecart: .011, bas: a => a < 0 ? 1.545 : 1.575, ouverture: y => 1.3 * (1 - lisse(1.6, 1.745, y)), NA: 96, NY: 40 }); const m = new T.Mesh(gc, decoupe(MAT_CHEV(chevC))); m.castShadow = true; tete.add(m); }
@@ -1230,7 +1239,7 @@ function humainPP(o = {}) {
   if (((femme && co !== 'carre') || co === 'chignon') && o.chapeau !== 'scialle') { const ch = chignon = new T.Mesh(new T.SphereGeometry(.046, 18, 12), MAT_CHEV(chevC)); ch.scale.set(1, .85, .8); ch.position.set(0, .0, -.122); ch.castShadow = true; tete.add(ch); }
   // Mèches de cheveux, de barbe et de moustache
   if (!ESSAI) {
-    const gT = geo('tete'), Pm = gT.attributes.position.array, sT = f.tete ?? 1, bT = brutPP('tete'), loc = new Float32Array(Pm.length);
+    const gT = geo(BASE.teteMesh), Pm = gT.attributes.position.array, sT = f.tete ?? 1, bT = brutPP(BASE.teteMesh), loc = new Float32Array(Pm.length);
     for (let i = 0; i < Pm.length; i += 3) for (let k = 0; k < 3; k++) loc[i + k] = (Pm[i + k] - C[k]) / sT;
     const crane = { pos: loc, index: bT.index, src: bT.pos }, graine = (cheveux ^ (o.peau ?? 0)) & 0xffff, cartes = (S, opt, mat) => { const g = cartesMeches(S, Object.assign({ graine }, opt)); if (g) { const m = new T.Mesh(g, mat); m.castShadow = true; tete.add(m); } };
     const sommet = new T.Vector3(-.012, .112, -.035);
@@ -1249,14 +1258,39 @@ function humainPP(o = {}) {
     if (o.moustache || o.barbeEpaisse) cartes(crane, { filtre: (x, y, z) => VAR.zoneMoustache(x, y, z) > .3 ? 1 : 0, nb: 180, long: [.008, .015], leve: .003, larg: .007, rayon: .05, dir: (p, n, d) => d.set(Math.sign(p.x) * .7, -1, .25) }, matMeches(typeof o.moustache === 'number' ? o.moustache : cb));
   }
   // Barbe épaisse et moustache en relief
-  if (o.barbe && o.barbeEpaisse) ajouter(geo('tete', { ep: (x, y, z) => .009 * VAR.zoneBarbe(x, y, z), filtre: (x, y, z) => VAR.zoneBarbe(x, y, z) > .04, fc: 'barbe' }), MATS.get(cle + 'b') || (MATS.set(cle + 'b', new T.MeshStandardMaterial({ map: pt.tete, normalMap: TX.cheveux.normalMap, roughness: .7 })), MATS.get(cle + 'b')));
-  if (o.moustache || o.barbe) ajouter(geo('tete', { ep: (x, y, z) => .0045 * VAR.zoneMoustache(x, y, z), filtre: (x, y, z) => VAR.zoneMoustache(x, y, z) > .08, fc: 'moust' }), MATS.get(cle + 'b') || (MATS.set(cle + 'b', new T.MeshStandardMaterial({ map: pt.tete, normalMap: TX.cheveux.normalMap, roughness: .7 })), MATS.get(cle + 'b')));
+  if (o.barbe && o.barbeEpaisse) ajouter(geo(BASE.teteMesh, { ep: (x, y, z) => .009 * VAR.zoneBarbe(x, y, z), filtre: (x, y, z) => VAR.zoneBarbe(x, y, z) > .04, fc: 'barbe' }), MATS.get(cle + 'b') || (MATS.set(cle + 'b', new T.MeshStandardMaterial({ map: pt.tete, normalMap: TX.cheveux.normalMap, roughness: .7 })), MATS.get(cle + 'b')));
+  if (o.moustache || o.barbe) ajouter(geo(BASE.teteMesh, { ep: (x, y, z) => .0045 * VAR.zoneMoustache(x, y, z), filtre: (x, y, z) => VAR.zoneMoustache(x, y, z) > .08, fc: 'moust' }), MATS.get(cle + 'b') || (MATS.set(cle + 'b', new T.MeshStandardMaterial({ map: pt.tete, normalMap: TX.cheveux.normalMap, roughness: .7 })), MATS.get(cle + 'b')));
   if (o.guidon) for (const sx of [-1, 1]) { const c = new T.CatmullRomCurve3([new T.Vector3(sx * .02, -.082, .118), new T.Vector3(sx * .038, -.085, .106), new T.Vector3(sx * .05, -.075, .097), new T.Vector3(sx * .049, -.062, .094)]); const tb = new T.Mesh(new T.TubeGeometry(c, 12, .0024, 6), MAT_CHEV(typeof o.moustache === 'number' ? o.moustache : cheveux)); tete.add(tb); }
   }
   // Vêtements
   const moderne = !!o.moderne, chemise = o.chemise ?? 0xe8e0cc, robe = o.robe != null;
   const bras = (lim, debut = .26) => (x, y, z) => Math.abs(x) > debut && Math.abs(x) < lim && y > 1.2;
-  if (!pret) {
+  if (!pret && !BASE.tenue) {
+  // Corps complet : vêtements taillés sur le corps (coques lissées, coupes nettes), la peau cachée n'est pas dessinée
+  const b0 = brutPP('corps'), osN = i => D.os[b0.dom[i]].n, ax = x => Math.abs(x);
+  const TORSE = /^(spine|root|neck01)/, BRAS = /clavicle|upperarm|lowerarm/, JAMBE = /upperleg|lowerleg/;
+  const tissu = (cleT, c) => habitPP('corps', tx[cleT], c, true), lim = o.manches ? .37 : .455;
+  const encol = (lim0, larg) => (x, y, z) => z > .03 && y > lim0 ? ax(x) - (larg + (y - lim0) * .32) : .05;
+  const zone = (re, fn) => (x, y, z, i) => re.test(osN(i)) ? fn(x, y, z, i) : -1;
+  const habille = (opts, mat) => ajouter(geo('corps', Object.assign({ lisse: 3 }, opts)), decoupe(mat));
+  // Chemise (rentrée dans le pantalon), col
+  const couleurChemise = o.chemise ?? 0xe8e0cc;
+  habille({ ep: .009, coupe: (x, y, z, i) => { const n = osN(i); if (!TORSE.test(n) && !BRAS.test(n)) return -1; return Math.min(1.465 - y - (z > .04 ? .03 : 0), ax(x) > .2 ? lim - ax(x) : 1, y - .84); }, fc: 'chemise' + lim }, tissu('chemise', couleurChemise));
+  // Pantalon : jambes droites (plus amples vers le bas)
+  habille({ ep: (x, y) => .02 + (o.ample ? .03 : .02) * lisse(.6, .15, y) + .008 * lisse(.75, .95, y), coupe: (x, y, z, i) => { const n = osN(i); if (!JAMBE.test(n) && !/^(root|spine04)/.test(n) && !/foot/.test(n)) return -1; return Math.min(y - .1, 1.03 - y); }, lisse: 7, fc: 'pantalon' + !!o.ample }, habitPP('corps', tx.pantalon, o.pantalon ?? 0x4a3f33, true));
+  if (o.gilet != null) habille({ ep: .02, coupe: (x, y, z, i) => { const n = osN(i); if (!TORSE.test(n) || n === 'neck01') return -1; return Math.min(encol(1.26, .008)(x, y, z), 1.43 - y, y - .9, .19 - ax(x)); }, lisse: 4, fc: 'gilet' }, tissu('gilet', o.gilet));
+  if (o.veste != null) { const ep0 = o.epaisse ? .036 : .03, ep = (x, y) => ep0 + .03 * lisse(.98, o.longue ? .66 : .76, y); // la veste s'évase sur les hanches
+    habille({ ep, coupe: (x, y, z, i) => { const n = osN(i); if (!TORSE.test(n) && !BRAS.test(n) && !(JAMBE.test(n) && y > .74)) return -1; return Math.min(o.croise ? .05 : encol(o.longue ? 1.02 : 1.14, .016)(x, y, z), 1.47 - y - (z > .04 ? .02 : 0), ax(x) > .2 && y > 1.0 ? lim - .004 - ax(x) : 1, y - (o.longue ? .66 : .76)); }, lisse: 4, fc: 'veste' + ep0 + (o.croise ? 'c' : '') + (o.longue ? 'l' : '') + lim }, tissu('veste', o.veste)); }
+  if (o.bretelles) for (const sx of [-1, 1]) habille({ ep: .016, coupe: (x, y, z, i) => TORSE.test(osN(i)) ? Math.min(.013 - Math.abs(x * sx - .07), y - .93, 1.42 - y) : -1, fc: 'bret' + sx }, cuirPP(0x3a2416));
+  if (o.ceinture != null) habille({ ep: .022, coupe: (x, y) => Math.min(y - .96, 1.03 - y), fc: 'ceint' }, habitPP('corps', null, o.ceinture, true));
+  if (o.tablier) habille({ ep: .03, coupe: (x, y, z) => Math.min(z - .01, y - .42, 1.3 - y, .17 - ax(x)), lisse: 5, fc: 'tablier' }, habitPP('corps', null, 0xece6d6, true));
+  { const col = new T.Mesh(new T.CylinderGeometry(.058, .064, .04, 24, 1, true, PI / 2 + .35, PI * 2 - .7), tissu('chemise', couleurChemise)); col.material = col.material.clone(); col.material.side = T.DoubleSide; col.position.set(0, .045, .008); col.rotation.x = -.15; col.castShadow = true; B('neck01').add(col);
+    if (o.gilet != null) for (let i = 0; i < 4; i++) { const bt = new T.Mesh(GH.bouton, M('bronze')); bt.position.copy(h0pt([0, 1.16 + i * .055, .14])); B('spine02').add(bt); } }
+  // Chaussures et bottes
+  const bt = o.bottes || 'cuir', hautB = { montagne: .32, crottees: .3 }[bt] || .13, cuirC = { talons: 0x141414 }[bt] || 0x3a2a1e;
+  habille({ ep: (x, y) => .012 + .006 * lisse(.05, 0, y), coupe: (x, y, z, i) => /foot|lowerleg/.test(osN(i)) ? hautB - y : -1, lisse: 2, fc: 'chauss' + hautB }, cuirPP(cuirC));
+  if (bt === 'crottees') habille({ ep: .02, coupe: (x, y, z, i) => /foot|lowerleg/.test(osN(i)) ? .06 + (Math.sin(x * 300) + Math.sin(z * 250)) * .012 - y : -1, fc: 'boue' }, M('sol:6a5236'));
+  } else if (!pret) {
   const habit = (nom, cleT, c) => habitPP(nom, tx[cleT], c), manche = (cleT, c) => habitPP('haut', tx[cleT], c, true);
   // Manches longues d'époque : la manche courte d'origine couvre l'épaule (elle plie bien), la manche longue part
   // de dessous, aussi large qu'elle à la jonction, puis s'affine vers le coude (mêmes poids de peau : elle suit le bras)
@@ -1322,7 +1356,7 @@ function humainPP(o = {}) {
   const bd = B('upperarm01.L'), bg = B('upperarm01.R'), jd = B('upperleg01.L'), jg = B('upperleg01.R');
   bd.coude = B('lowerarm01.L'); bg.coude = B('lowerarm01.R'); jd.genou = B('lowerleg01.L'); jg.genou = B('lowerleg01.R');
   const h = { reel: true, pp: true, g, B, J, corps: B('root'), corps0: B('root').position.clone(), tete, osTete: B('head'), torse: B('spine02'), dos: B('spine04'), bassin: B('root'), jg, jd, bg, bd, brasZ: 1.45, ph: R() * 6, amp: 0, lanterne, porte: !!o.lanterne, assis: false, paupieres: [], parle: false, tp: R() * 9, couches, raideur: !!o.raideur, racineY: D.joints[rang.root][1] - (D.os[rang.root].p >= 0 ? D.joints[D.os[rang.root].p][1] : 0), voute: f.voute || (pret && vieux ? .3 : 0), pt: p => VAR.deformerPoint(p, 0, f, null, false), ecart: .1 + (f.ventre || 0) * .08 + Math.max(0, f.epais || 0) * 6 + (o.veste != null ? (o.epaisse ? .08 : .05) : 0) + (o.capuche != null ? .05 : 0),
-    coucheSupp: (regions, ep, filtre, cle, mat) => { const fl = (x, y, z) => filtre(0, [x, y, z]); ajouter(geo('haut', { ep, filtre: fl, fc: 'supp' + cle }), mat); if (regions.includes(RG.bras)) ajouter(geo('corps', { ep: ep * .8, filtre: (x, y, z) => bras(.4)(x, y, z) && fl(x, y, z), fc: 'suppb' + cle }), mat); } };
+    coucheSupp: (regions, ep, filtre, cle, mat) => { const fl = (x, y, z) => filtre(0, [x, y, z]); if (!BASE.tenue) { const b0 = brutPP('corps'); ajouter(geo('corps', { ep: ep + .012, lisse: 4, filtre: (x, y, z, i) => /spine|root|clavicle/.test(D.os[b0.dom[i]].n) && y > .9 && fl(x, y, z), fc: 'supp' + cle }), mat); return; } ajouter(geo('haut', { ep, filtre: fl, fc: 'supp' + cle }), mat); if (regions.includes(RG.bras)) ajouter(geo('corps', { ep: ep * .8, filtre: (x, y, z) => bras(.4)(x, y, z) && fl(x, y, z), fc: 'suppb' + cle }), mat); } };
   bd.rotation.z = -h.brasZ; bg.rotation.z = h.brasZ;
   animerAvecClips(h, BASE.cible);
   if (o.lupara) luparaPP(h);
@@ -1684,25 +1718,25 @@ function pnj(id, nom, o, x, z, rot = 0, quand = 'jour') {
   return (PNJ[id] = { id, nom, h, pos: h.g.position, quand, v: 0, base: { x, z, rot }, trajet: null, ti: 0, attente: 0, repliques: null });
 }
 const TURI = { manches: true, chemise: 0xe9e1cc, gilet: 0x3e2e22, pantalon: 0x383029, chapeau: 'coppola', chapeauC: 0x56503f, cheveux: 0x22180f, peau: 0xc68e62 };
-pnj('pippo', 'Zu Pippo', { vieux: true, manches: true, chemise: 0xe0d6bf, pantalon: 0x5a4a38, chapeau: 'paille', chapeauC: 0xcdb27a, moustache: 0xc9c2b4, cheveux: 0xb9b2a4, peau: 0xae7650, ceinture: 0x7a2a22 }, 63, 56, -PI / 2);
+pnj('pippo', 'Zu Pippo', { base: 'james', vieux: true, manches: true, chemise: 0xe0d6bf, pantalon: 0x5a4a38, chapeau: 'paille', chapeauC: 0xcdb27a, moustache: 0xc9c2b4, cheveux: 0xb9b2a4, peau: 0xae7650, ceinture: 0x7a2a22 }, 63, 56, -PI / 2);
 pnj('rosa', 'Donna Rosa', { robe: 0x1a1717, chemise: 0x1f1b1b, chapeau: 'scialle', chapeauC: 0x141212, peau: 0xd6a582 }, 72, 45.5, 0, 'toujours');
-pnj('nunzio', 'Mastro Nunzio', { chemise: 0xe8e0cc, gilet: 0x3b4a5a, tablier: true, chauve: true, moustache: 0x2a2018, pantalon: 0x4a3f33, taille: 1.04, peau: 0xc8946a }, -75, -59.4, PI);
+pnj('nunzio', 'Mastro Nunzio', { base: 'james', chemise: 0xe8e0cc, gilet: 0x3b4a5a, tablier: true, chauve: true, moustache: 0x2a2018, pantalon: 0x4a3f33, taille: 1.04, peau: 0xc8946a }, -75, -59.4, PI);
 pnj('pretre', 'Padre Calogero', { robe: 0x121212, chemise: 0x121212, chapeau: 'pretre', chapeauC: 0x121212, peau: 0xc89a72 }, -80, -82, 0);
 pnj('toto', 'Le voleur', { chemise: 0xb8a77f, pantalon: 0x5e5040, taille: .8, cheveux: 0x2a1d12, cassette: true }, 66, 69, PI, 'scene');
-pnj('nardo', 'Nardo', { foulard: 0x8e1f1a, veste: 0x3f4a33, chemise: 0xd9cfb8, pantalon: 0x2e2a24, chapeau: 'coppola', chapeauC: 0x2a2620, moustache: true, lupara: true, lanterne: true, peau: 0xb8805a }, 50, 49, PI / 2, 'scene');
-pnj('campiere1', 'Un campiere', { veste: 0x4a3a2a, pantalon: 0x2e2a24, chapeau: 'coppola', chapeauC: 0x33302a, lupara: true }, 49, 46, PI / 2, 'scene');
-pnj('campiere2', 'Un campiere', { foulard: 0x2a3a5a, veste: 0x3a3a30, pantalon: 0x2e2a24, chapeau: 'feutre', chapeauC: 0x2a2620, lupara: true, barbe: 0x1e1712 }, 49.5, 53, PI / 2, 'scene');
+pnj('nardo', 'Nardo', { base: 'james', foulard: 0x8e1f1a, veste: 0x3f4a33, chemise: 0xd9cfb8, pantalon: 0x2e2a24, chapeau: 'coppola', chapeauC: 0x2a2620, moustache: true, lupara: true, lanterne: true, peau: 0xb8805a }, 50, 49, PI / 2, 'scene');
+pnj('campiere1', 'Un campiere', { base: 'james', veste: 0x4a3a2a, pantalon: 0x2e2a24, chapeau: 'coppola', chapeauC: 0x33302a, lupara: true }, 49, 46, PI / 2, 'scene');
+pnj('campiere2', 'Un campiere', { base: 'james', foulard: 0x2a3a5a, veste: 0x3a3a30, pantalon: 0x2e2a24, chapeau: 'feutre', chapeauC: 0x2a2620, lupara: true, barbe: 0x1e1712 }, 49.5, 53, PI / 2, 'scene');
 pnj('ruffo', 'Le brigadier Ruffo', { veste: 0x1d2433, chemise: 0x1d2433, pantalon: 0x1d2433, chapeau: 'lucerna', moustache: 0x5a3a20, cheveux: 0x5a3a20, peau: 0xd9ad88, ceinture: 0xe8e2d0 }, -97, -70, PI / 2, 'scene');
-pnj('gardien1', 'Un campiere', { veste: 0x3f3a2a, pantalon: 0x2e2a24, chapeau: 'coppola', lupara: true }, 122, -34, 0);
-pnj('gardien2', 'Un campiere', { veste: 0x2f3a33, pantalon: 0x2e2a24, chapeau: 'feutre', lupara: true }, 128, -34, 0);
+pnj('gardien1', 'Un campiere', { base: 'james', veste: 0x3f3a2a, pantalon: 0x2e2a24, chapeau: 'coppola', lupara: true }, 122, -34, 0);
+pnj('gardien2', 'Un campiere', { base: 'james', veste: 0x2f3a33, pantalon: 0x2e2a24, chapeau: 'feutre', lupara: true }, 128, -34, 0);
 const TURI2 = { chemise: 0xece6d6, gilet: 0x5a2a22, veste: 0x2c3628, pantalon: 0x2a2620, chapeau: 'coppola', chapeauC: 0x2a2620, cheveux: 0x22180f, moustache: true, foulard: 0x8e1f1a, peau: 0xc08660, largeur: 1.03 };
 const DON_GASPARE = { base: 'costume', vieux: true, rides: 1, sansCheveux: true, veste: 0x16161a, gilet: 0x2a2a30, chemise: 0xf0ece4, pantalon: 0x16161a, chapeau: 'feutre', chapeauC: 0x101010, moustache: 0xdcd8d0, barbe: 0xdcd8d0, cheveux: 0xdcd8d0, peau: 0xc89a78, largeur: 1.06, longueur: .98 };
 pnj('don', 'Don Gaspare', DON_GASPARE, 121, -34, 0, 'scene');
-pnj('nardo2', 'Nardo', { veste: 0x3f4a33, chemise: 0xd9cfb8, pantalon: 0x2e2a24, chapeau: 'coppola', chapeauC: 0x2a2620, moustache: 0x4a3a2a, foulard: 0x8e1f1a, peau: 0xb8805a, largeur: 1.05 }, -89, -74, 0, 'scene');
+pnj('nardo2', 'Nardo', { base: 'james', veste: 0x3f4a33, chemise: 0xd9cfb8, pantalon: 0x2e2a24, chapeau: 'coppola', chapeauC: 0x2a2620, moustache: 0x4a3a2a, foulard: 0x8e1f1a, peau: 0xb8805a, largeur: 1.05 }, -89, -74, 0, 'scene');
 pnj('concetta', 'Concetta', { robe: 0x24365a, chemise: 0xe8e0cc, chapeau: 'scialle', chapeauC: 0x4a2a2a, peau: 0xd6a582, cheveux: 0x1a120c }, 70, 46.6, 0, 'scene');
 pnj('saro', 'Saro', { chemise: 0xe0d6bf, pantalon: 0x5a4a38, taille: .62, cheveux: 0x2a1d12 }, 71.2, 47.3, 0, 'scene');
-pnj('carmelo', 'Carmelo', { manches: true, chemise: 0xd8ccb0, gilet: 0x4a3a2a, pantalon: 0x4a3f33, chapeau: 'paille', chapeauC: 0xc8ab70, moustache: true, peau: 0xb07a50, longueur: 1.04 }, 63, 56, -PI / 2, 'scene');
-pnj('vanni', 'Zu Vanni', { vieux: true, manches: true, chemise: 0x5a6a7a, pantalon: 0x3a3a40, chapeau: 'coppola', chapeauC: 0x8a2a22, barbe: 0x9a968c, moustache: 0x9a968c, peau: 0xa86e48, largeur: .97 }, -76, -149, PI, 'scene');
+pnj('carmelo', 'Carmelo', { base: 'james', manches: true, chemise: 0xd8ccb0, gilet: 0x4a3a2a, pantalon: 0x4a3f33, chapeau: 'paille', chapeauC: 0xc8ab70, moustache: true, peau: 0xb07a50, longueur: 1.04 }, 63, 56, -PI / 2, 'scene');
+pnj('vanni', 'Zu Vanni', { base: 'james', vieux: true, manches: true, chemise: 0x5a6a7a, pantalon: 0x3a3a40, chapeau: 'coppola', chapeauC: 0x8a2a22, barbe: 0x9a968c, moustache: 0x9a968c, peau: 0xa86e48, largeur: .97 }, -76, -149, PI, 'scene');
 pnj('marechal', 'Le maréchal', { veste: 0x1a2232, chemise: 0x1a2232, pantalon: 0x1a2232, chapeau: 'lucerna', moustache: 0x7a5a3a, cheveux: 0x7a5a3a, peau: 0xe0b898, ceinture: 0xe8e2d0 }, -84, -66, 0, 'scene');
 function poserPositions1877() {
   poserPnj('don', -91.5, -73, PI / 2); poserPnj('concetta', 70, 46.6, 0); poserPnj('saro', 71.2, 47.3, -.3); poserPnj('carmelo', 63, 56, -PI / 2); poserPnj('vanni', -76, -149, PI);
@@ -1870,19 +1904,19 @@ const ACC = {
 /* ---------- Les familles : personnages de la saga et du chapitre I (galerie) ---------- */
 const FAMILLES = [
   { nom: 'Don Calogero « U Viddanu »', lieu: 'Sicile, 1880 - 1910', texte: 'Gardien de domaine agricole devenu chef de clan lors de l’abolition de la féodalité. Visage buriné par le soleil de Corleone, rides profondes comme des crevasses, épaisse moustache en guidon poivre et sel. Velours côtelé marron, lourdes bottes crottées, la lupara toujours en bandoulière. Un regard habitué à régler les conflits terriens par le sang.',
-    o: { silhouette: 'vieux', peau: 0x8e6044, rides: 1, cheveux: 0x8a8680, moustache: 0x6e6a64, guidon: true, chemise: 0xd8ccb0, tex: { veste: 'velours', pantalon: 'velours', gilet: 'velours' }, veste: 0x6a4a2e, gilet: 0x5a3e26, pantalon: 0x5e4228, bottes: 'crottees', chapeau: 'coppola', chapeauC: 0x3a2e24, yeux: 0x1a120a, visage: { machoire: 1, anguleux: .6 }, accessoires: [ACC.lupara] } },
+    o: { base: 'james', silhouette: 'vieux', peau: 0x8e6044, rides: 1, cheveux: 0x8a8680, moustache: 0x6e6a64, guidon: true, chemise: 0xd8ccb0, tex: { veste: 'velours', pantalon: 'velours', gilet: 'velours' }, veste: 0x6a4a2e, gilet: 0x5a3e26, pantalon: 0x5e4228, bottes: 'crottees', chapeau: 'coppola', chapeauC: 0x3a2e24, yeux: 0x1a120a, visage: { machoire: 1, anguleux: .6 }, accessoires: [ACC.lupara] } },
   { nom: 'Carmela « La Lupa » Macrì', lieu: 'Calabre, 1920 - 1950', texte: 'Matriarche de la ’Ndrangheta, elle gère le clan d’une main de fer depuis l’ombre pendant que les hommes sont en prison. Le noir strict du deuil perpétuel, des cheveux blancs tirés en chignon sous un épais châle, une peau diaphane, des yeux noirs perçants. Entre ses doigts noueux, un chapelet de bois poli qu’elle égrène sans fin.',
     o: { femme: true, silhouette: 'vieille', robe: 0x0e0d0d, chemise: 0x121010, chapeau: 'scialle', chapeauC: 0x1c1a1a, epaisse: true, tex: { scialle: 'tricot' }, cheveux: 0xe8e4dc, coiffure: 'chignon', peau: 0xd6b6a2, yeux: 0x050403, rides: .55, visage: { jouesCreuses: .9, anguleux: 1 }, accessoires: [ACC.chapelet] } },
   { nom: 'Efisio « Le Loup de Bosa »', lieu: 'Sardaigne, 1950 - 1970', texte: 'Berger devenu roi des enlèvements de l’Anonima Sequestri, dans les montagnes escarpées. Barbe épaisse et négligée, mastruca, le manteau de berger en laine brute de brebis qui double sa silhouette, casquette plate tombante. Des mains marquées par le travail et, toujours, une resolza de Pattada au manche de corne sculpté.',
-    o: { silhouette: 'fort', peau: 0xa0663e, barbe: 0x241810, barbeEpaisse: true, moustache: 0x241810, cheveux: 0x241810, chemise: 0xcfc6b0, pantalon: 0x3a3226, tex: { pantalon: 'velours' }, chapeau: 'coppolaTombante', chapeauC: 0x2a2420, rides: .35, accessoires: [ACC.mastruca, ACC.resolza] } },
+    o: { base: 'james', silhouette: 'fort', peau: 0xa0663e, barbe: 0x241810, barbeEpaisse: true, moustache: 0x241810, cheveux: 0x241810, chemise: 0xcfc6b0, pantalon: 0x3a3226, tex: { pantalon: 'velours' }, chapeau: 'coppolaTombante', chapeauC: 0x2a2420, rides: .35, accessoires: [ACC.mastruca, ACC.resolza] } },
   { nom: 'Vittorio « Le Baron » Di Stefano', lieu: 'Sicile, 1970 - 1985', texte: 'L’archétype du mafieux palermitain du boom de l’héroïne et de la première guerre des clans. Costume croisé à rayures sur mesure, lunettes d’aviateur fumées, épaisse chaîne en or sur une chemise ouverte et un torse velu, cheveux gominés en arrière. Sous l’aisselle, un revolver chromé dans un holster d’épaule en cuir rouge.',
     o: { base: 'costume', peau: 0xc89268, cheveux: 0x0e0a08, coiffure: 'gomine', chemise: 0xe6dccc, ouvert: true, poils: true, veste: 0x262832, pantalon: 0x262832, tex: { veste: 'rayures', pantalon: 'rayures' }, longue: true, accessoires: [ACC.aviateurs, ACC.chaineOr] } },
   { nom: 'Rocco « Il Vangelo » Morabito', lieu: 'Calabre, 1980 - 2000', texte: 'Le pont entre les montagnes de l’Aspromonte et les cartels colombiens. Physique imposant, nez cassé par d’anciennes bagarres, pull en cachemire coûteux sous une veste de chasse de luxe délavée. Il vit dans des bunkers cachés sous des bergeries en ruine, ne lâche jamais son téléphone satellite et porte l’archange Michel tatoué sur l’avant-bras droit.',
-    o: { silhouette: 'fort', peau: 0xb88058, cheveux: 0x2a2018, visage: { nezCasse: 1, machoire: 1 }, chemise: 0xc8b090, tex: { chemise: 'tricot', veste: 'cire' }, veste: 0x4c4a32, epaisse: true, manches: true, tatouage: true, pantalon: 0x3a3a40, echelle: 1.03, accessoires: [ACC.telephoneSat] } },
+    o: { base: 'james', silhouette: 'fort', peau: 0xb88058, cheveux: 0x2a2018, visage: { nezCasse: 1, machoire: 1 }, chemise: 0xc8b090, tex: { chemise: 'tricot', veste: 'cire' }, veste: 0x4c4a32, epaisse: true, manches: true, tatouage: true, pantalon: 0x3a3a40, echelle: 1.03, accessoires: [ACC.telephoneSat] } },
   { nom: 'Salvatore « Totuccio » Vitiello', lieu: 'Sicile, 1943 - 1960', texte: 'Opportuniste du marché noir né du débarquement allié. Uniforme américain bricolé avec des vêtements civils usés : pantalon cargo olive, bretelles tendues sur un ventre bedonnant, fedora cabossé. Visage rond, luisant de sueur, un cigare bon marché coincé au coin des lèvres et de lourdes sacoches de toile qui lui pendent de travers.',
-    o: { silhouette: 'gros', peau: 0xc89070, sueur: true, visage: { rond: 1.2 }, cheveux: 0x2a2018, chemise: 0x8a8460, manches: true, pantalon: 0x5a5a3a, ample: true, bretelles: true, chapeau: 'cabosse', chapeauC: 0x5a4a3a, accessoires: [ACC.cigare, ACC.sacoches, ACC.pochesCargo] } },
+    o: { base: 'james', silhouette: 'gros', peau: 0xc89070, sueur: true, visage: { rond: 1.2 }, cheveux: 0x2a2018, chemise: 0x8a8460, manches: true, pantalon: 0x5a5a3a, ample: true, bretelles: true, chapeau: 'cabosse', chapeauC: 0x5a4a3a, accessoires: [ACC.cigare, ACC.sacoches, ACC.pochesCargo] } },
   { nom: 'Gavino « Su Ferru »', lieu: 'Sardaigne, 1980 - 1995', texte: 'Fugitif endurci des grottes calcaires du Supramonte, un spectre de la nature. Treillis de camouflage de l’armée italienne déchirés et rapiécés, énormes chaussures de montagne. Très grand, d’une maigreur cadavérique, les joues creuses et les yeux fiévreux de la paranoïa, un fusil d’assaut AR-70 volé, la sangle enroulée autour du bras.',
-    o: { peau: 0xb08a6a, yeux: 0x3a2a1a, cheveux: 0x1e1610, barbe: 0x2a2018, visage: { jouesCreuses: 1.3, anguleux: .7 }, mince: true, echelle: 1.06, chemise: 0xffffff, pantalon: 0xf0f0f0, veste: 0xe8e8e8, tex: { chemise: 'camouflage', pantalon: 'camouflage', veste: 'camouflage' }, bottes: 'montagne', ample: true, accessoires: [ACC.ar70] } },
+    o: { base: 'james', peau: 0xb08a6a, yeux: 0x3a2a1a, cheveux: 0x1e1610, barbe: 0x2a2018, visage: { jouesCreuses: 1.3, anguleux: .7 }, mince: true, echelle: 1.06, chemise: 0xffffff, pantalon: 0xf0f0f0, veste: 0xe8e8e8, tex: { chemise: 'camouflage', pantalon: 'camouflage', veste: 'camouflage' }, bottes: 'montagne', ample: true, accessoires: [ACC.ar70] } },
   { nom: 'Isabella « La Dottoressa » Greco', lieu: 'Sicile, 2000 - aujourd’hui', texte: 'Le visage de la Cosa Nostra moderne : col blanc, invisible des radars de la police. Avocate d’affaires, elle blanchit l’argent par des montages immobiliers internationaux. Tailleur-pantalon anthracite à la géométrie stricte, talons aiguilles, aucun bijou sauf une montre suisse compliquée. Traits lisses et froids, carré asymétrique parfaitement net.',
     o: { base: 'fille', teintes: { tenue: 0x50525a, tenue2: 0x34363a }, femme: true, peau: 0xe6c4a8, cheveux: 0x1a1210, coiffure: 'carre', chemise: 0xeeece8, veste: 0x34363a, pantalon: 0x34363a, bottes: 'talons', visage: { anguleux: .5 }, accessoires: [ACC.montre] } },
   { nom: 'Matteo « Ghost »', lieu: 'Calabre, 2015 - aujourd’hui', texte: 'La nouvelle génération de la ’Ndrangheta. Il ne touche jamais la marchandise : il coordonne les expéditions par des applications chiffrées. Streetwear de luxe, baskets massives, sweat technique à capuche, crâne rasé en dégradé, sacoche en bandoulière, une clé USB biométrique et deux smartphones sans coque.',

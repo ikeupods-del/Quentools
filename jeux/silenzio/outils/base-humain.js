@@ -15,7 +15,7 @@ const MODELES = {
     maillages: { 0: 'corps', 1: 'oeil', 2: 'oeilI' },
     os: [['root', null, [0, .935, -.01], [0, .99, -.01]], ['spine04', 'root', [0, .99, -.01], [0, 1.15, -.01]], ['spine02', 'spine04', [0, 1.15, -.01], [0, 1.37, -.03]],
       ['neck01', 'spine02', [0, 1.37, -.03], [0, 1.49, -.02]], ['head', 'neck01', [0, 1.49, -.02], [0, 1.72, 0]]],
-    cote: k => [['clavicle', 'spine02', [k * .03, 1.36, -.03], [k * .185, 1.355, -.03]], ['upperarm01', 'clavicle', [k * .185, 1.355, -.03], [k * .325, 1.2, -.015]],
+    cote: k => [['clavicle', 'spine02', [k * .03, 1.38, -.03], [k * .17, 1.385, -.03]], ['upperarm01', 'clavicle', [k * .17, 1.385, -.03], [k * .325, 1.2, -.015]],
       ['lowerarm01', 'upperarm01', [k * .325, 1.2, -.015], [k * .462, 1.07, .095]], ['wrist', 'lowerarm01', [k * .462, 1.07, .095], [k * .56, .96, .19]],
       ['upperleg01', 'root', [k * .095, .93, -.01], [k * .14, .49, -.015]], ['lowerleg01', 'upperleg01', [k * .14, .49, -.015], [k * .185, .09, -.045]], ['foot', 'lowerleg01', [k * .185, .09, -.045], [k * .21, .02, .13]]],
     taille: [2048, 2048, 1024]
@@ -54,6 +54,8 @@ function poids(p, rigide) {
 }
 const b64 = a => Buffer.from(a.buffer, a.byteOffset, a.byteLength).toString('base64');
 const images = {}, maillages = [], E = C.echelle, versJeu = (v, k) => v * E + (k === 2 ? C.decalZ : 0);
+// Poids de peau partagés avec outils/squelettes.js (calculés en mètres du jeu ; épaules sans bosse)
+const S_JEU = OS.map(([n, p, a, c]) => [n, p, a.map(versJeu), c.map(versJeu)]), poidsJeu = require('./squelettes.js').poids(S_JEU, rang);
 const image = (ti, f, taille, canal) => {
   if (ti == null) return null; const k = ti + f; if (images[k]) return images[k];
   const im = j.images[j.textures[ti].source], bv = j.bufferViews[im.bufferView], tmp = path.join(dest, '_tmp');
@@ -73,8 +75,7 @@ j.meshes.forEach((m, mi) => {
     if (id == null) {
       id = pos.length / 3; cles.set(k, id); pos.push(...q); nor.push(...nn); uv.push(...uu);
       const src0 = [P[i * 3], P[i * 3 + 1], P[i * 3 + 2]];
-      let w = poids(src0, rigide);
-      if (!rigide && src0[1] > 1.4 && Math.abs(src0[0]) < .13) { const t = lisse(1.47, 1.53, src0[1]); if (t > 0) w = [[rang.head, t], [rang.neck01, 1 - t]].filter(x => x[1] > 0); }
+      const w = poidsJeu(src0.map(versJeu), rigide);
       const wi = [0, 0, 0, 0], ww = [0, 0, 0, 0]; let reste = 255; w.forEach(([o, p_], z) => { wi[z] = o; ww[z] = z === w.length - 1 ? reste : Math.round(p_ * 255); reste -= ww[z]; });
       si.push(...wi); sw.push(...ww);
     }

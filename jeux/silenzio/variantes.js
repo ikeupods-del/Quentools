@@ -137,7 +137,7 @@ export function peindreTete(src, pos, o = {}, nrm = null) {
     const k4 = (py * W + px) * 4; if (!PP[k4 + 3]) continue;
     const x = PP[k4], y = PP[k4 + 1], z = PP[k4 + 2], ax = Math.abs(x), i = k4;
     let r = d[i], g = d[i + 1], b = d[i + 2]; const L = lum(r, g, b);
-    const h = partCheveux(x, y, z) * lisse(150, 112, L);
+    const h = o.cuir ? partCheveux(x, y, z) : partCheveux(x, y, z) * lisse(150, 112, L); // cuir : crâne nu du modèle, on y peint la chevelure
     // Teint
     const mT = 1 - h; r *= 1 + (fT[0] - 1) * mT; g *= 1 + (fT[1] - 1) * mT; b *= 1 + (fT[2] - 1) * mT;
     // Joues rosées (femme, enfant)
@@ -157,7 +157,7 @@ export function peindreTete(src, pos, o = {}, nrm = null) {
     }
     // Cheveux : couleur, gris, crâne dégarni, rasé
     if (h > .02) {
-      const l = Math.min(1.5, L / 85);
+      const l = o.cuir ? .55 + bruit2(px * .7, py * .17) * .45 + bruitDoux(px * .05, py * .05) * .2 : Math.min(1.5, L / 85);
       let hr = r, hg = g, hb = b;
       if (cheveux) { hr = cheveux[0] * l; hg = cheveux[1] * l; hb = cheveux[2] * l; }
       if (gris) { const sel = Math.min(1, gris * (.75 + bruitDoux(px * .06, py * .02) * .5)), gl = Math.pow(l, .7); hr += (GRIS[0] * gl - hr) * sel; hg += (GRIS[1] * gl - hg) * sel; hb += (GRIS[2] * gl - hb) * sel; }
