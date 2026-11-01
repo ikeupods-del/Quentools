@@ -9,7 +9,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { mergeGeometries, mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { fabriquerTextures, texVisage, texDrapeau, texTatouage } from './textures.js';
 import * as VAR from './variantes.js';
@@ -42,10 +42,14 @@ const ESSAI = new URLSearchParams(location.search).has('essai'); // essais autom
 const QUALITES = {
   haute: { nom: 'Haute', dof: true, ombre: 4096, ao: true, bloom: true, msaa: 4, dpr: 1.75, herbe: 42000, rayonHerbe: 26, arbres: 1 },
   moyenne: { nom: 'Moyenne', dof: true, ombre: 2048, ao: false, bloom: true, msaa: 2, dpr: 1.25, herbe: 16000, rayonHerbe: 20, arbres: 1 },
-  basse: { nom: 'Basse', ombre: 1024, ao: false, bloom: false, msaa: 0, dpr: 1, herbe: 0, rayonHerbe: 0, arbres: .6 }
+  basse: { nom: 'Basse', ombre: 1024, ao: false, bloom: false, msaa: 2, dpr: 1, herbe: 0, rayonHerbe: 0, arbres: .6 }
 };
-const QN = QUALITES[SAUVE.qualite] ? SAUVE.qualite : (tactile ? 'basse' : 'haute');
-const Q = QUALITES[QN];
+// Choix enregistré seulement s'il date du réglage actuel (les anciens téléphones restaient bloqués en Basse)
+const QN = SAUVE.qualiteV === 2 && QUALITES[SAUVE.qualite] ? SAUVE.qualite : (tactile ? 'moyenne' : 'haute');
+const Q = Object.assign({}, QUALITES[QN]);
+// Téléphone : écran très dense, on calcule plus de pixels et on lisse toujours les bords (MSAA peu coûteux sur ces puces)
+if (tactile) Object.assign(Q, { dpr: { haute: 2, moyenne: 1.6, basse: 1.3 }[QN], msaa: 4, dof: false, ao: false, ombre: Math.min(Q.ombre, 2048), herbe: Math.min(Q.herbe, 9000) });
+const A2C = Q.msaa > 0; // feuillages et mèches : bords lissés par l'anticrénelage au lieu d'un découpage en escalier
 const etape = (txt) => { $('#chargement .etat').textContent = txt; return new Promise(r => requestAnimationFrame(() => setTimeout(r, 0))); };
 
 /* ---------- Rendu ---------- */
@@ -110,6 +114,7 @@ const ETALON = new ShaderPass({
     }`
 });
 compo.addPass(ETALON);
+if (tactile) { ETALON.uniforms.uNet.value = .15; ETALON.uniforms.uGrain.value = .022; }
 if (SAUVE.sansFilm) { ETALON.uniforms.uGrain.value = 0; ETALON.uniforms.uVignette.value = .25; }
 function redimensionner() {
   const w = innerWidth, h = innerHeight; rendu.setSize(w, h, false); compo.setSize(w, h);
@@ -121,12 +126,12 @@ addEventListener('resize', redimensionner); redimensionner();
 await etape('Matières…');
 const ANISO = rendu.capabilities.getMaxAnisotropy();
 const TX = fabriquerTextures(QN, Math.min(ANISO, 8));
-/* Matières photographiques (ambientCG, CC0 ; outils/matieres.js) à la place des matières dessinées, sauf en qualité Basse */
+/* Matières photographiques (ambientCG, CC0 ; outils/matieres.js) à la place des matières dessinées */
 function matierePhoto(fam) {
   const charge = (suffixe, srgb) => { const t = new T.TextureLoader().load('matieres/' + fam + suffixe + '.jpg'); t.wrapS = t.wrapT = T.RepeatWrapping; if (srgb) t.colorSpace = T.SRGBColorSpace; t.anisotropy = Math.min(ANISO, 8); return t; };
   return { map: charge('_c', true), normalMap: charge('_n'), roughnessMap: charge('_r') };
 }
-if (QN !== 'basse' && !ESSAI) for (const fam of ['enduit', 'pierre', 'moellon', 'tuiles', 'paves', 'sol', 'bois', 'roche', 'gravier']) TX[fam] = matierePhoto(fam);
+if (!ESSAI) for (const fam of ['enduit', 'pierre', 'moellon', 'tuiles', 'paves', 'sol', 'bois', 'roche', 'gravier']) TX[fam] = matierePhoto(fam);
 else { TX.moellon = TX.pierre; TX.roche = TX.pierre; TX.gravier = TX.sol; }
 
 /* ---------- Matériaux ---------- */
@@ -163,7 +168,7 @@ function M(cle) {
     case 'cils': m = new T.MeshStandardMaterial({ color: 0x120c08, roughness: .9 }); break;
     case 'oeil': m = new T.MeshPhysicalMaterial({ color: 0xdcd4c8, roughness: .12, clearcoat: 1, clearcoatRoughness: .05 }); break;
     case 'iris': m = new T.MeshPhysicalMaterial({ color: c, roughness: .1, clearcoat: 1, clearcoatRoughness: .05 }); break;
-    case 'fleurs': m = new T.MeshStandardMaterial({ map: TX[hx], alphaTest: .45, side: T.DoubleSide, roughness: .7 }); break;
+    case 'fleurs': m = new T.MeshStandardMaterial({ map: TX[hx], alphaTest: .45, alphaToCoverage: A2C, side: T.DoubleSide, roughness: .7 }); break;
     case 'salissure': m = new T.MeshStandardMaterial({ map: TX[hx], transparent: true, depthWrite: false, roughness: 1, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }); break;
     case 'image': m = new T.MeshStandardMaterial({ map: TX.image, roughness: .6 }); break;
     case 'cuir': m = new T.MeshStandardMaterial({ color: c, roughness: .45 }); break;
@@ -312,7 +317,7 @@ await etape('Relief…');
     const dr = distRoute(x, z); if (dr < 8) c.lerp(poussiere, (1 - dr / 8) * .6);
     if (y < 1.8) c.lerp(sable, clamp((1.8 - y) / 1.3, 0, 1));
     const r = Math.hypot(x, z); if (r > 205) c.lerp(roche, clamp((r - 205) / 45, 0, .85));
-    c.multiplyScalar((.92 + .16 * h2(i, 7)) * 1.18);
+    c.multiplyScalar((.92 + .16 * bruit(x / 9 + 5, z / 9 - 2)) * 1.18);
     cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b;
   }
   g.setAttribute('color', new T.BufferAttribute(cols, 3)); g.computeVertexNormals();
@@ -322,14 +327,51 @@ await etape('Relief…');
     vec4 sampledDiffuseColor = mix(t1, t2, smoothstep(0.42, 0.62, mm)); diffuseColor *= sampledDiffuseColor * (0.88 + 0.24 * mm);
   #endif`); };
   sol.receiveShadow = true; scene.add(sol);
-  // Montagnes du fond et promontoire au bord de la mer (roche)
-  const roc = (() => { const rep = t => { const x = t.clone(); x.repeat.set(9, 9); x.needsUpdate = true; return x; }; return new T.MeshStandardMaterial({ color: 0xa89c88, map: rep(TX.roche.map), normalMap: rep(TX.roche.normalMap), normalScale: new T.Vector2(1.6, 1.6), roughnessMap: rep(TX.roche.roughnessMap), roughness: 1 }); })(), ge = facettes(new T.IcosahedronGeometry(1, 2));
-  for (let i = 0; i < 30; i++) {
-    const a = -PI * .05 + i / 29 * PI * 1.1, rr = 330 + R() * 90, hh = 70 + R() * 110;
-    const m = new T.Mesh(ge, roc); m.scale.set(90 + R() * 70, hh, 90 + R() * 70); m.rotation.y = R() * 3; m.position.set(Math.cos(a) * rr, -hh * .3, Math.sin(a) * rr); scene.add(m);
+  // Montagnes du fond : une couronne de relief continu (crêtes, ravines, normales lissées) qui prolonge le sol, et promontoire au bord de la mer
+  const roc = new T.MeshStandardMaterial({ vertexColors: true, map: TX.roche.map, normalMap: TX.roche.normalMap, normalScale: new T.Vector2(1.5, 1.5), roughnessMap: TX.roche.roughnessMap, roughness: 1 });
+  roc.onBeforeCompile = sol.material.onBeforeCompile; roc.customProgramCacheKey = () => 'roc';
+  const nA = tactile ? 300 : 420, nR = tactile ? 56 : 80, a0 = -PI * .16, a1 = PI * 1.16, r0 = 285, r1 = 680;
+  const crete = (x, z) => { let a = 0, f = 1, amp = 1, t = 0; for (let o = 0; o < 5; o++) { const n = 1 - Math.abs(2 * bruit(x * f / 150 + o * 7.3, z * f / 150 - o * 3.1) - 1); a += n * n * amp; t += amp; f *= 2.05; amp *= .5; } return a / t; };
+  const montagne = (x, z, a) => {
+    const r = Math.hypot(x, z), k = Math.min(r, 300) / r, base = hBrut(x * k, z * k) + Math.max(0, r - 300) * .12;
+    const env = lisse(295, 430, r) * lisse(-250, -90, z) * lisse(a0, a0 + .35, a) * lisse(a1, a1 - .35, a);
+    return base - .8 + env * (25 + 125 * crete(x, z) * (.45 + .9 * bruit(x / 260 + 4, z / 260 + 9)));
+  };
+  
+  const pos = new Float32Array((nA + 1) * (nR + 1) * 3), uvs = new Float32Array((nA + 1) * (nR + 1) * 2), idx = [];
+  for (let ia = 0; ia <= nA; ia++) {
+    const a = a0 + (a1 - a0) * ia / nA; let v = 0, px = 0, py = 0, pz = 0;
+    for (let ir = 0; ir <= nR; ir++) {
+      const r = r0 + (r1 - r0) * Math.pow(ir / nR, 1.25), x = Math.cos(a) * r, z = Math.sin(a) * r, y = montagne(x, z, a), k = ia * (nR + 1) + ir;
+      if (ir) v += Math.hypot(x - px, y - py, z - pz); px = x; py = y; pz = z;
+      pos.set([x, y, z], k * 3); uvs.set([a * 420 / 26, v / 26], k * 2);
+      if (ia < nA && ir < nR) { const b = k + nR + 1; idx.push(k, b, k + 1, k + 1, b, b + 1); }
+    }
   }
-  const prom = new T.Mesh(ge, roc); prom.scale.set(110, 85, 70); prom.position.set(230, -12, -250); scene.add(prom);
+  const gm = new T.BufferGeometry(); gm.setAttribute('position', new T.BufferAttribute(pos, 3)); gm.setAttribute('uv', new T.BufferAttribute(uvs, 2)); gm.setIndex(idx); gm.computeVertexNormals();
+  const nm = gm.attributes.normal, cm = new Float32Array(pos.length), cRoche = new T.Color(0xe6d8bc), cClair = new T.Color(0xfff4dc), cMaquis = new T.Color(0x9a9662), cOmbre = new T.Color(0xb89a7a), cc = new T.Color();
+  for (let k = 0; k < nm.count; k++) {
+    const x = pos[k * 3], y = pos[k * 3 + 1], z = pos[k * 3 + 2], ny = nm.getY(k);
+    cc.copy(cRoche).lerp(cOmbre, bruit(x / 55, z / 55) * .6).lerp(cClair, lisse(110, 230, y) * .7);
+    cc.lerp(cMaquis, lisse(.82, .95, ny) * (1 - lisse(60, 170, y)) * (.4 + .5 * bruit(x / 30 + 2, z / 30)));
+    cm.set([cc.r, cc.g, cc.b], k * 3);
+  }
+  gm.setAttribute('color', new T.BufferAttribute(cm, 3));
+  const chaine = new T.Mesh(gm, roc); chaine.receiveShadow = true; scene.add(chaine);
+  const prom = new T.Mesh(rocher(5, .32), roc); prom.scale.set(110, 85, 70); prom.position.set(230, -12, -250); scene.add(prom);
 })();
+// Rocher lisse : sphère fine déformée par un bruit à plusieurs échelles, normales lissées et couleurs par sommet (creux plus sombres)
+function rocher(det, rug = .25) {
+  const g = mergeVertices(new T.IcosahedronGeometry(1, det).deleteAttribute('normal').deleteAttribute('uv')), p = g.attributes.position, uv = new Float32Array(p.count * 2), col = new Float32Array(p.count * 3);
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    let n = 0, f = 1.6, amp = 1, t = 0; for (let o = 0; o < 4; o++) { n += (bruit(x * f + y * .7 * f + 11 * o, z * f - y * .5 * f) - .5) * amp; t += amp; f *= 2.1; amp *= .5; }
+    const k = 1 + n / t * rug * 2.2; p.setXYZ(i, x * k, y * k * (y < 0 ? .6 : 1), z * k);
+    uv[i * 2] = Math.atan2(z, x) * 1.6; uv[i * 2 + 1] = y * 1.6;
+    const c = .82 + .3 * (k - 1) / rug; col[i * 3] = col[i * 3 + 1] = col[i * 3 + 2] = clamp(c, .6, 1.08);
+  }
+  g.setAttribute('uv', new T.BufferAttribute(uv, 2)); g.setAttribute('color', new T.BufferAttribute(col, 3)); g.computeVertexNormals(); return g;
+}
 function facettes(g) { const n = g.index ? g.toNonIndexed() : g; const p = n.attributes.position; for (let i = 0; i < p.count; i++) { const k = 1 + (h2(Math.round(p.getX(i) * 50), Math.round(p.getZ(i) * 50 + p.getY(i) * 30)) - .5) * .25; p.setXYZ(i, p.getX(i) * k, p.getY(i) * k, p.getZ(i) * k); } n.computeVertexNormals(); const uv = new Float32Array(p.count * 2); for (let i = 0; i < p.count; i++) { uv[i * 2] = p.getX(i) * 3; uv[i * 2 + 1] = p.getY(i) * 3 + p.getZ(i) * 3; } n.setAttribute('uv', new T.BufferAttribute(uv, 2)); return n; }
 
 function ruban(pts, larg, couleur) {
@@ -595,9 +637,9 @@ function foret(liste, geoTronc, matTronc, geoFeuilles, matFeuilles) {
 }
 (() => {
   for (let x = 34; x <= 125; x += 7) for (let z = 76; z <= 139; z += 7) CITRONNIERS.push({ x: x + (h2(x, z) - .5) * .6, z: z + (h2(z, x) - .5) * .6, s: .9 + h2(x * 3, z) * .3 });
-  const matFeuilleC = auVent(new T.MeshStandardMaterial({ map: TX.citronnier, alphaTest: .45, side: T.DoubleSide, roughness: .55 }), 1.2, .035);
-  const matFeuilleO = auVent(new T.MeshStandardMaterial({ map: TX.olivier, alphaTest: .45, side: T.DoubleSide, roughness: .7 }), 1.2, .03);
-  const matFeuilleY = auVent(new T.MeshStandardMaterial({ map: TX.cypres, alphaTest: .45, side: T.DoubleSide, roughness: .8 }), 1, .012);
+  const matFeuilleC = auVent(new T.MeshStandardMaterial({ map: TX.citronnier, alphaTest: .45, alphaToCoverage: A2C, side: T.DoubleSide, roughness: .55 }), 1.2, .035);
+  const matFeuilleO = auVent(new T.MeshStandardMaterial({ map: TX.olivier, alphaTest: .45, alphaToCoverage: A2C, side: T.DoubleSide, roughness: .7 }), 1.2, .03);
+  const matFeuilleY = auVent(new T.MeshStandardMaterial({ map: TX.cypres, alphaTest: .45, alphaToCoverage: A2C, side: T.DoubleSide, roughness: .8 }), 1, .012);
   const ecorce = M('ecorce:8a7a68'), ecorceO = M('ecorce:9a9282');
   // Citronniers : touffus, bas, chargés de fruits
   const tC = tronc([[0, 0, 0, .05, 1, 0, .17, .12], [.05, 1, 0, .7, 1.9, .2, .09, .05], [.05, 1, 0, -.6, 2, .3, .09, .05], [.05, 1, 0, .1, 2.1, -.7, .08, .05], [.05, 1, 0, 0, 2.4, .1, .08, .05]]);
@@ -643,13 +685,13 @@ function foret(liste, geoTronc, matTronc, geoFeuilles, matFeuilles) {
   foret(fi, gFi, M('raquette:86a272')); foret(fi, gFr, new T.MeshStandardMaterial({ color: 0xd2662e, roughness: .45 }));
   n = 0;
   while (ro.length < 110 && n++ < 3000) { const x = (R() - .5) * 460, z = (R() - .5) * 420; if (!libre(x, z, -2)) continue; const s = .4 + R() * 1.3; ro.push({ x, y: H(x, z) - s * .2, z, s, ry: R() * 6 }); if (s > .8) CERCLES.push({ x, z, r: s * .9 }); }
-  const gRo = facettes(new T.IcosahedronGeometry(1, 1)); gRo.scale(1, .65, 1.1);
+  const gRo = rocher(3, .3); gRo.scale(1, .65, 1.1);
   foret(ro, gRo, M('pierre:b4a78e'));
   // Touffes d'herbes hautes (cartes croisées) le long des chemins et des murets
   const touffe = mergeGeometries([0, PI / 3, PI * 2 / 3].map(a => { const g = new T.PlaneGeometry(1.1, .8); g.translate(0, .38, 0); g.rotateY(a); return g; }));
   const hb = []; n = 0;
   while (hb.length < 900 * Q.arbres && n++ < 9000) { const x = (R() - .5) * 420, z = (R() - .5) * 400; if (Math.hypot(x - L.village.x, z - L.village.z) < 52 || (Math.abs(x - L.baglio.x) < 14 && Math.abs(z - L.baglio.z) < 14) || distRoute(x, z) < 2.6 || H(x, z) < 2) continue; hb.push({ x, y: H(x, z) - .05, z, s: .6 + R() * .7, ry: R() * 6 }); }
-  const matHerbe = auVent(new T.MeshStandardMaterial({ map: TX.herbes, alphaTest: .4, side: T.DoubleSide, roughness: .9 }), 0, .09);
+  const matHerbe = auVent(new T.MeshStandardMaterial({ map: TX.herbes, alphaTest: .4, alphaToCoverage: A2C, side: T.DoubleSide, roughness: .9 }), 0, .09);
   SANS_AO.push(...foret(hb, null, null, touffe, matHerbe));
 })();
 
@@ -1080,7 +1122,7 @@ function texMeche() {
   for (let i = 0; i < 140; i++) { const x0 = r() * W, l = H * (.45 + r() * .55), v = 140 + r() * 115 | 0; x.strokeStyle = `rgba(${v},${v},${v},${.5 + r() * .5})`; x.lineWidth = .5 + r() * 1.3; x.beginPath(); x.moveTo(x0, -2); x.bezierCurveTo(x0 + (r() - .5) * 8, l * .4, x0 + (r() - .5) * 12, l * .75, x0 + (r() - .5) * 16, l); x.stroke(); }
   const t = new T.CanvasTexture(c); t.colorSpace = T.SRGBColorSpace; t.anisotropy = Math.min(ANISO, 8); return (TEX_MECHE = t);
 }
-const matMeches = c => { const k = 'meche:' + c; if (MATS.has(k)) return MATS.get(k); const cc = new T.Color(c), m = new T.MeshStandardMaterial({ color: cc.multiplyScalar(Math.min(1.7, .95 / Math.max(cc.r, cc.g, cc.b, .01))), map: texMeche(), alphaTest: .42, side: T.DoubleSide, roughness: .62, envMapIntensity: .35 });
+const matMeches = c => { const k = 'meche:' + c; if (MATS.has(k)) return MATS.get(k); const cc = new T.Color(c), m = new T.MeshStandardMaterial({ color: cc.multiplyScalar(Math.min(1.7, .95 / Math.max(cc.r, cc.g, cc.b, .01))), map: texMeche(), alphaTest: .42, alphaToCoverage: A2C, side: T.DoubleSide, roughness: .62, envMapIntensity: .35 });
   m.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <normal_fragment_begin>', T.ShaderChunk.normal_fragment_begin.split('normal *= faceDirection;').join('')); }; // les deux faces gardent la normale du crâne
   m.customProgramCacheKey = () => 'meche'; MATS.set(k, m); return m; }; // couleur compensée : la texture des brins est plus sombre que le blanc
 /* S = { pos (repère du crâne), index, src (positions servant au filtre, sinon pos) } ; filtre(x, y, z) → poids (0 = rien) ;
@@ -2053,7 +2095,7 @@ function majCamera(dt) {
 
 /* ---------- Heure du jour : soleil, ciel, nuages, brume, étalonnage ---------- */
 const AMBIANCES = [
-  { elev: 48, azim: 25, turb: 3.2, ray: 1.5, mie: .004, mieG: .8, soleil: 0xfff0d8, si: 3.7, hs: 0xd0dcea, hg: 0x8a7350, hi: .36, env: .7, brume: 0xc9cfd4, dens: .0016, expo: .64, nuit: 0, chaleur: .32, couv: .58, nClair: 0xffffff, nSombre: 0x9aa0aa, nOpac: .9 },
+  { elev: 48, azim: 25, turb: 2.4, ray: 1.5, mie: .004, mieG: .8, soleil: 0xfff0d8, si: 3.7, hs: 0xd0dcea, hg: 0x8a7350, hi: .36, env: .7, brume: 0xbac6d2, dens: .001, expo: .64, nuit: 0, chaleur: .32, couv: .58, nClair: 0xffffff, nSombre: 0x9aa0aa, nOpac: .9 },
   { elev: 2.5, azim: 262, turb: 10, ray: 3, mie: .012, mieG: .9, soleil: 0xffa25a, si: 2.6, hs: 0xd0a080, hg: 0x4a3426, hi: .38, env: .7, brume: 0xd6a07a, dens: .0026, expo: .78, nuit: .08, chaleur: .6, couv: .55, nClair: 0xffb27a, nSombre: 0x6a4a5a, nOpac: .95 },
   { elev: -16, azim: 290, turb: 2, ray: .5, mie: .002, mieG: .7, soleil: 0x9db4e8, si: .7, hs: 0x5a6e9e, hg: 0x16161a, hi: .32, env: .9, brume: 0x0e1424, dens: .0085, expo: 1.0, nuit: 1, chaleur: -.35, couv: .6, nClair: 0x2a3550, nSombre: 0x0c1020, nOpac: .7 }
 ];
@@ -2901,7 +2943,8 @@ $('#m-commandes').onclick = () => { SON.init(); panneau('<h2>Commandes</h2>' + C
 const CREDITS = `<h3 style="font-family:var(--etiquette);letter-spacing:.18em;text-transform:uppercase;font-size:13px;color:var(--citron);margin:28px 0 10px;font-weight:400">Crédits</h3><p style="color:var(--fumee);font-size:14px;line-height:1.6;margin:0">Corps humains : MakeHuman (makehumancommunity.org), données publiées dans le domaine public (CC0) ; vêtements, peau et animations ajoutés par le jeu. Moteur : three.js (licence MIT). Polices : Cormorant, Bitter, Oswald (SIL Open Font License). Tout le reste (décors, matières, personnages, sons) est fabriqué par le programme du jeu.</p>`;
 $('#m-son').onclick = () => { SON.init(); SON.basculer(); majMenu(); };
 $('#m-qualite').onclick = changerQualite;
-function changerQualite() { const o = ['haute', 'moyenne', 'basse'], n = o[(o.indexOf(QN) + 1) % 3]; SAUVE.qualite = n; sauver(); toast('Qualité ' + QUALITES[n].nom.toLowerCase() + '…'); setTimeout(() => location.reload(), 300); }
+const ADAPT = { t: 0, n: 0 };
+function changerQualite() { const o = ['haute', 'moyenne', 'basse'], n = o[(o.indexOf(QN) + 1) % 3]; SAUVE.qualite = n; SAUVE.qualiteV = 2; sauver(); toast('Qualité ' + QUALITES[n].nom.toLowerCase() + '…'); setTimeout(() => location.reload(), 300); }
 function pause() {
   if (etat !== 'jeu') return; etat = 'pause'; if (document.pointerLockElement) document.exitPointerLock();
   panneau('<h2>Pause</h2>', [
@@ -2982,6 +3025,8 @@ function boucle(now) {
       if (chrono) { chrono.reste -= dt; UI.chrono.hidden = false; const r = Math.max(0, Math.ceil(chrono.reste)); UI.chrono.textContent = `${Math.floor(r / 60)}:${String(r % 60).padStart(2, '0')}`; UI.chrono.classList.toggle('urgent', r <= 15); if (chrono.reste <= 0) { if (chrono.job) { toast(chrono.echec, true, 3000); SON.rate(); JOB = null; chrono = null; UI.chrono.hidden = true; } else echec(chrono.echec, 'monter'); } }
       if (JOB && JOB.type === 'livraison' && J.dansChar && dist(CHAR, JOB.d) < 9 && Math.abs(CHAR.v) < 3) { const n = CHAR.nb, q = JOB.d.qui; JOB = null; chrono = null; UI.chrono.hidden = true; CHAR.v = 0; placerCharrette(CHAR.x, CHAR.z, CHAR.yaw, 0); gagner(10 + 2 * n, `livraison à ${q}, ${n} cagette${n > 1 ? 's' : ''} intacte${n > 1 ? 's' : ''}`); }
       if (PECHE.actif) { PECHE.t += dt; $('#peche .curseur').style.left = ((Math.sin(PECHE.t * PECHE.vitesse * (1 + JOB.essais * .18)) + 1) / 2 * 100) + '%'; }
+      // Résolution adaptative : si l'image saccade, on calcule un peu moins de pixels (jamais sous la taille de l'écran) ; on remonte si tout est fluide
+      if (!ESSAI) { ADAPT.t += dt; ADAPT.n++; if (ADAPT.t > 2.5) { const fps = ADAPT.n / ADAPT.t, pr = rendu.getPixelRatio(), max = Math.min(devicePixelRatio || 1, Q.dpr); let np = pr; if (fps < 27 && pr > 1) np = Math.max(1, pr - .15); else if (fps > 56 && pr < max) np = Math.min(max, pr + .1); if (np !== pr) { rendu.setPixelRatio(np); redimensionner(); } ADAPT.t = 0; ADAPT.n = 0; } }
       if (!mesure.fait) { mesure.t += dt; mesure.n++; if (mesure.t > 12) { mesure.fait = true; const fps = mesure.n / mesure.t; if (fps < 26 && QN !== 'basse') aide(`L’image saccade (${Math.round(fps)} images/s). Baisse la <b>qualité graphique</b> dans la pause (Échap).`, 9000); } }
     } else if (etat === 'dialogue') { majDialogue(dt); if (!J.dansChar) { J.h.g.rotation.y += ecartAngle(J.h.g.rotation.y, J.yaw) * Math.min(1, dt * 6); animer(J.h, dt, 0); } }
     majPnj(dt);
@@ -2999,7 +3044,7 @@ function boucle(now) {
   if (Q.bloom) {
     const sd = UC.sunPosition.value, sp = camera.position.clone().addScaledVector(sd, 1000).project(camera), m = Math.max(Math.abs(sp.x), Math.abs(sp.y));
     const f = sd.y > -.02 && sp.z < 1 ? (1 - lisse(1, 1.6, m)) * clamp(1.3 - sd.y * 1.7, .25, 1) : 0;
-    RAYONS.enabled = f > .02; RAYONS.uniforms.uForce.value = f * .85; RAYONS.uniforms.uSoleil.value.set(sp.x * .5 + .5, sp.y * .5 + .5); RAYONS.uniforms.uTeinte.value.copy(soleil.color);
+    RAYONS.enabled = f > .02; RAYONS.uniforms.uForce.value = f * .5; RAYONS.uniforms.uSoleil.value.set(sp.x * .5 + .5, sp.y * .5 + .5); RAYONS.uniforms.uTeinte.value.copy(soleil.color);
   }
   if (DRAPEAU) DRAPEAU.children.forEach((b, i) => { b.rotation.x = Math.sin(s * 3 + i * .8) * .12; });
   POUSSIERE.position.set(camera.position.x, camera.position.y - 3 + Math.sin(s * .2) * .3, camera.position.z); POUSSIERE.rotation.y = s * .01;
@@ -3013,4 +3058,4 @@ function boucle(now) {
 ETAPES.intro.setup(); retourMenu(); heure(1.05, true);
 $('#chargement').hidden = true;
 requestAnimationFrame(boucle);
-window.__silenzio = { galerie: (i, z) => { ouvrirGalerie(); GAL.zoom = !!z; montrerFamille(i); }, gal: () => GAL, aller, charger, ETAPES, J, CHAR, PNJ, CUEILLETTE, etat: () => etat, etape: () => ETAPE, inter: () => interProche && interProche.lib(), heure, camera, cam: CAM, sauve: SAUVE, job: () => JOB && JOB.type };
+window.__silenzio = { scene, galerie: (i, z) => { ouvrirGalerie(); GAL.zoom = !!z; montrerFamille(i); }, gal: () => GAL, aller, charger, ETAPES, J, CHAR, PNJ, CUEILLETTE, etat: () => etat, etape: () => ETAPE, inter: () => interProche && interProche.lib(), heure, camera, cam: CAM, sauve: SAUVE, job: () => JOB && JOB.type };
