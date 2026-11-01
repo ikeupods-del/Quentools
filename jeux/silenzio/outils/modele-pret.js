@@ -29,11 +29,11 @@ for (const [s, mx, cc] of [['L', 'Left', 'CC_Base_L_'], ['R', 'Right', 'CC_Base_
   [new RegExp('^(' + mx + 'Shoulder|' + cc + 'Clavicle)$'), 'clavicle.' + s], [new RegExp('^(' + mx + 'Arm|' + cc + 'Upperarm)$'), 'upperarm01.' + s], [new RegExp('^(' + mx + 'ForeArm|' + cc + 'Forearm)$'), 'lowerarm01.' + s],
   [new RegExp('^(' + mx + 'Hand|' + cc + 'Hand)$'), 'wrist.' + s], [new RegExp('^(' + mx + 'UpLeg|' + cc + 'Thigh)$'), 'upperleg01.' + s], [new RegExp('^(' + mx + 'Leg|' + cc + 'Calf)$'), 'lowerleg01.' + s], [new RegExp('^(' + mx + 'Foot|' + cc + 'Foot)$'), 'foot.' + s]);
 const BOUT = { root: 'spine04', spine04: /^(Spine1|CC_Base_Spine01)$/, spine02: 'neck01', neck01: 'head', head: /^(HeadTop_End|CC_Base_Head)$/ }; // fin de chaque os principal
-const skin = j.skins[0], jointsN = skin.joints, IBM = acc(skin.inverseBindMatrices), nomsJ = jointsN.map(i => propre(j.nodes[i].name));
-const noms = nomsJ.map(n => { for (const [re, v] of CORRESP) if (re.test(n)) return v; return n.replace(/[^\w]/g, '_'); });
+const skin = (j.skins || [])[0], jointsN = skin ? skin.joints : [], IBM = skin ? acc(skin.inverseBindMatrices) : null, nomsJ = jointsN.map(i => propre(j.nodes[i].name));
+let noms = nomsJ.map(n => { for (const [re, v] of CORRESP) if (re.test(n)) return v; return n.replace(/[^\w]/g, '_'); });
 const posJ = jointsN.map(i => appl(monde[i], [0, 0, 0]));
 // Côté gauche du personnage = +x dans le jeu : si les « Left » sont en −x, on retourne le modèle
-const iMG = noms.indexOf('wrist.L'), sens = posJ[iMG][0] >= 0 ? 1 : -1;
+const iMG = noms.indexOf('wrist.L'), sens = skin ? (posJ[iMG][0] >= 0 ? 1 : -1) : 1;
 // Recadrage : yeux du modèle à la hauteur et à l'avancée de ceux du personnage PromptPlay
 const yeuxM = j.meshes.map((m, mi) => [m, mi]).filter(([m]) => /eye(ball)?(_[lr])?$|Std_Eye_[LR]|LeftEyeball|RightEyeball|^Eyes/i.test(m.name + ' ' + (j.materials[m.primitives[0].material] || {}).name));
 const noeudsMesh = j.nodes.map((n, i) => [n, i]).filter(([n]) => n.mesh != null);
@@ -59,9 +59,12 @@ for (const t of toutes) for (const p of t.prims) { for (let v = 0; v < p.cnt; v+
 const moy = a => a.reduce((x, y) => x + y, 0) / a.length, yOeil = moy(ys) - sol, zOeil = Math.max(...zs), E = 1.667 / yOeil, dZ = .108 - zOeil * E;
 const versJeu = p => [p[0] * sens * E, (p[1] - sol) * E, p[2] * sens * E + dZ];
 console.log('sens', sens, 'échelle', E.toFixed(4), 'taille', ((Math.max(...toutes.flatMap(t => t.prims.flatMap(p => Array.from({ length: p.cnt }, (_, v) => p.pos[v * 3 + 1])))) - sol) * E).toFixed(3));
-// Squelette
-const os = noms.map((n, k) => { let p = parent[jointsN[k]]; while (p != null && !jointsN.includes(p)) p = parent[p]; return { n, p: p != null ? jointsN.indexOf(p) : -1 }; });
-const jp = posJ.map(versJeu), rangN = Object.fromEntries(noms.map((n, k) => [n, k]));
+// Squelette (d'origine, ou posé à la main pour un modèle qui n'en a pas : MANUEL)
+const MANUEL = require('./squelettes.js');
+if (!skin && !MANUEL[nom]) { mesurer(); process.exit(0); }
+if (!skin) { const S = MANUEL[nom]; noms = S.map(x => x[0]); }
+const os = !skin ? MANUEL[nom].map(x => ({ n: x[0], p: x[1] ? MANUEL[nom].findIndex(y => y[0] === x[1]) : -1 })) : noms.map((n, k) => { let p = parent[jointsN[k]]; while (p != null && !jointsN.includes(p)) p = parent[p]; return { n, p: p != null ? jointsN.indexOf(p) : -1 }; });
+const jp = skin ? posJ.map(versJeu) : MANUEL[nom].map(x => x[2]), rangN = Object.fromEntries(noms.map((n, k) => [n, k]));
 const bout = k => { const n = noms[k]; let cible = BOUT[n];
   if (/^(clavicle|upperarm01|lowerarm01|upperleg01|lowerleg01)\./.test(n)) { const s = n.slice(-1), suite = { clavicle: 'upperarm01', upperarm01: 'lowerarm01', lowerarm01: 'wrist', upperleg01: 'lowerleg01', lowerleg01: 'foot' }[n.split('.')[0]]; return jp[rangN[suite + '.' + s]]; }
   if (/^wrist\./.test(n)) { const e = nomsJ.findIndex(x => /(Middle1|Mid1)$/.test(x) && (n.endsWith('L') ? /(Left|_L_)/ : /(Right|_R_)/).test(x)); return e >= 0 ? jp[e] : jp[k].map((v, c) => v + (c === 0 ? (n.endsWith('L') ? .08 : -.08) : 0)); }
@@ -69,7 +72,14 @@ const bout = k => { const n = noms[k]; let cible = BOUT[n];
   if (typeof cible === 'string') return jp[rangN[cible]];
   if (cible instanceof RegExp) { const e = nomsJ.findIndex((x, i) => i !== k && cible.test(x)); if (e >= 0 && n !== 'head') return jp[e]; if (n === 'head') { const t = nomsJ.findIndex(x => /HeadTop_End/.test(x)); return t >= 0 ? jp[t] : [jp[k][0], jp[k][1] + .2, jp[k][2]]; } }
   return [jp[k][0], jp[k][1] + .01, jp[k][2]]; };
-const joints = jp.map((p, k) => [...p, ...bout(k)].map(v => +v.toFixed(4)));
+const joints = skin ? jp.map((p, k) => [...p, ...bout(k)].map(v => +v.toFixed(4))) : MANUEL[nom].map(x => [...x[2], ...x[3]]);
+const poidsManuel = !skin && require('./squelettes.js').poids(MANUEL[nom], rangN);
+/* Mesures (modèle sans squelette) : centre des bras et des jambes par tranches, en mètres du jeu */
+function mesurer() {
+  const pts = []; for (const t of toutes) for (const p of t.prims) for (let v = 0; v < p.cnt; v += 1) pts.push(versJeu([p.pos[v * 3], p.pos[v * 3 + 1], p.pos[v * 3 + 2]]));
+  console.log('BRAS (|x| : y moyen, z moyen, n)'); for (let x = .12; x < .95; x += .03) { const s = pts.filter(p => p[0] > x && p[0] < x + .03 && p[1] > .8); if (s.length) console.log(x.toFixed(2), (s.reduce((a, p) => a + p[1], 0) / s.length).toFixed(3), (s.reduce((a, p) => a + p[2], 0) / s.length).toFixed(3), s.length); }
+  console.log('TRANCHES (y : milieu, x jambe, xmax)'); for (let y = .03; y < 1.8; y += .05) { const s = pts.filter(p => Math.abs(p[1] - y) < .01), l = s.filter(p => p[0] > .02 && p[0] < .25); console.log(y.toFixed(2), s.filter(p => Math.abs(p[0]) < .01).length, l.length ? (l.reduce((a, p) => a + p[0], 0) / l.length).toFixed(3) : '-', s.length ? Math.max(...s.map(p => Math.abs(p[0]))).toFixed(3) : '-'); }
+}
 // Maillages
 const b64 = a => Buffer.from(a.buffer, a.byteOffset, a.byteLength).toString('base64'), images = {};
 function image(ti, f, taille, canal, png) {
@@ -81,7 +91,7 @@ function image(ti, f, taille, canal, png) {
   return (images[k] = nf);
 }
 const role = (n, mat) => { const s = (n + ' ' + mat).toLowerCase();
-  if (/tongue|teeth|tearline|occlusion|cornea/.test(s)) return null;
+  if (/tongue|teeth|tearline|occlusion|cornea|mouth/.test(s)) return null;
   if (/eyelash/.test(s)) return 'cils'; if (/eye/.test(s)) return 'oeil'; if (/hair|haircut|scalp|transparency/.test(s)) return 'cheveux'; if (/head|face/.test(s)) return 'tete';
   if (/skin|body|arm|leg|hand|feet|torso|nails/.test(s)) return 'peau'; return 'tenue'; };
 const maillages = [], vus = {};
@@ -94,7 +104,7 @@ for (const t of toutes) t.prims.forEach((p, pi) => {
     const g = versJeu([p.pos[v * 3], p.pos[v * 3 + 1], p.pos[v * 3 + 2]]); for (let c = 0; c < 3; c++) { pos[v * 3 + c] = Math.round(g[c] * 8000); nor[v * 3 + c] = Math.round((c === 1 ? p.nor[v * 3 + 1] : p.nor[v * 3 + c] * sens) * 127); }
     uv[v * 2] = Math.round(Math.min(1, Math.max(0, U[v * 2] % 1 + (U[v * 2] < 0 ? 1 : 0))) * 65535); uv[v * 2 + 1] = Math.round(Math.min(1, Math.max(0, U[v * 2 + 1] % 1 + (U[v * 2 + 1] < 0 ? 1 : 0))) * 65535);
     if (p.J4) { let reste = 255; const ws = [0, 1, 2, 3].map(k => [p.J4[v * 4 + k], p.W4[v * 4 + k]]).sort((a, c) => c[1] - a[1]), tot = ws.reduce((a, c) => a + c[1], 0) || 1; ws.forEach(([ji, w], k) => { si[v * 4 + k] = ji; sw[v * 4 + k] = Math.max(0, Math.min(reste, k === 3 ? reste : Math.round(w / tot * 255))); reste -= sw[v * 4 + k]; }); sw[v * 4] += reste; }
-    else { si[v * 4] = rangN.head; sw[v * 4] = 255; }
+    else { const w = poidsManuel(g, r === 'oeil' || r === 'cils' || r === 'cheveux' ? 'head' : null); let reste = 255; w.forEach(([o, p_], z) => { si[v * 4 + z] = o; sw[v * 4 + z] = z === w.length - 1 ? reste : Math.round(p_ * 255); reste -= sw[v * 4 + z]; }); }
   }
   if (sens < 0) for (let k = 0; k < I.length; k += 3) { const x = I[k + 1]; I[k + 1] = I[k + 2]; I[k + 2] = x; }
   let nm = r + (vus[r] = (vus[r] || 0) + 1); if (vus[r] === 1) nm = r;

@@ -13,6 +13,7 @@ const out = Buffer.alloc(T * T * 4);
 const ecrire = (px, py, a, b, c, w0, w1, w2) => { const o = (py * T + px) * 4; for (let k = 0; k < 3; k++) { const v = (P[a * 3 + k] * w0 + P[b * 3 + k] * w1 + P[c * 3 + k] * w2) / p.echelle, [lo, hi] = BORNES[k]; out[o + k] = Math.max(0, Math.min(255, Math.round((v - lo) / (hi - lo) * 255))); } out[o + 3] = 255; };
 for (let t = 0; t < I.length; t += 3) {
   const [a, b, c] = [I[t], I[t + 1], I[t + 2]]; if ([a, b, c].some(i => P[i * 3 + 1] / p.echelle < 1.44)) continue; const uv = [a, b, c].map(i => [U[i * 2] / 65535 * T - .5, U[i * 2 + 1] / 65535 * T - .5]);
+  if (Math.max(...uv.map(q => q[0])) - Math.min(...uv.map(q => q[0])) > T * .15 || Math.max(...uv.map(q => q[1])) - Math.min(...uv.map(q => q[1])) > T * .15) continue; // triangles intérieurs étirés sur la texture
   const x0 = Math.max(0, Math.floor(Math.min(...uv.map(q => q[0])) - 1)), x1 = Math.min(T - 1, Math.ceil(Math.max(...uv.map(q => q[0])) + 1));
   const y0 = Math.max(0, Math.floor(Math.min(...uv.map(q => q[1])) - 1)), y1 = Math.min(T - 1, Math.ceil(Math.max(...uv.map(q => q[1])) + 1));
   const [[ax, ay], [bx, by], [cx, cy]] = uv, d = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy); if (Math.abs(d) < 1e-9) continue;

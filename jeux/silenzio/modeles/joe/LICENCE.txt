@@ -1,0 +1,6 @@
+Joe | Realistic Human 3D Model
+Auteur : Arjun P Krishna (https://sketchfab.com/arjunpkrishna)
+Licence : CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+Source : https://sketchfab.com/3d-models/joe-realistic-human-3d-model-2a108401fe5547409a3ad666b9b7d6b3
+Le crédit est affiché dans le jeu (menu « Les familles »).
+Modifications : recadrage, os renommés et textures réduites par outils/modele-pret.js.

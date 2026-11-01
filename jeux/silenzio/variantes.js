@@ -102,12 +102,13 @@ const RIDES = [
   [[[.022, 1.655], [.034, 1.65], [.048, 1.654]], .0028, .8], // poche sous l'œil
   [[[.0, 1.5], [.03, 1.502], [.05, 1.508]], .003, .5], [[[.0, 1.522], [.03, 1.524], [.05, 1.53]], .0026, .4] // cou
 ].map(([pts, l, p]) => [pts, l, p, Math.min(...pts.map(q => q[0])) - l * 3, Math.max(...pts.map(q => q[0])) + l * 3, Math.min(...pts.map(q => q[1])) - l * 3, Math.max(...pts.map(q => q[1])) + l * 3]);
-const POS = new Map();
+const POS = new WeakMap(); // par carte de positions (une par personnage de base), puis par taille de texture
 function positions(pos, W, Hh) {
-  if (POS.has(W)) return POS.get(W);
+  if (!POS.has(pos)) POS.set(pos, new Map()); const cache = POS.get(pos);
+  if (cache.has(W)) return cache.get(W);
   const PW = pos.width, ech = PW / W, out = new Float32Array(W * Hh * 4);
   for (let py = 0; py < Hh; py++) for (let px = 0; px < W; px++) { const qi = (Math.min(PW - 1, (py * ech) | 0) * PW + Math.min(PW - 1, (px * ech) | 0)) * 4, o = (py * W + px) * 4; out[o + 3] = pos.data[qi + 3] ? 1 : 0; for (let k = 0; k < 3; k++) out[o + k] = BORNES[k][0] + pos.data[qi + k] / 255 * (BORNES[k][1] - BORNES[k][0]); }
-  POS.set(W, out); return out;
+  cache.set(W, out); return out;
 }
 /* Zones de la barbe et de la moustache (0 à 1) selon la position sur le visage */
 export function zoneBarbe(x, y, z) {
@@ -127,7 +128,7 @@ export function partCheveux(x, y, z) {
 export function peindreTete(src, pos, o = {}, nrm = null) {
   const W = src.width, Hh = src.height, d = src.data, out = new Uint8ClampedArray(d), PP = positions(pos, W, Hh);
   const age = o.age || 0, femme = o.femme || 0, enfant = o.enfant || 0, alea = hasard(o.graine || 7);
-  const REF = [205, 162, 140], cible = o.peau != null ? rgb(o.peau) : null, fT = cible ? [cible[0] / REF[0], cible[1] / REF[1], cible[2] / REF[2]] : [1, 1, 1];
+  const REF = o.ref || [205, 162, 140], cible = o.peau != null ? rgb(o.peau) : null, fT = cible ? [cible[0] / REF[0], cible[1] / REF[1], cible[2] / REF[2]] : [1, 1, 1];
   const cheveux = o.cheveux != null ? rgb(o.cheveux) : null, gris = o.gris || 0, barbe = o.barbe || 0, bc = rgb(o.barbeC ?? o.cheveux ?? 0x1a120c);
   const hgt = new Float32Array(W * Hh), taches = [];
   if (age > .3) for (let i = 0; i < 12 * age; i++) taches.push([(alea() - .5) * .12, 1.63 + alea() * .1, .002 + alea() * .003, .3 + alea() * .4]);
@@ -230,7 +231,7 @@ function flouPeau(px, W, H, PP, f) {
 }
 /* Texture du corps (bras, mains, cou) : même teint que la tête ; taches de vieillesse sur les mains */
 export function peindreCorps(src, o = {}) {
-  const d = new Uint8ClampedArray(src.data), REF = [205, 162, 140], cible = o.peau != null ? rgb(o.peau) : null, age = o.age || 0;
+  const d = new Uint8ClampedArray(src.data), REF = o.ref || [205, 162, 140], cible = o.peau != null ? rgb(o.peau) : null, age = o.age || 0;
   for (let i = 0; i < d.length; i += 4) {
     let r = d[i], g = d[i + 1], b = d[i + 2];
     if (cible) { r *= cible[0] / REF[0]; g *= cible[1] / REF[1]; b *= cible[2] / REF[2]; }
