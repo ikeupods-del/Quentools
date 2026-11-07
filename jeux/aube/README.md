@@ -2,7 +2,7 @@
 
 Jeu de stratégie au tour par tour dans le navigateur, dans la famille des « 4X » (explorer, s’étendre, exploiter, conquérir) : on guide un peuple de 4000 av. J.-C. jusqu’à l’ère spatiale, sur une carte hexagonale générée à chaque partie. Conception originale (règles, noms, graphismes dessinés par le programme) ; les nations et les merveilles sont des références historiques.
 
-Projet personnel : **pas publié sur le site** (dossier absent des `rsync` de `.github/workflows/pages.yml`, page en `noindex`). Aucune dépendance, aucun service externe, aucune image : tout est dessiné sur un canvas.
+Projet personnel : **pas publié sur le site** (dossier absent des `rsync` de `.github/workflows/pages.yml`, page en `noindex`). Affichage en **3D** avec three.js (r169, copié dans `vendor/`, licence MIT) : aucun service externe, aucune image ni modèle téléchargé, tous les modèles sont construits par le programme.
 
 ## Jouer
 
@@ -42,8 +42,8 @@ puis http://localhost:8766 (ou ouvrir directement `index.html`). Fonctionne sur 
 | `monde.js` | Géométrie hexagonale, bruit, génération de la carte et des points de départ |
 | `moteur.js` | État `G`, déplacements (`explorer` = chemins), combat (`prevision`, `attaquer`), villes, recherche, tours (`finDuTour`), sauvegarde (`exporter` / `importer`) |
 | `ia.js` | Nations adverses et barbares ; `iaOuvrier` et `iaExplorer` servent aussi à l’automatisation du joueur |
-| `figures.js` | Figurines dessinées par le programme : escouades, cavaliers, engins, navires, quartiers des villes selon l’époque, palais, remparts, aménagements |
-| `rendu.js` | Dessin de la carte : terrain peint par blocs de 6 × 6 cases gardés en mémoire (transitions entre sols, plages, relief éclairé, forêts), rivières, routes, frontières, brouillard en nuages, villes et unités ; réglage « Graphismes » (haute qualité / économie) dans le menu |
+| `modeles3d.js` | Modèles 3D construits à partir de formes simples : escouades (armes et casques selon l’époque), cavaliers, engins de siège, chars, navires, chariot du colon, arbres, quartiers des villes selon l’époque, palais, remparts, aménagements |
+| `rendu.js` | Scène 3D : relief continu calculé depuis les cases (collines, montagnes, côtes sous une eau transparente), soleil et ombres, arbres instanciés, rivières, routes, frontières, brouillard de guerre en mer de nuages (ajouté aux shaders), caméra inclinée, sélection des cases, bandeaux des villes et fanions des unités en HTML ; réglage « Graphismes » (haute qualité / économie : sans ombres, relief allégé) |
 | `interface.js` | Entrées, panneaux, fenêtres (ville, technologies, doctrines, nations), écran titre |
 
 Ajouter une unité, un bâtiment ou une technologie = une ligne dans `regles.js` (l’interface et l’IA les prennent seules).

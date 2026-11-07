@@ -12,6 +12,6 @@ if (!m) { console.error('Marqueurs JEU-DEBUT / JEU-FIN introuvables'); process.e
 const corps = m[1].replace('</head>\n<body>\n', '\n');
 fs.mkdirSync(sortie, { recursive: true });
 fs.writeFileSync(path.join(sortie, 'aube-des-nations.html'), corps.trim() + '\n');
-const scripts = [...corps.matchAll(/<script src="([^"]+)"/g)].map(x => x[1]);
-for (const s of scripts) fs.copyFileSync(path.join(racine, s), path.join(sortie, s));
+const scripts = [...corps.matchAll(/<script src="([^"]+)"/g), ...corps.matchAll(/from '\.\/([^']+)'/g)].map(x => x[1]);
+for (const s of scripts) { fs.mkdirSync(path.dirname(path.join(sortie, s)), { recursive: true }); fs.copyFileSync(path.join(racine, s), path.join(sortie, s)); }
 console.log(`Page : ${path.join(sortie, 'aube-des-nations.html')}\nScripts : ${scripts.join(', ')}`);

@@ -222,11 +222,37 @@ kbd{font:600 10px/1 var(--corps);border:1px solid var(--filet);border-radius:4px
   #b-mini{display:grid!important}
 }
 #b-mini{display:none}
+
+/* Étiquettes posées sur la vue 3D */
+#etiquettes{position:fixed;inset:0;z-index:4;pointer-events:none;overflow:hidden}
+#etiquettes>*{position:absolute;left:0;top:0;will-change:transform}
+.bv{pointer-events:auto;display:grid;grid-template-columns:auto auto auto;align-items:center;gap:0 6px;padding:2px 9px 3px 2px;border-radius:20px;cursor:pointer;
+  background:linear-gradient(color-mix(in srgb,var(--c) 62%,#000),color-mix(in srgb,var(--c) 38%,#000));border:1.5px solid color-mix(in srgb,var(--c) 55%,#fff);
+  color:#fbf3df;font:700 13px/1.2 var(--corps);white-space:nowrap;box-shadow:0 3px 10px rgba(0,0,0,.45)}
+.bv .po{grid-row:span 2;width:22px;height:22px;border-radius:50%;background:#f7efd9;color:#1b1408;display:grid;place-items:center;font-size:12px}
+.bv .pr{font-size:12px;font-weight:600;padding:1px 6px;border-radius:9px;background:rgba(0,0,0,.3)}
+.bv .jp,.bv .jc,.bv .pv{grid-column:2 / span 2;display:block;height:3px;border-radius:2px;background:rgba(0,0,0,.45);overflow:hidden;margin-top:2px}
+.bv .jp i,.bv .jc i,.bv .pv i{display:block;height:100%}
+.bv .jp i{background:#e09a44}.bv .jc i{background:#86c873}.bv .pv i{background:#e2543c}
+.bv .jc{margin-top:1px}
+.dr{display:flex;flex-direction:column;align-items:center;gap:1px;font-family:var(--emoji)}
+.dr span{width:24px;height:27px;display:grid;place-items:center;font-size:14px;line-height:1;
+  background:linear-gradient(color-mix(in srgb,var(--c) 75%,#fff),color-mix(in srgb,var(--c) 70%,#000));
+  clip-path:polygon(0 0,100% 0,100% 64%,50% 100%,0 64%);filter:drop-shadow(0 1px 0 #000)}
+.dr.sel span{outline:2px solid #fff4c8}
+.dr b{order:-1;color:#f0c040;font:800 9px/1 var(--corps);text-shadow:0 1px 2px #000}
+.dr .pv{width:24px;height:3px;background:rgba(0,0,0,.7);border-radius:2px;overflow:hidden;display:block}
+.dr .pv i{display:block;height:100%}
+.dr em{position:absolute;top:-2px;right:-4px;width:7px;height:7px;border-radius:50%;background:#fff4c8;box-shadow:0 0 0 1px #000}
+.dr s{position:absolute;bottom:3px;left:-12px;text-decoration:none;color:#e9dfc4;font:700 12px var(--corps);text-shadow:0 1px 2px #000}
+.tf{font:800 22px var(--corps);text-shadow:0 2px 4px #000,0 0 2px #000}
+.mq{width:24px;height:24px;border-radius:50%;background:#10161f;border:2px solid #fcf2d2;color:#f5ecd7;display:grid;place-items:center;font:700 12px var(--corps)}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}}
 </style>
 </head>
 <body>
 <canvas id="carte" aria-label="Carte du monde"></canvas>
+<div id="etiquettes"></div>
 
 <header id="barre" hidden>
   <button id="b-or" class="res" title="Trésor (O pour le détail)"><span class="ic">🪙</span><b id="v-or" class="num">0</b><small id="v-or-d" class="num">+0</small></button>
@@ -282,11 +308,16 @@ kbd{font:600 10px/1 var(--corps);border:1px solid var(--filet);border-radius:4px
   </div>
 </div>
 
+<script type="module">
+import * as THREE from './vendor/three.module.min.js';
+window.THREE = THREE;
+window.dispatchEvent(new Event('three-pret'));
+</script>
 <script src="regles.js"></script>
 <script src="monde.js"></script>
 <script src="moteur.js"></script>
 <script src="ia.js"></script>
-<script src="figures.js"></script>
+<script src="modeles3d.js"></script>
 <script src="rendu.js"></script>
 <script src="interface.js"></script>
 <!--JEU-FIN-->

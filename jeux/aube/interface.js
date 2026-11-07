@@ -221,7 +221,7 @@ function apres(u) {
   if (G.fin) { montrerFin(); return; }
   if (Prefs.autoCycle && (!u || u.mort || u.mv <= 0 || u.ordre)) {
     setTimeout(() => {
-      if (UI.occupe || !$('#modale').hidden && !UI.ville) return;
+      if (UI.occupe || !$('#modale').hidden) return;
       const s = selU();
       if (s && !s.mort && s.mv > 0 && !s.ordre) return;
       const n = besoins()[0];
@@ -421,7 +421,7 @@ function initEntrees() {
     }
     const dx = e.clientX - p.x, dy = e.clientY - p.y;
     if (!UI.glisse && Math.hypot(e.clientX - p.x0, e.clientY - p.y0) > 8) { UI.glisse = true; clearTimeout(UI.appui); $('#info').hidden = true; }
-    if (UI.glisse) { R.cam.x -= dx / R.cam.z; R.cam.y -= dy / R.cam.z; R.camAnim = null; borneCam(); R.sale = true; }
+    if (UI.glisse) panoramique(dx, dy);
     p.x = e.clientX; p.y = e.clientY;
   });
   const fin = e => {
@@ -440,7 +440,7 @@ function initEntrees() {
     if (UI.titre) return;
     if (e.ctrlKey) zoomer(Math.exp(-e.deltaY * 0.012), e.clientX, e.clientY);
     else if (e.deltaMode === 1 || (Math.abs(e.deltaY) >= 50 && e.deltaX === 0)) zoomer(e.deltaY < 0 ? 1.18 : 1 / 1.18, e.clientX, e.clientY);
-    else { R.cam.x += e.deltaX / R.cam.z; R.cam.y += e.deltaY / R.cam.z; R.camAnim = null; borneCam(); R.sale = true; }
+    else panoramique(-e.deltaX, -e.deltaY);
   }, { passive: false });
   /* Geste de pincement de Safari (trackpad du Mac). */
   let echelle = 1;
@@ -452,7 +452,7 @@ function initEntrees() {
   const allerMini = e => {
     const r = mini.getBoundingClientRect(), m = tailleMonde();
     const x = (e.clientX - r.left) / r.width * m.w, y = (e.clientY - r.top) / r.height * m.h;
-    R.cam.x = x - R.larg / 2 / R.cam.z; R.cam.y = y - R.haut / 2 / R.cam.z; R.camAnim = null; borneCam(); R.sale = true;
+    regarder(x, y);
   };
   mini.addEventListener('pointerdown', e => { mini.setPointerCapture(e.pointerId); allerMini(e); mini._actif = true; });
   mini.addEventListener('pointermove', e => { if (mini._actif) allerMini(e); });
@@ -484,11 +484,8 @@ function clavier(e) {
     e.preventDefault(); return;
   }
   if (modale && !UI.ville) return;
-  const pas = 90 / R.cam.z;
-  const touches = {
-    arrowleft: () => { R.cam.x -= pas; }, arrowright: () => { R.cam.x += pas; }, arrowup: () => { R.cam.y -= pas; }, arrowdown: () => { R.cam.y += pas; },
-  };
-  if (touches[k]) { touches[k](); R.camAnim = null; borneCam(); R.sale = true; e.preventDefault(); return; }
+  const touches = { arrowleft: [90, 0], arrowright: [-90, 0], arrowup: [0, 90], arrowdown: [0, -90] };
+  if (touches[k]) { panoramique(...touches[k]); e.preventDefault(); return; }
   if (k === '+' || k === '=') { zoomer(1.2); return; }
   if (k === '-' || k === '_') { zoomer(1 / 1.2); return; }
   if (k === 'enter') { e.preventDefault(); finirTour(e.shiftKey); return; }
@@ -584,8 +581,8 @@ function ouvrirVille(v) {
   rendreVille(v);
   majSurbrillance(); R.sale = true;
   if (!estVisibleEcran(v.i, 120) || window.innerWidth > 760) {
-    const p = centreTuile(v.i), dec = window.innerWidth > 760 ? 200 : 0, decY = window.innerWidth > 760 ? 0 : window.innerHeight * 0.28;
-    R.camAnim = { de: { x: R.cam.x, y: R.cam.y }, a: { x: p.x - (R.larg / 2 - dec) / R.cam.z, y: p.y - (R.haut / 2 - decY) / R.cam.z }, t0: performance.now(), d: 300 };
+    const large = window.innerWidth > 760;
+    centrerSur(v.i, true, large ? { x: -200, y: 0 } : { x: 0, y: -window.innerHeight * 0.28 });
   }
 }
 function rendreVille(v) {
@@ -807,7 +804,7 @@ function actionGenerale(a) {
     case 'journal': ouvrirJournal(); break;
     case 'aide': ouvrirAide(); break;
     case 'grille': Prefs.grille = !Prefs.grille; R.grille = Prefs.grille; garderPrefs(); R.sale = true; ouvrirMenu(); break;
-    case 'qualite': Prefs.qualite = Prefs.qualite === 'eco' ? 'haute' : 'eco'; garderPrefs(); R.blocs.clear(); R.vignette = null; R.sale = true; ouvrirMenu(); break;
+    case 'qualite': Prefs.qualite = Prefs.qualite === 'eco' ? 'haute' : 'eco'; garderPrefs(); appliquerQualite(); ouvrirMenu(); break;
     case 'cycle': Prefs.autoCycle = !Prefs.autoCycle; garderPrefs(); ouvrirMenu(); break;
     case 'plein': try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => toast('Plein écran indisponible ici')); } catch (e) { toast('Plein écran indisponible ici'); } fermerModale(); break;
     case 'titre': fermerModale(); afficherTitre(); break;
@@ -831,11 +828,11 @@ function afficherTitre() {
   const types = Object.keys(TYPES_CARTE);
   nouvellePartie({ taille: 'petite', type: types[Math.floor(Math.random() * types.length)], tousIA: true });
   for (let k = 0; k < 12; k++) finDuTour();
-  R.toutVoir = true; R.surbrillance = null; R.cam.z = Math.max(0.55, Math.min(1, window.innerWidth / 1500)); R.miniSale = true;
+  R.toutVoir = true; R.surbrillance = null; R.miniSale = true;
   const m = tailleMonde();
-  R.cam.x = (m.w - R.larg / R.cam.z) / 2 - 200; R.cam.y = (m.h - R.haut / R.cam.z) / 2;
+  R.cam.z = window.innerWidth < 760 ? 0.55 : 0.7; R.cam.x = m.w * 0.3; R.cam.y = m.h * 0.55; R.camAnim = null;
   R.sale = true;
-  const defiler = () => { if (!UI.titre) return; R.cam.x += 0.25 / R.cam.z; if (R.cam.x > m.w - R.larg / R.cam.z) R.cam.x = 0; R.sale = true; requestAnimationFrame(defiler); };
+  const defiler = () => { if (!UI.titre) return; R.cam.x += 0.3; if (R.cam.x > m.w * 0.8) R.cam.x = m.w * 0.2; R.sale = true; requestAnimationFrame(defiler); };
   if (!Prefs.reduit) requestAnimationFrame(defiler);
 }
 function remplirReglage() {
@@ -856,7 +853,7 @@ function demarrerAffichage() {
   UI.titre = false; UI.sel = null; UI.ville = null; UI.cible = -1; UI.vuJ = G.nJ || 0;
   R.toutVoir = false; R.grille = Prefs.grille; R.anims.clear(); R.textes = []; R.miniSale = true;
   $('#titre').hidden = true; $('#barre').hidden = false; $('#bas').hidden = false;
-  R.cam.z = window.innerWidth < 760 ? 1.05 : 1.15;
+  R.cam.z = window.innerWidth < 760 ? 1.3 : 1.45;
   const m = tailleMonde();
   R.mini.width = 200; R.mini.height = Math.round(200 * m.h / m.w); R.miniCache = null;
   const colon = unitesDe(G.joueur)[0];
@@ -895,6 +892,19 @@ function demarrer() {
   document.addEventListener('visibilitychange', () => { if (document.hidden && !UI.titre) sauvegarder(); });
   window.addEventListener('pagehide', () => { if (!UI.titre) sauvegarder(); });
 }
+/* Clic sur le bandeau d'une ville. */
+function surBanniere(id) {
+  const v = G && G.villes.find(x => x.id === id);
+  if (!v || UI.titre || UI.occupe) return;
+  const u = selU();
+  if (v.civ !== G.joueur && u && mienne(u) && ordrePossible(u, v.i)) {
+    if (UI.cible === v.i) executer(u, v.i); else { UI.cible = v.i; majSurbrillance(); majPanneauUnite(); }
+    return;
+  }
+  if (v.civ === G.joueur) ouvrirVille(v); else rendreVille(v);
+}
+/* La bibliothèque 3D est un module : on attend qu'elle soit chargée. */
+function lancerQuandPret() { if (window.THREE) demarrer(); else window.addEventListener('three-pret', demarrer, { once: true }); }
 if (typeof document !== 'undefined') {
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', demarrer); else demarrer();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', lancerQuandPret); else lancerQuandPret();
 }
