@@ -5,7 +5,6 @@
 
 const M3 = { cache: new Map() };
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
-const HAUT = V3(0, 1, 0);
 
 /* Assemble des formes colorées en une seule géométrie (une seule commande de dessin par modèle). */
 class Atelier {
@@ -26,7 +25,7 @@ class Atelier {
   /* Matrice qui étire l'axe y de la forme entre deux points. */
   entre(a, b) {
     const d = b.clone().sub(a), L = d.length() || 0.001;
-    return { L, m: new THREE.Matrix4().compose(a.clone().add(b).multiplyScalar(0.5), new THREE.Quaternion().setFromUnitVectors(HAUT, d.normalize()), V3(1, 1, 1)) };
+    return { L, m: new THREE.Matrix4().compose(a.clone().add(b).multiplyScalar(0.5), new THREE.Quaternion().setFromUnitVectors(V3(0, 1, 0), d.normalize()), V3(1, 1, 1)) };
   }
   boite(w, h, d, c, x, y, z, rx = 0, ry = 0, rz = 0) { return this.ajouter(new THREE.BoxGeometry(w, h, d), c, this.m(x, y, z, rx, ry, rz)); }
   cyl(rh, rb, h, seg, c, x, y, z, rx = 0, ry = 0, rz = 0, sx = 1, sz = 1) { return this.ajouter(new THREE.CylinderGeometry(rh, rb, h, seg), c, this.m(x, y, z, rx, ry, rz, sx, 1, sz)); }
