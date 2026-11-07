@@ -64,7 +64,7 @@ async function finirTours(page, n, forcer) {
     /* Déplacement de l'éclaireur à la souris. */
     const ok = await page.evaluate(() => {
       const u = unitesDe(0).find(x => x.type === 'eclaireur'); selectionner(u, false);
-      const libre = j => { const q = ecranTuile(j); return document.elementFromPoint(q.x, q.y) === R.cv; };
+      const libre = j => { const q = ecranTuile(j); return !VIL[j] && !OCC[j].length && document.elementFromPoint(q.x, q.y) === R.cv; };
       const dest = [...R.surbrillance.atteint].filter(libre).sort((a, b) => Math.abs(ecranTuile(a).x - R.larg / 2) + Math.abs(ecranTuile(a).y - R.haut / 2) - Math.abs(ecranTuile(b).x - R.larg / 2) - Math.abs(ecranTuile(b).y - R.haut / 2))[0]; const p = ecranTuile(dest);
       return { x: p.x, y: p.y, dest, id: u.id };
     });
