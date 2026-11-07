@@ -589,8 +589,8 @@ function construireMonde() {
   M.racine.add(ciel, soleil, soleil.target); M.soleil = soleil;
   M.racine.add(construireSol(M));
   const eauG = new THREE.PlaneGeometry(m.w + 4000, m.h + 4000); eauG.rotateX(-Math.PI / 2);
-  const normale = R.texEau || texNormaleEau(); normale.wrapS = normale.wrapT = THREE.RepeatWrapping; normale.repeat.set((m.w + 4000) / 70, (m.h + 4000) / 70);
-  const matEau = patcher(new THREE.MeshStandardMaterial({ color: 0x2b6f98, transparent: true, opacity: 0.8, roughness: 0.32, metalness: 0.05, normalMap: normale, normalScale: new THREE.Vector2(0.45, 0.45) }), { AUBE_MARQUES: '', AUBE_EAU: '' });
+  const normale = R.texEau || texNormaleEau(); normale.wrapS = normale.wrapT = THREE.RepeatWrapping; normale.repeat.set((m.w + 4000) / 150, (m.h + 4000) / 150);
+  const matEau = patcher(new THREE.MeshStandardMaterial({ color: 0x2b6f98, transparent: true, opacity: 0.84, roughness: 0.5, metalness: 0.02, normalMap: normale, normalScale: new THREE.Vector2(0.16, 0.16) }), { AUBE_MARQUES: '', AUBE_EAU: '' });
   const eau = new THREE.Mesh(eauG, matEau); eau.position.set(m.w / 2, 0.15, m.h / 2); eau.receiveShadow = true;
   M.normaleEau = normale; M.racine.add(eau);
   M.arbres = construireArbres(M); M.racine.add(M.arbres);
