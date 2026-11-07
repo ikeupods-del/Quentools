@@ -132,13 +132,39 @@ const U = {
   uK: { value: 0.12 }, uTaille: { value: null }, uKM: { value: 0.3 }, uTailleM: { value: null },
   uActif: { value: 1 }, uTemps: { value: 0 },
   uRivage: { value: null }, uRivO: { value: null }, uRivT: { value: null },
+  tHerbe: { value: null }, tRoche: { value: null }, tSable: { value: null }, nHerbe: { value: null }, nRoche: { value: null }, nSable: { value: null },
+  tEnduit: { value: null }, tTuiles: { value: null }, tBois: { value: null }, tMoellon: { value: null }, tPaves: { value: null },
 };
+/* Matières photographiques (matieres/, domaine public) : chargées avant le premier dessin. */
+function chargerMatieres() {
+  const l = new THREE.TextureLoader(), aniso = Math.min(8, R.rendu.capabilities.getMaxAnisotropy());
+  const secours = (r, g, b) => { const t = new THREE.DataTexture(new Uint8Array([r, g, b, 255]), 1, 1); t.needsUpdate = true; return t; };
+  const charger = (f, couleur) => new Promise(ok => l.load('matieres/' + f, t => {
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = aniso; if (couleur) t.colorSpace = THREE.SRGBColorSpace; ok(t);
+  }, undefined, () => ok(couleur ? secours(158, 158, 158) : secours(128, 128, 255))));
+  const liste = [['tHerbe', 'sol_c.jpg', 1], ['tRoche', 'roche_c.jpg', 1], ['tSable', 'gravier_c.jpg', 1], ['nHerbe', 'sol_n.jpg', 0], ['nRoche', 'roche_n.jpg', 0], ['nSable', 'gravier_n.jpg', 0],
+    ['tEnduit', 'enduit_c.jpg', 1], ['tTuiles', 'tuiles_c.jpg', 1], ['tBois', 'bois_c.jpg', 1], ['tMoellon', 'moellon_c.jpg', 1], ['tPaves', 'paves_c.jpg', 1], ['eau', 'eau_n.jpg', 0]];
+  return Promise.all(liste.map(([, f, c]) => charger(f, c))).then(tex => {
+    liste.forEach(([cle], k) => { if (U[cle]) U[cle].value = tex[k]; else R.texEau = tex[k]; });
+    R.texPretes = true; R.sale = true;
+  });
+}
 function patcher(mat, defs) {
   mat.defines = Object.assign(mat.defines || {}, defs);
   mat.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, U);
-    const tete = 'uniform sampler2D uBrume; uniform sampler2D uMarques; uniform sampler2D uNuages; uniform sampler2D uRivage; uniform vec2 uRivO; uniform vec2 uRivT; uniform float uK; uniform vec2 uTaille; uniform float uKM; uniform vec2 uTailleM; uniform float uActif; uniform float uTemps; varying vec3 vMonde;\n';
-    sh.vertexShader = tete + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+    const tete = 'uniform sampler2D uBrume; uniform sampler2D uMarques; uniform sampler2D uNuages; uniform sampler2D uRivage; uniform vec2 uRivO; uniform vec2 uRivT; uniform float uK; uniform vec2 uTaille; uniform float uKM; uniform vec2 uTailleM; uniform float uActif; uniform float uTemps; varying vec3 vMonde;\n'
+      + '#ifdef AUBE_SOL\nvarying vec4 vPoids;\nuniform sampler2D tHerbe; uniform sampler2D tRoche; uniform sampler2D tSable; uniform sampler2D nHerbe; uniform sampler2D nRoche; uniform sampler2D nSable;\n#endif\n'
+      + '#ifdef AUBE_TEX\nvarying float vMat;\nuniform sampler2D tEnduit; uniform sampler2D tTuiles; uniform sampler2D tBois; uniform sampler2D tMoellon; uniform sampler2D tPaves;\n#endif\n';
+    const teteV = '#ifdef AUBE_SOL\nattribute vec4 aPoids;\n#endif\n#ifdef AUBE_TEX\nattribute float aMat;\n#endif\n';
+    const teteF = '#ifdef AUBE_TEX\nvec3 aubeTri(sampler2D t, vec3 p, vec3 b) { return texture2D(t, p.zy).rgb * b.x + texture2D(t, p.xz).rgb * b.y + texture2D(t, p.xy).rgb * b.z; }\n#endif\n';
+    sh.vertexShader = tete + teteV + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      #ifdef AUBE_SOL
+        vPoids = aPoids;
+      #endif
+      #ifdef AUBE_TEX
+        vMat = aMat;
+      #endif
       vec4 aubeP = vec4(transformed, 1.0);
       #ifdef USE_INSTANCING
         aubeP = instanceMatrix * aubeP;
@@ -156,7 +182,49 @@ function patcher(mat, defs) {
       #ifdef AUBE_ENFOUIR
         transformed.y -= 80.0 * smoothstep(0.3, 0.55, aubeInc);
       #endif`);
-    sh.fragmentShader = tete + sh.fragmentShader.replace('#include <dithering_fragment>', `
+    sh.fragmentShader = tete + teteF + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+      #ifdef AUBE_SOL
+      {
+        vec3 aubeNw = normalize((vec4(vNormal, 0.0) * viewMatrix).xyz);
+        vec4 aubePw = vPoids / max(0.001, vPoids.r + vPoids.g + vPoids.b + vPoids.a);
+        vec2 aubeU1 = vMonde.xz / 44.0, aubeU2 = mat2(0.8, -0.6, 0.6, 0.8) * vMonde.xz / 131.0;
+        vec3 aubeH = mix(texture2D(tHerbe, aubeU1).rgb, texture2D(tHerbe, aubeU2).rgb, 0.45);
+        vec3 aubeS = mix(texture2D(tSable, aubeU1 * 1.4).rgb, texture2D(tSable, aubeU2 * 1.2).rgb, 0.4);
+        vec3 aubeBw = pow(abs(aubeNw), vec3(4.0)); aubeBw /= (aubeBw.x + aubeBw.y + aubeBw.z);
+        vec3 aubeR = texture2D(tRoche, vMonde.zy / 38.0).rgb * aubeBw.x + texture2D(tRoche, vMonde.xz / 38.0).rgb * aubeBw.y + texture2D(tRoche, vMonde.xy / 38.0).rgb * aubeBw.z;
+        vec3 aubeNg = vec3(0.34) * (0.85 + 0.3 * texture2D(tSable, aubeU1 * 0.7).r);
+        vec3 aubeTx = aubeH * aubePw.r + aubeR * aubePw.g + aubeS * aubePw.b + aubeNg * aubePw.a;
+        float aubeL = dot(aubeTx, vec3(0.2126, 0.7152, 0.0722));
+        diffuseColor.rgb *= mix(vec3(1.0), mix(vec3(aubeL), aubeTx, 0.6) / 0.33, 0.9);
+      }
+      #endif
+      #ifdef AUBE_TEX
+      if (vMat > 0.5) {
+        vec3 aubeNo = normalize((vec4(vNormal, 0.0) * viewMatrix).xyz);
+        vec3 aubeBo = pow(abs(aubeNo), vec3(4.0)); aubeBo /= (aubeBo.x + aubeBo.y + aubeBo.z);
+        float aubeE = vMat < 1.5 ? 9.0 : vMat < 2.5 ? 5.5 : vMat < 3.5 ? 6.0 : vMat < 4.5 ? 8.0 : 11.0;
+        vec3 aubeP = vMonde / aubeE, aubeTo;
+        if (vMat < 1.5) aubeTo = aubeTri(tEnduit, aubeP, aubeBo);
+        else if (vMat < 2.5) aubeTo = aubeTri(tTuiles, aubeP, aubeBo);
+        else if (vMat < 3.5) aubeTo = aubeTri(tBois, aubeP, aubeBo);
+        else if (vMat < 4.5) aubeTo = aubeTri(tMoellon, aubeP, aubeBo);
+        else aubeTo = aubeTri(tPaves, aubeP, aubeBo);
+        float aubeLo = dot(aubeTo, vec3(0.2126, 0.7152, 0.0722));
+        diffuseColor.rgb *= mix(vec3(aubeLo), aubeTo, 0.35) / 0.34;
+      }
+      #endif`).replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
+      #ifdef AUBE_SOL
+      {
+        vec4 aubeP2 = vPoids / max(0.001, vPoids.r + vPoids.g + vPoids.b + vPoids.a);
+        vec2 aubeUn = vMonde.xz / 44.0;
+        vec3 aubeNt = (texture2D(nHerbe, aubeUn).xyz * 2.0 - 1.0) * aubeP2.r + (texture2D(nRoche, vMonde.xz / 38.0).xyz * 2.0 - 1.0) * aubeP2.g
+          + (texture2D(nSable, aubeUn * 1.4).xyz * 2.0 - 1.0) * aubeP2.b + vec3(0.0, 0.0, 1.0) * aubeP2.a;
+        aubeNt.xy *= 1.15; aubeNt = normalize(aubeNt);
+        vec3 aubeW = normalize((vec4(normal, 0.0) * viewMatrix).xyz);
+        vec3 aubeTg = normalize(vec3(1.0, 0.0, 0.0) - aubeW * aubeW.x), aubeBt = normalize(cross(aubeTg, aubeW));
+        normal = normalize((viewMatrix * vec4(aubeTg * aubeNt.x + aubeBt * aubeNt.y + aubeW * aubeNt.z, 0.0)).xyz);
+      }
+      #endif`).replace('#include <dithering_fragment>', `
       vec4 aubeB = uActif * texture2D(uBrume, vMonde.xz * uK / uTaille);
       #ifdef AUBE_SOL
         gl_FragColor.rgb *= 0.9 + 0.2 * texture2D(uNuages, vMonde.xz / 34.0).r;
@@ -181,7 +249,7 @@ function patcher(mat, defs) {
       gl_FragColor.rgb = mix(gl_FragColor.rgb, aubeNuage, smoothstep(0.18, 0.7, aubeB.r));
       #include <dithering_fragment>`);
   };
-  mat.customProgramCacheKey = () => 'aube' + Object.keys(defs).join(',');
+  mat.customProgramCacheKey = () => 'aube2' + Object.keys(defs).join(',');
   return mat;
 }
 let MAT = null;
@@ -190,7 +258,7 @@ function materiaux() {
   MAT = {
     sol: patcher(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.93, metalness: 0 }), { AUBE_SOL: '', AUBE_MARQUES: '' }),
     arbre: patcher(new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.9 }), { AUBE_OBJET: '' }),
-    objet: patcher(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82 }), { AUBE_OBJET: '' }),
+    objet: patcher(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82 }), { AUBE_OBJET: '', AUBE_TEX: '' }),
     ruban: patcher(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.45, metalness: 0.05, polygonOffset: true, polygonOffsetFactor: -2 }), { AUBE_ENFOUIR: '' }),
     front: patcher(new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 }), { AUBE_ENFOUIR: '' }),
     unite: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, side: THREE.DoubleSide }),
@@ -265,7 +333,7 @@ const COUL_SOL = { ocean: '#18394f', cote: '#3c8a8c', prairie: '#5c9638', plaine
 function construireSol(M) {
   const m = tailleMonde(), e = qualiteHaute() ? 6 : 9, PAD = 90;
   const nx = Math.ceil((m.w + 2 * PAD) / e) + 1, ny = Math.ceil((m.h + 2 * PAD) / e) + 1, N = nx * ny, x0 = -PAD, y0 = -PAD;
-  const H = new Float32Array(N), C = new Float32Array(N * 3), coll = new Float32Array(N);
+  const H = new Float32Array(N), C = new Float32Array(N * 3), coll = new Float32Array(N), P4 = new Float32Array(N * 4);
   const bruit = creerBruit(creerAlea((G.graine ^ 0x5f3759) >>> 0));
   const lin = {}; for (const k in COUL_SOL) lin[k] = new THREE.Color(COUL_SOL[k]);
   const sombre = new THREE.Color('#2f5a26'), jungle = new THREE.Color('#2c6630'), marais = new THREE.Color('#4c6a46'), tmp = new THREE.Color();
@@ -284,9 +352,18 @@ function construireSol(M) {
       }
     }
     H[v] = h; C[v * 3] = tmp.r; C[v * 3 + 1] = tmp.g; C[v * 3 + 2] = tmp.b;
+    /* Matières : herbe, roche, sable, neige. */
+    let ph = 0, pr = 0, ps = 1, pn = 0;
+    if (t && !TERRAINS[t.t].eau) {
+      if (t.rel === 2) { ph = 0; pr = 1; ps = 0; }
+      else if (t.t === 'desert') { ph = 0.15; pr = t.rel === 1 ? 0.35 : 0.05; ps = 0.8; }
+      else if (t.t === 'neige') { ph = 0; pr = 0.2; ps = 0; pn = 1; }
+      else { ph = 1; pr = t.rel === 1 ? 0.5 : 0; ps = 0; }
+    }
+    P4[v * 4] = ph; P4[v * 4 + 1] = pr; P4[v * 4 + 2] = ps; P4[v * 4 + 3] = pn;
   }
   const rf = Math.max(1, Math.round(17 / e));
-  flou(H, nx, ny, rf, 2); flou(C, nx, ny, Math.max(1, Math.round(11 / e)), 2, 3); flou(coll, nx, ny, rf, 1);
+  flou(H, nx, ny, rf, 2); flou(C, nx, ny, Math.max(1, Math.round(11 / e)), 2, 3); flou(coll, nx, ny, rf, 1); flou(P4, nx, ny, Math.max(1, Math.round(10 / e)), 2, 4);
   /* Montagnes : trois pics par case, crêtes irrégulières. */
   const pics = new Float32Array(N), al = creerAlea((G.graine * 31 + 7) >>> 0);
   G.tuiles.forEach((t, i) => {
@@ -318,6 +395,8 @@ function construireSol(M) {
     else if (h < 1.2) tmp.lerp(sable, Math.min(1, (1.2 - h) / 0.95) * 0.85);
     tmp.multiplyScalar(0.88 + 0.24 * bruit(x / 23, y / 23, 2));
     if (h > 16) tmp.lerp(neige, Math.min(1, (h - 16) / 5));
+    const plage = h < 1.2 ? Math.min(1, (1.2 - h) / 0.95) : 0, cime = h > 16 ? Math.min(1, (h - 16) / 5) : 0;
+    P4[v * 4 + 2] += plage * 2; P4[v * 4 + 3] += cime * 3;
     pos[v * 3] = x; pos[v * 3 + 1] = h; pos[v * 3 + 2] = y;
     col[v * 3] = tmp.r; col[v * 3 + 1] = tmp.g; col[v * 3 + 2] = tmp.b;
   }
@@ -337,9 +416,11 @@ function construireSol(M) {
     if (h > 2.5 && pente < 0.84) {
       tmp.setRGB(col[v * 3], col[v * 3 + 1], col[v * 3 + 2]).lerp(roche, Math.min(1, (0.84 - pente) * 3.2) * (h > 16 ? 0.35 : 1));
       col[v * 3] = tmp.r; col[v * 3 + 1] = tmp.g; col[v * 3 + 2] = tmp.b;
+      P4[v * 4 + 1] += Math.min(1, (0.84 - pente) * 3.2) * 2.5;
     }
   }
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  geo.setAttribute('aPoids', new THREE.BufferAttribute(P4, 4));
   M.grille = { x0, y0, e, nx, ny, H };
   const riv = new Uint8Array(N * 4);
   for (let v = 0; v < N; v++) { const h = H[v]; riv[v * 4] = h < 0.4 ? Math.max(0, Math.min(255, (1 - Math.abs(h + 0.3) / 0.6) * 255)) : 0; riv[v * 4 + 3] = 255; }
@@ -508,8 +589,8 @@ function construireMonde() {
   M.racine.add(ciel, soleil, soleil.target); M.soleil = soleil;
   M.racine.add(construireSol(M));
   const eauG = new THREE.PlaneGeometry(m.w + 4000, m.h + 4000); eauG.rotateX(-Math.PI / 2);
-  const normale = texNormaleEau(); normale.repeat.set((m.w + 4000) / 90, (m.h + 4000) / 90);
-  const matEau = patcher(new THREE.MeshStandardMaterial({ color: 0x2b6f98, transparent: true, opacity: 0.8, roughness: 0.32, metalness: 0.05, normalMap: normale, normalScale: new THREE.Vector2(0.35, 0.35) }), { AUBE_MARQUES: '', AUBE_EAU: '' });
+  const normale = R.texEau || texNormaleEau(); normale.wrapS = normale.wrapT = THREE.RepeatWrapping; normale.repeat.set((m.w + 4000) / 70, (m.h + 4000) / 70);
+  const matEau = patcher(new THREE.MeshStandardMaterial({ color: 0x2b6f98, transparent: true, opacity: 0.8, roughness: 0.32, metalness: 0.05, normalMap: normale, normalScale: new THREE.Vector2(0.45, 0.45) }), { AUBE_MARQUES: '', AUBE_EAU: '' });
   const eau = new THREE.Mesh(eauG, matEau); eau.position.set(m.w / 2, 0.15, m.h / 2); eau.receiveShadow = true;
   M.normaleEau = normale; M.racine.add(eau);
   M.arbres = construireArbres(M); M.racine.add(M.arbres);
@@ -787,7 +868,7 @@ function texteFlottant(i, txt, coul) {
 
 /* ---------- Image ---------- */
 function dessiner(now) {
-  if (!G || !R.rendu) return;
+  if (!G || !R.rendu || !R.texPretes) return;
   if (!R.monde || R.monde.G !== G) construireMonde();
   const M = R.monde;
   if (R.camAnim) {
@@ -875,6 +956,7 @@ function initRendu(cv, mini) {
   R.scene.background = new THREE.Color(0x43525f);
   R.scene.fog = new THREE.Fog(0x55687a, 800, 2400);
   R.camera = new THREE.PerspectiveCamera(FOV, 1, 2, 5000);
+  chargerMatieres();
   redimensionner();
   window.addEventListener('resize', redimensionner);
   requestAnimationFrame(boucle);

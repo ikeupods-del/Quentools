@@ -14,4 +14,6 @@ fs.mkdirSync(sortie, { recursive: true });
 fs.writeFileSync(path.join(sortie, 'aube-des-nations.html'), corps.trim() + '\n');
 const scripts = [...corps.matchAll(/<script src="([^"]+)"/g), ...corps.matchAll(/from '\.\/([^']+)'/g)].map(x => x[1]);
 for (const s of scripts) { fs.mkdirSync(path.dirname(path.join(sortie, s)), { recursive: true }); fs.copyFileSync(path.join(racine, s), path.join(sortie, s)); }
+const mat = path.join(racine, 'matieres');
+if (fs.existsSync(mat)) { fs.mkdirSync(path.join(sortie, 'matieres'), { recursive: true }); for (const f of fs.readdirSync(mat)) { fs.copyFileSync(path.join(mat, f), path.join(sortie, 'matieres', f)); scripts.push('matieres/' + f); } }
 console.log(`Page : ${path.join(sortie, 'aube-des-nations.html')}\nScripts : ${scripts.join(', ')}`);

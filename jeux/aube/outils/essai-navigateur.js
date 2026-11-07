@@ -7,7 +7,7 @@ const { chromium, devices } = require('playwright');
 
 const racine = path.join(__dirname, '..');
 const captures = process.argv[2] || null;
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css' };
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css', '.jpg': 'image/jpeg' };
 const serveur = http.createServer((req, res) => {
   const p = path.join(racine, decodeURIComponent(req.url.split('?')[0]) === '/' ? 'index.html' : decodeURIComponent(req.url.split('?')[0]));
   if (!p.startsWith(racine) || !fs.existsSync(p)) { res.writeHead(404); res.end(); return; }

@@ -1,0 +1,4 @@
+Matières photographiques : ambientCG (ambientcg.com), domaine public (CC0 1.0).
+sol : Ground037 · roche : Rock029 · gravier : Gravel011 · enduit : Plaster001 · tuiles : RoofingTiles014A · bois : Wood043 · moellon : Bricks040 · paves : PavingStones054
+Reprises de jeux/silenzio/matieres (réduites, désaturées et égalisées), puis réduites pour ce jeu.
+eau_n.jpg : carte de vagues des exemples de three.js (licence MIT, voir vendor/LICENSE-three.txt).

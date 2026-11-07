@@ -8,14 +8,14 @@ const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 
 /* Assemble des formes colorées en une seule géométrie (une seule commande de dessin par modèle). */
 class Atelier {
-  constructor() { this.pos = []; this.nor = []; this.col = []; }
+  constructor() { this.pos = []; this.nor = []; this.col = []; this.mat = []; this.matiere = 0; }
   ajouter(geo, coul, m) {
     const g = geo.index ? geo.toNonIndexed() : geo;
     if (g !== geo) geo.dispose();
     if (!g.attributes.normal) g.computeVertexNormals();
     g.applyMatrix4(m);
     const p = g.attributes.position.array, n = g.attributes.normal.array, c = coul instanceof THREE.Color ? coul : new THREE.Color(coul);
-    for (let i = 0; i < p.length; i += 3) { this.pos.push(p[i], p[i + 1], p[i + 2]); this.nor.push(n[i], n[i + 1], n[i + 2]); this.col.push(c.r, c.g, c.b); }
+    for (let i = 0; i < p.length; i += 3) { this.pos.push(p[i], p[i + 1], p[i + 2]); this.nor.push(n[i], n[i + 1], n[i + 2]); this.col.push(c.r, c.g, c.b); this.mat.push(this.matiere); }
     g.dispose();
     return this;
   }
@@ -66,6 +66,7 @@ class Atelier {
     g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos, 3));
     g.setAttribute('normal', new THREE.Float32BufferAttribute(this.nor, 3));
     g.setAttribute('color', new THREE.Float32BufferAttribute(this.col, 3));
+    g.setAttribute('aMat', new THREE.Float32BufferAttribute(this.mat, 1));
     g.computeBoundingSphere();
     return g;
   }
@@ -498,7 +499,7 @@ function geoArbre(sorte) {
 
 /* ---------- Aménagements ---------- */
 function maison3(A, x, y, z, w, h, d, murs, toit, ry, al, o = {}) {
-  A.boite(w, h, d, murs, x, y + h / 2, z, 0, ry, 0);
+  avec(A, o.verre ? 0 : o.brique ? 4 : 1, () => A.boite(w, h, d, murs, x, y + h / 2, z, 0, ry, 0));
   const c = Math.cos(ry), s = Math.sin(ry), loc = (lx, lz) => [x + lx * c + lz * s, z - lx * s + lz * c];
   const sombre = '#2a2018';
   const [px, pz] = loc(0, d / 2 + 0.03); A.boite(w * 0.22, h * 0.5, 0.08, '#4a3020', px, y + h * 0.25, pz, 0, ry, 0);
@@ -509,10 +510,9 @@ function maison3(A, x, y, z, w, h, d, murs, toit, ry, al, o = {}) {
     A.boite(w * 0.16, Math.min(0.9, h * 0.22), 0.08, o.verre ? '#cfe3f0' : sombre, fx, yy, fz, 0, ry, 0);
   }
   for (const lz of [-d * 0.2, d * 0.2]) { const [fx, fz] = loc(w / 2 + 0.03, lz); A.boite(0.08, Math.min(0.9, h * 0.22), d * 0.16, o.verre ? '#cfe3f0' : sombre, fx, y + h * 0.6, fz, 0, ry, 0); }
-  if (o.plat) { A.boite(w + 0.3, 0.35, d + 0.3, teinte(murs, -0.18), x, y + h + 0.15, z, 0, ry, 0); return; }
-  if (al() < 0.35) A.pavillon(w * 1.15, w * 0.6, d * 1.15, toit, x, y + h, z, ry);
-  else A.toit(w * 1.15, w * 0.55, d * 1.12, toit, x, y + h, z, ry + Math.PI / 2);
-  if (al() < 0.5) { const [cx, cz] = loc(w * 0.28, -d * 0.15); A.boite(0.5, 1.6, 0.5, '#8a6e5a', cx, y + h + 0.9, cz, 0, ry, 0); }
+  if (o.plat) { avec(A, 1, () => A.boite(w + 0.3, 0.35, d + 0.3, teinte(murs, -0.18), x, y + h + 0.15, z, 0, ry, 0)); return; }
+  avec(A, 2, () => { if (al() < 0.35) A.pavillon(w * 1.15, w * 0.6, d * 1.15, toit, x, y + h, z, ry); else A.toit(w * 1.15, w * 0.55, d * 1.12, toit, x, y + h, z, ry + Math.PI / 2); });
+  if (al() < 0.5) { const [cx, cz] = loc(w * 0.28, -d * 0.15); avec(A, 4, () => A.boite(0.5, 1.6, 0.5, '#8a6e5a', cx, y + h + 0.9, cz, 0, ry, 0)); }
 }
 function geoAmel(am, v) {
   return enCache(`a|${am}|${v}`, () => {
@@ -528,7 +528,7 @@ function geoAmel(am, v) {
       maison3(A, 11, 0, 9, 3.6, 2.6, 3, '#e8dcc0', '#9a4a32', Math.PI / 2, al);
       A.cyl(1.0, 1.0, 3.2, 10, '#c0a070', 7.8, 1.6, 10.5); A.cone(1.2, 1.4, 10, '#8a4a32', 7.8, 3.9, 10.5);
     } else if (am === 'mine') {
-      A.boule(6, '#6e665a', 0, 0, 0, 1.2, 0.6, 1, 1);
+      avec(A, 4, () => A.boule(6, '#8a8276', 0, 0, 0, 1.2, 0.6, 1, 1));
       A.forme([[-1.6, 0], [1.6, 0], [1.6, 2.4], [0, 3.4], [-1.6, 2.4]], 1.2, '#151210', 0, 0.2, 4.6);
       A.boite(0.55, 3.6, 0.55, '#7a5230', -1.9, 1.8, 5.2); A.boite(0.55, 3.6, 0.55, '#7a5230', 1.9, 1.8, 5.2); A.boite(4.6, 0.55, 0.6, '#7a5230', 0, 3.7, 5.2);
       for (const dz of [-0.6, 0.6]) A.boite(0.25, 0.2, 10, '#5a4a3a', dz, 0.25, 10);
@@ -536,8 +536,10 @@ function geoAmel(am, v) {
       A.boite(2.4, 1.4, 1.8, '#5a4030', 0, 1.1, 9.5); A.boule(1.0, '#8c8c8c', 0, 1.9, 9.5, 1.1, 0.6, 0.8, 0);
       A.boule(1.6, '#7a7266', 6.5, 0.6, 6, 1.2, 0.7, 1, 0);
     } else if (am === 'paturage') {
+      A.matiere = 3;
       for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2; A.cyl(0.25, 0.3, 2.2, 5, '#8a6a44', Math.cos(a) * 14, 1.1, Math.sin(a) * 10); }
       for (let k = 0; k < 16; k++) { const a0 = k / 16 * Math.PI * 2, a1 = (k + 1) / 16 * Math.PI * 2; for (const y of [1.0, 1.8]) A.barre(V3(Math.cos(a0) * 14, y, Math.sin(a0) * 10), V3(Math.cos(a1) * 14, y, Math.sin(a1) * 10), 0.18, 0.12, '#a5845a'); }
+      A.matiere = 0;
       for (let k = 0; k < 4; k++) {
         const x = (al() - 0.5) * 16, z = (al() - 0.5) * 10, c = al() < 0.5 ? '#f2eee4' : '#8a5a36';
         A.sphere(1, c, x, 1.9, z, 1.6, 0.85, 0.8); A.sphere(0.55, c, x - 1.7, 2.3, z, 1.2, 0.9, 0.85);
@@ -550,7 +552,9 @@ function geoAmel(am, v) {
         A.cyl(0.25, 0.3, 1.3, 4, '#5a3c22', x, 0.8, z); A.boule(1.5, r % 2 ? '#3f7a35' : '#4f8a3f', x, 2.2, z, 1, 0.85, 1, 1);
       }
     } else if (am === 'scierie') {
+      A.matiere = 3;
       for (let k = 0; k < 3; k++) for (let l = 0; l <= 2 - k; l++) { A.cyl(0.9, 0.9, 7, 10, '#8a5a30', 4 + l * 1.8 + k * 0.9, 0.9 + k * 1.5, 4, Math.PI / 2, 0, 0); A.cyl(0.7, 0.7, 7.05, 10, '#d9b27a', 4 + l * 1.8 + k * 0.9, 0.9 + k * 1.5, 4, Math.PI / 2, 0, 0); }
+      A.matiere = 0;
       maison3(A, -6, 0, -2, 6, 3, 5, '#9a7450', '#5a3a22', 0, al);
       A.cyl(2.2, 2.2, 0.3, 16, '#7a7a7a', -1.5, 2.5, 3, Math.PI / 2, 0, 0);
     } else if (am === 'camp') {
@@ -572,6 +576,8 @@ function geoAmel(am, v) {
 }
 
 /* ---------- Villes ---------- */
+/* Matière photographique d'une partie : 0 aucune, 1 enduit, 2 tuiles, 3 bois, 4 pierre, 5 pavés. */
+function avec(A, k, f) { const o = A.matiere; A.matiere = k; f(); A.matiere = o; }
 const STYLES3D = [
   { murs: ['#e6d6b0', '#dccaa0', '#efe2c4'], toits: ['#b4553b', '#a3492f', '#c06a45'], plats: 0.4 },
   { murs: ['#ece0c2', '#e2d2ae', '#f0e6cf'], toits: ['#b05337', '#9d4630', '#7d3a2a'], plats: 0.15 },
@@ -585,13 +591,17 @@ function geoVille(v, ere, civ, hauteur) {
   const A = new Atelier(), al = creerAlea(v.id * 7919 + 13), st = STYLES3D[ere];
   const popB = Math.min(24, v.pop), murs = v.bat.chateau ? 2 : v.bat.remparts ? 1 : 0, cap = !!v.bat.palais;
   const R0 = 15 + Math.min(12, popB * 0.7);
-  A.cyl(R0 + 3, R0 + 4, 1.2, 24, '#bfae8a', 0, hauteur(0, 0) - 0.2, 0);
-  for (let k = 0; k < 3; k++) { const a = k * 2.1 + al(); A.boite(R0 * 1.8, 0.1, 2.2, '#a8987a', 0, hauteur(0, 0) + 0.45, 0, 0, a, 0); }
+  avec(A, 5, () => {
+    A.cyl(R0 + 3, R0 + 4, 1.2, 24, '#c9bb9c', 0, hauteur(0, 0) - 0.2, 0);
+    for (let k = 0; k < 3; k++) { const a = k * 2.1 + al(); A.boite(R0 * 1.8, 0.1, 2.2, '#a8987a', 0, hauteur(0, 0) + 0.45, 0, 0, a, 0); }
+  });
+  A.matiere = 4;
   if (!cap) {
     const y = hauteur(0, 0);
     if (ere < 4) { A.cyl(2.6, 2.8, 1.0, 14, '#b9ad94', 0, y + 0.5, 0); A.cyl(2.1, 2.1, 0.2, 14, '#5fa3c4', 0, y + 1.0, 0); A.cyl(0.35, 0.45, 2.2, 8, '#d9cfb8', 0, y + 1.9, 0); A.cyl(0.9, 0.5, 0.4, 10, '#d9cfb8', 0, y + 3.0, 0); }
     else { A.boite(3, 1.2, 3, '#9a9488', 0, y + 0.6, 0); A.cyl(0.6, 0.7, 4, 8, '#5a5a52', 0, y + 3.2, 0); A.sphere(0.9, '#7a7a70', 0, y + 5.6, 0); }
   }
+  A.matiere = 0;
   const pos = [];
   const nb = Math.min(30, 6 + Math.round(popB * 1.15));
   for (let k = 0; k < nb * 4 && pos.length < nb; k++) {
@@ -616,19 +626,19 @@ function geoVille(v, ere, civ, hauteur) {
     }
     if (st.usine && al() < 0.3) {
       const L = w * 1.8;
-      A.boite(L, 3.4, d * 1.3, '#8d7b6a', p.x, y + 1.7, p.z, 0, rot, 0);
+      avec(A, 4, () => A.boite(L, 3.4, d * 1.3, '#a06a52', p.x, y + 1.7, p.z, 0, rot, 0));
       for (let s = 0; s < 3; s++) A.toit(L / 3, 1.4, d * 1.3, '#4b4d52', p.x + (s - 1) * L / 3 * Math.cos(rot), y + 3.4, p.z - (s - 1) * L / 3 * Math.sin(rot), rot);
       A.cyl(0.6, 0.85, 10, 8, '#7a3e2c', p.x + 1.4, y + 5, p.z);
       A.sphere(1.2, '#9a9a9a', p.x + 1.8, y + 11, p.z); A.sphere(1.6, '#aaaaaa', p.x + 3, y + 12.5, p.z - 0.6);
       continue;
     }
     if (st.clocher && al() < 0.12) {
-      A.boite(4, 4, 7, '#d8ccb0', p.x, y + 2, p.z, 0, rot, 0); A.toit(4.2, 2.6, 7.2, '#5d606b', p.x, y + 4, p.z, rot);
-      A.boite(2.4, 9, 2.4, '#d8ccb0', p.x, y + 4.5, p.z); A.cone(1.9, 5, 4, '#5d606b', p.x, y + 11.5, p.z, 0, Math.PI / 4, 0);
+      avec(A, 4, () => { A.boite(4, 4, 7, '#d8ccb0', p.x, y + 2, p.z, 0, rot, 0); A.boite(2.4, 9, 2.4, '#d8ccb0', p.x, y + 4.5, p.z); });
+      avec(A, 2, () => { A.toit(4.2, 2.6, 7.2, '#5d606b', p.x, y + 4, p.z, rot); A.cone(1.9, 5, 4, '#5d606b', p.x, y + 11.5, p.z, 0, Math.PI / 4, 0); });
       continue;
     }
     const h = (2.6 + al() * 1.3) * (st.etages || 1);
-    maison3(A, p.x, y, p.z, w, h, d, murC, toitC, rot, al, { plat: st.plats && al() < st.plats });
+    maison3(A, p.x, y, p.z, w, h, d, murC, toitC, rot, al, { plat: st.plats && al() < st.plats, brique: ere === 4 || (ere === 2 && al() < 0.3) });
   }
   if (cap) {
     const y = hauteur(0, 0) - 0.3;
@@ -637,9 +647,11 @@ function geoVille(v, ere, civ, hauteur) {
       for (let e = 1; e < 12; e++) A.boite(9.1, 0.6, 9.1, '#5f7a92', 0, y + e * 2.5, 0);
       A.boite(9.4, 2, 9.4, civ, 0, y + 30.5, 0); A.tige(V3(0, y + 31.5, 0), V3(0, y + 38, 0), 0.2, '#999', 4);
     } else {
-      A.boite(13, 5.4, 8, ere >= 3 ? '#e9e1d0' : '#efe4c8', 0, y + 2.7, 0);
-      A.boite(5, 4, 9, ere >= 3 ? '#e2d9c6' : '#e8dcbc', -8.5, y + 2, 0.5); A.boite(5, 4, 9, ere >= 3 ? '#e2d9c6' : '#e8dcbc', 8.5, y + 2, 0.5);
-      A.toit(5.4, 2, 9.4, '#9a4a32', -8.5, y + 4, 0.5); A.toit(5.4, 2, 9.4, '#9a4a32', 8.5, y + 4, 0.5);
+      avec(A, 1, () => {
+        A.boite(13, 5.4, 8, ere >= 3 ? '#e9e1d0' : '#efe4c8', 0, y + 2.7, 0);
+        A.boite(5, 4, 9, ere >= 3 ? '#e2d9c6' : '#e8dcbc', -8.5, y + 2, 0.5); A.boite(5, 4, 9, ere >= 3 ? '#e2d9c6' : '#e8dcbc', 8.5, y + 2, 0.5);
+      });
+      avec(A, 2, () => { A.toit(5.4, 2, 9.4, '#9a4a32', -8.5, y + 4, 0.5); A.toit(5.4, 2, 9.4, '#9a4a32', 8.5, y + 4, 0.5); });
       for (let k = 0; k < 6; k++) A.cyl(0.42, 0.48, 4.8, 8, '#fbf6ea', -5 + k * 2, y + 2.5, 4.4);
       A.boite(13.6, 0.9, 9, '#d9cfb8', 0, y + 5.6, 0);
       A.forme([[-6.8, 0], [6.8, 0], [0, 2.2]], 0.6, '#e6dcc6', 0, y + 6, 4.3);
@@ -649,6 +661,7 @@ function geoVille(v, ere, civ, hauteur) {
       A.boite(4, 0.5, 6, '#cfc3a6', 0, y + 0.25, 7.5);
     }
   }
+  A.matiere = 4;
   if (murs) {
     const rx = R0 + 4, rz = (R0 + 4) * 0.85, nb2 = 26, th = murs === 2 ? 4.4 : 3.2, porte = Math.round(nb2 * 0.25);
     for (let k = 0; k < nb2; k++) {
@@ -666,8 +679,9 @@ function geoVille(v, ere, civ, hauteur) {
       if (Math.abs(a - ap) < 0.4) continue;
       A.cyl(1.8, 2.1, th + 3, 10, '#9a9183', x, y + (th + 3) / 2 - 0.4, z);
       for (let c = 0; c < 6; c++) { const b = c / 6 * Math.PI * 2; A.boite(0.7, 0.8, 0.7, '#b3aa99', x + Math.cos(b) * 1.6, y + th + 2.9, z + Math.sin(b) * 1.6); }
-      if (murs === 2) A.cone(2.3, 3.2, 10, civ, x, y + th + 4.8, z);
+      if (murs === 2) avec(A, 0, () => A.cone(2.3, 3.2, 10, civ, x, y + th + 4.8, z));
     }
   }
+  A.matiere = 0;
   return A.geometrie();
 }
