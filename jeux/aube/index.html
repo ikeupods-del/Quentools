@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="robots" content="noindex">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Aube">
+<meta name="theme-color" content="#0b1016">
+<!--JEU-DEBUT-->
+<title>Aube des Nations</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Carte plein écran ; panneaux de laque sombre et filets de laiton, comme un atlas de campagne. */
+:root{
+  --fond:#0b1016;          /* océan inconnu, fond de carte */
+  --laque:rgba(15,21,30,.94);
+  --laque-plein:#121a25;
+  --filet:rgba(214,186,120,.22);
+  --texte:#efe6d2;         /* parchemin */
+  --doux:#a8a08c;
+  --laiton:#c9a24a;        /* accent unique */
+  --laiton-vif:#e8c873;
+  --sci:#62aee0; --cult:#cf7cbc; --vert:#86c873; --rouge:#e5583f; --or:#e6b83f;
+  --titre:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --corps:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --emoji:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+  --haut:env(safe-area-inset-top,0px); --bas:env(safe-area-inset-bottom,0px);
+  --g:max(10px,env(safe-area-inset-left,0px)); --d:max(10px,env(safe-area-inset-right,0px));
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--fond);color:var(--texte);font:14px/1.4 var(--corps)}
+body{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-action:manipulation}
+button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--laiton-vif);outline-offset:2px}
+kbd{font:600 10px/1 var(--corps);border:1px solid var(--filet);border-radius:4px;padding:2px 4px;color:var(--doux);margin-left:6px}
+@media (hover:none){kbd{display:none}}
+#carte{position:fixed;inset:0;display:block;cursor:default}
+.num{font-variant-numeric:tabular-nums}
+
+/* Barre du haut */
+#barre{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;align-items:center;gap:4px;
+  padding:calc(var(--haut) + 6px) var(--d) 6px var(--g);background:linear-gradient(var(--laque),rgba(15,21,30,.86));
+  border-bottom:1px solid var(--filet);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+#barre .res{display:flex;align-items:center;gap:5px;padding:6px 9px;border-radius:9px;white-space:nowrap;min-height:36px}
+#barre .res:hover{background:rgba(255,255,255,.06)}
+#barre .res b{font-weight:700}
+#barre .res small{color:var(--doux);font-size:12px}
+#barre .ic{font-family:var(--emoji);font-size:16px}
+#b-sci{min-width:0;flex:0 1 270px}
+#b-sci .nom{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.jauge{position:relative;display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}
+.jauge i{position:absolute;inset:0 auto 0 0;background:var(--sci);border-radius:3px}
+#b-sci .col{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+#b-sci .jauge{width:100%}
+.plus{color:var(--vert)!important}.moins{color:var(--rouge)!important}
+#barre .esp{flex:1}
+#v-tour{color:var(--doux);font-size:13px;white-space:nowrap;padding:0 6px}
+#v-tour b{color:var(--texte);font-family:var(--titre);font-size:15px}
+.rond{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-family:var(--emoji);font-size:18px}
+.rond:hover{background:rgba(255,255,255,.07)}
+
+/* Notifications */
+#notifs{position:fixed;z-index:9;top:calc(var(--haut) + 60px);left:var(--g);width:min(340px,calc(100vw - 20px));display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.toast{pointer-events:auto;text-align:left;background:var(--laque);border:1px solid var(--filet);border-left:3px solid var(--laiton);
+  border-radius:10px;padding:8px 11px;box-shadow:0 8px 20px rgba(0,0,0,.4);animation:entree .25s ease-out}
+.toast.bon{border-left-color:var(--vert)}.toast.mal{border-left-color:var(--rouge)}.toast.tech{border-left-color:var(--sci)}.toast.diplo{border-left-color:var(--cult)}
+@keyframes entree{from{transform:translateX(-14px);opacity:0}}
+
+/* Bas de l'écran */
+#bas{position:fixed;z-index:10;left:0;right:0;bottom:0;display:flex;align-items:flex-end;gap:10px;pointer-events:none;
+  padding:0 var(--d) calc(var(--bas) + 10px) var(--g)}
+#bas>*{pointer-events:auto}
+#mini-boite{position:relative;flex:0 0 auto;border:1px solid var(--filet);border-radius:10px;overflow:hidden;background:#0a0e13;box-shadow:0 8px 20px rgba(0,0,0,.45)}
+#minicarte{display:block;width:200px;height:auto;cursor:pointer}
+#panneau{flex:1;min-width:0;display:flex;justify-content:center}
+#unite{width:min(560px,100%);background:var(--laque);border:1px solid var(--filet);border-radius:14px;padding:10px 12px 12px;box-shadow:0 10px 26px rgba(0,0,0,.45)}
+#unite .tete{display:flex;align-items:center;gap:10px}
+#unite .portrait{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-family:var(--emoji);font-size:22px;border:2px solid rgba(0,0,0,.6);flex:0 0 auto}
+#unite h3{margin:0;font:600 17px/1.15 var(--titre)}
+#unite .stats{color:var(--doux);font-size:12.5px;display:flex;flex-wrap:wrap;gap:3px 10px;margin-top:2px}
+#unite .actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 11px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid var(--filet);min-height:38px;white-space:nowrap}
+.btn:hover:not(:disabled){background:rgba(255,255,255,.11)}
+.btn:disabled{opacity:.42;cursor:default}
+.btn.principal{background:linear-gradient(#d8b55c,#b48a35);color:#1b1408;border-color:#e8c873;font-weight:700}
+.btn.danger{border-color:rgba(229,88,63,.5);color:#ffb4a6}
+.btn small{color:var(--doux)}
+.btn.principal small{color:#3d2c0e}
+#unite .indice{margin-top:8px;font-size:12.5px;color:var(--laiton-vif)}
+#combat{margin-top:8px;padding:8px 10px;border-radius:10px;background:rgba(0,0,0,.3);border:1px solid rgba(229,88,63,.35)}
+#combat .duel{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;font-size:13px}
+#combat .duel div:last-child{text-align:right}
+#combat .barre-pv{height:6px;border-radius:3px;background:rgba(255,255,255,.1);position:relative;overflow:hidden;margin-top:3px}
+#combat .barre-pv i{position:absolute;inset:0 auto 0 0;background:var(--vert)}
+#combat .barre-pv b{position:absolute;top:0;bottom:0;background:var(--rouge)}
+#fin-tour{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:0 0 auto}
+#b-tour{min-width:170px;min-height:56px;padding:8px 18px;border-radius:16px;text-align:right;
+  background:linear-gradient(#d8b55c,#a87e2c);color:#1b1408;border:1px solid #f0d488;box-shadow:0 10px 26px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.4)}
+#b-tour b{display:block;font:700 17px/1.1 var(--titre)}
+#b-tour small{display:block;font-size:12px;color:#3d2c0e}
+#b-tour.tache{background:linear-gradient(#36475d,#253244);color:var(--texte);border-color:var(--filet)}
+#b-tour.tache small{color:var(--doux)}
+#b-forcer{font-size:12px;color:var(--doux);padding:6px 10px;border-radius:8px;background:var(--laque);border:1px solid var(--filet)}
+
+/* Info tuile */
+#info{position:fixed;z-index:11;max-width:270px;background:var(--laque);border:1px solid var(--filet);border-radius:10px;padding:8px 10px;font-size:12.5px;pointer-events:none;box-shadow:0 8px 20px rgba(0,0,0,.45)}
+#info h4{margin:0 0 3px;font:600 14px var(--titre)}
+#info .l{color:var(--doux)}
+
+/* Fenêtres */
+#modale{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(5,8,12,.55);
+  padding:calc(var(--haut) + 12px) var(--d) calc(var(--bas) + 12px) var(--g)}
+#modale.cote{background:transparent;pointer-events:none;justify-content:flex-end;align-items:stretch;padding-top:calc(var(--haut) + 60px)}
+#modale .boite{pointer-events:auto;width:min(640px,100%);max-height:100%;display:flex;flex-direction:column;background:var(--laque-plein);
+  border:1px solid var(--filet);border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.6);overflow:hidden}
+#modale.large .boite{width:min(1180px,100%);height:100%}
+#modale.cote .boite{width:min(410px,100%);max-height:none;margin-bottom:calc(var(--bas))}
+#modale header{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--filet)}
+#modale h2{margin:0;font:600 21px/1.15 var(--titre);flex:1;min-width:0;text-wrap:balance}
+#modale .corps{overflow:auto;padding:12px 14px 16px;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;-webkit-user-select:text;user-select:text}
+#modale h3{margin:16px 0 7px;font:600 12px var(--corps);letter-spacing:.12em;text-transform:uppercase;color:var(--laiton)}
+#modale p{margin:0 0 10px;color:#ddd3bd;max-width:62ch}
+.fermer{width:36px;height:36px;border-radius:9px;font-size:18px;color:var(--doux)}
+.fermer:hover{background:rgba(255,255,255,.07);color:var(--texte)}
+.pied{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;margin-top:14px}
+
+/* Ville */
+.chiffres{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.chiffre{background:rgba(255,255,255,.04);border:1px solid var(--filet);border-radius:10px;padding:7px 9px}
+.chiffre b{font-size:16px}.chiffre small{display:block;color:var(--doux);font-size:11.5px}
+.seg{display:flex;flex-wrap:wrap;gap:4px;background:rgba(0,0,0,.25);padding:4px;border-radius:10px;border:1px solid var(--filet)}
+.seg button{flex:1;padding:7px 8px;border-radius:7px;font-size:12.5px;color:var(--doux);min-height:34px}
+.seg button.actif{background:var(--laiton);color:#1b1408;font-weight:700}
+.encours{background:rgba(201,162,74,.09);border:1px solid rgba(201,162,74,.4);border-radius:12px;padding:10px;display:grid;gap:7px}
+.encours .ligne{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.encours .jauge{height:7px}.encours .jauge i{background:#d9893a}
+.liste{display:grid;gap:5px}
+.choix{display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:center;text-align:left;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,.035);border:1px solid transparent;width:100%}
+.choix:hover{background:rgba(255,255,255,.08);border-color:var(--filet)}
+.choix.actif{border-color:var(--laiton);background:rgba(201,162,74,.12)}
+.choix .ic{font-family:var(--emoji);font-size:20px;grid-row:span 2}
+.choix .nom{font-weight:600}
+.choix .t{color:var(--doux);font-size:12px;white-space:nowrap;grid-row:span 2}
+.choix small{color:var(--doux);font-size:11.5px;grid-column:2}
+.puces{display:flex;flex-wrap:wrap;gap:5px}
+.puce{font-size:12px;padding:4px 8px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid var(--filet)}
+
+/* Technologies */
+.arbre{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,1fr);gap:12px;overflow-x:auto;padding-bottom:8px;touch-action:pan-x pan-y}
+.ere h4{margin:0 0 8px;font:600 15px var(--titre);color:var(--laiton-vif)}
+.ere .liste{gap:7px}
+.tech{text-align:left;width:100%;padding:9px 10px;border-radius:11px;background:rgba(255,255,255,.04);border:1px solid var(--filet);display:grid;gap:4px;position:relative;overflow:hidden}
+.tech:hover{background:rgba(255,255,255,.08)}
+.tech b{font:600 14.5px var(--titre)}
+.tech .deb{font-size:11.5px;color:var(--doux)}
+.tech .t{position:absolute;top:9px;right:10px;font-size:11.5px;color:var(--doux)}
+.tech.connue{opacity:.55;border-color:rgba(134,200,115,.45)}
+.tech.connue .t{color:var(--vert)}
+.tech.bloquee{opacity:.5}
+.tech.chemin{border-color:rgba(98,174,224,.6)}
+.tech.encours{border-color:var(--sci);background:rgba(98,174,224,.14);opacity:1}
+.tech .jauge{height:4px}
+
+/* Doctrines et nations */
+.voies{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+.voie{border:1px solid var(--filet);border-radius:12px;padding:10px;background:rgba(255,255,255,.03)}
+.voie h4{margin:0 0 8px;font:600 16px var(--titre)}
+.doc{padding:7px 8px;border-radius:9px;margin-bottom:5px;background:rgba(0,0,0,.2);font-size:12.5px}
+.doc b{display:block;font-size:13.5px}
+.doc.prise{background:rgba(134,200,115,.13);border:1px solid rgba(134,200,115,.35)}
+.doc.prochaine{border:1px solid var(--laiton)}
+.nation{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;padding:10px;border-radius:12px;border:1px solid var(--filet);background:rgba(255,255,255,.03);margin-bottom:8px}
+.pastille{width:16px;height:16px;border-radius:50%;border:2px solid rgba(0,0,0,.5)}
+.etat-guerre{color:var(--rouge);font-weight:700}.etat-paix{color:var(--vert)}
+
+/* Écran titre */
+#titre{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;overflow:auto;touch-action:pan-y;
+  background:radial-gradient(ellipse at 50% 40%,rgba(11,16,22,.35),rgba(11,16,22,.92) 70%);padding:calc(var(--haut) + 20px) var(--d) calc(var(--bas) + 20px) var(--g)}
+#titre .carte-titre{width:min(760px,100%);text-align:center}
+#titre h1{margin:0;font:600 clamp(40px,8vw,78px)/1 var(--titre);letter-spacing:.02em;color:#f6edd6;text-shadow:0 4px 30px rgba(0,0,0,.8);text-wrap:balance}
+#titre h1 span{color:var(--laiton-vif)}
+#titre .sous{margin:12px auto 26px;max-width:46ch;color:#d9cfb8;font-size:16px;text-shadow:0 2px 10px rgba(0,0,0,.9)}
+#titre .boutons{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+#titre .btn{min-height:48px;padding:12px 22px;font-size:16px;border-radius:12px;background:var(--laque)}
+#titre .btn.principal{background:linear-gradient(#d8b55c,#a87e2c)}
+#reglage{margin-top:20px;text-align:left;background:var(--laque);border:1px solid var(--filet);border-radius:16px;padding:14px;display:grid;gap:12px}
+#reglage h3{margin:0;font:600 12px var(--corps);letter-spacing:.12em;text-transform:uppercase;color:var(--laiton)}
+.nations{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:7px}
+.nat{text-align:left;padding:9px 10px;border-radius:11px;border:1px solid var(--filet);background:rgba(255,255,255,.03);display:grid;gap:3px}
+.nat b{display:flex;align-items:center;gap:7px;font:600 15px var(--titre)}
+.nat small{color:var(--doux);font-size:11.5px;line-height:1.3}
+.nat.actif{border-color:var(--laiton);background:rgba(201,162,74,.14)}
+#titre .version{margin-top:18px;color:var(--doux);font-size:12px}
+
+#attente{position:fixed;z-index:25;left:50%;top:calc(var(--haut) + 66px);transform:translateX(-50%);background:var(--laque);border:1px solid var(--filet);padding:9px 16px;border-radius:30px;font-size:13px;color:var(--doux)}
+
+/* Téléphone */
+@media (max-width:760px){
+  #barre{gap:2px}
+  #barre .res{padding:5px 6px;gap:4px}
+  #b-cult small,#b-or small,#v-sci{display:none}
+  .toast{font-size:13px;padding:7px 10px}
+  #notifs .toast:nth-last-child(n+4){display:none}
+  #b-sci{flex:1 1 auto}
+  #b-sci .nom{font-size:12.5px}
+  #v-tour{display:none}
+  #mini-boite{display:none}
+  #mini-boite.ouvert{display:block;position:fixed;left:var(--g);top:calc(var(--haut) + 58px)}
+  #bas{flex-direction:column;align-items:stretch;gap:8px}
+  #fin-tour{flex-direction:row-reverse;align-items:center;justify-content:space-between}
+  #b-tour{min-width:0;flex:1;min-height:52px}
+  #unite{width:100%;padding:9px 10px 10px}
+  #unite .actions{flex-wrap:nowrap;overflow-x:auto;touch-action:pan-x;padding-bottom:2px;scrollbar-width:none}
+  #modale.cote{align-items:flex-end;justify-content:center;padding-top:calc(var(--haut) + 70px)}
+  #modale.cote .boite{width:100%;max-height:78vh}
+  #modale.large .boite{height:100%}
+  .chiffres{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #b-mini{display:grid!important}
+}
+#b-mini{display:none}
+@media (prefers-reduced-motion:reduce){.toast{animation:none}}
+</style>
+</head>
+<body>
+<canvas id="carte" aria-label="Carte du monde"></canvas>
+
+<header id="barre" hidden>
+  <button id="b-or" class="res" title="Trésor (O pour le détail)"><span class="ic">🪙</span><b id="v-or" class="num">0</b><small id="v-or-d" class="num">+0</small></button>
+  <button id="b-sci" class="res" title="Technologies (T)"><span class="ic">🔬</span><span class="col"><span class="nom" id="v-rech">Choisir une recherche</span><span class="jauge"><i id="j-rech"></i></span></span><small id="v-sci" class="num">+0</small></button>
+  <button id="b-cult" class="res" title="Doctrines (P)"><span class="ic">🎭</span><b id="v-cult" class="num">0</b><small class="num">/<span id="v-cult-c">0</span></small></button>
+  <button id="b-bonheur" class="res" title="Bonheur de la population"><span class="ic" id="ic-bonheur">😊</span><b id="v-bonheur" class="num">0</b></button>
+  <span class="esp"></span>
+  <span id="v-tour"></span>
+  <button id="b-mini" class="rond" title="Mini-carte" aria-label="Mini-carte">🗺️</button>
+  <button id="b-diplo" class="rond" title="Nations (D)" aria-label="Nations">🌍</button>
+  <button id="b-menu" class="rond" title="Menu (Échap)" aria-label="Menu">☰</button>
+</header>
+
+<div id="notifs" aria-live="polite"></div>
+<div id="info" hidden></div>
+<div id="attente" hidden>Les autres nations jouent…</div>
+
+<div id="bas" hidden>
+  <div id="mini-boite"><canvas id="minicarte" width="200" height="130" aria-label="Mini-carte"></canvas></div>
+  <div id="panneau"><section id="unite" hidden></section></div>
+  <div id="fin-tour">
+    <button id="b-forcer" hidden>Finir le tour</button>
+    <button id="b-tour"><b>Tour suivant</b><small>Entrée</small></button>
+  </div>
+</div>
+
+<div id="modale" hidden role="dialog" aria-modal="true">
+  <div class="boite"><header><h2 id="m-titre"></h2><button class="fermer" id="m-fermer" aria-label="Fermer">✕</button></header><div class="corps" id="m-corps"></div></div>
+</div>
+
+<div id="titre">
+  <div class="carte-titre">
+    <h1>Aube <span>des</span> Nations</h1>
+    <p class="sous">Guidez un peuple de la première hutte jusqu’au départ vers les étoiles : explorez, fondez des villes, cherchez, commercez et faites la guerre si l’histoire l’exige.</p>
+    <div class="boutons">
+      <button class="btn principal" id="b-continuer" hidden>Continuer la partie</button>
+      <button class="btn" id="b-nouvelle">Nouvelle partie</button>
+      <button class="btn" id="b-aide-titre">Comment jouer</button>
+    </div>
+    <div id="reglage" hidden>
+      <h3>Votre nation</h3>
+      <div class="nations" id="choix-nation"></div>
+      <h3>Carte</h3>
+      <div class="seg" id="choix-taille"></div>
+      <div class="seg" id="choix-type"></div>
+      <h3>Difficulté</h3>
+      <div class="seg" id="choix-difficulte"></div>
+      <h3>Durée</h3>
+      <div class="seg" id="choix-vitesse"></div>
+      <div class="pied"><button class="btn principal" id="b-commencer">Commencer</button></div>
+    </div>
+    <p class="version" id="v-version"></p>
+  </div>
+</div>
+
+<script src="regles.js"></script>
+<script src="monde.js"></script>
+<script src="moteur.js"></script>
+<script src="ia.js"></script>
+<script src="rendu.js"></script>
+<script src="interface.js"></script>
+<!--JEU-FIN-->
+</body>
+</html>
