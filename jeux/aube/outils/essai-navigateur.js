@@ -64,7 +64,8 @@ async function finirTours(page, n, forcer) {
     /* Déplacement de l'éclaireur à la souris. */
     const ok = await page.evaluate(() => {
       const u = unitesDe(0).find(x => x.type === 'eclaireur'); selectionner(u, false);
-      const dest = [...R.surbrillance.atteint].sort((a, b) => Math.abs(ecranTuile(a).x - R.larg / 2) + Math.abs(ecranTuile(a).y - R.haut / 2) - Math.abs(ecranTuile(b).x - R.larg / 2) - Math.abs(ecranTuile(b).y - R.haut / 2))[0]; const p = ecranTuile(dest);
+      const libre = j => { const q = ecranTuile(j); return document.elementFromPoint(q.x, q.y) === R.cv; };
+      const dest = [...R.surbrillance.atteint].filter(libre).sort((a, b) => Math.abs(ecranTuile(a).x - R.larg / 2) + Math.abs(ecranTuile(a).y - R.haut / 2) - Math.abs(ecranTuile(b).x - R.larg / 2) - Math.abs(ecranTuile(b).y - R.haut / 2))[0]; const p = ecranTuile(dest);
       return { x: p.x, y: p.y, dest, id: u.id };
     });
     await page.mouse.move(ok.x, ok.y);
@@ -113,7 +114,7 @@ async function finirTours(page, n, forcer) {
     /* Toucher deux fois une case pour déplacer le guerrier. */
     const cible = await pm.evaluate(() => {
       const u = unitesDe(0).find(x => x.type === 'guerrier'); selectionner(u, false); centrerSur(u.i, false);
-      const dest = [...R.surbrillance.atteint].find(j => !OCC[j].length && !VIL[j] && estVisibleEcran(j, 60)); const p = ecranTuile(dest);
+      const dest = [...R.surbrillance.atteint].find(j => { const q = ecranTuile(j); return !OCC[j].length && !VIL[j] && estVisibleEcran(j, 60) && document.elementFromPoint(q.x, q.y) === R.cv; }); const p = ecranTuile(dest);
       return { x: p.x, y: p.y, dest, id: u.id };
     });
     await pm.touchscreen.tap(cible.x, cible.y);
