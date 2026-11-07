@@ -62,7 +62,7 @@ function majCamera() {
   c.position.set(R.cam.x, d * Math.sin(a), R.cam.y + d * Math.cos(a));
   c.lookAt(R.cam.x, 0, R.cam.y);
   c.updateMatrixWorld();
-  if (R.scene.fog) { R.scene.fog.near = d * 1.3; R.scene.fog.far = d * 3.6; }
+  if (R.scene.fog) { R.scene.fog.near = d * 1.15; R.scene.fog.far = d * 3.2; }
   const L = R.monde && R.monde.soleil;
   if (L) {
     L.position.set(R.cam.x - 260, 420, R.cam.y - 220); L.target.position.set(R.cam.x, 0, R.cam.y); L.target.updateMatrixWorld();
@@ -131,12 +131,13 @@ const U = {
   uBrume: { value: null }, uMarques: { value: null }, uNuages: { value: null },
   uK: { value: 0.12 }, uTaille: { value: null }, uKM: { value: 0.3 }, uTailleM: { value: null },
   uActif: { value: 1 }, uTemps: { value: 0 },
+  uRivage: { value: null }, uRivO: { value: null }, uRivT: { value: null },
 };
 function patcher(mat, defs) {
   mat.defines = Object.assign(mat.defines || {}, defs);
   mat.onBeforeCompile = sh => {
     Object.assign(sh.uniforms, U);
-    const tete = 'uniform sampler2D uBrume; uniform sampler2D uMarques; uniform sampler2D uNuages; uniform float uK; uniform vec2 uTaille; uniform float uKM; uniform vec2 uTailleM; uniform float uActif; uniform float uTemps; varying vec3 vMonde;\n';
+    const tete = 'uniform sampler2D uBrume; uniform sampler2D uMarques; uniform sampler2D uNuages; uniform sampler2D uRivage; uniform vec2 uRivO; uniform vec2 uRivT; uniform float uK; uniform vec2 uTaille; uniform float uKM; uniform vec2 uTailleM; uniform float uActif; uniform float uTemps; varying vec3 vMonde;\n';
     sh.vertexShader = tete + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
       vec4 aubeP = vec4(transformed, 1.0);
       #ifdef USE_INSTANCING
@@ -157,6 +158,15 @@ function patcher(mat, defs) {
       #endif`);
     sh.fragmentShader = tete + sh.fragmentShader.replace('#include <dithering_fragment>', `
       vec4 aubeB = uActif * texture2D(uBrume, vMonde.xz * uK / uTaille);
+      #ifdef AUBE_SOL
+        gl_FragColor.rgb *= 0.9 + 0.2 * texture2D(uNuages, vMonde.xz / 34.0).r;
+      #endif
+      #ifdef AUBE_EAU
+        float aubeR = texture2D(uRivage, (vMonde.xz - uRivO) / uRivT).r;
+        float aubeV = texture2D(uNuages, vMonde.xz / 38.0 + vec2(uTemps * 0.02, uTemps * 0.013)).r;
+        float aubeEcume = smoothstep(0.3, 0.95, aubeR) * smoothstep(0.4, 0.8, aubeV + 0.22 * sin(uTemps * 1.6 + aubeR * 9.0));
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.93, 0.97, 1.0), aubeEcume * 0.7);
+      #endif
       #ifdef AUBE_MARQUES
         vec4 aubeM = texture2D(uMarques, vMonde.xz * uKM / uTailleM);
         gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(1.0, 0.97, 0.86), aubeM.r * 0.3);
@@ -180,10 +190,10 @@ function materiaux() {
   MAT = {
     sol: patcher(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.93, metalness: 0 }), { AUBE_SOL: '', AUBE_MARQUES: '' }),
     arbre: patcher(new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.9 }), { AUBE_OBJET: '' }),
-    objet: patcher(new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.82 }), { AUBE_OBJET: '' }),
+    objet: patcher(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82 }), { AUBE_OBJET: '' }),
     ruban: patcher(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.45, metalness: 0.05, polygonOffset: true, polygonOffsetFactor: -2 }), { AUBE_ENFOUIR: '' }),
     front: patcher(new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 }), { AUBE_ENFOUIR: '' }),
-    unite: new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.7 }),
+    unite: new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.62, side: THREE.DoubleSide }),
     anneau: new THREE.MeshBasicMaterial({ color: 0xfff6d8, transparent: true, opacity: 0.85, depthWrite: false }),
     chemin: new THREE.MeshBasicMaterial({ color: 0xfcf2d2, transparent: true, opacity: 0.95, depthTest: false }),
   };
@@ -331,6 +341,10 @@ function construireSol(M) {
   }
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   M.grille = { x0, y0, e, nx, ny, H };
+  const riv = new Uint8Array(N * 4);
+  for (let v = 0; v < N; v++) { const h = H[v]; riv[v * 4] = h < 0.6 ? Math.max(0, Math.min(255, (1 - Math.abs(h + 0.6) / 1.4) * 255)) : 0; riv[v * 4 + 3] = 255; }
+  const texRiv = new THREE.DataTexture(riv, nx, ny); texRiv.magFilter = texRiv.minFilter = THREE.LinearFilter; texRiv.needsUpdate = true;
+  U.uRivage.value = texRiv; U.uRivO.value = new THREE.Vector2(x0, y0); U.uRivT.value = new THREE.Vector2((nx - 1) * e, (ny - 1) * e);
   const sol = new THREE.Mesh(geo, materiaux().sol);
   sol.receiveShadow = true; sol.castShadow = qualiteHaute();
   return sol;
@@ -338,7 +352,7 @@ function construireSol(M) {
 
 /* ---------- Arbres ---------- */
 function construireArbres(M) {
-  const lots = { sapin: [], feuillu: [], palmier: [], roseau: [] }, c = new THREE.Color(), al = creerAlea((G.graine * 13 + 5) >>> 0);
+  const lots = { sapin: [], feuillu: [], palmier: [], roseau: [], touffe: [], rocher: [], buisson: [] }, c = new THREE.Color(), al = creerAlea((G.graine * 13 + 5) >>> 0);
   const ajoute = (sorte, x, y, ech, coul) => { const h = hauteurSol(x, y); if (h < 0.4) return; lots[sorte].push({ x, y, h: h - 0.3, ech, coul, rot: al() * 6.3 }); };
   G.tuiles.forEach((t, i) => {
     if (VIL[i] || TERRAINS[t.t].eau || t.rel === 2) return;
@@ -355,6 +369,12 @@ function construireArbres(M) {
       }
     } else if (t.cv === 'marais') { for (let k = 0; k < 5; k++) { const q = place(); ajoute('roseau', q.x, q.y, 0.8 + al() * 0.5, '#5a7a3a'); } }
     else if (!t.res && (t.t === 'prairie' || t.t === 'plaine') && al() < 0.3) { const q = place(); ajoute('feuillu', q.x, q.y, 0.7 + al() * 0.3, '#4a7d35'); }
+    if (qualiteHaute() && !t.cv) {
+      const herbe = { prairie: '#6a9a3e', plaine: '#a39b4c', toundra: '#7d8a62' }[t.t];
+      if (herbe) for (let k = 0; k < 4; k++) { const q = place(); ajoute('touffe', q.x, q.y, 0.8 + al() * 0.6, herbe); }
+      if (t.t === 'plaine' && al() < 0.5) { const q = place(); ajoute('buisson', q.x, q.y, 0.8 + al() * 0.5, '#5a7d38'); }
+    }
+    if (t.rel === 1 || t.t === 'desert' || t.t === 'toundra') { const nb = t.rel === 1 ? 3 : 1; for (let k = 0; k < nb; k++) { const q = place(); ajoute('rocher', q.x, q.y, 0.6 + al() * 0.9, t.t === 'desert' ? '#b49a70' : '#8a8478'); } }
   });
   const groupe = new THREE.Group(), mat = new THREE.Matrix4(), q = new THREE.Quaternion(), axe = new THREE.Vector3(0, 1, 0);
   for (const sorte in lots) {
@@ -489,7 +509,7 @@ function construireMonde() {
   M.racine.add(construireSol(M));
   const eauG = new THREE.PlaneGeometry(m.w + 4000, m.h + 4000); eauG.rotateX(-Math.PI / 2);
   const normale = texNormaleEau(); normale.repeat.set((m.w + 4000) / 90, (m.h + 4000) / 90);
-  const matEau = patcher(new THREE.MeshStandardMaterial({ color: 0x2b6f98, transparent: true, opacity: 0.8, roughness: 0.16, metalness: 0.08, normalMap: normale, normalScale: new THREE.Vector2(0.35, 0.35) }), { AUBE_MARQUES: '' });
+  const matEau = patcher(new THREE.MeshStandardMaterial({ color: 0x2b6f98, transparent: true, opacity: 0.8, roughness: 0.16, metalness: 0.08, normalMap: normale, normalScale: new THREE.Vector2(0.35, 0.35) }), { AUBE_MARQUES: '', AUBE_EAU: '' });
   const eau = new THREE.Mesh(eauG, matEau); eau.position.set(m.w / 2, 0.15, m.h / 2); eau.receiveShadow = true;
   M.normaleEau = normale; M.racine.add(eau);
   M.arbres = construireArbres(M); M.racine.add(M.arbres);
@@ -671,7 +691,15 @@ function majUnites(M, now) {
     if (VIL[u.i] && !anim) { dy += R.S * 0.42; dx += estMil(u) ? -R.S * 0.25 : R.S * 0.3; ech *= 0.85; }
     const x = p.x + dx, y = p.y + dy, mer = UNITES[u.type].classe === 'mer' || emb;
     const h = mer ? 0.1 + Math.sin(now / 700 + u.id) * 0.25 : Math.max(0.2, hauteurSol(x, y)) - 0.1;
-    e.mesh.position.set(x, h, y); e.mesh.scale.setScalar(ech * (UNITES[u.type].classe === 'mer' ? 1.7 : 2.1));
+    let hb = h;
+    if (anim) {
+      const a = R.anims.get(u.id), k = Math.min(a.ch.length - 2, Math.max(0, Math.floor((now - a.t0) / a.dur)));
+      const p0 = centreTuile(a.ch[k]), p1 = centreTuile(a.ch[k + 1]), dxm = p1.x - p0.x, dym = p1.y - p0.y;
+      e.rot = (MODELES3D[u.type] || {}).face === 'x' || emb ? Math.atan2(dym, -dxm) : Math.atan2(dxm, dym);
+      if (!mer) hb += Math.abs(Math.sin(now / 85)) * 0.9;
+    }
+    e.mesh.rotation.y = e.rot ?? e.mesh.rotation.y;
+    e.mesh.position.set(x, hb, y); e.mesh.scale.setScalar(ech * (UNITES[u.type].classe === 'mer' ? 1.7 : 2.1));
     e.x = x; e.y = y; e.h = h; e.u = u;
     if (u.id === sel) { M.anneau.visible = true; M.anneau.position.set(x, h + 0.6, y); M.anneau.material.opacity = 0.6 + 0.3 * Math.sin(now / 200); }
   }
@@ -844,8 +872,8 @@ function initRendu(cv, mini) {
   R.rendu.toneMapping = THREE.ACESFilmicToneMapping; R.rendu.toneMappingExposure = 1.05;
   R.rendu.shadowMap.enabled = qualiteHaute(); R.rendu.shadowMap.type = THREE.PCFSoftShadowMap;
   R.scene = new THREE.Scene();
-  R.scene.background = new THREE.Color(0x0c1219);
-  R.scene.fog = new THREE.Fog(0x0c1219, 800, 2400);
+  R.scene.background = new THREE.Color(0x43525f);
+  R.scene.fog = new THREE.Fog(0x55687a, 800, 2400);
   R.camera = new THREE.PerspectiveCamera(FOV, 1, 2, 5000);
   redimensionner();
   window.addEventListener('resize', redimensionner);
