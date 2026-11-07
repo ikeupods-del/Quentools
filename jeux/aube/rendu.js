@@ -165,7 +165,7 @@ function patcher(mat, defs) {
         float aubeR = texture2D(uRivage, (vMonde.xz - uRivO) / uRivT).r;
         float aubeV = texture2D(uNuages, vMonde.xz / 38.0 + vec2(uTemps * 0.02, uTemps * 0.013)).r;
         float aubeEcume = smoothstep(0.3, 0.95, aubeR) * smoothstep(0.4, 0.8, aubeV + 0.22 * sin(uTemps * 1.6 + aubeR * 9.0));
-        gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.93, 0.97, 1.0), aubeEcume * 0.7);
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.93, 0.97, 1.0), aubeEcume * 0.55);
       #endif
       #ifdef AUBE_MARQUES
         vec4 aubeM = texture2D(uMarques, vMonde.xz * uKM / uTailleM);
@@ -342,7 +342,7 @@ function construireSol(M) {
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   M.grille = { x0, y0, e, nx, ny, H };
   const riv = new Uint8Array(N * 4);
-  for (let v = 0; v < N; v++) { const h = H[v]; riv[v * 4] = h < 0.6 ? Math.max(0, Math.min(255, (1 - Math.abs(h + 0.6) / 1.4) * 255)) : 0; riv[v * 4 + 3] = 255; }
+  for (let v = 0; v < N; v++) { const h = H[v]; riv[v * 4] = h < 0.4 ? Math.max(0, Math.min(255, (1 - Math.abs(h + 0.3) / 0.6) * 255)) : 0; riv[v * 4 + 3] = 255; }
   const texRiv = new THREE.DataTexture(riv, nx, ny); texRiv.magFilter = texRiv.minFilter = THREE.LinearFilter; texRiv.needsUpdate = true;
   U.uRivage.value = texRiv; U.uRivO.value = new THREE.Vector2(x0, y0); U.uRivT.value = new THREE.Vector2((nx - 1) * e, (ny - 1) * e);
   const sol = new THREE.Mesh(geo, materiaux().sol);
@@ -509,7 +509,7 @@ function construireMonde() {
   M.racine.add(construireSol(M));
   const eauG = new THREE.PlaneGeometry(m.w + 4000, m.h + 4000); eauG.rotateX(-Math.PI / 2);
   const normale = texNormaleEau(); normale.repeat.set((m.w + 4000) / 90, (m.h + 4000) / 90);
-  const matEau = patcher(new THREE.MeshStandardMaterial({ color: 0x2b6f98, transparent: true, opacity: 0.8, roughness: 0.16, metalness: 0.08, normalMap: normale, normalScale: new THREE.Vector2(0.35, 0.35) }), { AUBE_MARQUES: '', AUBE_EAU: '' });
+  const matEau = patcher(new THREE.MeshStandardMaterial({ color: 0x2b6f98, transparent: true, opacity: 0.8, roughness: 0.32, metalness: 0.05, normalMap: normale, normalScale: new THREE.Vector2(0.35, 0.35) }), { AUBE_MARQUES: '', AUBE_EAU: '' });
   const eau = new THREE.Mesh(eauG, matEau); eau.position.set(m.w / 2, 0.15, m.h / 2); eau.receiveShadow = true;
   M.normaleEau = normale; M.racine.add(eau);
   M.arbres = construireArbres(M); M.racine.add(M.arbres);
