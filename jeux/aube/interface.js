@@ -9,7 +9,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 function lire(cle) { try { return localStorage.getItem(cle); } catch (e) { return null; } }
 function ecrire(cle, val) { try { localStorage.setItem(cle, val); return true; } catch (e) { return false; } }
 
-const Prefs = Object.assign({ grille: false, survol: true, autoCycle: true, reduit: false }, (() => { try { return JSON.parse(lire(CLE_PREFS)) || {}; } catch (e) { return {}; } })());
+const Prefs = Object.assign({ grille: false, survol: true, autoCycle: true, reduit: false, qualite: 'haute' }, (() => { try { return JSON.parse(lire(CLE_PREFS)) || {}; } catch (e) { return {}; } })());
 try { if (matchMedia('(prefers-reduced-motion: reduce)').matches) Prefs.reduit = true; } catch (e) { /* rien */ }
 const garderPrefs = () => ecrire(CLE_PREFS, JSON.stringify(Prefs));
 
@@ -323,6 +323,7 @@ function infoTuile(i) {
   else h += '<div class="l">Infranchissable</div>';
   if (t.res && resVisible(c, t.res)) h += `<div>${RESSOURCES[t.res].ic} ${esc(RESSOURCES[t.res].nom)}${RESSOURCES[t.res].luxe ? ' <span class="l">(luxe : +4 bonheur une fois exploité)</span>' : ''}</div>`;
   if (t.am) h += `<div>${AMELIORATIONS[t.am].ic} ${esc(AMELIORATIONS[t.am].nom)}</div>`;
+  if (t.riv) h += '<div>〰️ Rivière (+1 or)</div>';
   if (t.rt) h += '<div>🛤️ Route</div>';
   if (t.hutte) h += '<div>🛖 Village tribal : entrez-y pour une surprise</div>';
   if (t.camp) h += '<div>🔥 Camp barbare</div>';
@@ -709,6 +710,7 @@ function ouvrirMenu() {
     <button class="choix" data-act="journal"><span class="ic">📜</span><span class="nom">Journal des événements</span></button>
     <button class="choix" data-act="aide"><span class="ic">❓</span><span class="nom">Commandes et règles</span></button>
     <button class="choix" data-act="grille"><span class="ic">⬡</span><span class="nom">Grille hexagonale : ${Prefs.grille ? 'affichée' : 'masquée'}</span></button>
+    <button class="choix" data-act="qualite"><span class="ic">🎨</span><span class="nom">Graphismes : ${Prefs.qualite === 'eco' ? 'économie (batterie)' : 'haute qualité'}</span><small>L’économie allège le brouillard et la finesse du terrain.</small></button>
     <button class="choix" data-act="cycle"><span class="ic">🔁</span><span class="nom">Passer seul à l’unité suivante : ${Prefs.autoCycle ? 'oui' : 'non'}</span></button>
     <button class="choix" data-act="plein"><span class="ic">⛶</span><span class="nom">Plein écran</span></button>
     <button class="choix" data-act="titre"><span class="ic">🏠</span><span class="nom">Écran d’accueil et nouvelle partie</span></button>
@@ -805,6 +807,7 @@ function actionGenerale(a) {
     case 'journal': ouvrirJournal(); break;
     case 'aide': ouvrirAide(); break;
     case 'grille': Prefs.grille = !Prefs.grille; R.grille = Prefs.grille; garderPrefs(); R.sale = true; ouvrirMenu(); break;
+    case 'qualite': Prefs.qualite = Prefs.qualite === 'eco' ? 'haute' : 'eco'; garderPrefs(); R.blocs.clear(); R.vignette = null; R.sale = true; ouvrirMenu(); break;
     case 'cycle': Prefs.autoCycle = !Prefs.autoCycle; garderPrefs(); ouvrirMenu(); break;
     case 'plein': try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => toast('Plein écran indisponible ici')); } catch (e) { toast('Plein écran indisponible ici'); } fermerModale(); break;
     case 'titre': fermerModale(); afficherTitre(); break;

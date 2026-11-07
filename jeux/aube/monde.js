@@ -169,6 +169,40 @@ function genererCarte(W, H, type, nbCivs, alea) {
     if (zone.length < 12) zone.forEach(j => { tuiles[j].t = 'cote'; });
   }
 
+  /* Rivières : de la montagne vers la mer, en suivant la pente. riv = directions reliées (bits), rf = débit. */
+  const eauI = i => TERRAINS[tuiles[i].t].eau;
+  const sources = terres.filter(i => tuiles[i].rel >= 1 && !eauI(i)).sort(() => alea() - 0.5).slice(0, Math.round(terres.length / 38));
+  for (const src of sources) {
+    if (tuiles[src].riv) continue;
+    const ch = [src], vus = new Set([src]);
+    let fin = -1, finDir = -1, jonction = false;
+    for (let pas = 0; pas < 18; pas++) {
+      const i = ch[ch.length - 1];
+      let mer = -1;
+      for (let k = 0; k < 6; k++) { const j = vois[i * 6 + k]; if (j >= 0 && eauI(j)) { mer = k; break; } }
+      if (mer >= 0 && ch.length > 1) { fin = i; finDir = mer; break; }
+      let best = -1, bk = -1, bh = Infinity;
+      for (let k = 0; k < 6; k++) {
+        const j = vois[i * 6 + k];
+        if (j < 0 || vus.has(j) || tuiles[j].rel === 2 || eauI(j)) continue;
+        const h = haut[j] + alea() * 0.012;
+        if (h < bh) { bh = h; best = j; bk = k; }
+      }
+      if (best < 0 || bh > haut[i] + 0.02) break;
+      vus.add(best); ch.push(best);
+      if (tuiles[best].riv) { jonction = true; fin = best; break; }
+    }
+    if (fin < 0 || ch.length < 3) continue;
+    for (let n = 0; n < ch.length - 1; n++) {
+      const a = ch[n], b = ch[n + 1];
+      for (let k = 0; k < 6; k++) if (vois[a * 6 + k] === b) { tuiles[a].riv = (tuiles[a].riv || 0) | (1 << k); tuiles[b].riv = (tuiles[b].riv || 0) | (1 << ((k + 3) % 6)); }
+      tuiles[b].rf = Math.max(tuiles[b].rf || 0, n + 1, (tuiles[a].rf || 0) + 1);
+      tuiles[a].rf = Math.max(tuiles[a].rf || 0, n);
+    }
+    if (!jonction && finDir >= 0) tuiles[fin].riv |= 1 << finDir;
+    if (tuiles[src].cv === 'marais') tuiles[src].cv = null;
+  }
+
   /* Ressources. */
   const ids = Object.keys(RESSOURCES);
   for (let i = 0; i < N; i++) {

@@ -597,6 +597,7 @@ function rendTuile(i, v, c) {
   let n, p, o;
   if (t.cv) { const cv = COUVERTS[t.cv]; n = cv.n; p = cv.p; o = 0; } else { n = ter.n; p = ter.p; o = ter.o; }
   if (t.rel === 1) p += 1;
+  if (t.riv) o += 1;
   if (t.res && resVisible(c, t.res)) { const r = RESSOURCES[t.res]; n += r.n || 0; p += r.p || 0; o += r.o || 0; }
   if (t.am) {
     const a = AMELIORATIONS[t.am]; n += a.n || 0; p += a.p || 0; o += a.o || 0;
