@@ -594,7 +594,7 @@ function rendreVille(v) {
   const croiss = b.surplus > 0 ? `croissance dans ${toursRestants(seuil - v.nour, b.surplus * (c.bonheur < 0 ? 0.5 : 1))} t.` : b.surplus < 0 ? 'famine !' : 'stagnation';
   const it = v.file[0], cout = it ? coutItem(v, it) : 0;
   let h = `<div class="chiffres num">
-    <div class="chiffre"><b>🍎 ${signe(b.surplus)}</b><small>${v.nour}/${seuil} · ${esc(croiss)}${v.pop >= habitat(v) ? ' · limite d’habitat' : ''}</small></div>
+    <div class="chiffre"><b>🍎 ${signe(b.surplus)}</b><small>${Math.floor(v.nour)}/${seuil} · ${esc(croiss)}${v.pop >= habitat(v) ? ' · limite d’habitat' : ''}</small></div>
     <div class="chiffre"><b>⚒️ ${b.p}</b><small>production</small></div>
     <div class="chiffre"><b>🪙 ${b.o}</b><small>or</small></div>
     <div class="chiffre"><b>🔬 ${b.s}</b><small>science${b.spec ? ` · ${b.spec} savant${b.spec > 1 ? 's' : ''}` : ''}</small></div>
