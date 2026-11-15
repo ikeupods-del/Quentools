@@ -92,6 +92,7 @@ function ouvrirFiche() {
       <h4 class="fiEtape"><span>1</span> Le texte</h4>
       <div class="ligne fiModes" role="radiogroup" aria-label="Façon de faire">${[['seul', '🤖 QuentMovie l’écrit', 'Tu donnes le sujet, QuentMovie écrit le texte d’après Wikipédia, le contrôle et fabrique la vidéo.'], ['relire', '👀 Écrit, puis je relis', 'Le texte est écrit d’après Wikipédia, tu le relis et le corriges avant la fabrication.'], ['script', '✍️ J’écris mon texte', 'Tu écris le texte toi-même : idéal pour un sujet d’actualité, que Wikipédia ne connaît pas encore.']].map(([id, nom, aide]) => `<label class="fiMode" title="${aide}"><input type="radio" name="fiMode" value="${id}" ${id === 'seul' ? 'checked' : ''}> ${nom}</label>`).join('')}</div>
       <p class="mut" id="fiModeAide" style="margin:6px 0"></p>
+      <div class="ligne" style="margin:0 0 6px"><button class="mini" id="fiIdeesBtn" title="Une centaine de scripts prêts à lire : histoires de la Bourse, produits d’épargne expliqués, notions d’économie">📚 Idées de vidéos prêtes à lire</button></div><div id="fiIdees" hidden></div>
       <div id="fiZoneSujet" class="ligne"><input id="fiSujet" placeholder="Le sujet, par exemple : le krach de 2008" style="flex:1"></div>
       <div id="fiZoneScript" hidden><p class="mut" style="margin:0 0 6px">Un titre (# Titre), l’accroche, des paragraphes (une ligne courte = un titre de partie, des lignes « - » = une liste), puis « En une phrase : … ». QuentMovie le découpe en répliques et choisit les écrans (chiffres, définitions, listes) sans rien ajouter.</p>
         <textarea id="fiScript" rows="6" style="width:100%" placeholder="# Pourquoi les prix montent ?&#10;&#10;Ton panier coûtait 50 € il y a cinq ans…"></textarea></div>
@@ -121,6 +122,25 @@ function ouvrirFiche() {
   if (fiMemo.script && !fiMemo.fiche) { $('#fiScript').value = fiMemo.script; const r = document.querySelector('[name="fiMode"][value="script"]'); if (r) r.checked = true; } // retour du Doublage : ton script est gardé
   majMode();
   $('#fiScript').oninput = () => { fiMemo.script = $('#fiScript').value; };
+  // banque d'idées (idees-quentinvest.js) : un script prêt à lire, choisi par thème ou par mot, remplit « J’écris mon texte » ; tu le relis
+  // et le modifies avant la voix. Une idée dont le titre est celui d'un épisode déjà fabriqué est marquée « déjà fait ».
+  $('#fiIdeesBtn').onclick = async () => {
+    const z = $('#fiIdees'); if (!z.hidden) { z.hidden = true; return; } z.hidden = false; z.textContent = 'Chargement des idées…';
+    const norm = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+    try {
+      const [{ themes }, faits] = await Promise.all([api('/api/quentinvest/idees').then(r => r.json()), api('/api/pico/episodes').then(r => r.json()).then(r => (r.episodes || []).map(e => norm(e.titre))).catch(() => [])]);
+      const tout = themes.flatMap(t => t.idees); let theme = '', q = '';
+      z.innerHTML = `<div class="encart" style="margin:0 0 8px"><div class="ligne" style="flex-wrap:wrap"><select id="fiIdTheme"><option value="">Tous les thèmes (${tout.length})</option>${themes.map(t => `<option>${esc(t.nom)}</option>`).join('')}</select><input id="fiIdCherche" placeholder="Chercher : PEA, krach, Newton…" style="flex:1;min-width:160px"><button class="mini" id="fiIdHasard">🎲 Au hasard</button></div><div id="fiIdListe" style="max-height:280px;overflow:auto;margin-top:6px"></div></div>`;
+      const liste = () => tout.filter(x => (!theme || x.theme === theme) && (!q || norm(x.titre + ' ' + x.accroche).includes(q)));
+      const peindre = () => { const l = liste(); $('#fiIdListe').innerHTML = l.length ? l.map(x => `<button class="fiIdee" data-idee="${esc(x.id)}" title="${esc(x.accroche)}"><b>${esc(x.titre)}</b>${faits.includes(norm(x.titre)) ? ' <span class="mut">· déjà fait</span>' : ''}<br><span class="mut">${esc(x.theme)} · environ ${String(x.minutes).replace('.', ',')} min de voix</span></button>`).join('') : '<p class="mut">Aucune idée ne correspond.</p>'; };
+      const prendre = x => { $('#fiScript').value = fiMemo.script = x.texte; const r = document.querySelector('[name="fiMode"][value="script"]'); if (r) r.checked = true; majMode(); z.hidden = true; $('#fiScript').scrollIntoView({ block: 'center' }); signal(`Script « ${x.titre} » prêt : relis-le, change ce que tu veux, puis « 🎬 Faire la vidéo ».`); };
+      $('#fiIdTheme').onchange = e => { theme = e.target.value; peindre(); };
+      $('#fiIdCherche').oninput = e => { q = norm(e.target.value); peindre(); };
+      $('#fiIdHasard').onclick = () => { const l = liste().filter(x => !faits.includes(norm(x.titre))); if (l.length) prendre(l[Math.floor(Math.random() * l.length)]); };
+      $('#fiIdListe').onclick = e => { const b = e.target.closest('[data-idee]'), x = b && tout.find(y => y.id === b.dataset.idee); if (x) prendre(x); };
+      peindre();
+    } catch (er) { z.textContent = 'Idées indisponibles : ' + er.message; }
+  };
   // ton script lu avec ta voix : le Doublage reçoit les répliques telles que la fabrication les découpe (accroche, salut, blocs, fin)
   $('#fiDoubler').onclick = async () => {
     const script = $('#fiScript').value; if (script.trim().length < 80) return signal('Écris d’abord ton script : une accroche, quelques paragraphes et une conclusion.');
